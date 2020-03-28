@@ -5,12 +5,12 @@ module Rodauth
     depends :login
     error_flash "Please authorize to continue", "require_authorization"
 
-    view :authorize, "Authorize"
+    view "authorize", "Authorize", "authorize"
 
     auth_value_method :grants_table, :oauth_grants
     auth_value_method :token_column, :token
     auth_value_method :authorize_path, "oauth/authorize"
-    auth_value_method :default_scope, "profile.read"
+    auth_value_method :default_grant, "profile.read"
     auth_value_method :authorization_required_error_status, 403
     session_key :flash_error_key, :error
     session_key :session_key, :account_id
@@ -25,6 +25,14 @@ module Rodauth
 
     def initialize(scope)
       @scope = scope
+    end
+
+    def grant_param
+      'grant'
+    end
+
+    def grant
+      param(oauth_grant_param) || default_grant
     end
 
     def authorization_token

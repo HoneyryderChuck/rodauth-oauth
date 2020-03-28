@@ -17,6 +17,7 @@ gem "tilt"
 
 gem "capybara"
 gem "minitest", "~> 5.0"
+gem "minitest-hooks"
 
 gem "rubocop"
 

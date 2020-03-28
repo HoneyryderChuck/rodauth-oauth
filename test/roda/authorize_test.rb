@@ -21,6 +21,12 @@ class RodaOauthAuthorizeTest < Minitest::Test
            "was redirected instead to #{page.current_path}"
   end
 
+  def test_authorize_get_authorize_logged_in
+    login
+    visit "/oauth-authorize"
+    assert page.current_path == "/", "was redirected instead to #{page.current_path}"
+  end
+
   private
 
   def setup
@@ -28,16 +34,18 @@ class RodaOauthAuthorizeTest < Minitest::Test
       include Capybara::DSL
 
       plugin :flash
-      plugin :render, layout_opts: { path: "test/views/layout.str" }
+      plugin :render, :views=>'test/views', layout_opts: { path: "test/views/layout.str" }
       plugin(:not_found) { raise "path #{request.path_info} not found" }
 
-      plugin :sessions, secret: SecureRandom.random_bytes(64),
-                        key: "rack.session"
-
-      use Rack::Session::Cookie, secret: "0123456789"
+      require 'roda/session_middleware'
+      self.opts[:sessions_convert_symbols] = true
+      use RodaSessionMiddleware, :secret=>SecureRandom.random_bytes(64), :key=>'rack.session'
 
       plugin :rodauth do
         enable :oauth
+        password_match? do |_password|
+          true
+        end
       end
 
       route do |r|
@@ -54,6 +62,10 @@ class RodaOauthAuthorizeTest < Minitest::Test
             "Authorized"
           end
         end
+      end
+
+      def self.logger
+        Logger.new($stderr)
       end
     end
   end
