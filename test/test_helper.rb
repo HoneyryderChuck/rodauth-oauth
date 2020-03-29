@@ -26,8 +26,52 @@ require "rodauth/migrations"
 Sequel::Migrator.run(DB, 'test/migrate')
 
 
+Base = Class.new(Roda)
+Base.opts[:check_dynamic_arity] = Base.opts[:check_arity] = :warn
+Base.plugin :flash
+Base.plugin :render, :views=>'test/views', :layout_opts=>{:path=>'test/views/layout.str'}
+Base.plugin(:not_found){raise "path #{request.path_info} not found"}
+
+require 'roda/session_middleware'
+Base.opts[:sessions_convert_symbols] = true
+Base.use RodaSessionMiddleware, :secret=>SecureRandom.random_bytes(64), :key=>'rack.session'
+def Base.logger
+  Logger.new($stderr)
+end
+
 class Minitest::Test
   include Minitest::Hooks
+
+  def app=(app)
+    @app = Capybara.app = app
+  end
+
+  def rodauth(&block)
+    @rodauth_block = block
+  end
+
+   def rodauth_opts(type={})
+    opts = type.is_a?(Hash) ? type : {}
+    opts[:csrf] = :route_csrf
+    opts
+  end
+
+  def roda(type=nil, &block)
+    app = Class.new(Base)
+    app.opts[:unsupported_block_result] = :raise
+    app.opts[:unsupported_matcher] = :raise
+    app.opts[:verbatim_string_matcher] = true
+    rodauth_block = @rodauth_block
+    opts = rodauth_opts(type)
+
+    app.plugin(:rodauth, opts) do
+      instance_exec(&rodauth_block)
+    end
+    app.route(&block)
+    app.precompile_rodauth_templates unless @no_precompile
+    self.app = app
+  end
+
   def login(opts={})
     visit(opts[:path]||'/login') unless opts[:visit] == false
     fill_in 'Login', :with=>opts.fetch(:login, 'foo@example.com')

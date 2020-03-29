@@ -45,7 +45,7 @@ module Rodauth
       token
     end
 
-    def oauth_authorize(scope = default_scope)
+    def oauth_authorize(scope = default_grant)
       grant = db[grants_table].filter(token_column => authorization_token).first
 
       # check if there is grant
