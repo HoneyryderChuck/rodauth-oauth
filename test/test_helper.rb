@@ -31,13 +31,11 @@ Base.opts[:check_dynamic_arity] = Base.opts[:check_arity] = :warn
 Base.plugin :flash
 Base.plugin :render, :views=>'test/views', :layout_opts=>{:path=>'test/views/layout.str'}
 Base.plugin(:not_found){raise "path #{request.path_info} not found"}
+Base.plugin :common_logger
 
 require 'roda/session_middleware'
 Base.opts[:sessions_convert_symbols] = true
 Base.use RodaSessionMiddleware, :secret=>SecureRandom.random_bytes(64), :key=>'rack.session'
-def Base.logger
-  Logger.new($stderr)
-end
 
 class Minitest::Test
   include Minitest::Hooks

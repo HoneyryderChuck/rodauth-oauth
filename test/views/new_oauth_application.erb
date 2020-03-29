@@ -1,0 +1,45 @@
+<form action= "/oauth-applications" method="post" class="form-horizontal" role="form" id="oauth-application-form">
+  <h2>Register Oauth Application</h2>
+  <%= csrf_tag if respond_to?(:csrf_tag) %>
+  <input type="hidden" name="lp" value="<%= rodauth.param('lp') %>"/>
+  <div class="form-group">
+    <label class="col-sm-2 control-label" for="name">Name</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control<%= ' error' if rodauth.field_error('name')%>" name="name" id="name"/>
+      <%= rodauth.field_error('name') %>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label" for="description">Description</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control<%= ' error' if rodauth.field_error('description') %>" name="description" id="description"/>
+      <%= rodauth.field_error('description') %>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label" for="homepage_url">Homepage URL</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control<%= ' error' if rodauth.field_error('homepage_url') %>" name="homepage_url" id="homepage-url"/>
+      <%= rodauth.field_error('homepage_url') %>
+    </div>
+  </div>
+  <div class="form-group">
+    <label class="col-sm-2 control-label" for="callback_url">Authorization callback URL</label>
+    <div class="col-sm-10">
+      <input type="text" class="form-control<%= ' error' if rodauth.field_error('callback_url') %>" name="callback_url" id="callback-url"/>
+      <%= rodauth.field_error('callback_url') %>
+    </div>
+  </div>
+  <% rodauth.oauth_application_grants.each do |grant| %>
+ 	<div>
+	  <input id="<%= grant %>" type="checkbox" name="grants[]" value="<%= grant %>">
+	  <label for="<%= grant %>"><%= grant %></label>
+	</div>
+  <% end %>
+  <%= rodauth.field_error('grant') %>
+  <div class="form-group">
+    <div class="col-sm-offset-2 col-sm-10">
+      <input type="submit" class="btn btn-default" value="Register"/>
+    </div>
+  </div>
+</form>
