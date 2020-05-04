@@ -19,16 +19,25 @@ class RodaOauthAuthorizeTest < Minitest::Test
 
   def test_authorize_get_authorize_not_logged_in
     setup_application
-    visit "/oauth/authorize"
+    visit "/oauth-authorize"
     assert page.current_path == "/login",
+           "was redirected instead to #{page.current_path}"
+  end
+
+  def test_authorize_get_authorize_logged_in_no_client_application
+    setup_application
+    login
+    visit "/oauth-authorize"
+    assert page.current_path == "/",
            "was redirected instead to #{page.current_path}"
   end
 
   def test_authorize_get_authorize_logged_in
     setup_application
     login
-    visit "/oauth/authorize"
-    assert page.current_path == "/", "was redirected instead to #{page.current_path}"
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}"
+    assert page.current_path == "/oauth-authorize",
+           "was redirected instead to #{page.current_path}"
   end
 
   private

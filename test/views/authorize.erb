@@ -1,5 +1,5 @@
 <form method="post" class="form-horizontal" role="form" id="login-form">
-  <%=  csrf_tag if respond_to?(:csrf_tag)} %>
+  <%=  csrf_tag if respond_to?(:csrf_tag) %>
   <p>Grants: <%= rodauth.param('lp') %></p>
   <input type="hidden" name="lp" value="<%= rodauth.grant %>"/>
   <div class="form-group">

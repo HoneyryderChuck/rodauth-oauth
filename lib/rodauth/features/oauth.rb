@@ -9,9 +9,11 @@ module Rodauth
     before "create_oauth_application"
     after "create_oauth_application"
 
+    error_flash "You need a valid client application ID to continue", "require_client_application"
+
     error_flash "Please authorize to continue", "require_authorization"
-    notice_flash "Your oauth application has been registered", "create_oauth_application"
     error_flash "There was an error registering your oauth application", "create_oauth_application"
+    notice_flash "Your oauth application has been registered", "create_oauth_application"
 
     view "authorize", "Authorize", "authorize"
     view "oauth_applications", "Oauth Applications", "oauth_applications"
@@ -21,6 +23,10 @@ module Rodauth
     auth_value_method :grants_table, :oauth_grants
     auth_value_method :token_column, :token
     auth_value_method :authorization_required_error_status, 403
+    auth_value_method :client_application_required_error_status, 404
+
+    auth_value_method :oauth_grants_param, "scopes"
+    auth_value_method :client_id_param, "client_id"
 
     auth_value_method :oauth_applications_path, "oauth-applications"
     auth_value_method :oauth_applications_table, :oauth_applications
@@ -29,6 +35,7 @@ module Rodauth
     auth_value_method :oauth_application_key, :id
     auth_value_method :oauth_application_grants_key, "grants"
     auth_value_method :oauth_application_client_id_key, "client_id"
+    auth_value_method :oauth_application_client_id_column, :client_id
     auth_value_method :oauth_application_client_secret_key, "client_secret"
     auth_value_method :oauth_application_homepage_url_key, "homepage_url"
     auth_value_method :oauth_application_callback_url_key, "callback_url"
@@ -39,6 +46,11 @@ module Rodauth
     auth_value_method :unique_error_message, "is already in use"
     auth_value_method :null_error_message, "is not filled"
 
+    auth_value_methods(
+      :client_application,
+      :grant
+    )
+
     session_key :flash_error_key, :error
     session_key :session_key, :account_id
 
@@ -48,7 +60,7 @@ module Rodauth
 
     redirect(:require_authorization) do
       if logged_in?
-        authorize_path
+        oauth_authorize_path
       else
         login_redirect
       end
@@ -60,9 +72,16 @@ module Rodauth
       @scope = scope
     end
 
-   
     def grant
-      param(oauth_grant_param) || oauth_application_default_grant
+      param(oauth_grants_param) || oauth_application_default_grant
+    end
+
+    def client_application
+      client_id = param(client_id_param)
+
+      return unless client_id
+
+      db[oauth_applications_table].filter(oauth_application_client_id_column => client_id).first
     end
 
     def authorization_token
@@ -190,7 +209,7 @@ module Rodauth
       grant = db[grants_table].filter(token_column => authorization_token).first
 
       # check if there is grant
-      # check if grant was expired
+      # check if grant was expires_ind
       # check if grant has been revoked
       # check if permission for scoep exists
       if !grant ||
@@ -203,15 +222,28 @@ module Rodauth
       # Client applications
     end
 
+    private
+
     def authorization_required
       set_redirect_error_status(authorization_required_error_status)
       set_redirect_error_flash(require_authorization_error_flash)
       redirect(require_authorization_redirect)
     end
 
+    def client_application_required
+      set_redirect_error_status(client_application_required_error_status)
+      set_redirect_error_flash(require_client_application_error_flash)
+      redirect(request.referer || default_redirect)
+    end
+
+    def require_client_application
+      client_application_required unless client_application
+    end
+
    
     route(:oauth_authorize) do |r|
       require_account
+      require_client_application
 
       r.get do
         authorize_view

@@ -16,7 +16,7 @@ require "rodauth"
 require "bcrypt"
 
 db_path = File.join(Dir.tmpdir, "roda-oauth.db")
-FileUtils.rm(db_path)
+FileUtils.rm(db_path, force: true)
 
 DB = Sequel.sqlite(db_path)
 DB.loggers << Logger.new($stderr)
@@ -68,6 +68,21 @@ class Minitest::Test
     app.route(&block)
     app.precompile_rodauth_templates unless @no_precompile
     self.app = app
+  end
+
+  def oauth_application
+    @oauth_application ||= begin
+     id = DB[:oauth_applications].insert \
+        name: "Foo",
+        description: "this is a foo",
+        homepage_url: "https://foobar.com",
+        callback_url: "https://foobar.com/callback",
+        client_id: "CLIENT_ID",
+        client_secret: "CLIENT_SECRET",
+        grants: %w[profile.read]
+
+      DB[:oauth_applications].filter(id: id).first
+    end
   end
 
   def login(opts={})
