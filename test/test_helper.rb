@@ -41,6 +41,8 @@ Base.use RodaSessionMiddleware, :secret=>SecureRandom.random_bytes(64), :key=>'r
 class Minitest::Test
   include Minitest::Hooks
 
+  attr_reader :app
+
   def app=(app)
     @app = Capybara.app = app
   end
@@ -56,12 +58,16 @@ class Minitest::Test
   end
 
   def roda(type=nil, &block)
+    jwt_only = type == :jwt
+
     app = Class.new(Base)
     app.opts[:unsupported_block_result] = :raise
     app.opts[:unsupported_matcher] = :raise
     app.opts[:verbatim_string_matcher] = true
     rodauth_block = @rodauth_block
     opts = rodauth_opts(type)
+
+    opts[:json] = jwt_only ? :only : true
 
     app.plugin(:rodauth, opts) do
       instance_exec(&rodauth_block)
@@ -84,6 +90,24 @@ class Minitest::Test
 
       DB[:oauth_applications].filter(id: id).first
     end
+  end
+
+  def oauth_grant(params = {})
+    @oauth_grant ||= begin
+     id = DB[:oauth_grants].insert({
+        oauth_application_id: oauth_application[:id],
+        account_id: account[:id],
+        code: "CODE",
+        expires_in: Time.now + 60 * 5,
+        callback_url: oauth_application[:callback_url],
+        grants: oauth_application[:grants]
+      }.merge(params))
+      DB[:oauth_grants].filter(id: id).first
+    end
+  end
+
+  def account
+    @account ||= DB[:accounts].first
   end
 
   def login(opts={})
