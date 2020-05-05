@@ -6,7 +6,7 @@ Sequel.migration do
       foreign_key :oauth_application_id, :oauth_applications, :null=>false
       String :code, :null=>false
       DateTime :expires_in, :null=>false
-      String :callback_url
+      String :redirect_uri
       DateTime :revoked_at
       String :scopes, :null => false
       index [:oauth_application_id, :code], unique: true

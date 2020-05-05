@@ -28,7 +28,7 @@ class RodaOauthTokenTest < Minitest::Test
     setup_application
     grant = oauth_grant(expires_in: Time.now - 60) 
 
-    post("/oauth-token", client_id: oauth_application[:client_id], grant_type: "authorization_code", code: grant[:code], redirect_uri: grant[:callback_url])
+    post("/oauth-token", client_id: oauth_application[:client_id], grant_type: "authorization_code", code: grant[:code], redirect_uri: grant[:redirect_uri])
 
     assert last_response.status == 400 
     json_body = JSON.parse(last_response.body)
@@ -39,7 +39,7 @@ class RodaOauthTokenTest < Minitest::Test
     setup_application
     grant = oauth_grant(revoked_at: Time.now) 
 
-    post("/oauth-token", client_id: oauth_application[:client_id], grant_type: "authorization_code", code: grant[:code], redirect_uri: grant[:callback_url])
+    post("/oauth-token", client_id: oauth_application[:client_id], grant_type: "authorization_code", code: grant[:code], redirect_uri: grant[:redirect_uri])
 
     assert last_response.status == 400 
     json_body = JSON.parse(last_response.body)
@@ -49,7 +49,7 @@ class RodaOauthTokenTest < Minitest::Test
   def test_token_successful
     setup_application
 
-    post("/oauth-token", client_id: oauth_application[:client_id], grant_type: "authorization_code", code: oauth_grant[:code], redirect_uri: oauth_grant[:callback_url])
+    post("/oauth-token", client_id: oauth_application[:client_id], grant_type: "authorization_code", code: oauth_grant[:code], redirect_uri: oauth_grant[:redirect_uri])
 
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"

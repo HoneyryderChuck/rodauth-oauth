@@ -4,7 +4,7 @@
   <input type="hidden" name="client_id" value="<%= rodauth.client_id %>"/>
   <input type="hidden" name="scope" value="<%= rodauth.scopes %>"/>
   <input type="hidden" name="state" value="<%= rodauth.state %>"/>
-  <input type="hidden" name="lp" value="<%= rodauth.callback_url %>"/>
+  <input type="hidden" name="lp" value="<%= rodauth.redirect_uri %>"/>
   <div class="form-group">
     <div class="col-sm-offset-2 col-sm-10">
       <input type="submit" class="btn btn-default" value="Authorize"/>

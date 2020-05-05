@@ -6,7 +6,7 @@ Sequel.migration do
       String :name, :null=>false
       String :description, :null=>false
       String :homepage_url, :null=>false
-      String :callback_url, :null=>false
+      String :redirect_uri, :null=>false
       String :client_id, :null=>false, :unique => true
       String :client_secret, :null=>false, :unique => true
       String :scopes, :null => false

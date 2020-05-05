@@ -39,17 +39,17 @@ class RodaOauthAuthorizeTest < Minitest::Test
     assert_includes page.html, 'OAuth Authorization invalid parameters'
   end
 
-  def test_authorize_get_authorize_invalid_callback_url
+  def test_authorize_get_authorize_invalid_redirect_uri
     setup_application
     login
-    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&callback_url=bla"
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&redirect_uri=bla"
     assert_includes page.html, 'OAuth Authorization invalid parameters'
   end
 
   def test_authorize_get_authorize_invalid_grant
     setup_application
     login
-    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&callback_url=#{oauth_application[:callback_url]}&scopes=marvel"
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&redirect_uri=#{oauth_application[:redirect_uri]}&scopes=marvel"
     assert_includes page.html, 'OAuth Authorization invalid parameters'
   end
 

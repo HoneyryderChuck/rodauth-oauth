@@ -83,7 +83,7 @@ class Minitest::Test
         name: "Foo",
         description: "this is a foo",
         homepage_url: "https://foobar.com",
-        callback_url: "https://foobar.com/callback",
+        redirect_uri: "https://foobar.com/callback",
         client_id: "CLIENT_ID",
         client_secret: "CLIENT_SECRET",
         scopes: %w[profile.read]
@@ -99,7 +99,7 @@ class Minitest::Test
         account_id: account[:id],
         code: "CODE",
         expires_in: Time.now + 60 * 5,
-        callback_url: oauth_application[:callback_url],
+        redirect_uri: oauth_application[:redirect_uri],
         scopes: oauth_application[:scopes]
       }.merge(params))
       DB[:oauth_grants].filter(id: id).first

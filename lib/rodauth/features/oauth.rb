@@ -38,7 +38,7 @@ module Rodauth
     auth_value_method :client_id_param, "client_id"
     auth_value_method :scopes_param, "scope"
     auth_value_method :state_param, "state"
-    auth_value_method :callback_url_param, "callback_url"
+    auth_value_method :redirect_uri_param, "redirect_uri"
     auth_value_method :oauth_scopes_param, "scopes"
 
     # OAuth Token
@@ -73,14 +73,14 @@ module Rodauth
     auth_value_method :oauth_application_client_id_column, :client_id
     auth_value_method :oauth_application_client_secret_column, :client_secret
     auth_value_method :oauth_application_homepage_url_column, :homepage_url
-    auth_value_method :oauth_application_callback_url_column, :callback_url
+    auth_value_method :oauth_application_redirect_uri_column, :redirect_uri
     auth_value_method :oauth_application_key, :id
 
     auth_value_method :oauth_application_default_scope, SCOPES.first
     auth_value_method :oauth_application_scopes, SCOPES
 
     auth_value_method :oauth_application_client_id_column, :client_id
-    auth_value_method :oauth_application_callback_url_column, :callback_url
+    auth_value_method :oauth_application_redirect_uri_column, :redirect_uri
     auth_value_method :oauth_application_scopes_column, :scopes
 
     auth_value_method :oauth_application_name_key, "name"
@@ -89,7 +89,7 @@ module Rodauth
     auth_value_method :oauth_application_client_id_key, "client_id"
     auth_value_method :oauth_application_client_secret_key, "client_secret"
     auth_value_method :oauth_application_homepage_url_key, "homepage_url"
-    auth_value_method :oauth_application_callback_url_key, "callback_url"
+    auth_value_method :oauth_application_redirect_uri_key, "redirect_uri"
     auth_value_method :oauth_application_id, Integer
 
     auth_value_method :invalid_grant_type_message, "Invalid grant type"
@@ -101,7 +101,7 @@ module Rodauth
     auth_value_methods(
       :state,
       :oauth_application,
-      :callback_url,
+      :redirect_uri,
       :client_id,
       :scopes
     )
@@ -145,11 +145,11 @@ module Rodauth
       client_id
     end
 
-    def callback_url
-      callback_url = param(callback_url_param)
+    def redirect_uri
+      redirect_uri = param(redirect_uri_param)
 
-      return oauth_application[oauth_application_callback_url_column] unless callback_url && !callback_url.empty?
-      callback_url
+      return oauth_application[oauth_application_redirect_uri_column] unless redirect_uri && !redirect_uri.empty?
+      redirect_uri
     end
 
 
@@ -188,7 +188,7 @@ module Rodauth
     def validate_oauth_application_params
       oauth_application_params.each do |key, value|
         if key == oauth_application_homepage_url_key ||
-           key == oauth_application_callback_url_key
+           key == oauth_application_redirect_uri_key
 
           unless URI.regexp(%w[http https]).match?(value)
             set_field_error(key, invalid_url_message)
@@ -213,7 +213,7 @@ module Rodauth
         oauth_application_description_column => oauth_application_params[oauth_application_description_key],
         oauth_application_scopes_column => oauth_application_params[oauth_application_scopes_key],
         oauth_application_homepage_url_column => oauth_application_params[oauth_application_homepage_url_key], 
-        oauth_application_callback_url_column => oauth_application_params[oauth_application_callback_url_key],
+        oauth_application_redirect_uri_column => oauth_application_params[oauth_application_redirect_uri_key],
       }
 
       # set client ID/secret pairs
@@ -431,7 +431,7 @@ module Rodauth
     end
 
     def require_oauth_grant_valid_parameters
-      oauth_grant_valid_parameters_required unless oauth_application && check_valid_scopes? && check_valid_callback_url?
+      oauth_grant_valid_parameters_required unless oauth_application && check_valid_scopes? && check_valid_redirect_uri?
     end
 
     def check_valid_scopes?
@@ -440,8 +440,8 @@ module Rodauth
       (scopes.split(",") - oauth_application[oauth_application_scopes_column].split(",")).empty?
     end
 
-    def check_valid_callback_url?
-      callback_url == oauth_application[oauth_application_callback_url_column]
+    def check_valid_redirect_uri?
+      redirect_uri == oauth_application[oauth_application_redirect_uri_column]
     end
    
     route(:oauth_token) do |r|
@@ -493,9 +493,9 @@ module Rodauth
 
         # check if there was a callback url, and verify it
         # TODO: check again what to do here compliance-wise
-        unless check_valid_callback_url?
+        unless check_valid_redirect_uri?
           after_authorize_failure
-          throw_error_status(authorize_error_status, callback_url_param, invalid_callback_url_message)
+          throw_error_status(authorize_error_status, redirect_uri_param, invalid_redirect_uri_message)
         end
 
         code = nil
@@ -505,7 +505,7 @@ module Rodauth
           after_authorize
         end
 
-        redirect_url = URI.parse(callback_url)
+        redirect_url = URI.parse(redirect_uri)
         query_params = ["code=#{code}"]
         query_params << "state=#{state}" if state
         query_params << redirect_url.query if redirect_url.query
