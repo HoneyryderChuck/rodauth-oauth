@@ -37,6 +37,7 @@ require 'roda/session_middleware'
 Base.opts[:sessions_convert_symbols] = true
 Base.use RodaSessionMiddleware, :secret=>SecureRandom.random_bytes(64), :key=>'rack.session'
 
+
 class Minitest::Test
   include Minitest::Hooks
 

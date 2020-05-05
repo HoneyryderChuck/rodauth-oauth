@@ -17,27 +17,59 @@ class RodaOauthAuthorizeTest < Minitest::Test
     assert page.html == "Unauthorized"
   end
 
-  def test_authorize_get_authorize_not_logged_in
+  def test_authorize_get_authorize_not_logged_in_no_client_application
     setup_application
     visit "/oauth-authorize"
     assert page.current_path == "/login",
            "was redirected instead to #{page.current_path}"
   end
 
-  def test_authorize_get_authorize_logged_in_no_client_application
+  def test_authorize_get_authorize
     setup_application
     login
     visit "/oauth-authorize"
     assert page.current_path == "/",
            "was redirected instead to #{page.current_path}"
   end
-
-  def test_authorize_get_authorize_logged_in
+  
+  def test_authorize_get_authorize_invalid_client_id
     setup_application
     login
+    visit "/oauth-authorize?client_id=bla"
+    assert_includes page.html, 'OAuth Authorization invalid parameters'
+  end
+
+  def test_authorize_get_authorize_invalid_callback_url
+    setup_application
+    login
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&callback_url=bla"
+    assert_includes page.html, 'OAuth Authorization invalid parameters'
+  end
+
+  def test_authorize_get_authorize_invalid_grant
+    setup_application
+    login
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&callback_url=#{oauth_application[:callback_url]}&scopes=marvel"
+    assert_includes page.html, 'OAuth Authorization invalid parameters'
+  end
+
+  def test_authorize_post_authorize
+    setup_application
+    login
+
+    # show the authorization form
     visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}"
     assert page.current_path == "/oauth-authorize",
            "was redirected instead to #{page.current_path}"
+
+    # submit authorization request
+    click_button "Authorize"
+    # TODO: it's redirecting from fallback to root, fix it
+    assert page.current_host == oauth_application[:homepage_url],
+           "was redirected instead to #{page.current_url}"
+
+    assert DB[:oauth_grants].count == 1,
+           "no grant has been created"
   end
 
   private
@@ -53,14 +85,14 @@ class RodaOauthAuthorizeTest < Minitest::Test
      r.rodauth
 
       r.root do
-        "Unauthorized"
+        flash["error"] || flash["notice"] || "Unauthorized"
       end
 
       rodauth.oauth_authorize
 
       r.on "private" do
         r.get do
-          "Authorized"
+          flash["error"] || flash["notice"] || "Authorized"
         end
       end
     end
