@@ -9,7 +9,7 @@ Sequel.migration do
       String :refresh_token
       DateTime :expires_in, :null=>false
       DateTime :revoked_at
-      String :grants, :null => false
+      String :scopes, :null => false
     end
   end
 

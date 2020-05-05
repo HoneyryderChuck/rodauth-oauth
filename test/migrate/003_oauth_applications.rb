@@ -9,7 +9,7 @@ Sequel.migration do
       String :callback_url, :null=>false
       String :client_id, :null=>false, :unique => true
       String :client_secret, :null=>false, :unique => true
-      String :grants, :null => false
+      String :scopes, :null => false
     end
 
   end

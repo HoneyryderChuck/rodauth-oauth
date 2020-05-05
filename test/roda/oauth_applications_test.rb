@@ -25,7 +25,7 @@ class RodaOauthClientApplicationsTest < Minitest::Test
     assert_equal page.find('#notice_flash').text, 'Your oauth application has been registered'
     assert_includes page.html, "Client ID: "
     assert_includes page.html, "Client Secret: "
-    assert_includes page.html, "Grants: "
+    assert_includes page.html, "Scopes: "
     assert DB[:oauth_applications].count == 1
   end
 
@@ -52,8 +52,8 @@ class RodaOauthClientApplicationsTest < Minitest::Test
   def setup_application
     rodauth do
       enable :oauth
-      oauth_application_default_grant "user.read"
-      oauth_application_grants %w[user.read user.write]
+      oauth_application_default_scope "user.read"
+      oauth_application_scopes %w[user.read user.write]
       password_match? do |_password|
         true
       end

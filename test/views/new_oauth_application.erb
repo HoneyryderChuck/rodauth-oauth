@@ -30,13 +30,13 @@
       <%= rodauth.field_error('callback_url') %>
     </div>
   </div>
-  <% rodauth.oauth_application_grants.each do |grant| %>
+  <% rodauth.oauth_application_scopes.each do |scope| %>
  	<div>
-	  <input id="<%= grant %>" type="checkbox" name="grants[]" value="<%= grant %>">
-	  <label for="<%= grant %>"><%= grant %></label>
+	  <input id="<%= scope %>" type="checkbox" name="scopes[]" value="<%= scope %>">
+	  <label for="<%= scope %>"><%= scope %></label>
 	</div>
   <% end %>
-  <%= rodauth.field_error('grant') %>
+  <%= rodauth.field_error('scope') %>
   <div class="form-group">
     <div class="col-sm-offset-2 col-sm-10">
       <input type="submit" class="btn btn-default" value="Register"/>

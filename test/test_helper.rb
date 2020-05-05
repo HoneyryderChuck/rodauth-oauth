@@ -86,7 +86,7 @@ class Minitest::Test
         callback_url: "https://foobar.com/callback",
         client_id: "CLIENT_ID",
         client_secret: "CLIENT_SECRET",
-        grants: %w[profile.read]
+        scopes: %w[profile.read]
 
       DB[:oauth_applications].filter(id: id).first
     end
@@ -100,7 +100,7 @@ class Minitest::Test
         code: "CODE",
         expires_in: Time.now + 60 * 5,
         callback_url: oauth_application[:callback_url],
-        grants: oauth_application[:grants]
+        scopes: oauth_application[:scopes]
       }.merge(params))
       DB[:oauth_grants].filter(id: id).first
     end

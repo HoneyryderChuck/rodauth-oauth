@@ -2,7 +2,7 @@
 
 module Rodauth
   Feature.define(:oauth, :Oauth) do
-    GRANTS = %w[profile.read]
+    SCOPES = %w[profile.read]
 
     depends :login
 
@@ -36,16 +36,16 @@ module Rodauth
     auth_value_method :grant_type_param, "grant_type"
     auth_value_method :authorize_code_param, "code"
     auth_value_method :client_id_param, "client_id"
-    auth_value_method :grants_param, "scope"
+    auth_value_method :scopes_param, "scope"
     auth_value_method :state_param, "state"
     auth_value_method :callback_url_param, "callback_url"
-    auth_value_method :oauth_grants_param, "scopes"
+    auth_value_method :oauth_scopes_param, "scopes"
 
     # OAuth Token
     auth_value_method :oauth_tokens_table, :oauth_tokens
     auth_value_method :oauth_tokens_token_column, :token
     auth_value_method :oauth_tokens_refresh_token_column, :refresh_token
-    auth_value_method :oauth_tokens_grants_column, :grants
+    auth_value_method :oauth_tokens_scopes_column, :scopes
     auth_value_method :oauth_tokens_oauth_application_id_column, :oauth_application_id
     auth_value_method :oauth_tokens_oauth_grant_id_column, :oauth_grant_id
     auth_value_method :oauth_grants_revoked_at_column, :revoked_at
@@ -57,7 +57,7 @@ module Rodauth
     auth_value_method :oauth_grants_oauth_application_id_column, :oauth_application_id
     auth_value_method :oauth_grants_code_column, :code
     auth_value_method :oauth_grants_expires_in_column, :expires_in
-    auth_value_method :oauth_grants_grants_column, :grants
+    auth_value_method :oauth_grants_scopes_column, :scopes
 
     auth_value_method :token_column, :token
     auth_value_method :authorization_required_error_status, 403
@@ -69,23 +69,23 @@ module Rodauth
     auth_value_method :oauth_applications_table, :oauth_applications
     auth_value_method :oauth_application_name_column, :name
     auth_value_method :oauth_application_description_column, :description
-    auth_value_method :oauth_application_grants_column, :grants
+    auth_value_method :oauth_application_scopes_column, :scopes
     auth_value_method :oauth_application_client_id_column, :client_id
     auth_value_method :oauth_application_client_secret_column, :client_secret
     auth_value_method :oauth_application_homepage_url_column, :homepage_url
     auth_value_method :oauth_application_callback_url_column, :callback_url
     auth_value_method :oauth_application_key, :id
 
-    auth_value_method :oauth_application_default_grant, GRANTS.first
-    auth_value_method :oauth_application_grants, GRANTS
+    auth_value_method :oauth_application_default_scope, SCOPES.first
+    auth_value_method :oauth_application_scopes, SCOPES
 
     auth_value_method :oauth_application_client_id_column, :client_id
     auth_value_method :oauth_application_callback_url_column, :callback_url
-    auth_value_method :oauth_application_grants_column, :grants
+    auth_value_method :oauth_application_scopes_column, :scopes
 
     auth_value_method :oauth_application_name_key, "name"
     auth_value_method :oauth_application_description_key, "description"
-    auth_value_method :oauth_application_grants_key, "scopes"
+    auth_value_method :oauth_application_scopes_key, "scopes"
     auth_value_method :oauth_application_client_id_key, "client_id"
     auth_value_method :oauth_application_client_secret_key, "client_secret"
     auth_value_method :oauth_application_homepage_url_key, "homepage_url"
@@ -103,7 +103,7 @@ module Rodauth
       :oauth_application,
       :callback_url,
       :client_id,
-      :grants
+      :scopes
     )
 
     redirect(:oauth_application) do |id|
@@ -131,11 +131,11 @@ module Rodauth
       state
     end
 
-    def grants
-      grants = param(oauth_grants_param)
+    def scopes
+      scopes = param(oauth_scopes_param)
 
-      return oauth_application_default_grant unless grants && !grants.empty?
-      grants
+      return oauth_application_default_scope unless scopes && !scopes.empty?
+      scopes
     end
 
     def client_id
@@ -194,11 +194,11 @@ module Rodauth
             set_field_error(key, invalid_url_message)
           end
 
-        elsif key == oauth_application_grants_key
+        elsif key == oauth_application_scopes_key
 
-          value.each do |grant|
-            unless oauth_application_grants.include?(grant)
-              set_field_error(key, invalid_grant_message)
+          value.each do |scope|
+            unless oauth_application_scopes.include?(scope)
+              set_field_error(key, invalid_scope_message)
             end
           end
         end
@@ -211,7 +211,7 @@ module Rodauth
       create_params = {
         oauth_application_name_column => oauth_application_params[oauth_application_name_key],
         oauth_application_description_column => oauth_application_params[oauth_application_description_key],
-        oauth_application_grants_column => oauth_application_params[oauth_application_grants_key],
+        oauth_application_scopes_column => oauth_application_params[oauth_application_scopes_key],
         oauth_application_homepage_url_column => oauth_application_params[oauth_application_homepage_url_key], 
         oauth_application_callback_url_column => oauth_application_params[oauth_application_callback_url_key],
       }
@@ -221,10 +221,10 @@ module Rodauth
         oauth_application_client_id_column => SecureRandom.uuid,
         oauth_application_client_secret_column => SecureRandom.uuid
 
-      if create_params[oauth_application_grants_column]
-        create_params[oauth_application_grants_column] = create_params[oauth_application_grants_column].join(",")
+      if create_params[oauth_application_scopes_column]
+        create_params[oauth_application_scopes_column] = create_params[oauth_application_scopes_column].join(",")
       else
-        create_params[oauth_application_grants_column] = oauth_application_default_grant
+        create_params[oauth_application_scopes_column] = oauth_application_default_scope
       end
 
       ds = db[oauth_applications_table]
@@ -292,7 +292,7 @@ module Rodauth
 
     # Authorize
 
-    def oauth_authorize(scope = oauth_application_default_grant)
+    def oauth_authorize(scope = oauth_application_default_scope)
       grant = db[oauth_tokens_table].filter(oauth_tokens_token_column => authorization_token).first
 
       # check if there is grant
@@ -344,7 +344,7 @@ module Rodauth
         oauth_grants_oauth_application_id_column => oauth_application[oauth_application_key],
         oauth_grants_code_column => SecureRandom.uuid,
         oauth_grants_expires_in_column => Time.now + oauth_grant_expires_in,
-        oauth_grants_grants_column => grants
+        oauth_grants_scopes_column => scopes
       }
 
       ds = db[oauth_grants_table]
@@ -379,7 +379,7 @@ module Rodauth
         create_params = {
           oauth_tokens_oauth_application_id_column => oauth_grant[oauth_grants_oauth_application_id_column],
           oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_key],
-          oauth_tokens_grants_column => oauth_grant[oauth_grants_grants_column],
+          oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column],
           oauth_grants_expires_in_column => Time.now + oauth_token_expires_in,
           oauth_tokens_refresh_token_column => SecureRandom.uuid,
           oauth_tokens_token_column => SecureRandom.uuid
@@ -431,13 +431,13 @@ module Rodauth
     end
 
     def require_oauth_grant_valid_parameters
-      oauth_grant_valid_parameters_required unless oauth_application && check_valid_grant? && check_valid_callback_url?
+      oauth_grant_valid_parameters_required unless oauth_application && check_valid_scopes? && check_valid_callback_url?
     end
 
-    def check_valid_grant?
-      return false unless grants
+    def check_valid_scopes?
+      return false unless scopes
 
-      (grants.split(",") - oauth_application[oauth_application_grants_column].split(",")).empty?
+      (scopes.split(",") - oauth_application[oauth_application_scopes_column].split(",")).empty?
     end
 
     def check_valid_callback_url?
@@ -486,9 +486,9 @@ module Rodauth
         require_oauth_application
 
         # check if grants are valid for the application
-        unless check_valid_grant?
+        unless check_valid_scopes?
           after_authorize_failure
-          throw_error_status(authorize_error_status, grants_param, invalid_grant_message)
+          throw_error_status(authorize_error_status, scopes_param, invalid_scope_message)
         end
 
         # check if there was a callback url, and verify it

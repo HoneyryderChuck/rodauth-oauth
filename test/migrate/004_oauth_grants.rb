@@ -8,7 +8,7 @@ Sequel.migration do
       DateTime :expires_in, :null=>false
       String :callback_url
       DateTime :revoked_at
-      String :grants, :null => false
+      String :scopes, :null => false
       index [:oauth_application_id, :code], unique: true
     end
   end

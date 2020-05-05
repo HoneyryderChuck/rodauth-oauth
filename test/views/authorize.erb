@@ -2,7 +2,7 @@
   <%=  csrf_tag if respond_to?(:csrf_tag) %>
   <p>Grants: <%= rodauth.param('lp') %></p>
   <input type="hidden" name="client_id" value="<%= rodauth.client_id %>"/>
-  <input type="hidden" name="scope" value="<%= rodauth.grants %>"/>
+  <input type="hidden" name="scope" value="<%= rodauth.scopes %>"/>
   <input type="hidden" name="state" value="<%= rodauth.state %>"/>
   <input type="hidden" name="lp" value="<%= rodauth.callback_url %>"/>
   <div class="form-group">
