@@ -175,6 +175,23 @@ module Rodauth
       token
     end
 
+    def oauth_authorize(scope = oauth_application_default_scope)
+      grant = db[oauth_tokens_table].filter(oauth_tokens_token_column => authorization_token).first
+
+      # check if there is grant
+      # check if grant was expires_ind
+      # check if grant has been revoked
+      # check if permission for scoep exists
+      if !grant ||
+         Time.now.utc > (grant[:created_at] + expires_in.seconds) ||
+         (grant[:revoked_at] && Time.now.utc > grant[:revoked_at]) ||
+         !grants[:scopes].include?(scope)
+        authorization_required
+      end
+
+    end
+    private
+
     # Oauth Application
 
     def oauth_application_params
@@ -292,20 +309,33 @@ module Rodauth
 
     # Authorize
 
-    def oauth_authorize(scope = oauth_application_default_scope)
-      grant = db[oauth_tokens_table].filter(oauth_tokens_token_column => authorization_token).first
 
-      # check if there is grant
-      # check if grant was expires_ind
-      # check if grant has been revoked
-      # check if permission for scoep exists
-      if !grant ||
-         Time.now.utc > (grant[:created_at] + expires_in.seconds) ||
-         (grant[:revoked_at] && Time.now.utc > grant[:revoked_at]) ||
-         !grants[:scopes].include?(scope)
-        authorization_required
+    def validate_oauth_grant_params
+      redirect_response_error("invalid_request") unless oauth_application && check_valid_redirect_uri?
+      redirect_response_error("invalid_scope") unless check_valid_scopes?
+    end
+
+    def create_oauth_grant
+      create_params = {
+        oauth_grants_account_id_column => account_id,
+        oauth_grants_oauth_application_id_column => oauth_application[oauth_application_key],
+        oauth_grants_code_column => SecureRandom.uuid,
+        oauth_grants_expires_in_column => Time.now + oauth_grant_expires_in,
+        oauth_grants_scopes_column => scopes
+      }
+
+      ds = db[oauth_grants_table]
+
+      begin
+        if ds.supports_returning?(:insert)
+          ds.returning(authorize_code_column).insert(create_params)
+        else
+          id = ds.insert(create_params)
+          ds.where(oauth_grants_key => id).get(oauth_grants_code_column)
+        end
+      rescue Sequel::UniqueConstraintViolation => e
+       retry 
       end
-
     end
 
 
@@ -336,30 +366,6 @@ module Rodauth
       end
     end
 
-    private
-
-    def create_oauth_grant
-      create_params = {
-        oauth_grants_account_id_column => account_id,
-        oauth_grants_oauth_application_id_column => oauth_application[oauth_application_key],
-        oauth_grants_code_column => SecureRandom.uuid,
-        oauth_grants_expires_in_column => Time.now + oauth_grant_expires_in,
-        oauth_grants_scopes_column => scopes
-      }
-
-      ds = db[oauth_grants_table]
-
-      begin
-        if ds.supports_returning?(:insert)
-          ds.returning(authorize_code_column).insert(create_params)
-        else
-          id = ds.insert(create_params)
-          ds.where(oauth_grants_key => id).get(oauth_grants_code_column)
-        end
-      rescue Sequel::UniqueConstraintViolation => e
-       retry 
-      end
-    end
 
     def create_oauth_token
       case param(grant_type_param)
@@ -406,6 +412,14 @@ module Rodauth
       end
     end
 
+    def redirect_response_error(error_code)
+      redirect_url = URI.parse(request.referer || default_redirect)
+      query_params = ["error=#{error_code}"]
+      query_params << redirect_url.query if redirect_url.query
+      redirect_url.query = query_params.join("&")
+      redirect(redirect_url.to_s)
+    end
+
     def throw_json_response_error(status, error_code)
       response.status = status
       payload = { "error" => error_code }
@@ -420,19 +434,6 @@ module Rodauth
       redirect(require_authorization_redirect)
     end
 
-    def oauth_grant_valid_parameters_required
-      set_redirect_error_status(invalid_oauth_response_status)
-      set_redirect_error_flash(oauth_grant_valid_parameters_error_flash)
-      redirect(request.referer || default_redirect)
-    end
-
-    def require_oauth_application
-      oauth_grant_valid_parameters_required unless oauth_application
-    end
-
-    def require_oauth_grant_valid_parameters
-      oauth_grant_valid_parameters_required unless oauth_application && check_valid_scopes? && check_valid_redirect_uri?
-    end
 
     def check_valid_scopes?
       return false unless scopes
@@ -478,25 +479,12 @@ module Rodauth
       require_account
       
       r.get do
-        require_oauth_grant_valid_parameters
+        validate_oauth_grant_params
         authorize_view
       end
 
       r.post do
-        require_oauth_application
-
-        # check if grants are valid for the application
-        unless check_valid_scopes?
-          after_authorize_failure
-          throw_error_status(authorize_error_status, scopes_param, invalid_scope_message)
-        end
-
-        # check if there was a callback url, and verify it
-        # TODO: check again what to do here compliance-wise
-        unless check_valid_redirect_uri?
-          after_authorize_failure
-          throw_error_status(authorize_error_status, redirect_uri_param, invalid_redirect_uri_message)
-        end
+        validate_oauth_grant_params
 
         code = nil
         transaction do

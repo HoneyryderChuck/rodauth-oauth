@@ -36,21 +36,24 @@ class RodaOauthAuthorizeTest < Minitest::Test
     setup_application
     login
     visit "/oauth-authorize?client_id=bla"
-    assert_includes page.html, 'OAuth Authorization invalid parameters'
+    assert page.current_url.end_with?("/?error=invalid_request"),
+           "was redirected instead to #{page.current_url}"
   end
 
   def test_authorize_get_authorize_invalid_redirect_uri
     setup_application
     login
     visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&redirect_uri=bla"
-    assert_includes page.html, 'OAuth Authorization invalid parameters'
+    assert page.current_url.end_with?("/?error=invalid_request"),
+           "was redirected instead to #{page.current_url}"
   end
 
-  def test_authorize_get_authorize_invalid_grant
+  def test_authorize_get_authorize_invalid_scope
     setup_application
     login
     visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&redirect_uri=#{oauth_application[:redirect_uri]}&scopes=marvel"
-    assert_includes page.html, 'OAuth Authorization invalid parameters'
+    assert page.current_url.end_with?("/?error=invalid_scope"),
+           "was redirected instead to #{page.current_url}"
   end
 
   def test_authorize_post_authorize
