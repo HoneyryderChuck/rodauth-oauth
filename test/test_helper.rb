@@ -106,6 +106,20 @@ class Minitest::Test
     end
   end
 
+  def oauth_token(params = {})
+    @oauth_token ||= begin
+     id = DB[:oauth_tokens].insert({
+        oauth_application_id: oauth_application[:id],
+        oauth_grant_id: oauth_grant[:id],
+        token: "TOKEN",
+        refresh_token: "REFRESH_TOKEN",
+        expires_in: Time.now + 60 * 5,
+        scopes: oauth_grant[:scopes]
+      }.merge(params))
+      DB[:oauth_tokens].filter(id: id).first
+    end
+  end
+
   def account
     @account ||= DB[:accounts].first
   end

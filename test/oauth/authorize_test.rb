@@ -11,12 +11,6 @@ class RodaOauthAuthorizeTest < Minitest::Test
     assert page.html == "Unauthorized"
   end
 
-  def test_authorize_get_private_area_unauthorized
-    setup_application
-    visit "/private"
-    assert page.html == "Unauthorized"
-  end
-
   def test_authorize_get_authorize_not_logged_in_no_client_application
     setup_application
     visit "/oauth-authorize"

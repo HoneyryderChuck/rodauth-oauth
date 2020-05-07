@@ -48,7 +48,8 @@ module Rodauth
     auth_value_method :oauth_tokens_scopes_column, :scopes
     auth_value_method :oauth_tokens_oauth_application_id_column, :oauth_application_id
     auth_value_method :oauth_tokens_oauth_grant_id_column, :oauth_grant_id
-    auth_value_method :oauth_grants_revoked_at_column, :revoked_at
+    auth_value_method :oauth_tokens_expires_in_column, :expires_in
+    auth_value_method :oauth_tokens_revoked_at_column, :revoked_at
 
     # OAuth Grants    
     auth_value_method :oauth_grants_table, :oauth_grants
@@ -57,10 +58,11 @@ module Rodauth
     auth_value_method :oauth_grants_oauth_application_id_column, :oauth_application_id
     auth_value_method :oauth_grants_code_column, :code
     auth_value_method :oauth_grants_expires_in_column, :expires_in
+    auth_value_method :oauth_grants_revoked_at_column, :revoked_at
     auth_value_method :oauth_grants_scopes_column, :scopes
 
     auth_value_method :token_column, :token
-    auth_value_method :authorization_required_error_status, 403
+    auth_value_method :authorization_required_error_status, 401
     auth_value_method :invalid_oauth_response_status, 400
 
 
@@ -118,6 +120,15 @@ module Rodauth
       end
     end
 
+    auth_value_method :json_request_accept_regexp, /\bapplication\/(?:vnd\.api\+)?json\b/i
+    auth_methods(:json_request?)
+
+    def json_request?
+      return @json_request if defined?(@json_request)
+      @json_request = request.get_header("HTTP_ACCEPT") =~ json_request_accept_regexp
+    end
+
+
     attr_reader :oauth_application
 
     def initialize(scope)
@@ -166,7 +177,7 @@ module Rodauth
     end
 
     def authorization_token
-      value = request["HTTP_AUTHORIZATION"].to_s
+      value = request.get_header("HTTP_AUTHORIZATION").to_s
 
       scheme, token = value.split(" ", 2)
 
@@ -175,20 +186,23 @@ module Rodauth
       token
     end
 
-    def oauth_authorize(scope = oauth_application_default_scope)
-      grant = db[oauth_tokens_table].filter(oauth_tokens_token_column => authorization_token).first
+    def oauth_authorize(scopes = oauth_application_default_scope)
+      # check if there is a token 
+      oauth_token = db[oauth_tokens_table].where(oauth_tokens_token_column => authorization_token)
+        # check if token has not expired 
+        .where(Sequel[oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
+        # check if token has been revoked
+        .where(oauth_tokens_revoked_at_column => nil)
+        .first
 
-      # check if there is grant
-      # check if grant was expires_ind
-      # check if grant has been revoked
-      # check if permission for scoep exists
-      if !grant ||
-         Time.now.utc > (grant[:created_at] + expires_in.seconds) ||
-         (grant[:revoked_at] && Time.now.utc > grant[:revoked_at]) ||
-         !grants[:scopes].include?(scope)
-        authorization_required
-      end
+      authorization_required unless oauth_token
 
+      # check token scopes
+      scopes = scopes.split(",") if scopes.respond_to?(:split)
+
+      token_scopes = oauth_token[:scopes].split(",")
+
+      authorization_required unless scopes.any? { |scope| token_scopes.include?(scope) }
     end
 
     
@@ -426,14 +440,18 @@ module Rodauth
       response.status = status
       payload = { "error" => error_code }
       response['Content-Type'] ||= json_response_content_type
+      response['WWW-Authenticate'] = "Bearer" if status == 401
       response.write(request.send(:convert_to_json, payload))
       request.halt
     end
 
     def authorization_required
-      set_redirect_error_status(authorization_required_error_status)
-      set_redirect_error_flash(require_authorization_error_flash)
-      redirect(require_authorization_redirect)
+      if json_request?
+        throw_json_response_error(authorization_required_error_status, "invalid_client")
+      else
+        set_redirect_error_flash(require_authorization_error_flash)
+        redirect(require_authorization_redirect)
+      end
     end
 
 

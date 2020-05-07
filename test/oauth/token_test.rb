@@ -67,6 +67,54 @@ class RodaOauthTokenTest < Minitest::Test
     assert !json_body["expires_in"].nil?
   end
 
+
+  # Access
+  def test_token_access_private_unauthenticated
+    setup_application
+
+    header "Accept", "application/json"
+    get("/private")
+    assert last_response.status == 401
+  end
+
+  def test_token_access_private_revoked_token
+    setup_application
+
+    header "Accept", "application/json"
+    header "Authorization", "Bearer #{oauth_token(revoked_at: Time.now)[:token]}"
+    # valid token, and now we're getting somewhere
+    get("/private")
+  end
+
+  def test_token_access_private_expired_token
+    setup_application
+
+    header "Accept", "application/json"
+    header "Authorization", "Bearer #{oauth_token(expires_in: Time.now - 20)[:token]}"
+    # valid token, and now we're getting somewhere
+    get("/private")
+  end
+
+  def test_token_access_private_invalid_scope
+    setup_application
+
+    header "Accept", "application/json"
+    header "Authorization", "Bearer #{oauth_token(scopes: "smthelse")[:token]}"
+    # valid token, and now we're getting somewhere
+    get("/private")
+  end
+
+
+  def test_token_access_private_valid_token
+    setup_application
+
+    header "Accept", "application/json"
+    header "Authorization", "Bearer #{oauth_token[:token]}"
+    # valid token, and now we're getting somewhere
+    get("/private")
+    assert last_response.status == 200
+  end
+
   private
 
   def setup_application
