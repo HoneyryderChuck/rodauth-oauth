@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 Sequel.migration do
   up do
     # Only for testing of account_password_hash_column, not recommended for new

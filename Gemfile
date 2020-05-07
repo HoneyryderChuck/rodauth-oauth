@@ -15,10 +15,10 @@ gem "sequel"
 gem "sqlite3"
 gem "tilt"
 
-gem "rack-test"
 gem "capybara"
 gem "minitest", "~> 5.0"
 gem "minitest-hooks"
+gem "rack-test"
 
 gem "rubocop"
 

@@ -6,7 +6,7 @@ class RodaOauthAuthorizeTest < Minitest::Test
   include Capybara::DSL
 
   def test_authorize_get_public_area
-    setup_application 
+    setup_application
     visit "/"
     assert page.html == "Unauthorized"
   end
@@ -25,7 +25,7 @@ class RodaOauthAuthorizeTest < Minitest::Test
     assert page.current_path == "/",
            "was redirected instead to #{page.current_path}"
   end
-  
+
   def test_authorize_get_authorize_invalid_client_id
     setup_application
     login
@@ -45,7 +45,9 @@ class RodaOauthAuthorizeTest < Minitest::Test
   def test_authorize_get_authorize_invalid_scope
     setup_application
     login
-    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&redirect_uri=#{oauth_application[:redirect_uri]}&scopes=marvel"
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}& "\
+          "redirect_uri=#{oauth_application[:redirect_uri]}&" \
+          "scopes=marvel"
     assert page.current_url.end_with?("/?error=invalid_scope"),
            "was redirected instead to #{page.current_url}"
   end
@@ -79,7 +81,7 @@ class RodaOauthAuthorizeTest < Minitest::Test
       end
     end
     roda do |r|
-     r.rodauth
+      r.rodauth
 
       r.root do
         flash["error"] || flash["notice"] || "Unauthorized"

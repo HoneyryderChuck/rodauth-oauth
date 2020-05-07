@@ -23,20 +23,18 @@ DB.loggers << Logger.new($stderr)
 
 Sequel.extension :migration
 require "rodauth/migrations"
-Sequel::Migrator.run(DB, 'test/migrate')
-
+Sequel::Migrator.run(DB, "test/migrate")
 
 Base = Class.new(Roda)
 Base.opts[:check_dynamic_arity] = Base.opts[:check_arity] = :warn
 Base.plugin :flash
-Base.plugin :render, :views=>'test/views', :layout_opts=>{:path=>'test/views/layout.str'}
-Base.plugin(:not_found){raise "path #{request.path_info} not found"}
+Base.plugin :render, views: "test/views", layout_opts: { path: "test/views/layout.str" }
+Base.plugin(:not_found) { raise "path #{request.path_info} not found" }
 Base.plugin :common_logger
 
-require 'roda/session_middleware'
+require "roda/session_middleware"
 Base.opts[:sessions_convert_symbols] = true
-Base.use RodaSessionMiddleware, :secret=>SecureRandom.random_bytes(64), :key=>'rack.session'
-
+Base.use RodaSessionMiddleware, secret: SecureRandom.random_bytes(64), key: "rack.session"
 
 class Minitest::Test
   include Minitest::Hooks
@@ -51,13 +49,13 @@ class Minitest::Test
     @rodauth_block = block
   end
 
-   def rodauth_opts(type={})
+  def rodauth_opts(type = {})
     opts = type.is_a?(Hash) ? type : {}
     opts[:csrf] = :route_csrf
     opts
   end
 
-  def roda(type=nil, &block)
+  def roda(type = nil, &block)
     jwt_only = type == :jwt
 
     app = Class.new(Base)
@@ -79,7 +77,7 @@ class Minitest::Test
 
   def oauth_application
     @oauth_application ||= begin
-     id = DB[:oauth_applications].insert \
+      id = DB[:oauth_applications].insert \
         name: "Foo",
         description: "this is a foo",
         homepage_url: "https://foobar.com",
@@ -94,7 +92,7 @@ class Minitest::Test
 
   def oauth_grant(params = {})
     @oauth_grant ||= begin
-     id = DB[:oauth_grants].insert({
+      id = DB[:oauth_grants].insert({
         oauth_application_id: oauth_application[:id],
         account_id: account[:id],
         code: "CODE",
@@ -108,7 +106,7 @@ class Minitest::Test
 
   def oauth_token(params = {})
     @oauth_token ||= begin
-     id = DB[:oauth_tokens].insert({
+      id = DB[:oauth_tokens].insert({
         oauth_application_id: oauth_application[:id],
         oauth_grant_id: oauth_grant[:id],
         token: "TOKEN",
@@ -124,21 +122,21 @@ class Minitest::Test
     @account ||= DB[:accounts].first
   end
 
-  def login(opts={})
-    visit(opts[:path]||'/login') unless opts[:visit] == false
-    fill_in 'Login', :with=>opts.fetch(:login, 'foo@example.com')
-    fill_in 'Password', :with=>opts.fetch(:pass, '0123456789')
-    click_button 'Login'
+  def login(opts = {})
+    visit(opts[:path] || "/login") unless opts[:visit] == false
+    fill_in "Login", with: opts.fetch(:login, "foo@example.com")
+    fill_in "Password", with: opts.fetch(:pass, "0123456789")
+    click_button "Login"
   end
 
   def around
-    DB.transaction(:rollback=>:always, :savepoint=>true, :auto_savepoint=>true){super}
+    DB.transaction(rollback: :always, savepoint: true, auto_savepoint: true) { super }
   end
-  
+
   def around_all
-    DB.transaction(:rollback=>:always) do
-      hash = BCrypt::Password.create('0123456789', :cost=>BCrypt::Engine::MIN_COST)
-      DB[:accounts].insert(:email=>'foo@example.com', :status_id=>2, :ph=>hash)
+    DB.transaction(rollback: :always) do
+      hash = BCrypt::Password.create("0123456789", cost: BCrypt::Engine::MIN_COST)
+      DB[:accounts].insert(email: "foo@example.com", status_id: 2, ph: hash)
       super
     end
   end
