@@ -190,6 +190,42 @@ module Rodauth
       end
 
     end
+
+    
+
+    # /oauth-applications routes
+    def oauth_applications
+      request.on(oauth_applications_path) do
+        request.get "new" do
+          new_oauth_application_view
+        end
+        request.on(oauth_application_id) do |id|
+          request.get do
+            @oauth_application = db[oauth_applications_table].where(oauth_application_key => id).first
+            oauth_application_view
+          end
+        end
+        request.get do
+          oauth_applications_view
+        end
+        request.post do
+          catch_error do
+            validate_oauth_application_params
+
+            transaction do
+              before_create_oauth_application
+              id = create_oauth_application
+              after_create_oauth_application
+              set_notice_flash create_oauth_application_notice_flash
+              redirect oauth_application_redirect(id)
+            end
+          end
+          set_error_flash create_oauth_application_error_flash
+          new_oauth_application_view
+        end
+      end
+    end
+
     private
 
     # Oauth Application
@@ -271,40 +307,6 @@ module Rodauth
       end
 
       !raised && id
-    end
-
-
-    # /oauth-applications routes
-    def oauth_applications
-      request.on(oauth_applications_path) do
-        request.get "new" do
-          new_oauth_application_view
-        end
-        request.on(oauth_application_id) do |id|
-          request.get do
-            @oauth_application = db[oauth_applications_table].where(oauth_application_key => id).first
-            oauth_application_view
-          end
-        end
-        request.get do
-          oauth_applications_view
-        end
-        request.post do
-          catch_error do
-            validate_oauth_application_params
-
-            transaction do
-              before_create_oauth_application
-              id = create_oauth_application
-              after_create_oauth_application
-              set_notice_flash create_oauth_application_notice_flash
-              redirect oauth_application_redirect(id)
-            end
-          end
-          set_error_flash create_oauth_application_error_flash
-          new_oauth_application_view
-        end
-      end
     end
 
     # Authorize

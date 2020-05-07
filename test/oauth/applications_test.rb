@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthClientApplicationsTest < Minitest::Test
+class RodaOauthApplicationsTest < Minitest::Test
   include Capybara::DSL
 
   def test_oauth_applications_successful
