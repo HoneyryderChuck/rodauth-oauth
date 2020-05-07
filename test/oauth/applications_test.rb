@@ -3,8 +3,6 @@
 require "test_helper"
 
 class RodaOauthApplicationsTest < RodauthTest
-  include Capybara::DSL
-
   def test_oauth_applications_successful
     setup_application
     login

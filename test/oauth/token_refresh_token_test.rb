@@ -3,7 +3,6 @@
 require "test_helper"
 
 class RodaOauthTokenRefreshTokenTest < RodauthTest
-  include Capybara::DSL
   include Rack::Test::Methods
 
   def test_token_refresh_token_no_token

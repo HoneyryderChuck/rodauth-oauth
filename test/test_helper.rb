@@ -38,6 +38,7 @@ Base.use RodaSessionMiddleware, secret: SecureRandom.random_bytes(64), key: "rac
 
 class RodauthTest < Minitest::Test
   include Minitest::Hooks
+  include Capybara::DSL
 
   attr_reader :app
 
@@ -87,6 +88,10 @@ class RodauthTest < Minitest::Test
     roda do |r|
       r.rodauth
 
+      r.on "callback" do
+        "Callback"
+      end
+
       r.root do
         flash["error"] || flash["notice"] || "Unauthorized"
       end
@@ -109,8 +114,8 @@ class RodauthTest < Minitest::Test
         account_id: account[:id],
         name: "Foo",
         description: "this is a foo",
-        homepage_url: "https://foobar.com",
-        redirect_uri: "https://foobar.com/callback",
+        homepage_url: "https://example.com",
+        redirect_uri: "https://example.com/callback",
         client_id: "CLIENT_ID",
         client_secret: "CLIENT_SECRET",
         scopes: %w[user.read]

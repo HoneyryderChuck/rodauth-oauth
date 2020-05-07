@@ -3,8 +3,6 @@
 require "test_helper"
 
 class RodaOauthAuthorizeTest < RodauthTest
-  include Capybara::DSL
-
   def test_authorize_get_public_area
     setup_application
     visit "/"
@@ -63,11 +61,34 @@ class RodaOauthAuthorizeTest < RodauthTest
 
     # submit authorization request
     click_button "Authorize"
-    # TODO: it's redirecting from fallback to root, fix it
-    assert page.current_host == oauth_application[:homepage_url],
-           "was redirected instead to #{page.current_url}"
 
     assert DB[:oauth_grants].count == 1,
            "no grant has been created"
+
+    oauth_grant = DB[:oauth_grants].first
+
+    assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{oauth_grant[:code]}",
+           "was redirected instead to #{page.current_url}"
+  end
+
+  def test_authorize_post_authorize_with_state
+    setup_application
+    login
+
+    # show the authorization form
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&state=STATE"
+    assert page.current_path == "/oauth-authorize",
+           "was redirected instead to #{page.current_path}"
+
+    # submit authorization request
+    click_button "Authorize"
+
+    assert DB[:oauth_grants].count == 1,
+           "no grant has been created"
+
+    oauth_grant = DB[:oauth_grants].first
+
+    assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{oauth_grant[:code]}&state=STATE",
+           "was redirected instead to #{page.current_url}"
   end
 end

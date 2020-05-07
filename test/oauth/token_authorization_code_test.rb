@@ -3,7 +3,6 @@
 require "test_helper"
 
 class RodaOauthTokenAuthorizationCodeTest < RodauthTest
-  include Capybara::DSL
   include Rack::Test::Methods
 
   def test_token_authorization_code_unauthorized
