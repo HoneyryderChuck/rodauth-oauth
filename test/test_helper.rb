@@ -19,7 +19,7 @@ db_path = File.join(Dir.tmpdir, "roda-oauth.db")
 FileUtils.rm(db_path, force: true)
 
 DB = Sequel.sqlite(db_path)
-DB.loggers << Logger.new($stderr)
+DB.loggers << Logger.new($stderr) if ENV.key?("RODAUTH_DEBUG")
 
 Sequel.extension :migration
 require "rodauth/migrations"
@@ -30,7 +30,7 @@ Base.opts[:check_dynamic_arity] = Base.opts[:check_arity] = :warn
 Base.plugin :flash
 Base.plugin :render, views: "test/views", layout_opts: { path: "test/views/layout.str" }
 Base.plugin(:not_found) { raise "path #{request.path_info} not found" }
-Base.plugin :common_logger
+Base.plugin :common_logger if ENV.key?("RODAUTH_DEBUG")
 
 require "roda/session_middleware"
 Base.opts[:sessions_convert_symbols] = true
