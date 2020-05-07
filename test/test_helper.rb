@@ -36,7 +36,7 @@ require "roda/session_middleware"
 Base.opts[:sessions_convert_symbols] = true
 Base.use RodaSessionMiddleware, secret: SecureRandom.random_bytes(64), key: "rack.session"
 
-class Minitest::Test
+class RodauthTest < Minitest::Test
   include Minitest::Hooks
 
   attr_reader :app
@@ -75,6 +75,34 @@ class Minitest::Test
     self.app = app
   end
 
+  def setup_application
+    rodauth do
+      enable :oauth
+      oauth_application_default_scope "user.read"
+      oauth_application_scopes %w[user.read user.write]
+      password_match? do |_password|
+        true
+      end
+    end
+    roda do |r|
+      r.rodauth
+
+      r.root do
+        flash["error"] || flash["notice"] || "Unauthorized"
+      end
+
+      yield(rodauth) if block_given?
+
+      rodauth.oauth_authorize
+
+      r.on "private" do
+        r.get do
+          flash["error"] || flash["notice"] || "Authorized"
+        end
+      end
+    end
+  end
+
   def oauth_application
     @oauth_application ||= begin
       id = DB[:oauth_applications].insert \
@@ -84,7 +112,7 @@ class Minitest::Test
         redirect_uri: "https://foobar.com/callback",
         client_id: "CLIENT_ID",
         client_secret: "CLIENT_SECRET",
-        scopes: %w[profile.read]
+        scopes: %w[user.read]
 
       DB[:oauth_applications].filter(id: id).first
     end

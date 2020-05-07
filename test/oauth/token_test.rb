@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthTokenTest < Minitest::Test
+class RodaOauthTokenTest < RodauthTest
   include Capybara::DSL
   include Rack::Test::Methods
 
@@ -123,31 +123,5 @@ class RodaOauthTokenTest < Minitest::Test
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 200
-  end
-
-  private
-
-  def setup_application
-    rodauth do
-      enable :oauth
-      password_match? do |_password|
-        true
-      end
-    end
-    roda do |r|
-      r.rodauth
-
-      r.root do
-        flash["error"] || flash["notice"] || "Unauthorized"
-      end
-
-      rodauth.oauth_authorize
-
-      r.on "private" do
-        r.get do
-          flash["error"] || flash["notice"] || "Authorized"
-        end
-      end
-    end
   end
 end

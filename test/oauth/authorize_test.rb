@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthAuthorizeTest < Minitest::Test
+class RodaOauthAuthorizeTest < RodauthTest
   include Capybara::DSL
 
   def test_authorize_get_public_area
@@ -69,31 +69,5 @@ class RodaOauthAuthorizeTest < Minitest::Test
 
     assert DB[:oauth_grants].count == 1,
            "no grant has been created"
-  end
-
-  private
-
-  def setup_application
-    rodauth do
-      enable :oauth
-      password_match? do |_password|
-        true
-      end
-    end
-    roda do |r|
-      r.rodauth
-
-      r.root do
-        flash["error"] || flash["notice"] || "Unauthorized"
-      end
-
-      rodauth.oauth_authorize
-
-      r.on "private" do
-        r.get do
-          flash["error"] || flash["notice"] || "Authorized"
-        end
-      end
-    end
   end
 end

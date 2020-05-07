@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthApplicationsTest < Minitest::Test
+class RodaOauthApplicationsTest < RodauthTest
   include Capybara::DSL
 
   def test_oauth_applications_successful
@@ -50,29 +50,6 @@ class RodaOauthApplicationsTest < Minitest::Test
   private
 
   def setup_application
-    rodauth do
-      enable :oauth
-      oauth_application_default_scope "user.read"
-      oauth_application_scopes %w[user.read user.write]
-      password_match? do |_password|
-        true
-      end
-    end
-    roda do |r|
-      r.rodauth
-
-      r.root do
-        "Unauthorized"
-      end
-
-      rodauth.oauth_applications
-      rodauth.oauth_authorize
-
-      r.on "private" do
-        r.get do
-          "Authorized"
-        end
-      end
-    end
+    super(&:oauth_applications)
   end
 end
