@@ -7,6 +7,7 @@ class RodaOauthApplicationsTest < RodauthTest
 
   def test_oauth_applications_successful
     setup_application
+    login
     # List
     visit "/oauth-applications"
     assert_includes page.html, "No oauth applications yet!"
@@ -31,6 +32,8 @@ class RodaOauthApplicationsTest < RodauthTest
 
   def test_oauth_applications_invalid_fields
     setup_application
+    login
+
     visit "/oauth-applications/new"
     click_button "Register"
     # must fill fields

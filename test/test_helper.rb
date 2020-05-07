@@ -77,7 +77,7 @@ class RodauthTest < Minitest::Test
 
   def setup_application
     rodauth do
-      enable :oauth
+      enable :http_basic_auth, :oauth
       oauth_application_default_scope "user.read"
       oauth_application_scopes %w[user.read user.write]
       password_match? do |_password|
@@ -106,6 +106,7 @@ class RodauthTest < Minitest::Test
   def oauth_application
     @oauth_application ||= begin
       id = DB[:oauth_applications].insert \
+        account_id: account[:id],
         name: "Foo",
         description: "this is a foo",
         homepage_url: "https://foobar.com",
@@ -155,6 +156,10 @@ class RodauthTest < Minitest::Test
     fill_in "Login", with: opts.fetch(:login, "foo@example.com")
     fill_in "Password", with: opts.fetch(:pass, "0123456789")
     click_button "Login"
+  end
+
+  def authorization_header(opts = {})
+    ["#{opts.delete(:username) || 'foo@example.com'}:#{opts.delete(:password) || '0123456789'}"].pack("m*")
   end
 
   def around

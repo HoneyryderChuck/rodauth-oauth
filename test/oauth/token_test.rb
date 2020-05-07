@@ -6,8 +6,20 @@ class RodaOauthTokenTest < RodauthTest
   include Capybara::DSL
   include Rack::Test::Methods
 
+  def test_token_unauthorized
+    setup_application
+
+    post("/oauth-token")
+
+    assert last_response.status == 401
+    json_body = JSON.parse(last_response.body)
+    assert json_body["error"] == "invalid_client"
+  end
+
   def test_token_no_params
     setup_application
+    login
+
     post("/oauth-token")
 
     assert last_response.status == 400
@@ -17,6 +29,7 @@ class RodaOauthTokenTest < RodauthTest
 
   def test_token_no_grant
     setup_application
+    login
     post("/oauth-token", client_id: oauth_application[:client_id], grant_type: "authorization_code", code: "CODE")
 
     assert last_response.status == 400
@@ -26,6 +39,7 @@ class RodaOauthTokenTest < RodauthTest
 
   def test_token_expired_grant
     setup_application
+    login
     grant = oauth_grant(expires_in: Time.now - 60)
 
     post("/oauth-token",
@@ -41,6 +55,7 @@ class RodaOauthTokenTest < RodauthTest
 
   def test_token_revoked_grant
     setup_application
+    login
     grant = oauth_grant(revoked_at: Time.now)
 
     post("/oauth-token",
@@ -56,6 +71,7 @@ class RodaOauthTokenTest < RodauthTest
 
   def test_token_successful
     setup_application
+    login
 
     post("/oauth-token",
          client_id: oauth_application[:client_id],
@@ -82,6 +98,7 @@ class RodaOauthTokenTest < RodauthTest
   # Access
   def test_token_access_private_unauthenticated
     setup_application
+    login
 
     header "Accept", "application/json"
     get("/private")
@@ -90,6 +107,7 @@ class RodaOauthTokenTest < RodauthTest
 
   def test_token_access_private_revoked_token
     setup_application
+    login
 
     header "Accept", "application/json"
     header "Authorization", "Bearer #{oauth_token(revoked_at: Time.now)[:token]}"
@@ -99,6 +117,7 @@ class RodaOauthTokenTest < RodauthTest
 
   def test_token_access_private_expired_token
     setup_application
+    login
 
     header "Accept", "application/json"
     header "Authorization", "Bearer #{oauth_token(expires_in: Time.now - 20)[:token]}"
@@ -108,6 +127,7 @@ class RodaOauthTokenTest < RodauthTest
 
   def test_token_access_private_invalid_scope
     setup_application
+    login
 
     header "Accept", "application/json"
     header "Authorization", "Bearer #{oauth_token(scopes: 'smthelse')[:token]}"
@@ -117,11 +137,18 @@ class RodaOauthTokenTest < RodauthTest
 
   def test_token_access_private_valid_token
     setup_application
+    login
 
     header "Accept", "application/json"
     header "Authorization", "Bearer #{oauth_token[:token]}"
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 200
+  end
+
+  private
+
+  def login
+    header "Authorization", "Basic #{authorization_header}"
   end
 end

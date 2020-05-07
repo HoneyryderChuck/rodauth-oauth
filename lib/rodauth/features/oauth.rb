@@ -79,6 +79,7 @@ module Rodauth
     auth_value_method :oauth_applications_id_pattern, Integer
 
     %i[
+      account_id
       name description scopes
       client_id client_secret
       homepage_url redirect_uri
@@ -211,6 +212,8 @@ module Rodauth
     # /oauth-applications routes
     def oauth_applications
       request.on(oauth_applications_path) do
+        require_account
+        
         request.get "new" do
           new_oauth_application_view
         end
@@ -242,6 +245,10 @@ module Rodauth
     end
 
     private
+
+    def require_oauth_application_account
+      throw_json_response_error(authorization_required_error_status, "invalid_client") unless logged_in?
+    end
 
     # Oauth Application
 
@@ -277,6 +284,7 @@ module Rodauth
 
     def create_oauth_application
       create_params = {
+        oauth_applications_account_id_column => account_id,
         oauth_applications_name_column => oauth_application_params[oauth_application_name_key],
         oauth_applications_description_column => oauth_application_params[oauth_application_description_key],
         oauth_applications_scopes_column => oauth_application_params[oauth_application_scopes_key],
@@ -391,7 +399,7 @@ module Rodauth
         oauth_grant = db[oauth_grants_table].where(
           oauth_grants_code_column => param(code_param),
           oauth_grants_oauth_application_id_column => db[oauth_applications_table].where(
-              oauth_applications_client_id_column => param(client_id_param)
+              oauth_applications_account_id_column => account_id
             ).select(oauth_applications_key),
         ).where(Sequel[oauth_grants_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
          .where(oauth_grants_revoked_at_column => nil)
@@ -467,6 +475,7 @@ module Rodauth
     end
    
     route(:oauth_token) do |r|
+      require_oauth_application_account
 
       # access-token
       request.post do
