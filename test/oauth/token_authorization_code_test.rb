@@ -2,11 +2,11 @@
 
 require "test_helper"
 
-class RodaOauthTokenTest < RodauthTest
+class RodaOauthTokenAuthorizationCodeTest < RodauthTest
   include Capybara::DSL
   include Rack::Test::Methods
 
-  def test_token_unauthorized
+  def test_token_authorization_code_unauthorized
     setup_application
 
     post("/oauth-token")
@@ -16,7 +16,7 @@ class RodaOauthTokenTest < RodauthTest
     assert json_body["error"] == "invalid_client"
   end
 
-  def test_token_no_params
+  def test_token_authorization_code_no_params
     setup_application
     login
 
@@ -27,17 +27,20 @@ class RodaOauthTokenTest < RodauthTest
     assert json_body["error"] == "invalid_request"
   end
 
-  def test_token_no_grant
+  def test_token_authorization_code_no_grant
     setup_application
     login
-    post("/oauth-token", client_id: oauth_application[:client_id], grant_type: "authorization_code", code: "CODE")
+    post("/oauth-token",
+         client_id: oauth_application[:client_id],
+         grant_type: "authorization_code",
+         code: "CODE")
 
     assert last_response.status == 400
     json_body = JSON.parse(last_response.body)
     assert json_body["error"] == "invalid_grant"
   end
 
-  def test_token_expired_grant
+  def test_token_authorization_code_expired_grant
     setup_application
     login
     grant = oauth_grant(expires_in: Time.now - 60)
@@ -53,7 +56,7 @@ class RodaOauthTokenTest < RodauthTest
     assert json_body["error"] == "invalid_grant"
   end
 
-  def test_token_revoked_grant
+  def test_token_authorization_code_revoked_grant
     setup_application
     login
     grant = oauth_grant(revoked_at: Time.now)
@@ -69,7 +72,7 @@ class RodaOauthTokenTest < RodauthTest
     assert json_body["error"] == "invalid_grant"
   end
 
-  def test_token_successful
+  def test_token_authorization_code_successful
     setup_application
     login
 
