@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+<title>Roda Oauth Demo - <%= @page_title %></title>
+<style>
+.error {border: 1px #a00 solid;}
+span.error_message {
+  color: #a00;
+  background-color: #ffffe0;
+  border-color: 1px solid #eeeed0;
+  padding: 5px 2px;
+  display: inline-block; 
+}
+span.error_message:before {
+    content: "(!) "
+}
+input.rodauth_hidden {
+  display: none;
+}
+</style>
+</head>
+
+<body>
+
+<nav class="navbar navbar-default" role="navigation">
+  <div class="container">
+    <a class="navbar-brand" href="/">Roda Oauth Demo</a>
+
+      <% if rodauth.logged_in? %>
+
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="oauth-applications">Oauth Applications</a>
+          </li>
+        </ul>
+        <form action="/logout" class="navbar-form pull-right" method="post">
+          <%== csrf_tag("/logout") %>
+          <input class="btn btn-primary form-control auth-button" type="submit" value="Logout" />
+        </form>
+      <% end %>
+    </div>
+  </div>
+</nav>
+
+<div class="container">
+  <% if flash['notice'] %>
+    <div class="alert alert-success"><p><%= flash['notice'] %></p></div>
+  <% end %>
+  <% if flash['error'] %>
+    <div class="alert alert-danger"><p><%= flash['error'] %></p></div>
+  <% end %>
+  <h1><%= @page_title %></h1>
+
+  <%== yield %>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,25 @@
+<% if rodauth.logged_in? %>
+  <h1>You are logged in as <%= DB[:accounts].where(:id=>rodauth.session_value).get(:email) %></h1>
+
+  <ul>
+    <li><a href="/remember">Change Remember Settings</a></li>
+    <% if rodauth.logged_in_via_remember_key? %>
+      <li><a href="/confirm-password">Confirm Password</a></li>
+    <% end %>
+  </ul>
+
+  <p>Now you can <a href="/oauth-applications">create oauth applications</a>
+
+  <% if @application %>    
+    <p>Or, you can <a href="/oauth-authorize?client_id=<%= @application[:client_id] %>&state=STATE">auth with yourself</a></p>
+  <% end %>
+<% else %>
+  <h1>Overview</h1>
+
+  <p>This is the demo site for <a href="https://gitlab.com/honeyryderchuck/roda-oauth">Roda Oauth</a>.  Roda Oauth extends Rodauth to support OAuth 2.0 authorization protocol, while adhering to the same principles of the parent library. </p>
+
+
+  <p>It's easiest to get started by going to the <a href="/login">login page</a>.</p>
+
+  <p>This demo site is part of the Rodauth repository, so if you want to know how it works, you can <a href="https://gitlab.com/honeyryderchuck/roda-oauth/tree/master/examples/roda">review the source</a>.</p>
+<% end %>

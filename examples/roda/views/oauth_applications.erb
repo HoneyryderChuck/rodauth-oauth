@@ -1,0 +1,28 @@
+<% apps_count = DB[:oauth_applications].count %>
+<div class="btn-group" role="group" aria-label="Buttons">
+  <a class="btn btn-secondary" href="/oauth-applications/new">New Oauth Application</a>
+</div>
+<% if apps_count.zero? %>
+  <p>No oauth applications yet!</p>
+<% else %>
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col">Client ID (<%= apps_count %>)</th>
+        <th scope="col">Name</th>
+        <th scope="col">Homepage</th>
+        <th scope="col"></th>
+      </tr>
+    </thead>
+    <tbody>
+      <% DB[:oauth_applications].each do |application| %>
+        <tr>
+          <td><%= application[:client_id] %></td>
+          <td><%= application[:name] %></td>
+          <td><%= application[:homepage_url] %></td>
+          <td><a href="/oauth-applications/<%= application[:id ] %>">Show</a></td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+<% end %>
