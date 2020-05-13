@@ -22,7 +22,7 @@ module Rodauth
     error_flash "There was an error registering your oauth application", "create_oauth_application"
     notice_flash "Your oauth application has been registered", "create_oauth_application"
 
-    view "authorize", "Authorize", "authorize"
+    view "oauth_authorize", "Authorize", "authorize"
     view "oauth_applications", "Oauth Applications", "oauth_applications"
     view "oauth_application", "Oauth Application", "oauth_application"
     view "new_oauth_application", "New Oauth Application", "new_oauth_application"
