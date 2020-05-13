@@ -11,6 +11,9 @@
 AllCops:
   TargetRubyVersion: 2.4
 
+Metrics/ModuleLength:
+  Enabled: false
+
 Layout/SpaceAroundMethodCallOperator:
   Enabled: true
 
@@ -27,7 +30,7 @@ Style/Documentation:
   Enabled: false
 
 Metrics/BlockLength:
-  Max: 100
+  Enabled: false
 
 Metrics/MethodLength:
   Max: 100

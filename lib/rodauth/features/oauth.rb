@@ -124,6 +124,11 @@ module Rodauth
     auth_value_method :json_request_accept_regexp, %r{\bapplication/(?:vnd\.api\+)?json\b}i
     auth_methods(:json_request?)
 
+    # Overrides logged_in?, so that a valid authorization token also authnenticates a request
+    def logged_in?
+      super || authorization_token
+    end
+
     def json_request?
       return @json_request if defined?(@json_request)
 
@@ -180,21 +185,32 @@ module Rodauth
       end
     end
 
-    def oauth_authorize(scopes = oauth_application_default_scope)
-      # check if there is a token
-      # check if token has not expired
-      # check if token has been revoked
-      oauth_token = db[oauth_tokens_table].where(oauth_tokens_token_column => authorization_token)
-                                          .where(Sequel[oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
-                                          .where(oauth_tokens_revoked_at_column => nil)
-                                          .first
+    def authorization_token
+      return @authorization_token if defined?(@authorization_token)
 
-      authorization_required unless oauth_token
+      @authorization_token = begin
+        value = request.get_header("HTTP_AUTHORIZATION").to_s
 
-      # check token scopes
-      scopes = scopes.split(",") if scopes.respond_to?(:split)
+        scheme, token = value.split(" ", 2)
 
-      token_scopes = oauth_token[:scopes].split(",")
+        return unless scheme == "Bearer"
+
+        # check if there is a token
+        # check if token has not expired
+        # check if token has been revoked
+        db[oauth_tokens_table].where(oauth_tokens_token_column => token)
+                              .where(Sequel[oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
+                              .where(oauth_tokens_revoked_at_column => nil)
+                              .first
+      end
+    end
+
+    def require_oauth_authorization(*scopes)
+      authorization_required unless authorization_token
+
+      scopes << oauth_application_default_scope if scopes.empty?
+
+      token_scopes = authorization_token[:scopes].split(",")
 
       authorization_required unless scopes.any? { |scope| token_scopes.include?(scope) }
     end
@@ -235,16 +251,6 @@ module Rodauth
     end
 
     private
-
-    def authorization_token
-      value = request.get_header("HTTP_AUTHORIZATION").to_s
-
-      scheme, token = value.split(" ", 2)
-
-      authorization_required unless scheme == "Bearer"
-
-      token
-    end
 
     def require_oauth_application_account
       throw_json_response_error(authorization_required_error_status, "invalid_client") unless logged_in?

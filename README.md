@@ -1,8 +1,7 @@
 # Roda::Oauth
 
-Welcome to your new gem! In this directory, you'll find the files you need to be able to package up your Ruby library into a gem. Put your Ruby code in the file `lib/roda/oauth`. To experiment with that code, run `bin/console` for an interactive prompt.
 
-TODO: Delete this and the text above, and describe your gem
+This is an extension to the `rodauth` gem which adds support for the OAuth 2.0 protocol.
 
 ## Installation
 
@@ -22,7 +21,48 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+This tutorial assumes you already read the documentation and know how to set up `rodauth`. After that, it's as simple as:
+
+```ruby
+plugin :rodauth do
+  # enable it in the plugin
+  enable :login, :oauth
+  oauth_application_default_scope %w[profile.read]
+  oauth_application_scopes %w[profile.read profile.write]
+end
+
+# then, inside roda
+
+route do |r|
+  r.rodauth
+
+  # public routes go here
+  # ...
+  # here you do your thing
+  # authenticated section is here
+
+  rodauth.require_authentication
+
+  # oauth will only kick in on ce you call #require_oauth_authorization
+
+  r.is "users" do
+    rodauth.require_oauth_authorization # defaults to profile.read
+    r.post do
+      rodauth.require_oauth_authorization("profile.write")
+    end
+    # ...
+  end
+
+  r.is "books" do
+    rodauth.require_oauth_authorization("books.read", "books.research")
+    r.get do
+      # ...
+    end
+  end
+
+end
+
+```
 
 ## Development
 

@@ -96,9 +96,9 @@ class RodauthTest < Minitest::Test
         flash["error"] || flash["notice"] || "Unauthorized"
       end
 
+      rodauth.require_authentication
       yield(rodauth) if block_given?
-
-      rodauth.oauth_authorize
+      rodauth.require_oauth_authorization
 
       r.on "private" do
         r.get do
