@@ -344,8 +344,9 @@ module Rodauth
       create_params = {
         oauth_grants_account_id_column => account_id,
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_key],
+        oauth_grants_redirect_uri_column => redirect_uri,
         oauth_grants_code_column => SecureRandom.uuid,
-        oauth_grants_expires_in_column => Time.now.utc + oauth_grant_expires_in,
+        oauth_grants_expires_in_column => Time.now + oauth_grant_expires_in,
         oauth_grants_scopes_column => scopes
       }
 
@@ -392,7 +393,7 @@ module Rodauth
           oauth_grants_redirect_uri_column => param(redirect_uri_param),
           oauth_grants_oauth_application_id_column => db[oauth_applications_table].where(
             oauth_applications_client_id_column => param(client_id_param),
-            oauth_applications_account_id_column => account_id
+            oauth_applications_account_id_column => oauth_applications_account_id_column
           ).select(oauth_applications_key)
         ).where(Sequel[oauth_grants_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
                                             .where(oauth_grants_revoked_at_column => nil)
@@ -404,7 +405,7 @@ module Rodauth
           oauth_tokens_oauth_application_id_column => oauth_grant[oauth_grants_oauth_application_id_column],
           oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_key],
           oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column],
-          oauth_grants_expires_in_column => Time.now.utc + oauth_token_expires_in,
+          oauth_grants_expires_in_column => Time.now + oauth_token_expires_in,
           oauth_tokens_refresh_token_column => SecureRandom.uuid,
           oauth_tokens_token_column => SecureRandom.uuid
         }
@@ -440,7 +441,7 @@ module Rodauth
 
         update_params = {
           oauth_tokens_oauth_application_id_column => oauth_token[oauth_grants_oauth_application_id_column],
-          oauth_tokens_expires_in_column => Time.now.utc + oauth_token_expires_in,
+          oauth_tokens_expires_in_column => Time.now + oauth_token_expires_in,
           oauth_tokens_token_column => SecureRandom.uuid
         }
 
