@@ -7,7 +7,7 @@
   <% else %>
     <ul>
       <% DB[:oauth_applications].each do |application| %>
-        <li><a href="/oauth/applications/<%= application[:id ] %>"><%= application[:name] %></a></li>
+        <li><a href="/oauth-applications/<%= application[:id ] %>"><%= application[:name] %></a></li>
       <% end %>
     </ul>
   <% end %>

@@ -497,11 +497,11 @@ module Rodauth
       redirect_uri == oauth_application[oauth_applications_redirect_uri_column]
     end
 
-    route(:oauth_token) do |_r|
+    route(:oauth_token) do |r|
       require_oauth_application_account
 
       # access-token
-      request.post do
+      r.post do
         catch_error do
           validate_oauth_token_params
 
