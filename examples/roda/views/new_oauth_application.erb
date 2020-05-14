@@ -1,0 +1,35 @@
+<form action= "/oauth-applications" method="post" class="form-horizontal" role="form" id="oauth-application-form">
+  <h2>Register Oauth Application</h2>
+  <%== csrf_tag("/oauth-applications") if respond_to?(:csrf_tag) %>
+  <input type="hidden" name="lp" value="<%= rodauth.param('lp') %>"/>
+  <%= rodauth.field_error('scope') %>
+  <div class="form-group">
+    <label for="name">Name</label>
+    <input type="text" class="form-control<%= ' error' if rodauth.field_error('name')%>" name="name" id="name" value="<%= rodauth.param('name') %>"/>
+    <%= rodauth.field_error('name') %>
+  </div>
+  <div class="form-group">
+    <label for="description">Description</label>
+    <input type="text" class="form-control<%= ' error' if rodauth.field_error('description') %>" name="description" id="description" value="<%= rodauth.param('description') %>" />
+    <%= rodauth.field_error('description') %>
+  </div>
+  <div class="form-group">
+    <label for="homepage_url">Homepage URL</label>
+    <input type="text" class="form-control<%= ' error' if rodauth.field_error('homepage_url') %>" name="homepage_url" id="homepage-url" value="<%= rodauth.param('homepage_url') %>" />
+    <%= rodauth.field_error('homepage_url') %>
+  </div>
+  <div class="form-group">
+    <label for="redirect_uri">Authorization callback URL</label>
+    <input type="text" class="form-control<%= ' error' if rodauth.field_error('redirect_uri') %>" name="redirect_uri" id="callback-url" value="<%= rodauth.param('redirect_url') %>" />
+    <%= rodauth.field_error('redirect_uri') %>
+  </div>
+  <% rodauth.oauth_application_scopes.each do |scope| %>
+		<div class="form-check">
+			<input id="<%= scope %>" class="form-check-input" type="checkbox" name="scopes[]" value="<%= scope %>">
+			<label class="form-check-label" for="<%= scope %>"><%= scope %></label>
+		</div>
+  <% end %>
+  <div class="form-group">
+   <input type="submit" class="btn btn-primary" value="Register"/>
+ </div>
+</form>

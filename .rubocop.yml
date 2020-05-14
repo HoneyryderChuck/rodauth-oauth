@@ -10,6 +10,13 @@
 # See https://github.com/rubocop-hq/rubocop/blob/master/manual/configuration.md
 AllCops:
   TargetRubyVersion: 2.4
+  Include:
+    - lib/**/*.rb
+    - test/**/*.rb
+    - Rakefile
+    - Gemfile
+    - roda-oauth.gemspec
+    - examples/**/*.rb
 
 Metrics/ModuleLength:
   Enabled: false
