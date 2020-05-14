@@ -114,5 +114,7 @@ module OauthDemo
       rodauth.require_authentication
       rodauth.oauth_applications
     end
+
+    freeze
   end
 end
