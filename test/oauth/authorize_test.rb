@@ -55,7 +55,7 @@ class RodaOauthAuthorizeTest < RodauthTest
     login
 
     # show the authorization form
-    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}"
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scopes=user.read+user.write"
     assert page.current_path == "/oauth-authorize",
            "was redirected instead to #{page.current_path}"
 

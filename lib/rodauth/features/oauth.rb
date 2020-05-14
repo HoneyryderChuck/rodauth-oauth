@@ -157,9 +157,9 @@ module Rodauth
     def scopes
       scopes = param(scopes_param)
 
-      return oauth_application_default_scope unless scopes && !scopes.empty?
+      return [oauth_application_default_scope] unless scopes && !scopes.empty?
 
-      scopes
+      scopes.split(" ")
     end
 
     def client_id
@@ -359,7 +359,7 @@ module Rodauth
         oauth_grants_redirect_uri_column => redirect_uri,
         oauth_grants_code_column => oauth_unique_id_generator,
         oauth_grants_expires_in_column => Time.now + oauth_grant_expires_in,
-        oauth_grants_scopes_column => scopes
+        oauth_grants_scopes_column => scopes.join(",")
       }
 
       ds = db[oauth_grants_table]
@@ -503,7 +503,7 @@ module Rodauth
     def check_valid_scopes?
       return false unless scopes
 
-      (scopes.split(",") - oauth_application[oauth_applications_scopes_column].split(",")).empty?
+      (scopes - oauth_application[oauth_applications_scopes_column].split(",")).empty?
     end
 
     def check_valid_redirect_uri?

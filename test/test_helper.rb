@@ -76,11 +76,13 @@ class RodauthTest < Minitest::Test
     self.app = app
   end
 
+  TEST_SCOPES = %w[user.read user.write].freeze
+
   def setup_application
     rodauth do
       enable :http_basic_auth, :oauth
-      oauth_application_default_scope "user.read"
-      oauth_application_scopes %w[user.read user.write]
+      oauth_application_default_scope TEST_SCOPES.first
+      oauth_application_scopes TEST_SCOPES
       password_match? do |_password|
         true
       end
@@ -118,7 +120,7 @@ class RodauthTest < Minitest::Test
         redirect_uri: "https://example.com/callback",
         client_id: "CLIENT_ID",
         client_secret: "CLIENT_SECRET",
-        scopes: %w[user.read]
+        scopes: TEST_SCOPES.join(",")
 
       DB[:oauth_applications].filter(id: id).first
     end
