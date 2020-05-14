@@ -102,6 +102,7 @@ module Rodauth
     auth_value_method :null_error_message, "is not filled"
 
     auth_value_methods(
+      :oauth_unique_id_generator,
       :state,
       :oauth_application,
       :redirect_uri,
@@ -252,6 +253,10 @@ module Rodauth
 
     private
 
+    def oauth_unique_id_generator
+      SecureRandom.uuid
+    end
+
     def require_oauth_application_account
       throw_json_response_error(authorization_required_error_status, "invalid_client") unless logged_in?
     end
@@ -296,8 +301,8 @@ module Rodauth
 
       # set client ID/secret pairs
       create_params.merge! \
-        oauth_applications_client_id_column => SecureRandom.uuid,
-        oauth_applications_client_secret_column => SecureRandom.uuid
+        oauth_applications_client_id_column => oauth_unique_id_generator,
+        oauth_applications_client_secret_column => oauth_unique_id_generator
 
       create_params[oauth_applications_scopes_column] = if create_params[oauth_applications_scopes_column]
                                                           create_params[oauth_applications_scopes_column].join(",")
@@ -345,7 +350,7 @@ module Rodauth
         oauth_grants_account_id_column => account_id,
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_key],
         oauth_grants_redirect_uri_column => redirect_uri,
-        oauth_grants_code_column => SecureRandom.uuid,
+        oauth_grants_code_column => oauth_unique_id_generator,
         oauth_grants_expires_in_column => Time.now + oauth_grant_expires_in,
         oauth_grants_scopes_column => scopes
       }
@@ -406,8 +411,8 @@ module Rodauth
           oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_key],
           oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column],
           oauth_grants_expires_in_column => Time.now + oauth_token_expires_in,
-          oauth_tokens_refresh_token_column => SecureRandom.uuid,
-          oauth_tokens_token_column => SecureRandom.uuid
+          oauth_tokens_refresh_token_column => oauth_unique_id_generator,
+          oauth_tokens_token_column => oauth_unique_id_generator
         }
 
         # revoke oauth grant
@@ -442,7 +447,7 @@ module Rodauth
         update_params = {
           oauth_tokens_oauth_application_id_column => oauth_token[oauth_grants_oauth_application_id_column],
           oauth_tokens_expires_in_column => Time.now + oauth_token_expires_in,
-          oauth_tokens_token_column => SecureRandom.uuid
+          oauth_tokens_token_column => oauth_unique_id_generator
         }
 
         ds = db[oauth_tokens_table].where(oauth_tokens_key => oauth_token[oauth_tokens_key])
