@@ -40,7 +40,10 @@ module Rodauth
     end
 
     # Application
-    %w[name description scopes client_id client_secret homepage_url redirect_uri].each do |param|
+    APPLICATION_REQUIRED_PARAMS = %w[name description scopes homepage_url redirect_uri].freeze
+    auth_value_method :oauth_application_required_params, APPLICATION_REQUIRED_PARAMS
+
+    (APPLICATION_REQUIRED_PARAMS + %w[client_id client_secret]).each do |param|
       auth_value_method :"oauth_application_#{param}_param", param
     end
 
@@ -265,10 +268,13 @@ module Rodauth
     # Oauth Application
 
     def oauth_application_params
-      @oauth_application_params ||= begin
-        columns = db[oauth_applications_table].columns
-        params = request.params.select { |k, value| columns.include?(k.to_sym) && !(value.nil? || value.empty?) }
-        params
+      @oauth_application_params ||= oauth_application_required_params.each_with_object({}) do |param, params|
+        value = request.params[__send__(:"oauth_application_#{param}_param")]
+        if value && !value.empty?
+          params[param] = value
+        else
+          set_field_error(param, null_error_message)
+        end
       end
     end
 
