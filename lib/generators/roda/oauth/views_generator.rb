@@ -10,8 +10,9 @@ module Rodauth
           source_root "#{__dir__}/templates"
           namespace "roda:oauth:views"
 
+          DEFAULT = %w[oauth_authorize]
           VIEWS = {
-            oauth_authorize: %w[oauth_authorize],
+            oauth_authorize: DEFAULT,
             oauth_applications: %w[oauth_applications oauth_application new_oauth_application]
           }
 
@@ -25,7 +26,7 @@ module Rodauth
 
           class_option :features, type: :array,
             desc: "Roda OAuth features to generate views for (oauth_applications etc.)",
-            default: %w[oauth_authorize oauth_applications]
+            default: DEFAULT
 
           class_option :all, aliases: "-a", type: :boolean,
             desc: "Generates views for all Roda OAuth features",
@@ -36,7 +37,7 @@ module Rodauth
             default: "rodauth"
 
           def create_views
-            features = options[:all] ? VIEWS.keys : options[:features].map(&:to_sym)
+            features = options[:all] ? VIEWS.keys : (DEFAULT+options[:features]).map(&:to_sym)
 
             views = features.inject([]) do |list, feature|
               list |= VIEWS[feature] || []

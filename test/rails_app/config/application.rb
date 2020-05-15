@@ -6,7 +6,7 @@ require "action_mailer/railtie"
 require "active_job/railtie"
 require "rails/test_unit/railtie"
 
-require "rodauth-rails"
+require "rodauth/rails"
 
 module RailsApp
   class Application < Rails::Application
