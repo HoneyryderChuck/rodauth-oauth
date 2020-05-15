@@ -4,6 +4,12 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 require "simplecov" if ENV.key?("CI")
 
+ENV["RAILS_ENV"] = "test"
+
+# for rails integration tests
+require_relative "rails_app/config/environment"
+require "rails/test_help"
+
 require "fileutils"
 require "logger"
 require "securerandom"

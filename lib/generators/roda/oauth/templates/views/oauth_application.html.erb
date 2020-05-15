@@ -1,0 +1,18 @@
+<div>
+  <h2><%= rodauth.oauth_application[:name] %></h2>
+
+  <dl>
+    <dt>Description: </dt>
+    <dd><%= rodauth.oauth_application[:description] %></dd>
+    <dt>Homepage URL: </dt>
+    <dd><%= rodauth.oauth_application[:homepage_url] %></dd>
+    <dt>Client ID: </dt>
+    <dd><%= rodauth.oauth_application[:client_id] %></dd>
+    <dt>Client Secret: </dt>
+    <dd><%= rodauth.oauth_application[:client_secret] %></dd>
+    <dt>Callback URL: </dt>
+    <dd><%= rodauth.oauth_application[:redirect_uri] %></dd>
+    <dt>Scopes: </dt>
+    <dd><%= rodauth.oauth_application[:scopes] %></dd>
+  </dl>
+</div>

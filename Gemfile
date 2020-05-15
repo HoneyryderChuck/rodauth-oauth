@@ -9,6 +9,8 @@ gem "rake", "~> 12.0"
 
 gem "bcrypt"
 gem "rack_csrf"
+gem "rodauth-rails"
+gem "rails", ">= 4.2"
 gem "roda"
 gem "rodauth"
 gem "sequel"
