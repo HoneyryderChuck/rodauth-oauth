@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthTokenAuthorizationCodeTest < RodauthTest
+class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
   include Rack::Test::Methods
 
   def test_token_authorization_code_unauthorized

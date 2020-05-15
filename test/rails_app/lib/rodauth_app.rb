@@ -30,6 +30,12 @@ class RodauthApp < Rodauth::Rails::App
     logout_redirect "/"
     verify_account_redirect { login_redirect }
     reset_password_redirect { login_path }
+
+    # OAuth
+
+    enable :oauth
+    oauth_application_default_scope TEST_SCOPES.first
+    oauth_application_scopes TEST_SCOPES
   end
 
   configure(:admin) do
@@ -49,8 +55,4 @@ class RodauthApp < Rodauth::Rails::App
       rodauth.require_authentication
     end
   end
-
-  # OAuth
-
-  enable :oauth
 end

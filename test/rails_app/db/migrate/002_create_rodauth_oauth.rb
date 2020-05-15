@@ -1,7 +1,16 @@
-class CreateRodauthOAuth < ActiveRecord::Migration<%= migration_version %>
+version = eval("#{::ActiveRecord::VERSION::MAJOR}.#{::ActiveRecord::VERSION::MINOR}")
+
+if ActiveRecord.version >= Gem::Version.new("5.0.0")
+  superclass = ActiveRecord::Migration[version]
+else
+  superclass = ActiveRecord::Migration
+end
+
+class CreateRodauthOauth < superclass
   def change
     create_table :oauth_applications do |t|
-      t.foreign_key :accounts, column: :id
+      t.integer :account_id
+      t.foreign_key :accounts, column: :account_id
       t.string :name, null: false
       t.string :description, null: false
       t.string :homepage_url, null: false
@@ -13,8 +22,10 @@ class CreateRodauthOAuth < ActiveRecord::Migration<%= migration_version %>
     end
 
     create_table :oauth_grants do |t|
-      t.foreign_key :accounts, column: :id
-      t.foreign_key :oauth_applications, column: :id
+      t.integer :account_id
+      t.foreign_key :accounts, column: :account_id
+      t.integer :oauth_application_id
+      t.foreign_key :oauth_applications, column: :oauth_application_id
       t.string :code, null: false
       t.datetime :expires_in, null: false
       t.string :redirect_uri
@@ -25,9 +36,12 @@ class CreateRodauthOAuth < ActiveRecord::Migration<%= migration_version %>
     end
 
     create_table :oauth_tokens do |t|
-      t.foreign_key :oauth_grants, column: :id
-      t.foreign_key :oauth_tokens, column: :id
-      t.foreign_key :oauth_applications, column: :id, null: false
+      t.integer :oauth_grant_id
+      t.foreign_key :oauth_grants, column: :oauth_grant_id
+      t.integer :oauth_token_id
+      t.foreign_key :oauth_tokens, column: :oauth_token_id
+      t.integer :oauth_application_id
+      t.foreign_key :oauth_applications, column: :oauth_application_id
       t.string :token, null: false, token: true
       t.string :refresh_token
       t.datetime :expires_in, null: false

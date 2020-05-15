@@ -20,14 +20,6 @@ module Rodauth
             migration_template "db/migrate/create_rodauth_oauth.rb", "db/migrate/create_rodauth_oauth.rb"
           end
 
-          def inject_rodauth_oauth_app
-            insert_into_file 'lib/rodauth_app.rb', before: "end" do <<-'RUBY'
-              # Roda OAuth configuration
-              enable :oauth
-              RUBY
-            end if File.exist?('lib/rodauth_app.rb')
-          end
-
           def create_oauth_models
             return unless defined?(ActiveRecord::Base)
 
