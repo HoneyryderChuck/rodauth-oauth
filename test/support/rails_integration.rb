@@ -17,10 +17,11 @@ class RailsIntegrationTest < ActiveSupport::TestCase
   self.test_order = :random
 
   def setup_application
+    # eager load the application
     oauth_application
   end
 
-  def register(login: "user@example.com", password: "secret", verify: false)
+  def register(login: "foo@example.com", password: "secret", verify: false)
     visit "/create-account"
     fill_in "Login", with: login
     fill_in "Password", with: password
@@ -36,7 +37,7 @@ class RailsIntegrationTest < ActiveSupport::TestCase
     end
   end
 
-  def login(login: "user@example.com", password: "secret")
+  def login(login: "foo@example.com", password: "secret")
     visit "/login"
     fill_in "Login", with: login
     fill_in "Password", with: password
