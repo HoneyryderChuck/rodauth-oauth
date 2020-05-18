@@ -1,0 +1,22 @@
+<%= form_tag rodauth.oauth_authorize_path, method: :post do %>
+  <h2>The application <%= rodauth.oauth_application[:name] %> would like to access your data.</h2>
+
+  <div class="form-group">
+    <h3>Requested grants:</h3>
+
+    <% rodauth.oauth_application[:scopes].split(",").each do |scope| %>
+      <% is_default = scope == rodauth.oauth_application_default_scope %>
+      <div class="form-check">
+        <%= check_box_tag scope, scope, is_default, disabled: is_default, class: "form-check-input" %>
+        <%= label_tag scope, scope, class: "form-check-label" %>
+      </div>
+    <% end %>
+    <%= hidden_field_tag :client_id, rodauth.client_id %>
+    <%= hidden_field_tag :state, rodauth.state %>
+    <%= hidden_field_tag :redirect_uri, rodauth.redirect_uri %>
+  </div>
+  <div class="form-group">
+    <%= submit_tag "Authorize", class: "btn btn-primary" %>
+    <%= link_to "Cancel", "#{rodauth.redirect_uri}?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request#{"&state=\#{rodauth.state}" if rodauth.state}", class: "btn btn-danger" %>
+  </div>
+<% end %>

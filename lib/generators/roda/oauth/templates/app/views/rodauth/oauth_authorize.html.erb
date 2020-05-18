@@ -10,7 +10,7 @@
         <%%= check_box_tag scope, scope, is_default, disabled: is_default, class: "form-check-input" %>
         <%%= label_tag scope, scope, class: "form-check-label" %>
       </div>
-    <v% end %>
+    <%% end %>
     <%%= hidden_field_tag :client_id, rodauth.client_id %>
     <%%= hidden_field_tag :state, rodauth.state %>
     <%%= hidden_field_tag :redirect_uri, rodauth.redirect_uri %>

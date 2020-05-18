@@ -1,4 +1,4 @@
-<%%= form_tag rodauth.oauth_applications_path, method: :post, class: "form-horizontal" do >
+<%%= form_tag rodauth.oauth_applications_path, method: :post, class: "form-horizontal" do %>
   <h2>Register Oauth Application</h2>
   <%%= rodauth.field_error('scope') %>
   <div class="form-group">
@@ -23,7 +23,7 @@
   </div>
   <%% rodauth.oauth_application_scopes.each do |scope| %>
     <div class="form-check">
-      <%%= check_box_tag "scopes[]", scope, class: "form-check-input" %>
+      <%%= check_box_tag "scopes[]", scope, scope == rodauth.oauth_application_default_scope, id: scope, class: "form-check-input" %>
       <%%= scope %>
     </div>
   <%% end %>
