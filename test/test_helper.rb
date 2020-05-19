@@ -90,6 +90,7 @@ class RodauthTest < Minitest::Test
       end
     end
     roda do |r|
+      rodauth.http_basic_auth
       r.rodauth
 
       r.on "callback" do
