@@ -12,9 +12,7 @@ Rake::TestTask.new(:test) do |t|
 end
 
 desc "Run rubocop"
-RuboCop::RakeTask.new(:rubocop) do |task|
-  task.options += %W[-c.rubocop-#{RUBY_MAJOR_MINOR}.yml]
-end
+RuboCop::RakeTask.new(:rubocop)
 
-task :"test:ci" => %i[test rubocop]
+task "test:ci": %i[test rubocop]
 task default: :test
