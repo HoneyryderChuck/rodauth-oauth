@@ -1,5 +1,7 @@
 # Roda::Oauth
 
+[![pipeline status](https://gitlab.com/honeyryderchuck/roda-oauth/badges/master/pipeline.svg)](https://gitlab.com/honeyryderchuck/roda-oauth/-/commits/master)
+[![coverage report](https://gitlab.com/honeyryderchuck/roda-oauth/badges/master/coverage.svg)](https://gitlab.com/honeyryderchuck/roda-oauth/-/commits/master)
 
 This is an extension to the `rodauth` gem which adds support for the [OAuth 2.0 protocol](https://tools.ietf.org/html/rfc6749).
 
