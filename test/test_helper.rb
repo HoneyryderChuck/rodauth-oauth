@@ -34,9 +34,11 @@ Base.plugin :render, views: "test/views", layout_opts: { path: "test/views/layou
 Base.plugin(:not_found) { raise "path #{request.path_info} not found" }
 Base.plugin :common_logger if ENV.key?("RODAUTH_DEBUG")
 
-require "roda/session_middleware"
-Base.opts[:sessions_convert_symbols] = true
-Base.use RodaSessionMiddleware, secret: SecureRandom.random_bytes(64), key: "rack.session"
+if defined?(Roda::RodaVersionNumber) && Roda::RodaVersionNumber >= 30_100
+  require "roda/session_middleware"
+  Base.opts[:sessions_convert_symbols] = true
+  Base.use RodaSessionMiddleware, secret: SecureRandom.random_bytes(64), key: "rack.session"
+end
 
 class RodauthTest < Minitest::Test
   include Minitest::Hooks
@@ -53,9 +55,7 @@ class RodauthTest < Minitest::Test
   end
 
   def rodauth_opts(type = {})
-    opts = type.is_a?(Hash) ? type : {}
-    opts[:csrf] = :route_csrf
-    opts
+    type.is_a?(Hash) ? type : {}
   end
 
   def roda(type = nil, &block)
