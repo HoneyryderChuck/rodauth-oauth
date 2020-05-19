@@ -24,7 +24,9 @@ gem "simplecov"
 gem "rubocop"
 
 gem "pry"
-gem "pry-byebug"
+platform :mri do
+  gem "pry-byebug"
+end
 
 # For demo
 gem "erubi"

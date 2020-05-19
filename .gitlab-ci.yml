@@ -5,9 +5,17 @@ cache:
     - vendor/ruby
     - vendor/jruby
 
+
 .before_script: &before_script
   - ruby -v
   - bundle install -j 4 --path vendor
+
+.deps_alpine: &deps_alpine
+  - apk --update add g++ make sqlite sqlite-dev
+
+.deps_jruby: &deps_jruby
+  - apt-get update
+  - apt-get install -y --no-install-recommends build-essential sqlite3
 
 .test: &test
 - bundle exec rake test:ci
@@ -16,79 +24,61 @@ cache:
 jruby:
   variables:
     CI: 1
-  before_script: *before_script
-  image: "jruby:9.2.9"
+  before_script:
+    - *deps_jruby
+    - *before_script
+  image: "jruby:9.2.11"
   script:
     - *test
-# ruby21:
-#   variables:
-#     CI: 1
-#   before_script:
-#     - apk --update add g++ make
-#     - *before_script
-#   image: "ruby:2.1-alpine"
-#   script:
-#     - *test
-# ruby22:
-#   variables:
-#     CI: 1
-#   before_script:
-#     - apk --update add g++ make
-#     - *before_script
-#   image: "ruby:2.2-alpine"
-#   only:
-#     - master
-#   script:
-#     - *test
-# ruby23:
-#   variables:
-#     CI: 1
-#   before_script:
-#     - apk --update add g++ make
-#     - *before_script
-#   image: "ruby:2.3-alpine"
-#   only:
-#     - master
-#   script:
-#     - *test
-# ruby24:
-#   variables:
-#     CI: 1
-#   before_script:
-#     - apk --update add g++ make
-#     - *before_script
-#   image: "ruby:2.4-alpine"
-#   only:
-#     - master
-#   script:
-#     - *test
-# ruby25:
-#   variables:
-#     CI: 1
-#   before_script:
-#     - apk --update add g++ make
-#     - *before_script
-#   image: "ruby:2.5-alpine"
-#   only:
-#     - master
-#   script:
-#     - *test
-# ruby26:
-#   variables:
-#     CI: 1
-#   before_script:
-#     - apk --update add g++ make
-#     - *before_script
-#   image: "ruby:2.6-alpine"
-#   only:
-#     - master
-#   script:
-#     - *test
+ruby23:
+  variables:
+    CI: 1
+  before_script:
+    - *deps_alpine
+    - *before_script
+  image: "ruby:2.3-alpine"
+  only:
+    - master
+  script:
+    - *test
+ruby24:
+  variables:
+    CI: 1
+  before_script:
+    - *deps_alpine
+    - *before_script
+  image: "ruby:2.4-alpine"
+  only:
+    - master
+  script:
+    - *test
+ruby25:
+  variables:
+    CI: 1
+  before_script:
+    - *deps_alpine
+    - *before_script
+  image: "ruby:2.5-alpine"
+  only:
+    - master
+  script:
+    - *test
+ruby26:
+  variables:
+    CI: 1
+  before_script:
+    - *deps_alpine
+    - *before_script
+  image: "ruby:2.6-alpine"
+  only:
+    - master
+  script:
+    - *test
 ruby27:
   variables:
     CI: 1
   before_script:
-    - apk --update add g++ make sqlite sqlite-dev
+    - *deps_alpine
     - *before_script
   image: "ruby:2.7-alpine"
   script:
