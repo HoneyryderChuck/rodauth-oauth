@@ -3,7 +3,7 @@
 require "test_helper"
 
 class RodaOauthApplicationsTest < RailsIntegrationTest
-  def test_oauth_applications_successful
+  def test_oauth_rails_applications_successful
     login
     # List
     visit "/oauth-applications"
@@ -27,7 +27,7 @@ class RodaOauthApplicationsTest < RailsIntegrationTest
     assert DB[:oauth_applications].count == 1
   end
 
-  def test_oauth_applications_invalid_fields
+  def test_oauth_rails_applications_invalid_fields
     setup_application
     login
 

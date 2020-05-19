@@ -1,20 +1,20 @@
 require "test_helper"
 
 class IntegrationAuthorizeTest < RailsIntegrationTest
-  def test_authorize_get_public_area
+  def test_authorize_rails_get_public_area
     setup_application
     visit "/"
     assert page.html == "Unauthorized"
   end
 
-  def test_authorize_get_authorize_not_logged_in_no_client_application
+  def test_authorize_rails_get_authorize_not_logged_in_no_client_application
     setup_application
     visit "/oauth-authorize"
     assert page.current_path == "/login",
            "was redirected instead to #{page.current_path}"
   end
 
-  def test_authorize_get_authorize
+  def test_authorize_rails_get_authorize
     setup_application
     login
     visit "/oauth-authorize"
@@ -22,7 +22,7 @@ class IntegrationAuthorizeTest < RailsIntegrationTest
            "was redirected instead to #{page.current_path}"
   end
 
-  def test_authorize_get_authorize_invalid_client_id
+  def test_authorize_rails_get_authorize_invalid_client_id
     setup_application
     login
     visit "/oauth-authorize?client_id=bla"
@@ -30,7 +30,7 @@ class IntegrationAuthorizeTest < RailsIntegrationTest
            "was redirected instead to #{page.current_url}"
   end
 
-  def test_authorize_get_authorize_invalid_redirect_uri
+  def test_authorize_rails_get_authorize_invalid_redirect_uri
     setup_application
     login
     visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&redirect_uri=bla"
@@ -38,7 +38,7 @@ class IntegrationAuthorizeTest < RailsIntegrationTest
            "was redirected instead to #{page.current_url}"
   end
 
-  def test_authorize_get_authorize_invalid_scope
+  def test_authorize_rails_get_authorize_invalid_scope
     setup_application
     login
     visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}& "\
@@ -48,7 +48,7 @@ class IntegrationAuthorizeTest < RailsIntegrationTest
            "was redirected instead to #{page.current_url}"
   end
 
-  def test_authorize_post_authorize
+  def test_authorize_rails_post_authorize
     setup_application
     login
 
@@ -69,7 +69,7 @@ class IntegrationAuthorizeTest < RailsIntegrationTest
            "was redirected instead to #{page.current_url}"
   end
 
-  def test_authorize_post_authorize_with_state
+  def test_authorize_rails_post_authorize_with_state
     setup_application
     login
 
