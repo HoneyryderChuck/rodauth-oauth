@@ -88,7 +88,7 @@ ruby27:
   variables:
     CI: 1
   before_script:
-    - apk --update add g++ make sqlite
+    - apk --update add g++ make sqlite sqlite-dev
     - *before_script
   image: "ruby:2.7-alpine"
   script:
