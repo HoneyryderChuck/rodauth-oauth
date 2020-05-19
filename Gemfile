@@ -19,6 +19,7 @@ gem "capybara"
 gem "minitest", "~> 5.0"
 gem "minitest-hooks"
 gem "rack-test"
+gem "simplecov"
 
 gem "rubocop"
 

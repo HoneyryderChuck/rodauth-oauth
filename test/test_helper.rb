@@ -2,6 +2,8 @@
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
+require "simplecov" if ENV.key?("CI")
+
 require "fileutils"
 require "logger"
 require "securerandom"
