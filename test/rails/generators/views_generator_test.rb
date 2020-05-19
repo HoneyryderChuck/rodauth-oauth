@@ -30,7 +30,6 @@ class ViewsGeneratorTest < Rails::Generators::TestCase
     end
   end
 
-
   test "all features" do
     run_generator ["--all"]
 

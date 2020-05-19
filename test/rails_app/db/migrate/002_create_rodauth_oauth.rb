@@ -1,10 +1,12 @@
+# frozen_string_literal: true
+
 version = eval("#{::ActiveRecord::VERSION::MAJOR}.#{::ActiveRecord::VERSION::MINOR}")
 
-if ActiveRecord.version >= Gem::Version.new("5.0.0")
-  superclass = ActiveRecord::Migration[version]
-else
-  superclass = ActiveRecord::Migration
-end
+superclass = if ActiveRecord.version >= Gem::Version.new("5.0.0")
+               ActiveRecord::Migration[version]
+             else
+               ActiveRecord::Migration
+             end
 
 class CreateRodauthOauth < superclass
   def change

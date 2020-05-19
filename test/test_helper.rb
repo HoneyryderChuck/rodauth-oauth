@@ -27,6 +27,8 @@ require "bcrypt"
 TEST_SCOPES = %w[user.read user.write].freeze
 
 module OAuthHelpers
+  private
+
   def oauth_application
     @oauth_application ||= begin
       id = DB[:oauth_applications].insert \

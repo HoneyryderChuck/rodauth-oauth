@@ -1,6 +1,8 @@
+# frozen_string_literal: true
+
 class RodauthApp < Rodauth::Rails::App
   configure do
-    enable :login, :http_basic_auth, :oauth 
+    enable :login, :http_basic_auth, :oauth
 
     rails_controller { RodauthController }
 

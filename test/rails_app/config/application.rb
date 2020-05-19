@@ -1,4 +1,6 @@
-require_relative 'boot'
+# frozen_string_literal: true
+
+require_relative "boot"
 
 require "active_record/railtie"
 require "action_controller/railtie"
@@ -19,4 +21,3 @@ module RailsApp
     config.active_record.maintain_test_schema = false
   end
 end
-
