@@ -129,6 +129,10 @@ module Rodauth
     auth_value_method :json_request_accept_regexp, %r{\bapplication/(?:vnd\.api\+)?json\b}i
     auth_methods(:json_request?)
 
+    def check_csrf?
+      super && request.path != oauth_token_path
+    end
+
     # Overrides logged_in?, so that a valid authorization token also authnenticates a request
     def logged_in?
       super || authorization_token
