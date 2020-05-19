@@ -1,0 +1,98 @@
+# Cache gems in between builds
+cache:
+  key: ${CI_COMMIT_REF_SLUG}
+  paths:
+    - vendor/ruby
+    - vendor/jruby
+
+.before_script: &before_script
+  - ruby -v
+  - bundle install -j 4 --path vendor
+
+.test: &test
+- bundle exec rake test:ci
+
+
+jruby:
+  variables:
+    CI: 1
+  before_script: *before_script
+  image: "jruby:9.2.9"
+  script:
+    - *test
+# ruby21:
+#   variables:
+#     CI: 1
+#   before_script:
+#     - apk --update add g++ make
+#     - *before_script
+#   image: "ruby:2.1-alpine"
+#   script:
+#     - *test
+# ruby22:
+#   variables:
+#     CI: 1
+#   before_script:
+#     - apk --update add g++ make
+#     - *before_script
+#   image: "ruby:2.2-alpine"
+#   only:
+#     - master
+#   script:
+#     - *test
+# ruby23:
+#   variables:
+#     CI: 1
+#   before_script:
+#     - apk --update add g++ make
+#     - *before_script
+#   image: "ruby:2.3-alpine"
+#   only:
+#     - master
+#   script:
+#     - *test
+# ruby24:
+#   variables:
+#     CI: 1
+#   before_script:
+#     - apk --update add g++ make
+#     - *before_script
+#   image: "ruby:2.4-alpine"
+#   only:
+#     - master
+#   script:
+#     - *test
+# ruby25:
+#   variables:
+#     CI: 1
+#   before_script:
+#     - apk --update add g++ make
+#     - *before_script
+#   image: "ruby:2.5-alpine"
+#   only:
+#     - master
+#   script:
+#     - *test
+# ruby26:
+#   variables:
+#     CI: 1
+#   before_script:
+#     - apk --update add g++ make
+#     - *before_script
+#   image: "ruby:2.6-alpine"
+#   only:
+#     - master
+#   script:
+#     - *test
+ruby27:
+  variables:
+    CI: 1
+  before_script:
+    - apk --update add g++ make sqlite
+    - *before_script
+  image: "ruby:2.7-alpine"
+  script:
+    - *test
+  artifacts:
+    paths:
+      - "coverage/"
