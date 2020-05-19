@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class IntegrationAuthorizeTest < RailsIntegrationTest
+class RodaOAuthRailsAuthorizeTest < RailsIntegrationTest
   def test_authorize_rails_get_public_area
     setup_application
     visit "/"
@@ -62,10 +62,10 @@ class IntegrationAuthorizeTest < RailsIntegrationTest
     # submit authorization request
     click_button "Authorize"
 
-    assert DB[:oauth_grants].count == 1,
+    assert db[:oauth_grants].count == 1,
            "no grant has been created"
 
-    oauth_grant = DB[:oauth_grants].first
+    oauth_grant = db[:oauth_grants].first
 
     assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{oauth_grant[:code]}",
            "was redirected instead to #{page.current_url}"
@@ -83,10 +83,10 @@ class IntegrationAuthorizeTest < RailsIntegrationTest
     # submit authorization request
     click_button "Authorize"
 
-    assert DB[:oauth_grants].count == 1,
+    assert db[:oauth_grants].count == 1,
            "no grant has been created"
 
-    oauth_grant = DB[:oauth_grants].first
+    oauth_grant = db[:oauth_grants].first
 
     assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{oauth_grant[:code]}&state=STATE",
            "was redirected instead to #{page.current_url}"

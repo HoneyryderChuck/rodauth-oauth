@@ -48,7 +48,7 @@ class RodaOauthRefreshTokenTest < RodaIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert DB[:oauth_tokens].count == 1
+    assert db[:oauth_tokens].count == 1
 
     json_body = JSON.parse(last_response.body)
     assert !json_body["token"].nil?

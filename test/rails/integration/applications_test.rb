@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthApplicationsTest < RailsIntegrationTest
+class RodaOauthRailsApplicationsTest < RailsIntegrationTest
   def test_oauth_rails_applications_successful
     login
     # List
@@ -24,15 +24,14 @@ class RodaOauthApplicationsTest < RailsIntegrationTest
     assert_includes page.html, "Client ID: "
     assert_includes page.html, "Client Secret: "
     assert_includes page.html, "Scopes: "
-    assert DB[:oauth_applications].count == 1
+    assert db[:oauth_applications].count == 1
   end
 
   def test_oauth_rails_applications_invalid_fields
     setup_application
     login
 
-    visit "/oauth-applications"
-    click_link "New Oauth Application"
+    visit "/oauth-applications/new"
     click_button "Register"
     # must fill fields
     assert_equal page.find("#alert").text, "There was an error registering your oauth application"

@@ -1,16 +1,19 @@
 # frozen_string_literal: true
 
-TESTDB = if RUBY_ENGINE == "jruby"
+RODADB = begin
+  db = RUBY_ENGINE == "jruby"
          Sequel.connect("jdbc:sqlite::memory:")
        else
          Sequel.sqlite(db_path)
          Sequel.connect("sqlite::memory:")
        end
-TESTDB.loggers << Logger.new($stderr) if ENV.key?("RODAUTH_DEBUG")
+  db.loggers << Logger.new($stderr) if ENV.key?("RODAUTH_DEBUG")
+  Sequel.extension :migration
+  require "rodauth/migrations"
+  Sequel::Migrator.run(db, "test/migrate")
+  db
+end
 
-Sequel.extension :migration
-require "rodauth/migrations"
-Sequel::Migrator.run(TESTDB, "test/migrate")
 
 Base = Class.new(Roda)
 Base.opts[:check_dynamic_arity] = Base.opts[:check_arity] = :warn
@@ -68,6 +71,7 @@ class RodaIntegration < Minitest::Test
 
   def setup_application
     rodauth do
+      db RODADB
       enable :http_basic_auth, :oauth
       oauth_application_default_scope TEST_SCOPES.first
       oauth_application_scopes TEST_SCOPES
@@ -105,18 +109,14 @@ class RodaIntegration < Minitest::Test
     click_button "Login"
   end
 
-  def authorization_header(opts = {})
-    ["#{opts.delete(:username) || 'foo@example.com'}:#{opts.delete(:password) || '0123456789'}"].pack("m*")
-  end
-
   def around
-    TESTDB.transaction(rollback: :always, savepoint: true, auto_savepoint: true) { super }
+    db.transaction(rollback: :always, savepoint: true, auto_savepoint: true) { super }
   end
 
   def around_all
-    TESTDB.transaction(rollback: :always) do
+    db.transaction(rollback: :always) do
       hash = BCrypt::Password.create("0123456789", cost: BCrypt::Engine::MIN_COST)
-      DB[:accounts].insert(email: "foo@example.com", status_id: 2, ph: hash)
+      db[:accounts].insert(email: "foo@example.com", status_id: 2, ph: hash)
       super
     end
   end
@@ -124,5 +124,9 @@ class RodaIntegration < Minitest::Test
   def teardown
     Capybara.reset_sessions!
     Capybara.use_default_driver
+  end
+
+  def db
+    RODADB
   end
 end

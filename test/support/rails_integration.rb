@@ -16,6 +16,10 @@ class RailsIntegrationTest < ActiveSupport::TestCase
 
   self.test_order = :random
 
+  def app
+    Rails.application
+  end
+
   def setup_application
     # eager load the application
     oauth_application
@@ -57,7 +61,7 @@ class RailsIntegrationTest < ActiveSupport::TestCase
       ActiveRecord::Migrator.up(Rails.application.paths["db/migrate"].to_a)
     end
     hash = BCrypt::Password.create("0123456789", cost: BCrypt::Engine::MIN_COST)
-    DB[:accounts].insert(email: "foo@example.com", ph: hash)
+    db[:accounts].insert(email: "foo@example.com", ph: hash)
   end
 
   def teardown
@@ -69,5 +73,9 @@ class RailsIntegrationTest < ActiveSupport::TestCase
     end
     ActionMailer::Base.deliveries.clear
     Capybara.reset_sessions!
+  end
+
+  def db
+    DB
   end
 end
