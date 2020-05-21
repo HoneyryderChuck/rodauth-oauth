@@ -12,7 +12,6 @@ gem "rack_csrf"
 gem "roda"
 gem "rodauth"
 gem "sequel"
-gem "sqlite3"
 gem "tilt"
 
 gem "capybara"
@@ -24,7 +23,14 @@ gem "simplecov"
 gem "rubocop"
 
 gem "pry"
-gem "pry-byebug"
+platform :mri do
+  gem "pry-byebug"
+  gem "sqlite3"
+end
+
+platform :jruby do
+  gem "jdbc-sqlite3"
+end
 
 # For demo
 gem "erubi"

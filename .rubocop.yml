@@ -62,3 +62,13 @@ Style/StringLiterals:
 
 Metrics/AbcSize:
   Enabled: false
+
+# TO BE WORKED ON§
+Metrics/CyclomaticComplexity:
+  Enabled: false
+
+Metrics/PerceivedComplexity:
+  Enabled: false
+
+Style/MultipleComparison:
+  Enabled: false

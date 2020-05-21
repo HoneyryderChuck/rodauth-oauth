@@ -17,10 +17,12 @@ require "roda"
 require "rodauth"
 require "bcrypt"
 
-db_path = File.join(Dir.tmpdir, "roda-oauth.db")
-FileUtils.rm(db_path, force: true)
+DB = if RUBY_ENGINE == "jruby"
+       Sequel.connect("jdbc:sqlite::memory:")
+     else
+       Sequel.connect("sqlite::memory:")
+     end
 
-DB = Sequel.sqlite(db_path)
 DB.loggers << Logger.new($stderr) if ENV.key?("RODAUTH_DEBUG")
 
 Sequel.extension :migration
@@ -34,9 +36,11 @@ Base.plugin :render, views: "test/views", layout_opts: { path: "test/views/layou
 Base.plugin(:not_found) { raise "path #{request.path_info} not found" }
 Base.plugin :common_logger if ENV.key?("RODAUTH_DEBUG")
 
-require "roda/session_middleware"
-Base.opts[:sessions_convert_symbols] = true
-Base.use RodaSessionMiddleware, secret: SecureRandom.random_bytes(64), key: "rack.session"
+if defined?(Roda::RodaVersionNumber) && Roda::RodaVersionNumber >= 30_100
+  require "roda/session_middleware"
+  Base.opts[:sessions_convert_symbols] = true
+  Base.use RodaSessionMiddleware, secret: SecureRandom.random_bytes(64), key: "rack.session"
+end
 
 class RodauthTest < Minitest::Test
   include Minitest::Hooks
@@ -53,9 +57,7 @@ class RodauthTest < Minitest::Test
   end
 
   def rodauth_opts(type = {})
-    opts = type.is_a?(Hash) ? type : {}
-    opts[:csrf] = :route_csrf
-    opts
+    type.is_a?(Hash) ? type : {}
   end
 
   def roda(type = nil, &block)
@@ -90,6 +92,7 @@ class RodauthTest < Minitest::Test
       end
     end
     roda do |r|
+      rodauth.http_basic_auth
       r.rodauth
 
       r.on "callback" do
