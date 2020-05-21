@@ -13,17 +13,15 @@ cache:
 .deps_alpine: &deps_alpine
   - apk --update add g++ make sqlite sqlite-dev
 
-.deps_jruby: &deps_jruby
-  - apt-get update
-  - apt-get install -y --no-install-recommends build-essential sqlite3
-
 .test: &test
 - bundle exec rake test:ci
 
 
 jruby:
+  variables:
+    CI: 1
+    JRUBY_OPTS: --debug
   before_script:
-    - *deps_jruby
     - *before_script
   image: "jruby:9.2.11"
   script:
