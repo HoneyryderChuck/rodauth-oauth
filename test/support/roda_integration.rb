@@ -1,10 +1,9 @@
 # frozen_string_literal: true
 
 RODADB = begin
-  db = RUBY_ENGINE == "jruby"
+  db = if RUBY_ENGINE == "jruby"
          Sequel.connect("jdbc:sqlite::memory:")
        else
-         Sequel.sqlite(db_path)
          Sequel.connect("sqlite::memory:")
        end
   db.loggers << Logger.new($stderr) if ENV.key?("RODAUTH_DEBUG")
