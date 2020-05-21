@@ -22,8 +22,6 @@ cache:
 
 
 jruby:
-  variables:
-    CI: 1
   before_script:
     - *deps_jruby
     - *before_script
