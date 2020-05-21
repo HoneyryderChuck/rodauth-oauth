@@ -12,7 +12,6 @@ gem "rack_csrf"
 gem "roda"
 gem "rodauth"
 gem "sequel"
-gem "sqlite3"
 gem "tilt"
 
 gem "capybara"
@@ -26,6 +25,11 @@ gem "rubocop"
 gem "pry"
 platform :mri do
   gem "pry-byebug"
+  gem "sqlite3"
+end
+
+platform :jruby do
+  gem "activerecord-jdbcsqlite3-adapter"
 end
 
 # For demo

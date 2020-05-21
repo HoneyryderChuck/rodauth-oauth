@@ -53,7 +53,7 @@ class RodaOauthTokenRefreshTokenTest < RodauthTest
     json_body = JSON.parse(last_response.body)
     assert !json_body["token"].nil?
     assert json_body["token"] != prev_token
-    assert Time.now.utc + json_body["expires_in"] > prev_expires_in
+    assert (Time.now.utc + json_body["expires_in"]).to_i > prev_expires_in.to_i
   end
 
   private

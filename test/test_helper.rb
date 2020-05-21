@@ -20,7 +20,11 @@ require "bcrypt"
 db_path = File.join(Dir.tmpdir, "roda-oauth.db")
 FileUtils.rm(db_path, force: true)
 
-DB = Sequel.sqlite(db_path)
+DB = if RUBY_ENGINE == "jruby"
+  Sequel.connect("jdbc:sqlite::memory:")
+else
+  Sequel.sqlite(db_path)
+end
 DB.loggers << Logger.new($stderr) if ENV.key?("RODAUTH_DEBUG")
 
 Sequel.extension :migration
