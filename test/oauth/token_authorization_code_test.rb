@@ -81,6 +81,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
          code: oauth_grant[:code],
          redirect_uri: oauth_grant[:redirect_uri])
 
+
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 

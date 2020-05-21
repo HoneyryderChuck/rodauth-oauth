@@ -621,9 +621,14 @@ module Rodauth
       response.status = status
       payload = { "error" => error_code }
       payload["error_description"] = send(:"#{error_code}_message") if respond_to?(:"#{error_code}_message")
+      json_payload = if request.respond_to?(:convert_to_json)
+        request.send(:convert_to_json, payload)
+      else
+        payload.to_json
+      end
       response["Content-Type"] ||= json_response_content_type
       response["WWW-Authenticate"] = "Bearer" if status == 401
-      response.write(request.send(:convert_to_json, payload))
+      response.write(json_payload)
       request.halt
     end
 

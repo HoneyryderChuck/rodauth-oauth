@@ -19,5 +19,6 @@ module RailsApp
     config.action_mailer.delivery_method = :test
     config.autoload_paths += %W[#{config.root}/lib]
     config.active_record.maintain_test_schema = false
+    config.action_controller.allow_forgery_protection = false
   end
 end
