@@ -14,7 +14,8 @@ require "minitest/hooks"
 
 require "sequel"
 require "roda"
-require "rodauth"
+require "rodauth/oauth"
+require "rodauth/version"
 require "bcrypt"
 
 DB = if RUBY_ENGINE == "jruby"

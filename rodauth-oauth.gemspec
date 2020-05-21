@@ -3,7 +3,7 @@
 version = File.read(File.expand_path("VERSION", __dir__)).strip
 
 Gem::Specification.new do |spec|
-  spec.name          = "roda-oauth"
+  spec.name          = "rodauth-oauth"
   spec.version       = version
   spec.platform      = Gem::Platform::RUBY
   spec.authors       = ["Tiago Cardoso"]

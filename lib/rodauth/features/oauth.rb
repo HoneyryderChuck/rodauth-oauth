@@ -1,7 +1,7 @@
 # frozen-string-literal: true
 
 module Rodauth
-  Feature.define(:oauth, :Oauth) do
+  Feature.define(:oauth, :OAuth) do
     SCOPES = %w[profile.read].freeze
 
     depends :login
