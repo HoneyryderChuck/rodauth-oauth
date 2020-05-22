@@ -468,10 +468,12 @@ module Rodauth
           oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column],
           oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column],
           oauth_grants_expires_in_column => Time.now + oauth_token_expires_in,
-          oauth_tokens_refresh_token_column => oauth_unique_id_generator,
           oauth_tokens_token_column => oauth_unique_id_generator
         }
 
+        if oauth_grant[oauth_grants_access_type_column] == "offline"
+          create_params[oauth_tokens_refresh_token_column] = oauth_unique_id_generator
+        end
         # revoke oauth grant
         db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column])
                               .update(oauth_grants_revoked_at_column => Sequel::CURRENT_TIMESTAMP)
@@ -653,9 +655,11 @@ module Rodauth
           json_response = {
             "token" => oauth_token[:token],
             "token_type" => oauth_token_type,
-            "refresh_token" => oauth_token[:refresh_token],
             "expires_in" => oauth_token_expires_in
           }
+
+          json_response["refresh_token"] = oauth_token[:refresh_token] if oauth_token[:refresh_token]
+
           response.write(request.__send__(:convert_to_json, json_response))
           request.halt
         end
