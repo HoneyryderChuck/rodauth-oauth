@@ -1,4 +1,4 @@
-<% apps_count = DB[:oauth_applications].count %>
+<% apps_count = @oauth_applications.count %>
 <div class="btn-group" role="group" aria-label="Buttons">
   <a class="btn btn-secondary" href="/oauth-applications/new">New Oauth Application</a>
 </div>
@@ -8,14 +8,14 @@
   <table class="table">
     <thead>
       <tr>
-        <th scope="col">Client ID (<%= apps_count %>)</th>
+        <th scope="col">Client ID</th>
         <th scope="col">Name</th>
         <th scope="col">Homepage</th>
-        <th scope="col"></th>
+        <th scope="col"><span class="badge badge-pill badge-dark"><%= apps_count %></span></th>
       </tr>
     </thead>
     <tbody>
-      <% DB[:oauth_applications].each do |application| %>
+      <% @oauth_applications.each do |application| %>
         <tr>
           <td><%= application[:client_id] %></td>
           <td><%= application[:name] %></td>
