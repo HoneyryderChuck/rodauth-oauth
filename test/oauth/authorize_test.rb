@@ -84,10 +84,10 @@ class RodaOauthAuthorizeTest < RodaIntegration
     # submit authorization request
     click_button "Authorize"
 
-    assert DB[:oauth_grants].count == 1,
+    assert db[:oauth_grants].count == 1,
            "no grant has been created"
 
-    oauth_grant = DB[:oauth_grants].first
+    oauth_grant = db[:oauth_grants].first
 
     assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{oauth_grant[:code]}",
            "was redirected instead to #{page.current_url}"
@@ -147,10 +147,10 @@ class RodaOauthAuthorizeTest < RodaIntegration
     # submit authorization request
     click_button "Authorize"
 
-    assert DB[:oauth_tokens].count == 1,
+    assert db[:oauth_tokens].count == 1,
            "no token has been created"
 
-    oauth_token = DB[:oauth_tokens].first
+    oauth_token = db[:oauth_tokens].first
 
     skip page.current_url == "#{oauth_application[:redirect_uri]}#access_token=#{oauth_token[:token]}& " \
                              "token_type=Bearer&expires_in=3600",
