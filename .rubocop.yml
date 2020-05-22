@@ -30,6 +30,9 @@ Lint/RaiseException:
 Lint/StructNewOverride:
   Enabled: true
 
+Lint/DeprecatedOpenSSLConstant:
+  Enabled: true
+
 Style/ExponentialNotation:
   Enabled: true
 
@@ -49,6 +52,9 @@ Style/HashTransformKeys:
   Enabled: true
 
 Style/HashTransformValues:
+  Enabled: true
+
+Style/SlicingWithRange:
   Enabled: true
 
 Metrics/ClassLength:
@@ -72,3 +78,6 @@ Metrics/PerceivedComplexity:
 
 Style/MultipleComparison:
   Enabled: false
+
+Layout/EmptyLinesAroundAttributeAccessor:
+  Enabled: true
