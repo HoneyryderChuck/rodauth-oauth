@@ -69,6 +69,29 @@ class RodaOauthAuthorizeTest < RodauthTest
 
     assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{oauth_grant[:code]}",
            "was redirected instead to #{page.current_url}"
+    assert oauth_grant[:access_type] == "offline"
+  end
+
+  def test_authorize_post_authorize_access_type_online
+    setup_application
+    login
+
+    # show the authorization form
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scopes=user.read+user.write&access_type=online"
+    assert page.current_path == "/oauth-authorize",
+           "was redirected instead to #{page.current_path}"
+
+    # submit authorization request
+    click_button "Authorize"
+
+    assert DB[:oauth_grants].count == 1,
+           "no grant has been created"
+
+    oauth_grant = DB[:oauth_grants].first
+
+    assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{oauth_grant[:code]}",
+           "was redirected instead to #{page.current_url}"
+    assert oauth_grant[:access_type] == "online"
   end
 
   def test_authorize_post_authorize_with_state
