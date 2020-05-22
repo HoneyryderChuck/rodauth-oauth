@@ -37,6 +37,7 @@ module Rodauth
 
     auth_value_method :oauth_grant_expires_in, 60 * 5 # 5 minutes
     auth_value_method :oauth_token_expires_in, 60 * 60 # 60 minutes
+    auth_value_method :use_oauth_implicit_grant_type, false
 
     # URL PARAMS
 
@@ -391,9 +392,14 @@ module Rodauth
     # Authorize
 
     def validate_oauth_grant_params
+<<<<<<< HEAD
       unless oauth_application && check_valid_redirect_uri? && check_valid_access_type?
         redirect_response_error("invalid_request")
       end
+=======
+      redirect_response_error("invalid_request") unless oauth_application && check_valid_redirect_uri?
+      redirect_response_error("unsupported_grant_type") unless request.get? || check_valid_response_type?
+>>>>>>> added test for response type parameter
       redirect_response_error("invalid_scope") unless check_valid_scopes?
     end
 
@@ -632,6 +638,16 @@ module Rodauth
     def check_valid_access_type?
       access_type = param("access_type")
       access_type.empty? || ACCESS_TYPES.include?(access_type)
+    end
+
+    def check_valid_response_type?
+      response_type = param("response_type")
+
+      return true if response_type.empty? || response_type == "code"
+
+      return use_oauth_implicit_grant_type if response_type == "token"
+
+      false
     end
 
     # /oauth-token

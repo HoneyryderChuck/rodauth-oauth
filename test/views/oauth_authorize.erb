@@ -8,6 +8,9 @@
   <% if rodauth.param("access_type") %>
     <input type="hidden" name="access_type" value="<%= rodauth.param("access_type") %>"/>
   <% end %>
+  <% if !rodauth.param("response_type").empty? %>
+    <input type="hidden" name="response_type" value="<%= rodauth.param("response_type") %>"/>
+  <% end %>
   <div class="form-group">
     <div class="col-sm-offset-2 col-sm-10">
       <input type="submit" class="btn btn-default" value="Authorize"/>
