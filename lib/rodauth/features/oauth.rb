@@ -41,7 +41,11 @@ module Rodauth
     # URL PARAMS
 
     # Authorize / token
-    %w[grant_type code refresh_token client_id scope state redirect_uri scopes token_type_hint token].each do |param|
+    %w[
+      grant_type code refresh_token client_id scope
+      state redirect_uri scopes token_type_hint token
+      access_type
+    ].each do |param|
       auth_value_method :"#{param}_param", param
     end
 
@@ -71,7 +75,7 @@ module Rodauth
     auth_value_method :oauth_grants_id_column, :id
     %i[
       account_id oauth_application_id
-      redirect_uri code scopes
+      redirect_uri code scopes access_type
       expires_in revoked_at
     ].each do |column|
       auth_value_method :"oauth_grants_#{column}_column", column
@@ -387,7 +391,9 @@ module Rodauth
     # Authorize
 
     def validate_oauth_grant_params
-      redirect_response_error("invalid_request") unless oauth_application && check_valid_redirect_uri?
+      unless oauth_application && check_valid_redirect_uri? && check_valid_access_type?
+        redirect_response_error("invalid_request")
+      end
       redirect_response_error("invalid_scope") unless check_valid_scopes?
     end
 
@@ -400,6 +406,10 @@ module Rodauth
         oauth_grants_expires_in_column => Time.now + oauth_grant_expires_in,
         oauth_grants_scopes_column => scopes.join(",")
       }
+
+      unless (access_type = param("access_type")).empty?
+        create_params[oauth_grants_access_type_column] = access_type
+      end
 
       ds = db[oauth_grants_table]
 
@@ -613,6 +623,13 @@ module Rodauth
 
     def check_valid_redirect_uri?
       redirect_uri == oauth_application[oauth_applications_redirect_uri_column]
+    end
+
+    ACCESS_TYPES = %w[offline online].freeze
+
+    def check_valid_access_type?
+      access_type = param("access_type")
+      access_type.empty? || ACCESS_TYPES.include?(access_type)
     end
 
     # /oauth-token

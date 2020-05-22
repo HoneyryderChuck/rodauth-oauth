@@ -101,7 +101,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodauthTest
     setup_application
     login
 
-    online_grant = oauth_grant(access_type; "online")
+    online_grant = oauth_grant(access_type: "online")
 
     post("/oauth-token",
          client_id: oauth_application[:client_id],
