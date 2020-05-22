@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthTokenRevokeTest < RodauthTest
+class RodaOauthTokenRevokeTest < RodaIntegration
   include Rack::Test::Methods
 
   def test_oauth_token_revoke_invalid_hint
@@ -44,7 +44,7 @@ class RodaOauthTokenRevokeTest < RodauthTest
     post("/oauth-revoke", token_type_hint: "access_token", token: oauth_token[:token])
 
     assert last_response.status == 200
-    assert DB[:oauth_tokens].where(revoked_at: nil).count.zero?
+    assert db[:oauth_tokens].where(revoked_at: nil).count.zero?
   end
 
   def test_oauth_token_revoke_refresh_token
@@ -60,7 +60,7 @@ class RodaOauthTokenRevokeTest < RodauthTest
     post("/oauth-revoke", token_type_hint: "refresh_token", token: oauth_token[:refresh_token])
 
     assert last_response.status == 200
-    assert DB[:oauth_tokens].where(revoked_at: nil).count.zero?
+    assert db[:oauth_tokens].where(revoked_at: nil).count.zero?
   end
 
   private

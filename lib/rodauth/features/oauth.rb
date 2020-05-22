@@ -618,13 +618,13 @@ module Rodauth
     end
 
     def throw_json_response_error(status, error_code)
-      response.status = status
+      set_response_error_status(status)
       payload = { "error" => error_code }
       payload["error_description"] = send(:"#{error_code}_message") if respond_to?(:"#{error_code}_message")
       json_payload = if request.respond_to?(:convert_to_json)
         request.send(:convert_to_json, payload)
       else
-        payload.to_json
+        JSON.dump(payload)
       end
       response["Content-Type"] ||= json_response_content_type
       response["WWW-Authenticate"] = "Bearer" if status == 401
@@ -694,7 +694,12 @@ module Rodauth
 
           json_response["refresh_token"] = oauth_token[:refresh_token] if oauth_token[:refresh_token]
 
-          response.write(request.__send__(:convert_to_json, json_response))
+          json_payload = if request.respond_to?(:convert_to_json)
+            request.send(:convert_to_json, json_response)
+          else
+            JSON.dump(json_response)
+          end
+          response.write(json_payload)
           request.halt
         end
 
@@ -726,7 +731,12 @@ module Rodauth
               "refresh_token" => oauth_token[:refresh_token],
               "revoked_at" => oauth_token[:revoked_at]
             }
-            response.write(request.__send__(:convert_to_json, json_response))
+            json_payload = if request.respond_to?(:convert_to_json)
+              request.send(:convert_to_json, json_response)
+            else
+              JSON.dump(json_response)
+            end
+            response.write(json_payload)
             request.halt
           else
             set_notice_flash revoke_oauth_token_notice_flash

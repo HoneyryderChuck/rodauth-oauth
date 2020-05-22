@@ -38,6 +38,8 @@ class CreateRodauthOauth < superclass
     end
 
     create_table :oauth_tokens do |t|
+      t.integer :account_id
+      t.foreign_key :accounts, column: :account_id
       t.integer :oauth_grant_id
       t.foreign_key :oauth_grants, column: :oauth_grant_id
       t.integer :oauth_token_id
