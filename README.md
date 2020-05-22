@@ -70,6 +70,31 @@ You'll have to do a bit more boilerplate, so here's the instructions.
 
 If you're familiar with the technology and want to skip the next paragraphs, just [check our roda example](https://gitlab.com/honeyryderchuck/roda-oauth/-/tree/master/examples/roda).
 
+
+Generating tokens happens mostly server-to-server, so here's an example using:
+
+#### HTTPX
+
+```ruby
+require "httpx"
+httpx = HTTPX.plugin(:authorization)
+response = httpx.with(headers: { "X-your-auth-scheme" => ENV["SERVER_KEY"] })
+                .post(json: {
+                  client_id: ENV["OAUTH_CLIENT_ID"],
+                  grant_type: "authorization_code",
+                  code: "oiweicnewdh32fhoi3hf3ihfo2ih3f2o3as"
+                })
+response.raise_for_status
+payload = JSON.parse(response.to_s)
+puts payload #=> {"token" => "awr23f3h8f9d2h89...", "refresh_token" => "23fkop3kr290kc..." ....
+```
+
+#### cURL
+
+```
+> curl -H "X-your-auth-scheme: $SERVER_KEY" --data '{"client_id":"$OAUTH_CLIENT_ID","grant_type":"authorization_code","code":"oiweicnewdh32fhoi3hf3ihfo2ih3f2o3as"}'
+```
+
 ### Database migrations
 
 You have to generate database tables for Oauth applications, grants and tokens. In order for you to hit the ground running, [here's a set of migrations (using `sequel`) to generate the needed tables](https://gitlab.com/honeyryderchuck/roda-oauth/-/tree/master/test/migrate) (omit the first 2 if you already have account tables).
@@ -101,6 +126,7 @@ Once you set it up, by default, the following endpoints will be available:
 * `GET /oauth-authorize`: Loads the OAuth authorization HTML form;
 * `POST /oauth-authorize`: Responds to an OAuth authorization request, as [per the spec](https://tools.ietf.org/html/rfc6749#section-4);
 * `POST /oauth-token`: Generates OAuth tokens as [per the spec](https://tools.ietf.org/html/rfc6749#section-4.4.2);
+* `POST /oauth-revoke`: Revokes OAuth tokens as [per the spec](https://tools.ietf.org/html/rfc7009);
 
 ### OAuth applications
 
@@ -120,6 +146,7 @@ This will define the following endpoints:
 
 * `GET /oauth-applications`: returns the OAuth applications HTML dashboard;
 * `GET /oauth-applications/{application_id}`: returns an OAuth application HTML page;
+* `GET /oauth-applications/{application_id}/oauth-tokens`: returns the OAuth tokens from an OAuth application HTML page;
 * `GET /oauth-applications/new`: returns a new OAuth application form;
 * `POST /oauth-applications`: processes a new OAuth application request;
 
@@ -128,6 +155,7 @@ As in the OAuth authorization form example, you'll have to define the following 
 * `oauth_applications.(erb|str|...)`: the list of OAuth applications;
 * `oauth_application.(erb|str|...)`: the OAuth application page;
 * `new_oauth_application.(erb|str|...)`: the new OAuth application form;
+* `oauth_tokens.(erb|str|...)`: the list of OAuth tokens from an application;
 
 ## Development
 

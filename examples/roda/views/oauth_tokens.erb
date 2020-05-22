@@ -1,0 +1,38 @@
+<% tokens_count = @oauth_tokens.count %>
+<div>
+  <% if tokens_count.zero? %>
+    <p>No oauth tokens yet!</p>
+  <% else %>
+    <table class="table">
+      <thead>
+        <tr>
+          <th scope="col">Token</th>
+          <th scope="col">Refresh Token</th>
+          <th scope="col">Expires in</th>
+          <th scope="col">Revoke</th>
+          <th scope="col"><span class="badge badge-pill badge-dark"><%= tokens_count %></span>
+        </tr>
+      </thead>
+      <tbody>
+        <% @oauth_tokens.each do |oauth_token| %>
+          <tr>
+            <td><%= oauth_token[:token] %></td>
+            <td><%= oauth_token[:refresh_token] %></td>
+            <td><%= oauth_token[:expires_in] %></td>
+            <td><%= oauth_token[:revoked_at] %></td>
+            <td>
+              <% if !oauth_token[:revoked_at] %>
+                <form method="post" action="<%= rodauth.oauth_revoke_path %>" class="form-horizontal" role="form" id="login-form">
+                  <%== csrf_tag(rodauth.oauth_revoke_path) if respond_to?(:csrf_tag) %>
+                  <input type="hidden" name="token_type_hint" value="access_token" />
+                  <input type="hidden" name="token" value="<%= oauth_token[:token] %>" />
+                  <input type="submit" class="btn btn-danger" value="Revoke"/>
+                </form>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% end %>
+</div>

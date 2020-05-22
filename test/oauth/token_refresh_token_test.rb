@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthTokenRefreshTokenTest < RodauthTest
+class RodaOauthRefreshTokenTest < RodauthTest
   include Rack::Test::Methods
 
   def test_token_refresh_token_no_token
@@ -60,5 +60,10 @@ class RodaOauthTokenRefreshTokenTest < RodauthTest
 
   def login
     header "Authorization", "Basic #{authorization_header}"
+  end
+
+  def setup_application
+    super
+    header "Accept", "application/json"
   end
 end

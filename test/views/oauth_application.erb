@@ -1,18 +1,18 @@
 <div>
-  <h1><%= rodauth.oauth_application[:name] %></h1>
+  <h1><%= @oauth_application[:name] %></h1>
 
   <dl>
     <dt>Description: </dt>
-    <dd><%= rodauth.oauth_application[:description] %></dd>
+    <dd><%= @oauth_application[:description] %></dd>
     <dt>Homepage URL: </dt>
-    <dd><%= rodauth.oauth_application[:homepage_url] %></dd>
+    <dd><%= @oauth_application[:homepage_url] %></dd>
     <dt>Client ID: </dt>
-    <dd><%= rodauth.oauth_application[:client_id] %></dd>
+    <dd><%= @oauth_application[:client_id] %></dd>
     <dt>Client Secret: </dt>
-    <dd><%= rodauth.oauth_application[:client_secret] %></dd>
+    <dd><%= @oauth_application[:client_secret] %></dd>
     <dt>Callback URL: </dt>
-    <dd><%= rodauth.oauth_application[:redirect_uri] %></dd>
+    <dd><%= @oauth_application[:redirect_uri] %></dd>
     <dt>Scopes: </dt>
-    <dd><%= rodauth.oauth_application[:scopes] %></dd>
+    <dd><%= @oauth_application[:scopes] %></dd>
   </dl>
 </div>

@@ -149,6 +149,7 @@ class RodauthTest < Minitest::Test
   def oauth_token(params = {})
     @oauth_token ||= begin
       id = DB[:oauth_tokens].insert({
+        account_id: account[:id],
         oauth_application_id: oauth_application[:id],
         oauth_grant_id: oauth_grant[:id],
         token: "TOKEN",

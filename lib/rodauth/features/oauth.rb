@@ -13,6 +13,9 @@ module Rodauth
     before "token"
     after "token"
 
+    before "revoke"
+    after "revoke"
+
     before "create_oauth_application"
     after "create_oauth_application"
 
@@ -22,10 +25,13 @@ module Rodauth
     error_flash "There was an error registering your oauth application", "create_oauth_application"
     notice_flash "Your oauth application has been registered", "create_oauth_application"
 
+    notice_flash "The oauth token has been revoked", "revoke_oauth_token"
+
     view "oauth_authorize", "Authorize", "authorize"
     view "oauth_applications", "Oauth Applications", "oauth_applications"
     view "oauth_application", "Oauth Application", "oauth_application"
     view "new_oauth_application", "New Oauth Application", "new_oauth_application"
+    view "oauth_tokens", "Oauth Tokens", "oauth_tokens"
 
     auth_value_method :json_response_content_type, "application/json"
 
@@ -35,7 +41,7 @@ module Rodauth
     # URL PARAMS
 
     # Authorize / token
-    %w[grant_type code refresh_token client_id scope state redirect_uri scopes].each do |param|
+    %w[grant_type code refresh_token client_id scope state redirect_uri scopes token_type_hint token].each do |param|
       auth_value_method :"#{param}_param", param
     end
 
@@ -48,11 +54,12 @@ module Rodauth
     end
 
     # OAuth Token
+    auth_value_method :oauth_tokens_path, "oauth-tokens"
     auth_value_method :oauth_tokens_table, :oauth_tokens
     auth_value_method :oauth_tokens_id_column, :id
 
     %i[
-      oauth_application_id oauth_token_id oauth_grant_id
+      oauth_application_id oauth_token_id oauth_grant_id account_id
       token refresh_token scopes
       expires_in revoked_at
     ].each do |column|
@@ -101,17 +108,13 @@ module Rodauth
     auth_value_method :invalid_scope_message, "Invalid scope"
 
     auth_value_method :invalid_url_message, "Invalid URL"
+    auth_value_method :unsupported_token_type_message, "Invalid token type hint"
 
     auth_value_method :unique_error_message, "is already in use"
     auth_value_method :null_error_message, "is not filled"
 
     auth_value_methods(
-      :oauth_unique_id_generator,
-      :state,
-      :oauth_application,
-      :redirect_uri,
-      :client_id,
-      :scopes
+      :oauth_unique_id_generator
     )
 
     redirect(:oauth_application) do |id|
@@ -130,7 +133,14 @@ module Rodauth
     auth_methods(:json_request?)
 
     def check_csrf?
-      super && request.path != oauth_token_path
+      case request.path
+      when oauth_token_path
+        false
+      when oauth_revoke_path
+        !json_request?
+      else
+        super
+      end
     end
 
     # Overrides logged_in?, so that a valid authorization token also authnenticates a request
@@ -180,6 +190,22 @@ module Rodauth
       return oauth_application[oauth_applications_redirect_uri_column] unless redirect_uri && !redirect_uri.empty?
 
       redirect_uri
+    end
+
+    def token_type_hint
+      token_type_hint = param(token_type_hint_param)
+
+      return "access_token" unless token_type_hint && !token_type_hint.empty?
+
+      token_type_hint
+    end
+
+    def token
+      token = param(token_param)
+
+      return unless token && !token.empty?
+
+      token
     end
 
     def oauth_application
@@ -233,14 +259,27 @@ module Rodauth
           new_oauth_application_view
         end
         request.on(oauth_applications_id_pattern) do |id|
-          request.get do
-            @oauth_application = db[oauth_applications_table].where(oauth_applications_id_column => id).first
-            oauth_application_view
+          oauth_application = db[oauth_applications_table].where(oauth_applications_id_column => id).first
+          scope.instance_variable_set(:@oauth_application, oauth_application)
+
+          request.is do
+            request.get do
+              oauth_application_view
+            end
+          end
+
+          request.on(oauth_tokens_path) do
+            oauth_tokens = db[oauth_tokens_table].where(oauth_tokens_oauth_application_id_column => id)
+            scope.instance_variable_set(:@oauth_tokens, oauth_tokens)
+            oauth_tokens_view
           end
         end
+
         request.get do
+          scope.instance_variable_set(:@oauth_applications, db[:oauth_applications])
           oauth_applications_view
         end
+
         request.post do
           catch_error do
             validate_oauth_application_params
@@ -263,10 +302,6 @@ module Rodauth
 
     def oauth_unique_id_generator
       SecureRandom.uuid
-    end
-
-    def require_oauth_application_account
-      throw_json_response_error(authorization_required_error_status, "invalid_client") unless logged_in?
     end
 
     # Oauth Application
@@ -383,20 +418,20 @@ module Rodauth
     # Access Tokens
 
     def validate_oauth_token_params
-      throw_json_response_error(invalid_oauth_response_status, "invalid_request") unless param(client_id_param)
+      redirect_response_error("invalid_request") unless param(client_id_param)
 
       unless (grant_type = param(grant_type_param))
-        throw_json_response_error(invalid_oauth_response_status, "invalid_request")
+        redirect_response_error("invalid_request")
       end
 
       case grant_type
       when "authorization_code"
-        throw_json_response_error(invalid_oauth_response_status, "invalid_request") unless param(code_param)
+        redirect_response_error("invalid_request") unless param(code_param)
 
       when "refresh_token"
-        throw_json_response_error(invalid_oauth_response_status, "invalid_request") unless param(refresh_token_param)
+        redirect_response_error("invalid_request") unless param(refresh_token_param)
       else
-        throw_json_response_error(invalid_oauth_response_status, "invalid_request")
+        redirect_response_error("invalid_request")
       end
     end
 
@@ -415,9 +450,10 @@ module Rodauth
                                             .where(oauth_grants_revoked_at_column => nil)
                                             .first
 
-        throw_json_response_error(invalid_oauth_response_status, "invalid_grant") unless oauth_grant
+        redirect_response_error("invalid_grant") unless oauth_grant
 
         create_params = {
+          oauth_tokens_account_id_column => oauth_grant[oauth_grants_account_id_column],
           oauth_tokens_oauth_application_id_column => oauth_grant[oauth_grants_oauth_application_id_column],
           oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column],
           oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column],
@@ -453,7 +489,7 @@ module Rodauth
         ).where(oauth_grants_revoked_at_column => nil)
                                             .first
 
-        throw_json_response_error(invalid_oauth_response_status, "invalid_grant") unless oauth_token
+        redirect_response_error("invalid_grant") unless oauth_token
 
         update_params = {
           oauth_tokens_oauth_application_id_column => oauth_token[oauth_grants_oauth_application_id_column],
@@ -473,16 +509,81 @@ module Rodauth
           retry
         end
       else
-        throw_json_response_error(invalid_grant_status, "invalid_grant")
+        redirect_response_error("invalid_grant")
       end
     end
 
+    # Token revocation
+
+    TOKEN_HINT_TYPES = %w[access_token refresh_token].freeze
+
+    def validate_oauth_revoke_params
+      # check if valid token hint type
+      redirect_response_error("unsupported_token_type") unless TOKEN_HINT_TYPES.include?(token_type_hint)
+
+      redirect_response_error("invalid_request") unless param(token_param)
+    end
+
+    def revoke_oauth_token
+      # one can only revoke tokens which haven't been revoked before, and which are
+      # either our tokens, or tokens from applications we own.
+      ds = db[oauth_tokens_table]
+           .where(oauth_tokens_revoked_at_column => nil)
+           .where(
+             Sequel.or(
+               oauth_tokens_account_id_column => account_id,
+               oauth_tokens_oauth_application_id_column => db[oauth_applications_table].where(
+                 oauth_applications_client_id_column => param(client_id_param),
+                 oauth_applications_account_id_column => account_id
+               ).select(oauth_applications_id_column)
+             )
+           )
+      ds = case token_type_hint
+           when "access_token"
+             ds.where(oauth_tokens_token_column => token)
+           when "refresh_token"
+             ds.where(oauth_tokens_refresh_token_column => token)
+           end
+
+      oauth_token = ds.first
+      redirect_response_error("invalid_request") unless oauth_token
+
+      update_params = { oauth_tokens_revoked_at_column => Sequel::CURRENT_TIMESTAMP }
+
+      ds = db[oauth_tokens_table].where(oauth_tokens_id_column => oauth_token[oauth_tokens_id_column])
+
+      if ds.supports_returning?(:update)
+        ds.returning.update(update_params)
+      else
+        ds.update(update_params)
+        ds.first
+      end
+
+      # If the particular
+      # token is a refresh token and the authorization server supports the
+      # revocation of access tokens, then the authorization server SHOULD
+      # also invalidate all access tokens based on the same authorization
+      # grant
+      #
+      # we don't need to do anything here, as we revalidate existing tokens
+    end
+
+    # Response helpers
+
     def redirect_response_error(error_code)
-      redirect_url = URI.parse(request.referer || default_redirect)
-      query_params = ["error=#{error_code}"]
-      query_params << redirect_url.query if redirect_url.query
-      redirect_url.query = query_params.join("&")
-      redirect(redirect_url.to_s)
+      if json_request?
+        throw_json_response_error(invalid_oauth_response_status, error_code)
+      else
+        redirect_url = URI.parse(request.referer || default_redirect)
+        query_params = ["error=#{error_code}"]
+        if respond_to?(:"#{error_code}_message")
+          message = send(:"#{error_code}_message")
+          query_params << ["error_description=#{CGI.escape(message)}"]
+        end
+        query_params << redirect_url.query if redirect_url.query
+        redirect_url.query = query_params.join("&")
+        redirect(redirect_url.to_s)
+      end
     end
 
     def throw_json_response_error(status, error_code)
@@ -514,8 +615,9 @@ module Rodauth
       redirect_uri == oauth_application[oauth_applications_redirect_uri_column]
     end
 
+    # /oauth-token
     route(:oauth_token) do |r|
-      require_oauth_application_account
+      throw_json_response_error(authorization_required_error_status, "invalid_client") unless logged_in?
 
       # access-token
       r.post do
@@ -541,10 +643,47 @@ module Rodauth
           request.halt
         end
 
-        throw_json_response_error(json_response_content_type, "invalid_request")
+        throw_json_response_error(invalid_oauth_response_status, "invalid_request")
       end
     end
 
+    # /oauth-revoke
+    route(:oauth_revoke) do |r|
+      require_account
+
+      # access-token
+      r.post do
+        catch_error do
+          validate_oauth_revoke_params
+
+          oauth_token = nil
+          transaction do
+            before_revoke
+            oauth_token = revoke_oauth_token
+            after_revoke
+          end
+
+          if json_request?
+            response.status = 200
+            response["Content-Type"] ||= json_response_content_type
+            json_response = {
+              "token" => oauth_token[:token],
+              "refresh_token" => oauth_token[:refresh_token],
+              "revoked_at" => oauth_token[:revoked_at]
+            }
+            response.write(request.__send__(:convert_to_json, json_response))
+            request.halt
+          else
+            set_notice_flash revoke_oauth_token_notice_flash
+            redirect request.referer || "/"
+          end
+        end
+
+        throw_json_response_error(invalid_oauth_response_status, "invalid_request")
+      end
+    end
+
+    # /oauth-authorize
     route(:oauth_authorize) do |r|
       require_account
 
