@@ -1,4 +1,4 @@
-<%% apps_count = DB[:oauth_applications].count %>
+<%% apps_count = rodauth.db[rodauth.oauth_applications_table].count %>
 <div class="btn-group" role="group" aria-label="Buttons">
   <%%= link_to "New Oauth Application", rodauth.oauth_applications_new_path, class: "btn btn-secondary" %>
 </div>
@@ -15,12 +15,12 @@
       </tr>
     </thead>
     <tbody>
-      <%% DB[:oauth_applications].each do |application| %>
+      <%% rodauth.db[rodauth.oauth_applications_table].each do |application| %>
         <tr>
-          <td><%%= application[:client_id] %></td>
-          <td><%%= application[:name] %></td>
-          <td><%%= application[:homepage_url] %></td>
-          <td><%%= link_to "Show",  rodauth.oauth_application_path(application[:id]) %></td>
+          <td><%%= application[rodauth.oauth_applications_client_id_column] %></td>
+          <td><%%= application[rodauth.oauth_applications_name_column] %></td>
+          <td><%%= application[rodauth.oauth_applications_homepage_url_column] %></td>
+          <td><%%= link_to "Show",  rodauth.oauth_application_path(application[rodauth.oauth_applications_id_column]) %></td>
         </tr>
       <%% end %>
     </tbody>

@@ -1,19 +1,19 @@
-<%%=form_tag rodauth.oauth_authorize_path, method: :post do %>
-  <h2>The application <%%= rodauth.oauth_application[:name] %> would like to access your data.</h2>
+<%%= form_tag rodauth.oauth_authorize_path, method: :post do %>
+  <h2>The application <%%= rodauth.oauth_application[rodauth.oauth_applications_name_column] %> would like to access your data.</h2>
 
   <div class="form-group">
     <h3>Requested grants:</h3>
 
-    <%% rodauth.oauth_application[:scopes].split(",").each do |scope| %>
+    <%% rodauth.oauth_application[rodauth.oauth_applications_scopes_column].split(",").each do |scope| %>
       <%% is_default = scope == rodauth.oauth_application_default_scope %>
       <div class="form-check">
         <%%= check_box_tag scope, scope, is_default, disabled: is_default, class: "form-check-input" %>
         <%%= label_tag scope, scope, class: "form-check-label" %>
       </div>
     <%% end %>
-    <%%= hidden_field_tag :client_id, rodauth.client_id %>
-    <%%= hidden_field_tag :state, rodauth.state %>
-    <%%= hidden_field_tag :redirect_uri, rodauth.redirect_uri %>
+    <%%= hidden_field_tag rodauth.client_id_param, rodauth.client_id %>
+    <%%= hidden_field_tag rodauth.state_param, rodauth.state %>
+    <%%= hidden_field_tag rodauth.redirect_uri_param, rodauth.redirect_uri %>
   </div>
   <div class="form-group">
     <%%= submit_tag "Authorize", class: "btn btn-primary" %>
