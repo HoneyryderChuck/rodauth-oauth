@@ -68,4 +68,9 @@ class RodaOauthTokenRevokeTest < RodauthTest
   def login
     header "Authorization", "Basic #{authorization_header}"
   end
+
+  def setup_application
+    super
+    header "Accept", "application/json"
+  end
 end
