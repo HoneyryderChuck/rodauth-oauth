@@ -2,6 +2,18 @@
 
 module Rodauth
   Feature.define(:oauth, :OAuth) do
+    # RUBY EXTENSIONS
+    unless Regexp.method_defined?(:match?)
+      module RegexpExtensions
+        refine(Regexp) do
+          def match?(*args)
+            !match(*args).nil?
+          end
+        end
+      end
+      using(RegexpExtensions)
+    end
+
     SCOPES = %w[profile.read].freeze
 
     depends :login
@@ -37,6 +49,7 @@ module Rodauth
 
     auth_value_method :oauth_grant_expires_in, 60 * 5 # 5 minutes
     auth_value_method :oauth_token_expires_in, 60 * 60 # 60 minutes
+    auth_value_method :use_oauth_implicit_grant_type, false
 
     # URL PARAMS
 
@@ -44,7 +57,7 @@ module Rodauth
     %w[
       grant_type code refresh_token client_id scope
       state redirect_uri scopes token_type_hint token
-      access_type
+      access_type response_type
     ].each do |param|
       auth_value_method :"#{param}_param", param
     end
@@ -445,6 +458,26 @@ module Rodauth
       end
     end
 
+    def generate_oauth_token(params = {})
+      create_params = {
+        oauth_grants_expires_in_column => Time.now + oauth_token_expires_in,
+        oauth_tokens_token_column => oauth_unique_id_generator
+      }.merge(params)
+
+      ds = db[oauth_tokens_table]
+
+      begin
+        if ds.supports_returning?(:insert)
+          ds.returning.insert(create_params)
+        else
+          id = ds.insert(create_params)
+          ds.where(oauth_tokens_id_column => id).first
+        end
+      rescue Sequel::UniqueConstraintViolation
+        retry
+      end
+    end
+
     def create_oauth_token
       case param(grant_type_param)
       when "authorization_code"
@@ -466,9 +499,7 @@ module Rodauth
           oauth_tokens_account_id_column => oauth_grant[oauth_grants_account_id_column],
           oauth_tokens_oauth_application_id_column => oauth_grant[oauth_grants_oauth_application_id_column],
           oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column],
-          oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column],
-          oauth_grants_expires_in_column => Time.now + oauth_token_expires_in,
-          oauth_tokens_token_column => oauth_unique_id_generator
+          oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column]
         }
 
         if oauth_grant[oauth_grants_access_type_column] == "offline"
@@ -478,18 +509,7 @@ module Rodauth
         db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column])
                               .update(oauth_grants_revoked_at_column => Sequel::CURRENT_TIMESTAMP)
 
-        ds = db[oauth_tokens_table]
-
-        begin
-          if ds.supports_returning?(:insert)
-            ds.returning.insert(create_params)
-          else
-            id = ds.insert(create_params)
-            ds.where(oauth_tokens_id_column => id).first
-          end
-        rescue Sequel::UniqueConstraintViolation
-          retry
-        end
+        generate_oauth_token(create_params)
       when "refresh_token"
         # fetch oauth grant
         oauth_token = db[oauth_tokens_table].where(
@@ -498,8 +518,7 @@ module Rodauth
             oauth_applications_client_id_column => param(client_id_param),
             oauth_applications_account_id_column => account_id
           ).select(oauth_applications_id_column)
-        ).where(oauth_grants_revoked_at_column => nil)
-                                            .first
+        ).where(oauth_grants_revoked_at_column => nil).first
 
         redirect_response_error("invalid_grant") unless oauth_token
 
@@ -582,11 +601,11 @@ module Rodauth
 
     # Response helpers
 
-    def redirect_response_error(error_code)
+    def redirect_response_error(error_code, redirect_url = request.referer || default_redirect)
       if json_request?
         throw_json_response_error(invalid_oauth_response_status, error_code)
       else
-        redirect_url = URI.parse(request.referer || default_redirect)
+        redirect_url = URI.parse(redirect_url)
         query_params = ["error=#{error_code}"]
         if respond_to?(:"#{error_code}_message")
           message = send(:"#{error_code}_message")
@@ -632,6 +651,16 @@ module Rodauth
     def check_valid_access_type?
       access_type = param("access_type")
       access_type.empty? || ACCESS_TYPES.include?(access_type)
+    end
+
+    def check_valid_response_type?
+      response_type = param("response_type")
+
+      return true if response_type.empty? || response_type == "code"
+
+      return use_oauth_implicit_grant_type if response_type == "token"
+
+      false
     end
 
     # /oauth-token
@@ -717,14 +746,32 @@ module Rodauth
         validate_oauth_grant_params
 
         code = nil
+        query_params = []
+
         transaction do
           before_authorize
-          code = create_oauth_grant
+          case param(response_type_param)
+          when "token"
+            redirect_response_error("invalid_request", redirect_uri) unless use_oauth_implicit_grant_type
+
+            create_params = {
+              oauth_tokens_account_id_column => account_id,
+              oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+              oauth_tokens_scopes_column => scopes
+            }
+            oauth_token = generate_oauth_token(create_params)
+
+            query_params << ["access_token=#{oauth_token[:token]}"]
+          when "code", "", nil
+            code = create_oauth_grant
+            query_params << ["code=#{code}"]
+          else
+            redirect_response_error("invalid_request")
+          end
           after_authorize
         end
 
         redirect_url = URI.parse(redirect_uri)
-        query_params = ["code=#{code}"]
         query_params << "state=#{state}" if state
         query_params << redirect_url.query if redirect_url.query
         redirect_url.query = query_params.join("&")

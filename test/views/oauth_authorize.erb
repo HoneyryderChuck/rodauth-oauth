@@ -1,12 +1,15 @@
 <form method="post" class="form-horizontal" role="form" id="login-form">
   <%=  csrf_tag(rodauth.oauth_authorize_path) if respond_to?(:csrf_tag) %>
-  <p>Grants: <%= rodauth.param('lp') %></p>
+  <p>Grants: <%= rodauth.scopes.join(", ") %></p>
   <input type="hidden" name="client_id" value="<%= rodauth.client_id %>"/>
   <input type="hidden" name="scope" value="<%= rodauth.scopes %>"/>
   <input type="hidden" name="state" value="<%= rodauth.state %>"/>
   <input type="hidden" name="redirect_uri" value="<%= rodauth.redirect_uri %>"/>
   <% if rodauth.param("access_type") %>
     <input type="hidden" name="access_type" value="<%= rodauth.param("access_type") %>"/>
+  <% end %>
+  <% if !rodauth.param("response_type").empty? %>
+    <input type="hidden" name="response_type" value="<%= rodauth.param("response_type") %>"/>
   <% end %>
   <div class="form-group">
     <div class="col-sm-offset-2 col-sm-10">

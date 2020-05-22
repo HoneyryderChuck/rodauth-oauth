@@ -114,4 +114,45 @@ class RodaOauthAuthorizeTest < RodauthTest
     assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{oauth_grant[:code]}&state=STATE",
            "was redirected instead to #{page.current_url}"
   end
+
+  def test_authorize_post_authorize_no_implicit_grant
+    setup_application
+    login
+
+    # show the authorization form
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scopes=user.read+user.write&response_type=token"
+    assert page.current_path == "/oauth-authorize",
+           "was redirected instead to #{page.current_path}"
+
+    # submit authorization request
+    click_button "Authorize"
+
+    assert page.current_url.include?("?error=invalid_request"),
+           "was redirected instead to #{page.current_url}"
+  end
+
+  def test_authorize_post_authorize_with_implicit_grant
+    rodauth do
+      use_oauth_implicit_grant_type true
+    end
+    setup_application
+
+    login
+
+    # show the authorization form
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&&response_type=token"
+    assert page.current_path == "/oauth-authorize",
+           "was redirected instead to #{page.current_path}"
+
+    # submit authorization request
+    click_button "Authorize"
+
+    assert DB[:oauth_tokens].count == 1,
+           "no token has been created"
+
+    oauth_token = DB[:oauth_tokens].first
+
+    assert page.current_url == "#{oauth_application[:redirect_uri]}?access_token=#{oauth_token[:token]}",
+           "was redirected instead to #{page.current_url}"
+  end
 end

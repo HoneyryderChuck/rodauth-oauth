@@ -54,7 +54,7 @@ class RodauthTest < Minitest::Test
   end
 
   def rodauth(&block)
-    @rodauth_block = block
+    (@rodauth_blocks ||= []) << block
   end
 
   def rodauth_opts(type = {})
@@ -68,13 +68,15 @@ class RodauthTest < Minitest::Test
     app.opts[:unsupported_block_result] = :raise
     app.opts[:unsupported_matcher] = :raise
     app.opts[:verbatim_string_matcher] = true
-    rodauth_block = @rodauth_block
+    rodauth_blocks = @rodauth_blocks
     opts = rodauth_opts(type)
 
     opts[:json] = jwt_only ? :only : true
 
     app.plugin(:rodauth, opts) do
-      instance_exec(&rodauth_block)
+      rodauth_blocks.reverse_each do |rodauth_block|
+        instance_exec(&rodauth_block)
+      end
     end
     app.route(&block)
     app.precompile_rodauth_templates unless @no_precompile
