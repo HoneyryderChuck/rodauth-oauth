@@ -133,7 +133,14 @@ module Rodauth
     auth_methods(:json_request?)
 
     def check_csrf?
-      super && (request.path != oauth_token_path && request.path != oauth_revoke_path)
+      case request.path
+      when oauth_token_path
+        false
+      when oauth_revoke_path
+        !json_request?
+      else
+        super
+      end
     end
 
     # Overrides logged_in?, so that a valid authorization token also authnenticates a request
