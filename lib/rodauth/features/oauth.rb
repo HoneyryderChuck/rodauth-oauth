@@ -114,12 +114,7 @@ module Rodauth
     auth_value_method :null_error_message, "is not filled"
 
     auth_value_methods(
-      :oauth_unique_id_generator,
-      :state,
-      :oauth_application,
-      :redirect_uri,
-      :client_id,
-      :scopes
+      :oauth_unique_id_generator
     )
 
     redirect(:oauth_application) do |id|
@@ -307,10 +302,6 @@ module Rodauth
 
     def oauth_unique_id_generator
       SecureRandom.uuid
-    end
-
-    def require_oauth_application_account
-      throw_json_response_error(authorization_required_error_status, "invalid_client") unless logged_in?
     end
 
     # Oauth Application
@@ -626,7 +617,7 @@ module Rodauth
 
     # /oauth-token
     route(:oauth_token) do |r|
-      require_oauth_application_account
+      throw_json_response_error(authorization_required_error_status, "invalid_client") unless logged_in?
 
       # access-token
       r.post do
