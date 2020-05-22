@@ -1,4 +1,4 @@
-<% apps_count = DB[:oauth_applications].count %>
+<% apps_count = @oauth_applications.count %>
 <div>
   <h2>Oauth applications (<%= apps_count %>)</h2>
   <a href="/oauth-applications/new">Register new Oauth Application</a>
@@ -6,7 +6,7 @@
     <p>No oauth applications yet!</p>
   <% else %>
     <ul>
-      <% DB[:oauth_applications].each do |application| %>
+      <% @oauth_applications.each do |application| %>
         <li><a href="/oauth-applications/<%= application[:id ] %>"><%= application[:name] %></a></li>
       <% end %>
     </ul>

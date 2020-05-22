@@ -25,10 +25,13 @@ module Rodauth
     error_flash "There was an error registering your oauth application", "create_oauth_application"
     notice_flash "Your oauth application has been registered", "create_oauth_application"
 
+    notice_flash "The oauth token has been revoked", "revoke_oauth_token"
+
     view "oauth_authorize", "Authorize", "authorize"
     view "oauth_applications", "Oauth Applications", "oauth_applications"
     view "oauth_application", "Oauth Application", "oauth_application"
     view "new_oauth_application", "New Oauth Application", "new_oauth_application"
+    view "oauth_tokens", "Oauth Tokens", "oauth_tokens"
 
     auth_value_method :json_response_content_type, "application/json"
 
@@ -51,6 +54,7 @@ module Rodauth
     end
 
     # OAuth Token
+    auth_value_method :oauth_tokens_path, "oauth-tokens"
     auth_value_method :oauth_tokens_table, :oauth_tokens
     auth_value_method :oauth_tokens_id_column, :id
 
@@ -104,6 +108,7 @@ module Rodauth
     auth_value_method :invalid_scope_message, "Invalid scope"
 
     auth_value_method :invalid_url_message, "Invalid URL"
+    auth_value_method :unsupported_token_type_message, "Invalid token type hint"
 
     auth_value_method :unique_error_message, "is already in use"
     auth_value_method :null_error_message, "is not filled"
@@ -259,14 +264,27 @@ module Rodauth
           new_oauth_application_view
         end
         request.on(oauth_applications_id_pattern) do |id|
-          request.get do
-            @oauth_application = db[oauth_applications_table].where(oauth_applications_id_column => id).first
-            oauth_application_view
+          oauth_application = db[oauth_applications_table].where(oauth_applications_id_column => id).first
+          scope.instance_variable_set(:@oauth_application, oauth_application)
+
+          request.is do
+            request.get do
+              oauth_application_view
+            end
+          end
+
+          request.on(oauth_tokens_path) do
+            oauth_tokens = db[oauth_tokens_table].where(oauth_tokens_oauth_application_id_column => id)
+            scope.instance_variable_set(:@oauth_tokens, oauth_tokens)
+            oauth_tokens_view
           end
         end
+
         request.get do
+          scope.instance_variable_set(:@oauth_applications, db[:oauth_applications])
           oauth_applications_view
         end
+
         request.post do
           catch_error do
             validate_oauth_application_params
