@@ -46,7 +46,7 @@ class RodaOauthAuthorizeTest < RodauthTest
     visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}& "\
           "redirect_uri=#{oauth_application[:redirect_uri]}&" \
           "scopes=marvel"
-    assert page.current_url.end_with?("/?error=invalid_scope"),
+    assert page.current_url.include?("?error=invalid_scope"),
            "was redirected instead to #{page.current_url}"
   end
 

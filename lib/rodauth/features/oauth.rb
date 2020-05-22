@@ -427,20 +427,20 @@ module Rodauth
     # Access Tokens
 
     def validate_oauth_token_params
-      throw_json_response_error(invalid_oauth_response_status, "invalid_request") unless param(client_id_param)
+      redirect_response_error("invalid_request") unless param(client_id_param)
 
       unless (grant_type = param(grant_type_param))
-        throw_json_response_error(invalid_oauth_response_status, "invalid_request")
+        redirect_response_error("invalid_request")
       end
 
       case grant_type
       when "authorization_code"
-        throw_json_response_error(invalid_oauth_response_status, "invalid_request") unless param(code_param)
+        redirect_response_error("invalid_request") unless param(code_param)
 
       when "refresh_token"
-        throw_json_response_error(invalid_oauth_response_status, "invalid_request") unless param(refresh_token_param)
+        redirect_response_error("invalid_request") unless param(refresh_token_param)
       else
-        throw_json_response_error(invalid_oauth_response_status, "invalid_request")
+        redirect_response_error("invalid_request")
       end
     end
 
@@ -459,7 +459,7 @@ module Rodauth
                                             .where(oauth_grants_revoked_at_column => nil)
                                             .first
 
-        throw_json_response_error(invalid_oauth_response_status, "invalid_grant") unless oauth_grant
+        redirect_response_error("invalid_grant") unless oauth_grant
 
         create_params = {
           oauth_tokens_account_id_column => oauth_grant[oauth_grants_account_id_column],
@@ -498,7 +498,7 @@ module Rodauth
         ).where(oauth_grants_revoked_at_column => nil)
                                             .first
 
-        throw_json_response_error(invalid_oauth_response_status, "invalid_grant") unless oauth_token
+        redirect_response_error("invalid_grant") unless oauth_token
 
         update_params = {
           oauth_tokens_oauth_application_id_column => oauth_token[oauth_grants_oauth_application_id_column],
@@ -518,7 +518,7 @@ module Rodauth
           retry
         end
       else
-        throw_json_response_error(invalid_grant_status, "invalid_grant")
+        redirect_response_error("invalid_grant")
       end
     end
 
@@ -528,11 +528,9 @@ module Rodauth
 
     def validate_oauth_revoke_params
       # check if valid token hint type
-      unless TOKEN_HINT_TYPES.include?(token_type_hint)
-        throw_json_response_error(invalid_oauth_response_status, "unsupported_token_type")
-      end
+      redirect_response_error("unsupported_token_type") unless TOKEN_HINT_TYPES.include?(token_type_hint)
 
-      throw_json_response_error(invalid_oauth_response_status, "invalid_request") unless param(token_param)
+      redirect_response_error("invalid_request") unless param(token_param)
     end
 
     def revoke_oauth_token
@@ -557,7 +555,7 @@ module Rodauth
            end
 
       oauth_token = ds.first
-      throw_json_response_error(invalid_oauth_response_status, "invalid_request") unless oauth_token
+      redirect_response_error("invalid_request") unless oauth_token
 
       update_params = { oauth_tokens_revoked_at_column => Sequel::CURRENT_TIMESTAMP }
 
@@ -582,11 +580,19 @@ module Rodauth
     # Response helpers
 
     def redirect_response_error(error_code)
-      redirect_url = URI.parse(request.referer || default_redirect)
-      query_params = ["error=#{error_code}"]
-      query_params << redirect_url.query if redirect_url.query
-      redirect_url.query = query_params.join("&")
-      redirect(redirect_url.to_s)
+      if json_request?
+        throw_json_response_error(invalid_oauth_response_status, error_code)
+      else
+        redirect_url = URI.parse(request.referer || default_redirect)
+        query_params = ["error=#{error_code}"]
+        if respond_to?(:"#{error_code}_message")
+          message = send(:"#{error_code}_message")
+          query_params << ["error_description=#{CGI.escape(message)}"]
+        end
+        query_params << redirect_url.query if redirect_url.query
+        redirect_url.query = query_params.join("&")
+        redirect(redirect_url.to_s)
+      end
     end
 
     def throw_json_response_error(status, error_code)
@@ -646,7 +652,7 @@ module Rodauth
           request.halt
         end
 
-        throw_json_response_error(json_response_content_type, "invalid_request")
+        throw_json_response_error(invalid_oauth_response_status, "invalid_request")
       end
     end
 
@@ -666,18 +672,23 @@ module Rodauth
             after_revoke
           end
 
-          response.status = 200
-          response["Content-Type"] ||= json_response_content_type
-          json_response = {
-            "token" => oauth_token[:token],
-            "refresh_token" => oauth_token[:refresh_token],
-            "revoked_at" => oauth_token[:revoked_at]
-          }
-          response.write(request.__send__(:convert_to_json, json_response))
-          request.halt
+          if json_request?
+            response.status = 200
+            response["Content-Type"] ||= json_response_content_type
+            json_response = {
+              "token" => oauth_token[:token],
+              "refresh_token" => oauth_token[:refresh_token],
+              "revoked_at" => oauth_token[:revoked_at]
+            }
+            response.write(request.__send__(:convert_to_json, json_response))
+            request.halt
+          else
+            set_notice_flash revoke_oauth_token_notice_flash
+            redirect request.referer || "/"
+          end
         end
 
-        throw_json_response_error(json_response_content_type, "invalid_request")
+        throw_json_response_error(invalid_oauth_response_status, "invalid_request")
       end
     end
 
