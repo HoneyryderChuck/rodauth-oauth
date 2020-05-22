@@ -747,6 +747,7 @@ module Rodauth
 
         code = nil
         query_params = []
+        fragment_params = []
 
         transaction do
           before_authorize
@@ -761,7 +762,9 @@ module Rodauth
             }
             oauth_token = generate_oauth_token(create_params)
 
-            query_params << ["access_token=#{oauth_token[:token]}"]
+            fragment_params << ["access_token=#{oauth_token[:token]}"]
+            fragment_params << ["token_type=#{oauth_token_type}"]
+            fragment_params << ["expires_in=#{oauth_token_expires_in}"]
           when "code", "", nil
             code = create_oauth_grant
             query_params << ["code=#{code}"]
@@ -774,7 +777,8 @@ module Rodauth
         redirect_url = URI.parse(redirect_uri)
         query_params << "state=#{state}" if state
         query_params << redirect_url.query if redirect_url.query
-        redirect_url.query = query_params.join("&")
+        redirect_url.query = query_params.join("&") unless query_params.empty?
+        redirect_url.fragment = fragment_params.join("&") unless fragment_params.empty?
 
         redirect(redirect_url.to_s)
       end
