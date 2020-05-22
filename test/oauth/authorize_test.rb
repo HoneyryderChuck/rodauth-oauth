@@ -127,14 +127,15 @@ class RodaOauthAuthorizeTest < RodauthTest
     # submit authorization request
     click_button "Authorize"
 
-    assert page.current_url.include?("?error=unsupported_grant_type"),
+    assert page.current_url.include?("?error=invalid_request"),
            "was redirected instead to #{page.current_url}"
   end
 
   def test_authorize_post_authorize_with_implicit_grant
-    setup_application do |rodauth|
-      rodauth.use_oauth_implicit_grant_type true
+    rodauth do
+      use_oauth_implicit_grant_type true
     end
+    setup_application
 
     login
 
@@ -147,7 +148,7 @@ class RodaOauthAuthorizeTest < RodauthTest
     click_button "Authorize"
 
     assert DB[:oauth_tokens].count == 1,
-           "no grant has been created"
+           "no token has been created"
 
     oauth_token = DB[:oauth_tokens].first
 
