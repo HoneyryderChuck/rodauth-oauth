@@ -5,6 +5,23 @@
 
 This is an extension to the `rodauth` gem which adds support for the [OAuth 2.0 protocol](https://tools.ietf.org/html/rfc6749).
 
+## Features
+
+This gem implements:
+
+* The OAuth 2.0 protocol framework:
+  * Authorize flow;
+  * Token generation;
+  * Token refresh;
+  * Token revocation;
+  * Implicit grant (off by default);
+* Access Type (Token refresh online and offline);
+* OAuth application and token management dashboards;
+
+
+This gem supports also rails (through [rodauth-rails]((https://github.com/janko/rodauth-rails))).
+
+
 ## Installation
 
 Add this line to your application's Gemfile:
@@ -156,6 +173,67 @@ As in the OAuth authorization form example, you'll have to define the following 
 * `oauth_application.(erb|str|...)`: the OAuth application page;
 * `new_oauth_application.(erb|str|...)`: the new OAuth application form;
 * `oauth_tokens.(erb|str|...)`: the list of OAuth tokens from an application;
+
+## Rails
+
+This library provides a thin integration layer on top of [rodauth-rails](https://github.com/janko/rodauth-rails). Therefore, the first step you'll have to take is to integrate it in your project. Fortunately, it's very straightforward.
+
+You'll have to run the generator task to create the necessary migrations and views:
+
+```
+> bundle exec rails generate rodauth:oauth:install
+# create a migration file into db/migrate
+> bundle exec rails generate rodauth:oauth:views
+# creates view files under app/views/rodauth
+```
+
+You are encouraged to check the output and adapt it to your needs.
+
+You can then enable this feature in `lib/rodauth_app.rb` and set up any options you want:
+
+```ruby
+# lib/roudauth_app.rb
+enable :oauth
+# OAuth
+oauth_application_default_scope "profile.read"
+oauth_application_scopes %w[profile.read profile.write books.read books.write]
+```
+
+Now that you're set up, you can use the `rodauth` object to deny access to certain subsets of your app/API:
+
+```ruby
+class BooksController < ApplicationController
+  before_action :allow_read_access, only: %i[index show]
+  before_action :allow_write_access, only: %i[create update]
+
+  def index
+    # ...
+  end
+
+  def show
+    # ...
+  end
+
+  def create
+    # ...
+  end
+
+  def update
+    # ...
+  end
+
+  private
+
+  def allow_read_access
+    rodauth.require_oauth_authorization("books.read")
+  end
+
+  def allow_write_access
+    rodauth.require_oauth_authorization("books.write")
+  end
+end
+```
+
 
 ## Development
 
