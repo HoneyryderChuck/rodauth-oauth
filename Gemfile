@@ -37,8 +37,8 @@ platform :mri do
 end
 
 platform :jruby do
-  gem "jdbc-sqlite3"
   gem "activerecord-jdbc-adapter"
+  gem "jdbc-sqlite3"
 end
 
 # For demo
