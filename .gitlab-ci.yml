@@ -12,7 +12,7 @@ cache:
   - bundle install -j 4
 
 .deps_alpine: &deps_alpine
-  - apk --update add g++ make sqlite sqlite-dev
+  - apk --update add g++ make sqlite sqlite-dev git
 
 .test: &test
 - bundle exec rake test:ci
@@ -24,6 +24,7 @@ jruby:
     JRUBY_OPTS: --debug
   before_script:
     - *before_script
+    - apt-get install -y git
   image: "jruby:9.2.11"
   script:
     - *test
