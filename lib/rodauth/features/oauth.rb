@@ -1,7 +1,7 @@
 # frozen-string-literal: true
 
 module Rodauth
-  Feature.define(:oauth, :OAuth) do
+  Feature.define(:oauth) do
     # RUBY EXTENSIONS
     unless Regexp.method_defined?(:match?)
       module RegexpExtensions
