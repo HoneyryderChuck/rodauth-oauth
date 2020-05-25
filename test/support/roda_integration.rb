@@ -13,7 +13,6 @@ RODADB = begin
   db
 end
 
-
 Base = Class.new(Roda)
 Base.opts[:check_dynamic_arity] = Base.opts[:check_arity] = :warn
 Base.plugin :flash
@@ -29,12 +28,6 @@ class RodaIntegration < Minitest::Test
   include OAuthHelpers
   include Minitest::Hooks
   include Capybara::DSL
-
-  attr_reader :app
-
-  def app=(app)
-    @app = Capybara.app = app
-  end
 
   def rodauth(&block)
     (@rodauth_blocks ||= []) << block

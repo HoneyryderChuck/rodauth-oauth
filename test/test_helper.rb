@@ -27,8 +27,13 @@ require "bcrypt"
 TEST_SCOPES = %w[user.read user.write].freeze
 
 module OAuthHelpers
+  attr_reader :app
 
   private
+
+  def app=(app)
+    @app = Capybara.app = app
+  end
 
   def oauth_application
     @oauth_application ||= begin
