@@ -20,6 +20,9 @@ AllCops:
     - Rakefile
     - test/rails_app/db/**/*.rb
     - lib/generators/**/*.rb
+    - .bundle/**/*
+    - vendor/**/*
+    - test/tmp/**/*
 
 Naming/FileName:
   Exclude:

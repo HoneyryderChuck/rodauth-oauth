@@ -23,8 +23,8 @@ jruby:
     CI: 1
     JRUBY_OPTS: --debug
   before_script:
+    - apt-get update && apt-get install -y git
     - *before_script
-    - apt-get install -y git
   image: "jruby:9.2.11"
   script:
     - *test

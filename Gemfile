@@ -20,6 +20,7 @@ gem "rodauth-rails"
 gem "sequel", github: "jeremyevans/sequel", branch: "master"
 gem "sequel-activerecord_connection", github: "HoneyryderChuck/sequel-activerecord_connection", branch: "patch-1"
 gem "tilt"
+gem "tzinfo-data"
 
 gem "capybara"
 gem "minitest", "~> 5.0"
