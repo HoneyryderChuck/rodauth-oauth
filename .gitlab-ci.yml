@@ -8,7 +8,8 @@ cache:
 
 .before_script: &before_script
   - ruby -v
-  - bundle install -j 4 --path vendor
+  - bundle config set path 'vendor'
+  - bundle install -j 4
 
 .deps_alpine: &deps_alpine
   - apk --update add g++ make sqlite sqlite-dev
