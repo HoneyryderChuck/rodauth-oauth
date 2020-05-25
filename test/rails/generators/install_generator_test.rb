@@ -15,7 +15,8 @@ class InstallGeneratorTest < Rails::Generators::TestCase
       migration_version = Regexp.escape("[#{ActiveRecord::VERSION::MAJOR}.#{ActiveRecord::VERSION::MINOR}]")
     end
 
-    assert_migration "db/migrate/create_rodauth_oauth.rb", /class CreateRodauthOAuth < ActiveRecord::Migration#{migration_version}/
+    assert_migration "db/migrate/create_rodauth_oauth.rb",
+                     /class CreateRodauthOAuth < ActiveRecord::Migration#{migration_version}/
     assert_migration "db/migrate/create_rodauth_oauth.rb", /create_table :oauth_applications/
     assert_migration "db/migrate/create_rodauth_oauth.rb", /create_table :oauth_grants/
     assert_migration "db/migrate/create_rodauth_oauth.rb", /create_table :oauth_tokens/

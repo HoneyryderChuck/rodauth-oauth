@@ -9,11 +9,16 @@ gem "rake", "~> 12.0"
 
 gem "bcrypt"
 gem "rack_csrf"
-gem "rodauth-rails"
+
+# frameworks
 gem "rails", ">= 4.2"
 gem "roda"
-gem "rodauth"
-gem "sequel"
+
+# extension dependencies
+gem "rodauth", github: "janko/rodauth", branch: "check-csrf-method"
+gem "rodauth-rails"
+gem "sequel", github: "jeremyevans/sequel", branch: "master"
+gem "sequel-activerecord_connection", github: "HoneyryderChuck/sequel-activerecord_connection", branch: "patch-1"
 gem "tilt"
 
 gem "capybara"
