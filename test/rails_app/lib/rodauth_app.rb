@@ -4,6 +4,7 @@ class RodauthApp < Rodauth::Rails::App
   configure do
     enable :login, :http_basic_auth, :oauth
 
+    db DB
     rails_controller { RodauthController }
 
     skip_status_checks? true

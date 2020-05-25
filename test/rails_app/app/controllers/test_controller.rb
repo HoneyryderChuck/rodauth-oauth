@@ -13,6 +13,6 @@ class TestController < ApplicationController
     rodauth.require_authentication
     rodauth.require_oauth_authorization
 
-    flash["error"] || flash["notice"] || "Authorized"
+    render inline: flash["error"] || flash["notice"] || "Authorized"
   end
 end
