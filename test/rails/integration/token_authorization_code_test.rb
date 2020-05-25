@@ -8,6 +8,7 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
   def test_token_rails_authorization_code_unauthorized
     setup_application
 
+    header "Accept", "application/json"
     post("/oauth-token")
 
     assert last_response.status == 401
@@ -19,6 +20,7 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
     setup_application
     login
 
+    header "Accept", "application/json"
     post("/oauth-token")
 
     assert last_response.status == 400
@@ -29,6 +31,7 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
   def test_token_rails_authorization_code_no_grant
     setup_application
     login
+    header "Accept", "application/json"
     post("/oauth-token",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
@@ -44,6 +47,7 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
     login
     grant = oauth_grant(expires_in: Time.now - 60)
 
+    header "Accept", "application/json"
     post("/oauth-token",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
@@ -60,6 +64,7 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
     login
     grant = oauth_grant(revoked_at: Time.now)
 
+    header "Accept", "application/json"
     post("/oauth-token",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
@@ -75,6 +80,7 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
     setup_application
     login
 
+    header "Accept", "application/json"
     post("/oauth-token",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",

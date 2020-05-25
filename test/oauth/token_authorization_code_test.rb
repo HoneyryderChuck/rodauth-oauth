@@ -20,7 +20,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     login
 
     post("/oauth-token")
-
     assert last_response.status == 400
     json_body = JSON.parse(last_response.body)
     assert json_body["error"] == "invalid_request"
@@ -80,7 +79,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
          grant_type: "authorization_code",
          code: oauth_grant[:code],
          redirect_uri: oauth_grant[:redirect_uri])
-
 
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
