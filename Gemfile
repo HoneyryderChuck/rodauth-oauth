@@ -38,6 +38,7 @@ end
 
 platform :jruby do
   gem "jdbc-sqlite3"
+  gem "activerecord-jdbc-adapter"
 end
 
 # For demo

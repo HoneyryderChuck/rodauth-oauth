@@ -9,12 +9,12 @@ This is an extension to the `rodauth` gem which adds support for the [OAuth 2.0 
 
 This gem implements:
 
-* The OAuth 2.0 protocol framework:
-  * Authorize flow;
-  * Token generation;
-  * Token refresh;
-  * Token revocation;
-  * Implicit grant (off by default);
+* [The OAuth 2.0 protocol framework](https://tools.ietf.org/html/rfc6749):
+  * [Authorization grant flow](https://tools.ietf.org/html/rfc6749#section-1.3);
+  * [Access Token generation](https://tools.ietf.org/html/rfc6749#section-1.4);
+  * [Access Token refresh](https://tools.ietf.org/html/rfc6749#section-1.5);
+  * [Token revocation](https://tools.ietf.org/html/rfc7009);
+  * [Implicit grant (off by default)[https://tools.ietf.org/html/rfc6749#section-4.2];
 * Access Type (Token refresh online and offline);
 * OAuth application and token management dashboards;
 
@@ -182,7 +182,8 @@ You'll have to run the generator task to create the necessary migrations and vie
 
 ```
 > bundle exec rails generate rodauth:oauth:install
-# create a migration file into db/migrate
+# create a migration file, db/migrate(*_create_rodauth_oauth.rb);
+# Oauth Application, Grant and Token models into app/models;
 > bundle exec rails generate rodauth:oauth:views
 # creates view files under app/views/rodauth
 ```

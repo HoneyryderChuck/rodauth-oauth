@@ -14,5 +14,8 @@ end
 desc "Run rubocop"
 RuboCop::RakeTask.new(:rubocop)
 
-task "test:ci": %i[test rubocop]
+CI_TASKS = RUBY_VERSION < "2.4" ? %i[test] : %i[test rubocop]
+
+task "test:ci": CI_TASKS
+
 task default: :test
