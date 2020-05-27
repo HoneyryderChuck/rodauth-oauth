@@ -90,13 +90,15 @@ If you're familiar with the technology and want to skip the next paragraphs, jus
 
 Generating tokens happens mostly server-to-server, so here's an example using:
 
-#### HTTPX
+#### Access Token Generation
+
+##### HTTPX
 
 ```ruby
 require "httpx"
 httpx = HTTPX.plugin(:authorization)
 response = httpx.with(headers: { "X-your-auth-scheme" => ENV["SERVER_KEY"] })
-                .post(json: {
+                .post("https://auth_server/oauth-token",json: {
                   client_id: ENV["OAUTH_CLIENT_ID"],
                   grant_type: "authorization_code",
                   code: "oiweicnewdh32fhoi3hf3ihfo2ih3f2o3as"
@@ -106,10 +108,60 @@ payload = JSON.parse(response.to_s)
 puts payload #=> {"token" => "awr23f3h8f9d2h89...", "refresh_token" => "23fkop3kr290kc..." ....
 ```
 
-#### cURL
+##### cURL
 
 ```
-> curl -H "X-your-auth-scheme: $SERVER_KEY" --data '{"client_id":"$OAUTH_CLIENT_ID","grant_type":"authorization_code","code":"oiweicnewdh32fhoi3hf3ihfo2ih3f2o3as"}'
+> curl -H "X-your-auth-scheme: $SERVER_KEY" --data '{"client_id":"$OAUTH_CLIENT_ID","grant_type":"authorization_code","code":"oiweicnewdh32fhoi3hf3ihfo2ih3f2o3as"}' https://auth_server/oauth-token
+```
+
+#### Refresh Token
+
+Refreshing expired tokens also happens mostly server-to-server, here's an example:
+
+##### HTTPX
+
+```ruby
+require "httpx"
+httpx = HTTPX.plugin(:authorization)
+response = httpx.with(headers: { "X-your-auth-scheme" => ENV["SERVER_KEY"] })
+                .post("https://auth_server/oauth-token",json: {
+                  client_id: ENV["OAUTH_CLIENT_ID"],
+                  grant_type: "refresh_token",
+                  token: "2r89hfef4j9f90d2j2390jf390g"
+                })
+response.raise_for_status
+payload = JSON.parse(response.to_s)
+puts payload #=> {"token" => "awr23f3h8f9d2h89...", "token_type" => "Bearer" ....
+```
+
+##### cURL
+
+```
+> curl -H "X-your-auth-scheme: $SERVER_KEY" --data '{"client_id":"$OAUTH_CLIENT_ID","grant_type":"token","token":"2r89hfef4j9f90d2j2390jf390g"}' https://auth_server/oauth-token
+```
+
+#### Revoking tokens
+
+Token revocation can be done both by the idenntity owner or the application owner, and can therefore be done either online (browser-based form) or server-to-server. Here's an example using server-to-server:
+
+```ruby
+require "httpx"
+httpx = HTTPX.plugin(:authorization)
+response = httpx.with(headers: { "X-your-auth-scheme" => ENV["SERVER_KEY"] })
+                .post("https://auth_server/oauth-revoke",json: {
+                  client_id: ENV["OAUTH_CLIENT_ID"],
+                  token_type_hint: "access_token", # can also be "refresh:tokn"
+                  token: "2r89hfef4j9f90d2j2390jf390g"
+                })
+response.raise_for_status
+payload = JSON.parse(response.to_s)
+puts payload #=> {"token" => "awr23f3h8f9d2h89...", "token_type" => "Bearer" ....
+```
+
+##### cURL
+
+```
+> curl -H "X-your-auth-scheme: $SERVER_KEY" --data '{"client_id":"$OAUTH_CLIENT_ID","token_type_hint":"access_token","token":"2r89hfef4j9f90d2j2390jf390g"}' https://auth_server/oauth-revoke
 ```
 
 ### Database migrations
@@ -235,10 +287,45 @@ class BooksController < ApplicationController
 end
 ```
 
+## Features
+
+In this section, the non-standard features are going to be described in more detail.
+
+### Access Type (default: "offline")
+
+The "access_type" feature allows the authorization server to emit access tokens with no associated refresh token. This means that users with expired access tokens will have to go through the OAuth flow everytime they need a new one.
+
+In order to enable this option, add "access_type=online" to the query params section of the authorization url.
+
+**Note**: this feature does not yet support the "approval_prompt" feature.
+
+
+### Implicit Grant (default: disabled)
+
+The implicit grant flow is part of the original OAuth 2.0 RFC, however, if you care about security, you are **strongly recommended** not to enable it.
+
+However, if you really need it, just pass the option when enabling the `rodauth` plugin:
+
+```ruby
+plugin :rodauth do
+  enable :oauth
+  use_oauth_implicit_grant_type true
+end
+```
+
+And add "response_type=token" to the query params section of the authorization url.
+
+## Ruby support policy
+
+The minimum Ruby version required to run `rodauth-oauth` is 2.3 . Besides that, it should support all rubies that rodauth and roda support.
+
+### JRuby
+
+If you're interested in using this library in rails, be warned that `rodauth-rails` doesn't support it yet (although, this is expected to change at some point).
 
 ## Development
 
-After checking out the repo, run `bundle install` to install dependencies. Then, run `rake test` to run the tests, and `rake rubocop` to run thew linter.
+After checking out the repo, run `bundle install` to install dependencies. Then, run `rake test` to run the tests, and `rake rubocop` to run the linter.
 
 ## Contributing
 
