@@ -178,51 +178,27 @@ module Rodauth
     end
 
     def state
-      state = param(state_param)
-
-      return unless state && !state.empty?
-
-      state
+      param_or_nil(state_param)
     end
 
     def scopes
-      scopes = param(scopes_param)
-
-      return [oauth_application_default_scope] unless scopes && !scopes.empty?
-
-      scopes.split(" ")
+      (param_or_nil(scopes_param) || oauth_application_default_scope).split(" ")
     end
 
     def client_id
-      client_id = param(client_id_param)
-
-      return unless client_id && !client_id.empty?
-
-      client_id
+      param_or_nil(client_id_param)
     end
 
     def redirect_uri
-      redirect_uri = param(redirect_uri_param)
-
-      return oauth_application[oauth_applications_redirect_uri_column] unless redirect_uri && !redirect_uri.empty?
-
-      redirect_uri
+      param_or_nil(redirect_uri_param) || oauth_application[oauth_applications_redirect_uri_column]
     end
 
     def token_type_hint
-      token_type_hint = param(token_type_hint_param)
-
-      return "access_token" unless token_type_hint && !token_type_hint.empty?
-
-      token_type_hint
+      param_or_nil(token_type_hint_param) || "access_token"
     end
 
     def token
-      token = param(token_param)
-
-      return unless token && !token.empty?
-
-      token
+      param_or_nil(token_param)
     end
 
     def oauth_application
@@ -420,7 +396,7 @@ module Rodauth
         oauth_grants_scopes_column => scopes.join(",")
       }
 
-      unless (access_type = param("access_type")).empty?
+      if (access_type = param_or_nil("access_type"))
         create_params[oauth_grants_access_type_column] = access_type
       end
 
@@ -654,14 +630,14 @@ module Rodauth
     ACCESS_TYPES = %w[offline online].freeze
 
     def check_valid_access_type?
-      access_type = param("access_type")
-      access_type.empty? || ACCESS_TYPES.include?(access_type)
+      access_type = param_or_nil("access_type")
+      !access_type || ACCESS_TYPES.include?(access_type)
     end
 
     def check_valid_response_type?
-      response_type = param("response_type")
+      response_type = param_or_nil("response_type")
 
-      return true if response_type.empty? || response_type == "code"
+      return true if response_type.nil? || response_type == "code"
 
       return use_oauth_implicit_grant_type if response_type == "token"
 

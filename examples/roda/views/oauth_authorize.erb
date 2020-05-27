@@ -12,8 +12,12 @@
       </div>
     <% end %>
     <input type="hidden" name="client_id" value="<%= rodauth.client_id %>"/>
-    <input type="hidden" name="state" value="<%= rodauth.state %>"/>
-    <input type="hidden" name="redirect_uri" value="<%= rodauth.redirect_uri %>"/>
+    <% if rodauth.param_or_nil("state") %>
+      <input type="hidden" name="state" value="<%= rodauth.state %>"/>
+    <% end %>
+    <% if rodauth.param_or_nil("redirect_uri") %>
+      <input type="hidden" name="redirect_uri" value="<%= rodauth.redirect_uri %>"/>
+    <% end %>
   </div>
   <div class="form-group">
     <input type="submit" class="btn btn-primary" value="Authorize"/>
