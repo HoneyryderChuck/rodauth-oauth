@@ -50,6 +50,8 @@ module Rodauth
     auth_value_method :oauth_grant_expires_in, 60 * 5 # 5 minutes
     auth_value_method :oauth_token_expires_in, 60 * 60 # 60 minutes
     auth_value_method :use_oauth_implicit_grant_type, false
+
+    auth_value_method :oauth_require_pkce, false
     auth_value_method :oauth_pkce_challenge_method, "S256"
 
     # URL PARAMS
@@ -132,6 +134,12 @@ module Rodauth
 
     auth_value_method :unique_error_message, "is already in use"
     auth_value_method :null_error_message, "is not filled"
+
+    # PKCE
+    auth_value_method :code_challenge_required_error_code, "invalid_request"
+    auth_value_method :code_challenge_required_message, "code challenge required"
+    auth_value_method :unsupported_transform_algorithm_error_code, "invalid_request"
+    auth_value_method :unsupported_transform_algorithm_message, "transform algorithm not supported"
 
     auth_value_methods(
       :oauth_unique_id_generator
@@ -411,6 +419,8 @@ module Rodauth
 
         create_params[oauth_grants_code_challenge_column] = code_challenge
         create_params[oauth_grants_code_challenge_method_column] = code_challenge_method
+      elsif oauth_require_pkce
+        redirect_response_error("code_challenge_required")
       end
 
       ds = db[oauth_grants_table]
@@ -491,6 +501,8 @@ module Rodauth
           unless code_verifier && check_valid_grant_challenge?(oauth_grant, code_verifier)
             redirect_response_error("invalid_request")
           end
+        elsif oauth_require_pkce
+          redirect_response_error("code_challenge_required")
         end
 
         create_params = {
@@ -604,11 +616,19 @@ module Rodauth
         throw_json_response_error(invalid_oauth_response_status, error_code)
       else
         redirect_url = URI.parse(redirect_url)
-        query_params = ["error=#{error_code}"]
+        query_params = []
+
+        query_params << if respond_to?(:"#{error_code}_error_code")
+                          "error=#{send(:"#{error_code}_error_code")}"
+                        else
+                          "error=#{error_code}"
+                        end
+
         if respond_to?(:"#{error_code}_message")
           message = send(:"#{error_code}_message")
           query_params << ["error_description=#{CGI.escape(message)}"]
         end
+
         query_params << redirect_url.query if redirect_url.query
         redirect_url.query = query_params.join("&")
         redirect(redirect_url.to_s)
@@ -617,7 +637,12 @@ module Rodauth
 
     def throw_json_response_error(status, error_code)
       set_response_error_status(status)
-      payload = { "error" => error_code }
+      code = if respond_to?(:"#{error_code}_error_code")
+               send(:"#{error_code}_error_code")
+             else
+               error_code
+             end
+      payload = { "error" => code }
       payload["error_description"] = send(:"#{error_code}_message") if respond_to?(:"#{error_code}_message")
       json_payload = if request.respond_to?(:convert_to_json)
                        request.send(:convert_to_json, payload)
@@ -669,10 +694,15 @@ module Rodauth
     # PKCE
 
     def validate_pkce_challenge_params
-      return unless param_or_nil(code_challenge_param)
+      if param_or_nil(code_challenge_param)
 
-      challenge_method = param_or_nil(code_challenge_method_param)
-      redirect_response_error("invalid_request") unless oauth_pkce_challenge_method == challenge_method
+        challenge_method = param_or_nil(code_challenge_method_param)
+        redirect_response_error("code_challenge_required") unless oauth_pkce_challenge_method == challenge_method
+      else
+        return unless oauth_require_pkce
+
+        redirect_response_error("code_challenge_required")
+      end
     end
 
     def check_valid_grant_challenge?(grant, verifier)
@@ -687,7 +717,7 @@ module Rodauth
 
         challenge == generated_challenge
       else
-        raise "unsupported challenge method"
+        redirect_response_error("unsupported_transform_algorithm")
       end
     end
 

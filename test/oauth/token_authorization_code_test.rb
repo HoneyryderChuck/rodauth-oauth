@@ -124,7 +124,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     assert !json_body["expires_in"].nil?
   end
 
-  def test_token_authorization_code_online_pkcs_no_code_verifier
+  def test_token_authorization_code_pkce_no_code_verifier
     setup_application
     login
 
@@ -141,7 +141,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     assert json_body["error"] == "invalid_request"
   end
 
-  def test_token_authorization_code_online_pkcs_wrong_code_verifier
+  def test_token_authorization_code_pkce_wrong_code_verifier
     setup_application
     login
 
@@ -159,7 +159,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     assert json_body["error"] == "invalid_request"
   end
 
-  def test_token_authorization_code_online_pkcs_with_code_verifier
+  def test_token_authorization_code_pkce_with_code_verifier
     setup_application
     login
 
@@ -188,7 +188,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     assert !json_body["expires_in"].nil?
   end
 
-  def test_token_authorization_code_online_pkcs_with_plain_code_verifier
+  def test_token_authorization_code_pkce_with_plain_code_verifier
     setup_application
     login
 
@@ -215,6 +215,27 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     assert json_body["token"] == access_token[:token]
     assert json_body["refresh_token"].nil?
     assert !json_body["expires_in"].nil?
+  end
+
+  def test_token_authorization_code_required_pkce_no_code_verifier
+    rodauth do
+      oauth_require_pkce true
+    end
+    setup_application
+    login
+
+    pkce_grant = oauth_grant
+
+    post("/oauth-token",
+         client_id: oauth_application[:client_id],
+         grant_type: "authorization_code",
+         code: pkce_grant[:code],
+         redirect_uri: pkce_grant[:redirect_uri])
+
+    assert last_response.status == 400
+    json_body = JSON.parse(last_response.body)
+    assert json_body["error"] == "invalid_request"
+    assert json_body["error_description"] == "code challenge required"
   end
 
   # Access

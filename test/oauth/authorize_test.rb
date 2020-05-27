@@ -177,4 +177,19 @@ class RodaOauthAuthorizeTest < RodaIntegration
     assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{oauth_grant[:code]}",
            "was redirected instead to #{page.current_url}"
   end
+
+  def test_authorize_post_authorize_with_forced_pkce_no_challenge
+    rodauth do
+      oauth_require_pkce true
+    end
+    setup_application
+
+    login
+
+    # show the authorization form
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}"
+
+    assert page.current_url.include?("?error=invalid_request"),
+           "code challenge required"
+  end
 end
