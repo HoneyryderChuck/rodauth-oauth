@@ -175,6 +175,6 @@ class RodaOauthAuthorizeTest < RodaIntegration
     assert oauth_grant[:code_challenge_method] == "S256"
 
     assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{oauth_grant[:code]}",
-         "was redirected instead to #{page.current_url}"
+           "was redirected instead to #{page.current_url}"
   end
 end

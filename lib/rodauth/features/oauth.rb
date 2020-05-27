@@ -388,11 +388,7 @@ module Rodauth
       end
       redirect_response_error("invalid_scope") unless check_valid_scopes?
 
-      # PKCE
-      if (code_challenge = param_or_nil(code_challenge_param))
-        challenge_method = param_or_nil(code_challenge_method_param)
-        redirect_response_error("invalid_request") unless oauth_pkce_challenge_method == challenge_method
-      end
+      validate_pkce_challenge_params
     end
 
     def create_oauth_grant
@@ -487,6 +483,15 @@ module Rodauth
                                             .first
 
         redirect_response_error("invalid_grant") unless oauth_grant
+
+        # PKCE
+        if oauth_grant[oauth_grants_code_challenge_column]
+          code_verifier = param_or_nil(code_verifier_param)
+
+          unless code_verifier && check_valid_grant_challenge?(oauth_grant, code_verifier)
+            redirect_response_error("invalid_request")
+          end
+        end
 
         create_params = {
           oauth_tokens_account_id_column => oauth_grant[oauth_grants_account_id_column],
@@ -659,6 +664,31 @@ module Rodauth
       return use_oauth_implicit_grant_type if response_type == "token"
 
       false
+    end
+
+    # PKCE
+
+    def validate_pkce_challenge_params
+      return unless param_or_nil(code_challenge_param)
+
+      challenge_method = param_or_nil(code_challenge_method_param)
+      redirect_response_error("invalid_request") unless oauth_pkce_challenge_method == challenge_method
+    end
+
+    def check_valid_grant_challenge?(grant, verifier)
+      challenge = grant[oauth_grants_code_challenge_column]
+
+      case grant[oauth_grants_code_challenge_method_column]
+      when "plain"
+        challenge == verifier
+      when "S256"
+        generated_challenge = Base64.urlsafe_encode64(Digest::SHA256.digest(verifier))
+        generated_challenge.delete_suffix!("=") while generated_challenge.end_with?("=")
+
+        challenge == generated_challenge
+      else
+        raise "unsupported challenge method"
+      end
     end
 
     # /oauth-token

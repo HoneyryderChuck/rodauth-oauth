@@ -124,6 +124,99 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     assert !json_body["expires_in"].nil?
   end
 
+  def test_token_authorization_code_online_pkcs_no_code_verifier
+    setup_application
+    login
+
+    pkce_grant = oauth_grant(access_type: "online", code_challenge_method: "S256", code_challenge: PKCE_CHALLENGE)
+
+    post("/oauth-token",
+         client_id: oauth_application[:client_id],
+         grant_type: "authorization_code",
+         code: pkce_grant[:code],
+         redirect_uri: pkce_grant[:redirect_uri])
+
+    assert last_response.status == 400
+    json_body = JSON.parse(last_response.body)
+    assert json_body["error"] == "invalid_request"
+  end
+
+  def test_token_authorization_code_online_pkcs_wrong_code_verifier
+    setup_application
+    login
+
+    pkce_grant = oauth_grant(access_type: "online", code_challenge_method: "S256", code_challenge: PKCE_CHALLENGE)
+
+    post("/oauth-token",
+         client_id: oauth_application[:client_id],
+         grant_type: "authorization_code",
+         code: pkce_grant[:code],
+         redirect_uri: pkce_grant[:redirect_uri],
+         code_verifier: "FAULTY_VERIFIER")
+
+    assert last_response.status == 400
+    json_body = JSON.parse(last_response.body)
+    assert json_body["error"] == "invalid_request"
+  end
+
+  def test_token_authorization_code_online_pkcs_with_code_verifier
+    setup_application
+    login
+
+    pkce_grant = oauth_grant(access_type: "online", code_challenge_method: "S256", code_challenge: PKCE_CHALLENGE)
+
+    post("/oauth-token",
+         client_id: oauth_application[:client_id],
+         grant_type: "authorization_code",
+         code: pkce_grant[:code],
+         redirect_uri: pkce_grant[:redirect_uri],
+         code_verifier: PKCE_VERIFIER)
+
+    assert last_response.status == 200
+    assert last_response.headers["Content-Type"] == "application/json"
+
+    assert db[:oauth_tokens].count == 1
+
+    access_token = db[:oauth_tokens].first
+
+    oauth_grant = db[:oauth_grants].where(id: access_token[:oauth_grant_id]).first
+    assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
+
+    json_body = JSON.parse(last_response.body)
+    assert json_body["token"] == access_token[:token]
+    assert json_body["refresh_token"].nil?
+    assert !json_body["expires_in"].nil?
+  end
+
+  def test_token_authorization_code_online_pkcs_with_plain_code_verifier
+    setup_application
+    login
+
+    pkce_grant = oauth_grant(access_type: "online", code_challenge_method: "plain", code_challenge: PKCE_VERIFIER)
+
+    post("/oauth-token",
+         client_id: oauth_application[:client_id],
+         grant_type: "authorization_code",
+         code: pkce_grant[:code],
+         redirect_uri: pkce_grant[:redirect_uri],
+         code_verifier: PKCE_VERIFIER)
+
+    assert last_response.status == 200
+    assert last_response.headers["Content-Type"] == "application/json"
+
+    assert db[:oauth_tokens].count == 1
+
+    access_token = db[:oauth_tokens].first
+
+    oauth_grant = db[:oauth_grants].where(id: access_token[:oauth_grant_id]).first
+    assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
+
+    json_body = JSON.parse(last_response.body)
+    assert json_body["token"] == access_token[:token]
+    assert json_body["refresh_token"].nil?
+    assert !json_body["expires_in"].nil?
+  end
+
   # Access
   def test_token_access_private_unauthenticated
     setup_application
