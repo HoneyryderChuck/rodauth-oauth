@@ -1,7 +1,7 @@
-# Roda::Oauth
+# Rodauth::Oauth
 
-[![pipeline status](https://gitlab.com/honeyryderchuck/roda-oauth/badges/master/pipeline.svg)](https://gitlab.com/honeyryderchuck/roda-oauth/-/commits/master)
-[![coverage report](https://gitlab.com/honeyryderchuck/roda-oauth/badges/master/coverage.svg)](https://gitlab.com/honeyryderchuck/roda-oauth/-/commits/master)
+[![pipeline status](https://gitlab.com/honeyryderchuck/rodauth-oauth/badges/master/pipeline.svg)](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/commits/master)
+[![coverage report](https://gitlab.com/honeyryderchuck/rodauth-oauth/badges/master/coverage.svg)](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/commits/master)
 
 This is an extension to the `rodauth` gem which adds support for the [OAuth 2.0 protocol](https://tools.ietf.org/html/rfc6749).
 
@@ -27,7 +27,7 @@ This gem supports also rails (through [rodauth-rails]((https://github.com/janko/
 Add this line to your application's Gemfile:
 
 ```ruby
-gem 'roda-oauth'
+gem 'rodauth-oauth'
 ```
 
 And then execute:
@@ -36,7 +36,7 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install roda-oauth
+    $ gem install rodauth-oauth
 
 ## Usage
 
@@ -85,7 +85,7 @@ You'll have to do a bit more boilerplate, so here's the instructions.
 
 ### Example (TL;DR)
 
-If you're familiar with the technology and want to skip the next paragraphs, just [check our roda example](https://gitlab.com/honeyryderchuck/roda-oauth/-/tree/master/examples/roda).
+If you're familiar with the technology and want to skip the next paragraphs, just [check our roda example](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/tree/master/examples/roda).
 
 
 Generating tokens happens mostly server-to-server, so here's an example using:
@@ -114,7 +114,7 @@ puts payload #=> {"token" => "awr23f3h8f9d2h89...", "refresh_token" => "23fkop3k
 
 ### Database migrations
 
-You have to generate database tables for Oauth applications, grants and tokens. In order for you to hit the ground running, [here's a set of migrations (using `sequel`) to generate the needed tables](https://gitlab.com/honeyryderchuck/roda-oauth/-/tree/master/test/migrate) (omit the first 2 if you already have account tables).
+You have to generate database tables for Oauth applications, grants and tokens. In order for you to hit the ground running, [here's a set of migrations (using `sequel`) to generate the needed tables](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/tree/master/test/migrate) (omit the first 2 if you already have account tables).
 
 You can change column names or even use existing tables, however, be aware that you'll have to define new column accessors at the `rodauth` plugin declaration level. Let's say, for instance, you'd like to change the `oauth_grants` table name to `access_grants`, and it's `code` column to `authorization_code`; then, you'd have to do the following:
 
@@ -242,5 +242,5 @@ After checking out the repo, run `bundle install` to install dependencies. Then,
 
 ## Contributing
 
-Bug reports and pull requests are welcome on Gitlab at https://gitlab.com/honeyryderchuck/roda-oauth.
+Bug reports and pull requests are welcome on Gitlab at https://gitlab.com/honeyryderchuck/rodauth-oauth.
 
