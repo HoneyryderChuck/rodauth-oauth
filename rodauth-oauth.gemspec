@@ -1,10 +1,10 @@
 # frozen_string_literal: true
 
-version = File.read(File.expand_path("VERSION", __dir__)).strip
+require File.expand_path("lib/rodauth/oauth/version", __dir__)
 
 Gem::Specification.new do |spec|
   spec.name          = "rodauth-oauth"
-  spec.version       = version
+  spec.version       = Rodauth::OAuth::VERSION
   spec.platform      = Gem::Platform::RUBY
   spec.authors       = ["Tiago Cardoso"]
   spec.email         = ["cardoso_tiago@hotmail.com"]

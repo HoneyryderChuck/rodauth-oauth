@@ -13,10 +13,21 @@ AllCops:
   Include:
     - lib/**/*.rb
     - test/**/*.rb
-    - Rakefile
     - Gemfile
     - roda-oauth.gemspec
     - examples/**/*.rb
+  Exclude:
+    - Rakefile
+    - test/rails_app/db/**/*.rb
+    - lib/generators/**/*.rb
+    - .bundle/**/*
+    - vendor/**/*
+    - test/tmp/**/*
+
+Naming/FileName:
+  Exclude:
+    - Rakefile
+    - Gemfile
 
 Metrics/ModuleLength:
   Enabled: false

@@ -9,10 +9,18 @@ gem "rake", "~> 12.0"
 
 gem "bcrypt"
 gem "rack_csrf"
+
+# frameworks
+gem "rails", ">= 4.2"
 gem "roda"
-gem "rodauth"
-gem "sequel"
+
+# extension dependencies
+gem "rodauth", github: "jeremyevans/rodauth", branch: "master"
+gem "rodauth-rails"
+gem "sequel", github: "jeremyevans/sequel", branch: "master"
+gem "sequel-activerecord_connection", github: "janko/sequel-activerecord_connection", branch: "master"
 gem "tilt"
+gem "tzinfo-data"
 
 gem "capybara"
 gem "minitest", "~> 5.0"
@@ -29,6 +37,7 @@ platform :mri do
 end
 
 platform :jruby do
+  gem "activerecord-jdbc-adapter"
   gem "jdbc-sqlite3"
 end
 

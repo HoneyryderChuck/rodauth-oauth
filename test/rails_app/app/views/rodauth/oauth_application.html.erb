@@ -1,0 +1,19 @@
+<% oauth_application = rodauth.scope.instance_variable_get(:@oauth_application) %>
+<div>
+  <h2><%= oauth_application[rodauth.oauth_applications_name_column] %></h2>
+
+  <dl>
+    <dt>Description: </dt>
+    <dd><%= oauth_application[rodauth.oauth_applications_description_column] %></dd>
+    <dt>Homepage URL: </dt>
+    <dd><%= oauth_application[rodauth.oauth_applications_homepage_url_column] %></dd>
+    <dt>Client ID: </dt>
+    <dd><%= oauth_application[rodauth.oauth_applications_client_id_column] %></dd>
+    <dt>Client Secret: </dt>
+    <dd><%= oauth_application[rodauth.oauth_applications_client_secret_column] %></dd>
+    <dt>Callback URL: </dt>
+    <dd><%= oauth_application[rodauth.oauth_applications_redirect_uri_column] %></dd>
+    <dt>Scopes: </dt>
+    <dd><%= oauth_application[rodauth.oauth_applications_scopes_column] %></dd>
+  </dl>
+</div>

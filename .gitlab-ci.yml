@@ -8,27 +8,31 @@ cache:
 
 .before_script: &before_script
   - ruby -v
-  - bundle install -j 4 --path vendor
+  - bundle config set path 'vendor'
+  - bundle install -j 4
 
 .deps_alpine: &deps_alpine
-  - apk --update add g++ make sqlite sqlite-dev
+  - apk --update add g++ make sqlite sqlite-dev git
 
 .test: &test
 - bundle exec rake test:ci
 
+variables:
+  CI: 1
+  DATABASE_URL: sqlite3::memory
 
 jruby:
+  allow_failure: true
   variables:
-    CI: 1
     JRUBY_OPTS: --debug
+    DATABASE_URL: jdbc:sqlite::memory
   before_script:
+    - apt-get update && apt-get install -y git
     - *before_script
   image: "jruby:9.2.11"
   script:
     - *test
 ruby23:
-  variables:
-    CI: 1
   before_script:
     - *deps_alpine
     - *before_script
@@ -38,8 +42,6 @@ ruby23:
   script:
     - *test
 ruby24:
-  variables:
-    CI: 1
   before_script:
     - *deps_alpine
     - *before_script
@@ -49,8 +51,6 @@ ruby24:
   script:
     - *test
 ruby25:
-  variables:
-    CI: 1
   before_script:
     - *deps_alpine
     - *before_script
@@ -60,8 +60,6 @@ ruby25:
   script:
     - *test
 ruby26:
-  variables:
-    CI: 1
   before_script:
     - *deps_alpine
     - *before_script
@@ -71,8 +69,6 @@ ruby26:
   script:
     - *test
 ruby27:
-  variables:
-    CI: 1
   before_script:
     - *deps_alpine
     - *before_script

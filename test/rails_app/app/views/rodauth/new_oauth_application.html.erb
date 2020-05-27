@@ -1,0 +1,33 @@
+<%= form_tag rodauth.oauth_applications_path, method: :post, class: "form-horizontal" do %>
+  <h2>Register Oauth Application</h2>
+  <%= rodauth.field_error('scope') %>
+  <div class="form-group">
+  	<%= label_tag "Name", "name" %>
+  	<%= text_field_tag "name", rodauth.param('name'), class: "form-control#{' is-invalid' if rodauth.field_error('name')}" %>
+    <%= rodauth.field_error('name') %>
+  </div>
+  <div class="form-group">
+  	<%= label_tag "Description", "description" %>
+  	<%= text_field_tag "description", rodauth.param('description'), class: "form-control#{' is-invalid' if rodauth.field_error('description')}" %>
+    <%= rodauth.field_error('description') %>
+  </div>
+  <div class="form-group">
+  	<%= label_tag "Homepage URL", "homepage_url" %>
+  	<%= text_field_tag "homepage_url", rodauth.param('homepage_url'), class: "form-control#{' is-invalid' if rodauth.field_error('homepage_url')}" %>
+    <%= rodauth.field_error('homepage_url') %>
+  </div>
+  <div class="form-group">
+  	<%= label_tag "Authorization callback URL", "redirect_uri" %>
+  	<%= text_field_tag "redirect_uri", rodauth.param('redirect_uri'), class: "form-control#{' is-invalid' if rodauth.field_error('redirect_uri')}" %>
+    <%= rodauth.field_error('redirect_uri') %>
+  </div>
+  <% rodauth.oauth_application_scopes.each do |scope| %>
+    <div class="form-check">
+      <%= check_box_tag "scopes[]", scope, scope == rodauth.oauth_application_default_scope, id: scope, class: "form-check-input" %>
+      <%= scope %>
+    </div>
+  <% end %>
+  <div class="form-group">
+    <%= submit_tag "Register", class: "btn btn-primary" %>
+  </div>
+<% end %>

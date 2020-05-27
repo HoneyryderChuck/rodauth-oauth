@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthApplicationsTest < RodauthTest
+class RodaOauthApplicationsTest < RodaIntegration
   def test_oauth_applications_successful
     setup_application
     login
@@ -25,7 +25,7 @@ class RodaOauthApplicationsTest < RodauthTest
     assert_includes page.html, "Client ID: "
     assert_includes page.html, "Client Secret: "
     assert_includes page.html, "Scopes: "
-    assert DB[:oauth_applications].count == 1
+    assert db[:oauth_applications].count == 1
   end
 
   def test_oauth_applications_invalid_fields

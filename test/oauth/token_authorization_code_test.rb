@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthTokenAuthorizationCodeTest < RodauthTest
+class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
   include Rack::Test::Methods
 
   def test_token_authorization_code_unauthorized
@@ -20,7 +20,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodauthTest
     login
 
     post("/oauth-token")
-
     assert last_response.status == 400
     json_body = JSON.parse(last_response.body)
     assert json_body["error"] == "invalid_request"
@@ -84,11 +83,11 @@ class RodaOauthTokenAuthorizationCodeTest < RodauthTest
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert DB[:oauth_tokens].count == 1
+    assert db[:oauth_tokens].count == 1
 
-    access_token = DB[:oauth_tokens].first
+    access_token = db[:oauth_tokens].first
 
-    oauth_grant = DB[:oauth_grants].where(id: access_token[:oauth_grant_id]).first
+    oauth_grant = db[:oauth_grants].where(id: access_token[:oauth_grant_id]).first
     assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
 
     json_body = JSON.parse(last_response.body)
@@ -112,11 +111,11 @@ class RodaOauthTokenAuthorizationCodeTest < RodauthTest
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert DB[:oauth_tokens].count == 1
+    assert db[:oauth_tokens].count == 1
 
-    access_token = DB[:oauth_tokens].first
+    access_token = db[:oauth_tokens].first
 
-    oauth_grant = DB[:oauth_grants].where(id: access_token[:oauth_grant_id]).first
+    oauth_grant = db[:oauth_grants].where(id: access_token[:oauth_grant_id]).first
     assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
 
     json_body = JSON.parse(last_response.body)

@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthTokensTest < RodauthTest
+class RodaOauthTokensTest < RodaIntegration
   def test_oauth_tokens
     setup_application
     login
@@ -26,7 +26,7 @@ class RodaOauthTokensTest < RodauthTest
     assert_includes page.html, oauth_token[:expires_in].to_s
     refute_includes page.html, "value=\"Revoke"
 
-    assert DB[:oauth_tokens].where(revoked_at: nil).count.zero?
+    assert db[:oauth_tokens].where(revoked_at: nil).count.zero?
   end
 
   private
