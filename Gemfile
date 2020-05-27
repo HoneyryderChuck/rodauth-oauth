@@ -15,10 +15,10 @@ gem "rails", ">= 4.2"
 gem "roda"
 
 # extension dependencies
-gem "rodauth", github: "janko/rodauth", branch: "check-csrf-method"
+gem "rodauth", github: "jeremyevans/rodauth", branch: "master"
 gem "rodauth-rails"
 gem "sequel", github: "jeremyevans/sequel", branch: "master"
-gem "sequel-activerecord_connection", github: "HoneyryderChuck/sequel-activerecord_connection", branch: "patch-1"
+gem "sequel-activerecord_connection", github: "janko/sequel-activerecord_connection", branch: "master"
 gem "tilt"
 gem "tzinfo-data"
 
