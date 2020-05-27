@@ -121,11 +121,6 @@ class RodaOauthAuthorizeTest < RodaIntegration
 
     # show the authorization form
     visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scopes=user.read+user.write&response_type=token"
-    assert page.current_path == "/oauth-authorize",
-           "was redirected instead to #{page.current_path}"
-
-    # submit authorization request
-    click_button "Authorize"
 
     assert page.current_url.include?("?error=invalid_request"),
            "was redirected instead to #{page.current_url}"
@@ -140,7 +135,7 @@ class RodaOauthAuthorizeTest < RodaIntegration
     login
 
     # show the authorization form
-    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&&response_type=token"
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&response_type=token"
     assert page.current_path == "/oauth-authorize",
            "was redirected instead to #{page.current_path}"
 
