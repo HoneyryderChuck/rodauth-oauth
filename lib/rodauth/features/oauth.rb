@@ -50,6 +50,7 @@ module Rodauth
     auth_value_method :oauth_grant_expires_in, 60 * 5 # 5 minutes
     auth_value_method :oauth_token_expires_in, 60 * 60 # 60 minutes
     auth_value_method :use_oauth_implicit_grant_type, false
+    auth_value_method :oauth_pkce_challenge_method, "S256"
 
     # URL PARAMS
 
@@ -58,6 +59,7 @@ module Rodauth
       grant_type code refresh_token client_id scope
       state redirect_uri scopes token_type_hint token
       access_type response_type
+      code_challenge code_challenge_method code_verifier
     ].each do |param|
       auth_value_method :"#{param}_param", param
     end
@@ -90,6 +92,7 @@ module Rodauth
       account_id oauth_application_id
       redirect_uri code scopes access_type
       expires_in revoked_at
+      code_challenge code_challenge_method
     ].each do |column|
       auth_value_method :"oauth_grants_#{column}_column", column
     end
@@ -380,10 +383,16 @@ module Rodauth
     # Authorize
 
     def validate_oauth_grant_params
-      unless oauth_application && check_valid_redirect_uri? && check_valid_access_type?
+      unless oauth_application && check_valid_redirect_uri? && check_valid_access_type? && check_valid_response_type?
         redirect_response_error("invalid_request")
       end
       redirect_response_error("invalid_scope") unless check_valid_scopes?
+
+      # PKCE
+      if (code_challenge = param_or_nil(code_challenge_param))
+        challenge_method = param_or_nil(code_challenge_method_param)
+        redirect_response_error("invalid_request") unless oauth_pkce_challenge_method == challenge_method
+      end
     end
 
     def create_oauth_grant
@@ -396,8 +405,16 @@ module Rodauth
         oauth_grants_scopes_column => scopes.join(",")
       }
 
-      if (access_type = param_or_nil("access_type"))
+      if (access_type = param_or_nil(access_type_param))
         create_params[oauth_grants_access_type_column] = access_type
+      end
+
+      # PKCE flow
+      if (code_challenge = param_or_nil(code_challenge_param))
+        code_challenge_method = param_or_nil(code_challenge_method_param)
+
+        create_params[oauth_grants_code_challenge_column] = code_challenge
+        create_params[oauth_grants_code_challenge_method_column] = code_challenge_method
       end
 
       ds = db[oauth_grants_table]
@@ -630,12 +647,12 @@ module Rodauth
     ACCESS_TYPES = %w[offline online].freeze
 
     def check_valid_access_type?
-      access_type = param_or_nil("access_type")
+      access_type = param_or_nil(access_type_param)
       !access_type || ACCESS_TYPES.include?(access_type)
     end
 
     def check_valid_response_type?
-      response_type = param_or_nil("response_type")
+      response_type = param_or_nil(response_type_param)
 
       return true if response_type.nil? || response_type == "code"
 

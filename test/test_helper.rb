@@ -26,6 +26,9 @@ require "bcrypt"
 
 TEST_SCOPES = %w[user.read user.write].freeze
 
+PKCE_VERIFIER = "VERIFIER"
+PKCE_CHALLENGE = "a1Y-Z7sHPycP84FUZMgqhDyqVo6DdP5EUEXrLaTUge0" # using S256
+
 module OAuthHelpers
   attr_reader :app
 

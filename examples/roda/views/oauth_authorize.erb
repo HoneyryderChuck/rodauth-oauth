@@ -18,6 +18,12 @@
     <% if rodauth.param_or_nil("redirect_uri") %>
       <input type="hidden" name="redirect_uri" value="<%= rodauth.redirect_uri %>"/>
     <% end %>
+    <% if rodauth.param_or_nil("code_challenge") %>
+      <input type="hidden" name="code_challenge" value="<%= rodauth.param("code_challenge") %>"/>
+    <% end %>
+    <% if rodauth.param_or_nil("code_challenge_method") %>
+      <input type="hidden" name="code_challenge_method" value="<%= rodauth.param("code_challenge_method") %>"/>
+    <% end %>
   </div>
   <div class="form-group">
     <input type="submit" class="btn btn-primary" value="Authorize"/>

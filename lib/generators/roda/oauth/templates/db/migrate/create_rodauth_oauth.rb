@@ -24,6 +24,12 @@ class CreateRodauthOAuth < ActiveRecord::Migration<%= migration_version %>
       t.datetime :revoked_at
       t.string :scopes, null: false
       t.datetime :created_at, null: false, default: -> { "CURRENT_TIMESTAMP" }
+      # for using access_types
+      t.string :access_type, null: false, default: "offline"
+      # uncomment to enable PKCE
+      # t.string :code_challenge
+      # t.string :code_challenge_method
+
       t.index(%i[oauth_application_id code], unique: true)
     end
 

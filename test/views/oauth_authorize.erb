@@ -17,6 +17,12 @@
   <% if rodauth.param_or_nil("response_type") %>
     <input type="hidden" name="response_type" value="<%= rodauth.param("response_type") %>"/>
   <% end %>
+  <% if rodauth.param_or_nil("code_challenge") %>
+    <input type="hidden" name="code_challenge" value="<%= rodauth.param("code_challenge") %>"/>
+  <% end %>
+  <% if rodauth.param_or_nil("code_challenge_method") %>
+    <input type="hidden" name="code_challenge_method" value="<%= rodauth.param("code_challenge_method") %>"/>
+  <% end %>
   <div class="form-group">
     <div class="col-sm-offset-2 col-sm-10">
       <input type="submit" class="btn btn-default" value="Authorize"/>
