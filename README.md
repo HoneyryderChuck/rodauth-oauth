@@ -299,6 +299,14 @@ In order to enable this option, add "access_type=online" to the query params sec
 
 **Note**: this feature does not yet support the "approval_prompt" feature.
 
+#### DB schema
+
+the "oauth_grants" table will have to include the "access_type row":
+
+```ruby
+# in migration
+String :access_type, null: false, default: "offline"
+```
 
 ### Implicit Grant (default: disabled)
 
