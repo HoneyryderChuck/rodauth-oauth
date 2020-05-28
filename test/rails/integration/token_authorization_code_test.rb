@@ -78,7 +78,7 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
     json_body = JSON.parse(last_response.body)
     assert json_body["error"] == "invalid_request"
   end
-  
+
   def test_token_rails_authorization_code_successful
     setup_application
 

@@ -492,7 +492,7 @@ module Rodauth
       }
 
       if (client_secret = param_or_nil(client_secret_param))
-       oauth_application_conds[oauth_applications_client_secret_column] = client_secret
+        oauth_application_conds[oauth_applications_client_secret_column] = client_secret
       end
 
       case param(grant_type_param)
@@ -502,7 +502,8 @@ module Rodauth
         oauth_grant = db[oauth_grants_table].where(
           oauth_grants_code_column => param(code_param),
           oauth_grants_redirect_uri_column => param(redirect_uri_param),
-          oauth_grants_oauth_application_id_column => db[oauth_applications_table].where(oauth_application_conds).select(oauth_applications_id_column)
+          oauth_grants_oauth_application_id_column =>
+            db[oauth_applications_table].where(oauth_application_conds).select(oauth_applications_id_column)
         ).where(Sequel[oauth_grants_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
                                             .where(oauth_grants_revoked_at_column => nil)
                                             .first
@@ -539,7 +540,8 @@ module Rodauth
         # fetch oauth grant
         oauth_token = db[oauth_tokens_table].where(
           oauth_tokens_refresh_token_column => param(refresh_token_param),
-          oauth_tokens_oauth_application_id_column => db[oauth_applications_table].where(oauth_application_conds).select(oauth_applications_id_column)
+          oauth_tokens_oauth_application_id_column =>
+            db[oauth_applications_table].where(oauth_application_conds).select(oauth_applications_id_column)
         ).where(oauth_grants_revoked_at_column => nil).first
 
         redirect_response_error("invalid_grant") unless oauth_token

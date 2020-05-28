@@ -33,7 +33,6 @@ class RodaOauthRefreshTokenTest < RodaIntegration
     assert json_body["error"] == "invalid_grant"
   end
 
-
   def test_token_refresh_token_no_client_secret
     setup_application
 
