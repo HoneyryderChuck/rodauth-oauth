@@ -5,20 +5,8 @@ require "test_helper"
 class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
   include Rack::Test::Methods
 
-  def test_token_rails_authorization_code_unauthorized
-    setup_application
-
-    header "Accept", "application/json"
-    post("/oauth-token")
-
-    assert last_response.status == 401
-    json_body = JSON.parse(last_response.body)
-    assert json_body["error"] == "invalid_client"
-  end
-
   def test_token_rails_authorization_code_no_params
     setup_application
-    login
 
     header "Accept", "application/json"
     post("/oauth-token")
@@ -30,9 +18,9 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
 
   def test_token_rails_authorization_code_no_grant
     setup_application
-    login
     header "Accept", "application/json"
     post("/oauth-token",
+         client_secret: oauth_application[:client_secret],
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
          code: "CODE")
@@ -44,11 +32,11 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
 
   def test_token_rails_authorization_code_expired_grant
     setup_application
-    login
     grant = oauth_grant(expires_in: Time.now - 60)
 
     header "Accept", "application/json"
     post("/oauth-token",
+         client_secret: oauth_application[:client_secret],
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
          code: grant[:code],
@@ -61,11 +49,11 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
 
   def test_token_rails_authorization_code_revoked_grant
     setup_application
-    login
     grant = oauth_grant(revoked_at: Time.now)
 
     header "Accept", "application/json"
     post("/oauth-token",
+         client_secret: oauth_application[:client_secret],
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
          code: grant[:code],
@@ -76,12 +64,27 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
     assert json_body["error"] == "invalid_grant"
   end
 
-  def test_token_rails_authorization_code_successful
+  def test_token_authorization_code_no_client_secret
     setup_application
-    login
 
     header "Accept", "application/json"
     post("/oauth-token",
+         client_id: oauth_application[:client_id],
+         grant_type: "authorization_code",
+         code: oauth_grant[:code],
+         redirect_uri: oauth_grant[:redirect_uri])
+
+    assert last_response.status == 400
+    json_body = JSON.parse(last_response.body)
+    assert json_body["error"] == "invalid_request"
+  end
+
+  def test_token_rails_authorization_code_successful
+    setup_application
+
+    header "Accept", "application/json"
+    post("/oauth-token",
+         client_secret: oauth_application[:client_secret],
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
          code: oauth_grant[:code],

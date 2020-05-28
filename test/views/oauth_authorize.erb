@@ -2,14 +2,26 @@
   <%=  csrf_tag(rodauth.oauth_authorize_path) if respond_to?(:csrf_tag) %>
   <p>Grants: <%= rodauth.scopes.join(", ") %></p>
   <input type="hidden" name="client_id" value="<%= rodauth.client_id %>"/>
-  <input type="hidden" name="scope" value="<%= rodauth.scopes %>"/>
-  <input type="hidden" name="state" value="<%= rodauth.state %>"/>
-  <input type="hidden" name="redirect_uri" value="<%= rodauth.redirect_uri %>"/>
-  <% if rodauth.param("access_type") %>
+  <% if rodauth.param_or_nil("state") %>
+    <input type="hidden" name="scope" value="<%= rodauth.scopes %>"/>
+  <% end %>
+  <% if rodauth.param_or_nil("state") %>
+    <input type="hidden" name="state" value="<%= rodauth.state %>"/>
+  <% end %>
+  <% if rodauth.param_or_nil("redirect_uri") %>
+    <input type="hidden" name="redirect_uri" value="<%= rodauth.redirect_uri %>"/>
+  <% end %>
+  <% if rodauth.param_or_nil("access_type") %>
     <input type="hidden" name="access_type" value="<%= rodauth.param("access_type") %>"/>
   <% end %>
-  <% if !rodauth.param("response_type").empty? %>
+  <% if rodauth.param_or_nil("response_type") %>
     <input type="hidden" name="response_type" value="<%= rodauth.param("response_type") %>"/>
+  <% end %>
+  <% if rodauth.param_or_nil("code_challenge") %>
+    <input type="hidden" name="code_challenge" value="<%= rodauth.param("code_challenge") %>"/>
+  <% end %>
+  <% if rodauth.param_or_nil("code_challenge_method") %>
+    <input type="hidden" name="code_challenge_method" value="<%= rodauth.param("code_challenge_method") %>"/>
   <% end %>
   <div class="form-group">
     <div class="col-sm-offset-2 col-sm-10">
