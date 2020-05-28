@@ -328,7 +328,7 @@ module Rodauth
     private
 
     def oauth_unique_id_generator
-      SecureRandom.uuid
+      SecureRandom.hex(32)
     end
 
     # Oauth Application
