@@ -14,6 +14,25 @@ module Rodauth
       using(RegexpExtensions)
     end
 
+    unless String.method_defined?(:delete_suffix!)
+       module SuffixExtensions
+        refine(String) do
+          def delete_suffix!(suffix)
+            suffix = suffix.to_s
+            chomp! if frozen?
+            len = suffix.length
+            if len > 0 && index(suffix, -len)
+              self[-len..-1] = ''
+              self
+            else
+              nil
+            end
+          end
+        end
+      end
+      using(SuffixExtensions)
+    end
+
     SCOPES = %w[profile.read].freeze
 
     depends :login
