@@ -101,6 +101,7 @@ module OauthDemo
                                    "grant_type" => "authorization_code",
                                    "code" => code,
                                    "client_id" => application[:client_id],
+                                   "client_secret" => application[:client_secret],
                                    "redirect_uri" => application[:redirect_uri]
                                  })
         request["content-type"] = "application/json"
