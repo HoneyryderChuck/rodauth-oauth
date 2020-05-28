@@ -5,19 +5,8 @@ require "test_helper"
 class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
   include Rack::Test::Methods
 
-  def test_token_authorization_code_unauthorized
-    setup_application
-
-    post("/oauth-token")
-
-    assert last_response.status == 401
-    json_body = JSON.parse(last_response.body)
-    assert json_body["error"] == "invalid_client"
-  end
-
   def test_token_authorization_code_no_params
     setup_application
-    login
 
     post("/oauth-token")
     assert last_response.status == 400
@@ -27,7 +16,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
 
   def test_token_authorization_code_no_grant
     setup_application
-    login
     post("/oauth-token",
          client_secret: oauth_application[:client_secret],
          client_id: oauth_application[:client_id],
@@ -41,7 +29,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
 
   def test_token_authorization_code_expired_grant
     setup_application
-    login
     grant = oauth_grant(expires_in: Time.now - 60)
 
     post("/oauth-token",
@@ -58,7 +45,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
 
   def test_token_authorization_code_revoked_grant
     setup_application
-    login
     grant = oauth_grant(revoked_at: Time.now)
 
     post("/oauth-token",
@@ -75,7 +61,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
 
   def test_token_authorization_code_no_client_secret
     setup_application
-    login
 
     post("/oauth-token",
          client_id: oauth_application[:client_id],
@@ -90,7 +75,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
 
   def test_token_authorization_code_successful
     setup_application
-    login
 
     post("/oauth-token",
          client_id: oauth_application[:client_id],
@@ -117,7 +101,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
 
   def test_token_authorization_code_online_successful
     setup_application
-    login
 
     online_grant = oauth_grant(access_type: "online")
 
@@ -146,7 +129,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
 
   def test_token_authorization_code_pkce_no_code_verifier
     setup_application
-    login
 
     pkce_grant = oauth_grant(access_type: "online", code_challenge_method: "S256", code_challenge: PKCE_CHALLENGE)
 
@@ -164,7 +146,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
 
   def test_token_authorization_code_pkce_wrong_code_verifier
     setup_application
-    login
 
     pkce_grant = oauth_grant(access_type: "online", code_challenge_method: "S256", code_challenge: PKCE_CHALLENGE)
 
@@ -182,7 +163,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
 
   def test_token_authorization_code_pkce_with_code_verifier
     setup_application
-    login
 
     pkce_grant = oauth_grant(access_type: "online", code_challenge_method: "S256", code_challenge: PKCE_CHALLENGE)
 
@@ -211,7 +191,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
 
   def test_token_authorization_code_pkce_with_plain_code_verifier
     setup_application
-    login
 
     pkce_grant = oauth_grant(access_type: "online", code_challenge_method: "plain", code_challenge: PKCE_VERIFIER)
 
@@ -243,7 +222,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
       oauth_require_pkce true
     end
     setup_application
-    login
 
     post("/oauth-token",
          client_secret: oauth_application[:client_secret],

@@ -486,16 +486,17 @@ module Rodauth
     end
 
     def create_oauth_token
+      oauth_application_conds = {
+        oauth_applications_client_id_column => param(client_id_param),
+        oauth_applications_account_id_column => oauth_applications_account_id_column
+      }
+
+      if (client_secret = param_or_nil(client_secret_param))
+       oauth_application_conds[oauth_applications_client_secret_column] = client_secret
+      end
+
       case param(grant_type_param)
       when "authorization_code"
-        oauth_application_conds = {
-          oauth_applications_client_id_column => param(client_id_param),
-          oauth_applications_account_id_column => oauth_applications_account_id_column
-        }
-
-        if (client_secret = param_or_nil(client_secret_param))
-         oauth_application_conds[oauth_applications_client_secret_column] = client_secret
-        end
 
         # fetch oauth grant
         oauth_grant = db[oauth_grants_table].where(
@@ -538,10 +539,7 @@ module Rodauth
         # fetch oauth grant
         oauth_token = db[oauth_tokens_table].where(
           oauth_tokens_refresh_token_column => param(refresh_token_param),
-          oauth_tokens_oauth_application_id_column => db[oauth_applications_table].where(
-            oauth_applications_client_id_column => param(client_id_param),
-            oauth_applications_account_id_column => account_id
-          ).select(oauth_applications_id_column)
+          oauth_tokens_oauth_application_id_column => db[oauth_applications_table].where(oauth_application_conds).select(oauth_applications_id_column)
         ).where(oauth_grants_revoked_at_column => nil).first
 
         redirect_response_error("invalid_grant") unless oauth_token
@@ -737,9 +735,6 @@ module Rodauth
 
     # /oauth-token
     route(:oauth_token) do |r|
-      throw_json_response_error(authorization_required_error_status, "invalid_client") unless logged_in?
-
-      # access-token
       r.post do
         catch_error do
           validate_oauth_token_params
