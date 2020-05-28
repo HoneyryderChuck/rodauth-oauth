@@ -58,7 +58,7 @@ module Rodauth
 
     # Authorize / token
     %w[
-      grant_type code refresh_token client_id scope
+      grant_type code refresh_token client_id client_secret scope
       state redirect_uri scopes token_type_hint token
       access_type response_type
       code_challenge code_challenge_method code_verifier
@@ -198,6 +198,10 @@ module Rodauth
 
     def client_id
       param_or_nil(client_id_param)
+    end
+
+    def client_secret
+      param_or_nil(client_secret_param)
     end
 
     def redirect_uri
@@ -440,18 +444,22 @@ module Rodauth
     # Access Tokens
 
     def validate_oauth_token_params
-      redirect_response_error("invalid_request") unless param(client_id_param)
+      redirect_response_error("invalid_request") unless param_or_nil(client_id_param)
 
-      unless (grant_type = param(grant_type_param))
+      unless param_or_nil(client_secret_param)
+        redirect_response_error("invalid_request") unless param_or_nil(code_verifier_param)
+      end
+
+      unless (grant_type = param_or_nil(grant_type_param))
         redirect_response_error("invalid_request")
       end
 
       case grant_type
       when "authorization_code"
-        redirect_response_error("invalid_request") unless param(code_param)
+        redirect_response_error("invalid_request") unless param_or_nil(code_param)
 
       when "refresh_token"
-        redirect_response_error("invalid_request") unless param(refresh_token_param)
+        redirect_response_error("invalid_request") unless param_or_nil(refresh_token_param)
       else
         redirect_response_error("invalid_request")
       end
@@ -480,14 +488,20 @@ module Rodauth
     def create_oauth_token
       case param(grant_type_param)
       when "authorization_code"
+        oauth_application_conds = {
+          oauth_applications_client_id_column => param(client_id_param),
+          oauth_applications_account_id_column => oauth_applications_account_id_column
+        }
+
+        if (client_secret = param_or_nil(client_secret_param))
+         oauth_application_conds[oauth_applications_client_secret_column] = client_secret
+        end
+
         # fetch oauth grant
         oauth_grant = db[oauth_grants_table].where(
           oauth_grants_code_column => param(code_param),
           oauth_grants_redirect_uri_column => param(redirect_uri_param),
-          oauth_grants_oauth_application_id_column => db[oauth_applications_table].where(
-            oauth_applications_client_id_column => param(client_id_param),
-            oauth_applications_account_id_column => oauth_applications_account_id_column
-          ).select(oauth_applications_id_column)
+          oauth_grants_oauth_application_id_column => db[oauth_applications_table].where(oauth_application_conds).select(oauth_applications_id_column)
         ).where(Sequel[oauth_grants_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
                                             .where(oauth_grants_revoked_at_column => nil)
                                             .first

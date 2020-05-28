@@ -10,6 +10,7 @@ class RodaOAuthRailsTokenRefreshTokenTest < RailsIntegrationTest
     login
     header "Accept", "application/json"
     post("/oauth-token",
+         client_secret: oauth_application[:client_secret],
          client_id: oauth_application[:client_id],
          grant_type: "refresh_token",
          refresh_token: "CODE")
@@ -26,6 +27,7 @@ class RodaOAuthRailsTokenRefreshTokenTest < RailsIntegrationTest
 
     header "Accept", "application/json"
     post("/oauth-token",
+         client_secret: oauth_application[:client_secret],
          client_id: oauth_application[:client_id],
          grant_type: "refresh_token",
          refresh_token: oauth_token[:refresh_token])
@@ -44,6 +46,7 @@ class RodaOAuthRailsTokenRefreshTokenTest < RailsIntegrationTest
 
     header "Accept", "application/json"
     post("/oauth-token",
+         client_secret: oauth_application[:client_secret],
          client_id: oauth_application[:client_id],
          grant_type: "refresh_token",
          refresh_token: oauth_token[:refresh_token])
