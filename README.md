@@ -97,10 +97,9 @@ Generating tokens happens mostly server-to-server, so here's an example using:
 
 ```ruby
 require "httpx"
-httpx = HTTPX.plugin(:authorization)
-response = httpx.with(headers: { "X-your-auth-scheme" => ENV["SERVER_KEY"] })
-                .post("https://auth_server/oauth-token",json: {
+response = HTTPX.post("https://auth_server/oauth-token",json: {
                   client_id: ENV["OAUTH_CLIENT_ID"],
+                  client_secret: ENV["OAUTH_CLIENT_SECRET"],
                   grant_type: "authorization_code",
                   code: "oiweicnewdh32fhoi3hf3ihfo2ih3f2o3as"
                 })
@@ -112,7 +111,7 @@ puts payload #=> {"token" => "awr23f3h8f9d2h89...", "refresh_token" => "23fkop3k
 ##### cURL
 
 ```
-> curl -H "X-your-auth-scheme: $SERVER_KEY" --data '{"client_id":"$OAUTH_CLIENT_ID","grant_type":"authorization_code","code":"oiweicnewdh32fhoi3hf3ihfo2ih3f2o3as"}' https://auth_server/oauth-token
+> curl --data '{"client_id":"$OAUTH_CLIENT_ID","client_secret":"$OAUTH_CLIENT_SECRET","grant_type":"authorization_code","code":"oiweicnewdh32fhoi3hf3ihfo2ih3f2o3as"}' https://auth_server/oauth-token
 ```
 
 #### Refresh Token
@@ -123,10 +122,9 @@ Refreshing expired tokens also happens mostly server-to-server, here's an exampl
 
 ```ruby
 require "httpx"
-httpx = HTTPX.plugin(:authorization)
-response = httpx.with(headers: { "X-your-auth-scheme" => ENV["SERVER_KEY"] })
-                .post("https://auth_server/oauth-token",json: {
+response = HTTPX.post("https://auth_server/oauth-token",json: {
                   client_id: ENV["OAUTH_CLIENT_ID"],
+                  client_secret: ENV["OAUTH_CLIENT_SECRET"],
                   grant_type: "refresh_token",
                   token: "2r89hfef4j9f90d2j2390jf390g"
                 })
@@ -138,7 +136,7 @@ puts payload #=> {"token" => "awr23f3h8f9d2h89...", "token_type" => "Bearer" ...
 ##### cURL
 
 ```
-> curl -H "X-your-auth-scheme: $SERVER_KEY" --data '{"client_id":"$OAUTH_CLIENT_ID","grant_type":"token","token":"2r89hfef4j9f90d2j2390jf390g"}' https://auth_server/oauth-token
+> curl -H "X-your-auth-scheme: $SERVER_KEY" --data '{"client_id":"$OAUTH_CLIENT_ID","client_secret":"$OAUTH_CLIENT_SECRET","grant_type":"token","token":"2r89hfef4j9f90d2j2390jf390g"}' https://auth_server/oauth-token
 ```
 
 #### Revoking tokens
@@ -326,7 +324,7 @@ And add "response_type=token" to the query params section of the authorization u
 
 ### PKCE
 
-The "Proof Key for Code Exchange by OAuth Public Clients" (aka PKCE) flow is transparently supported by `rodauth-oauth`, by adding the `code_challenge_method=S256&code_challenge=$YOUR_CODE_CHALLENGE` query params to the authorization url. Once you do that, you'll have to pass the `code_verifier` when generating a token:
+The "Proof Key for Code Exchange by OAuth Public Clients" (aka PKCE) flow, which is **particularly recommended for OAuth integration in mobile apps**, is transparently supported by `rodauth-oauth`, by adding the `code_challenge_method=S256&code_challenge=$YOUR_CODE_CHALLENGE` query params to the authorization url. Once you do that, you'll have to pass the `code_verifier` when generating a token:
 
 ```ruby
 # with httpx
