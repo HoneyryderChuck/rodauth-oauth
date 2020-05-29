@@ -2,6 +2,8 @@
 
 ## master
 
+## 0.0.2
+
 ### Features
 
 * Implementation of PKCE by OAuth Public Clients (https://tools.ietf.org/html/rfc7636);
