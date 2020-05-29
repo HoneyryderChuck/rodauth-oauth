@@ -94,6 +94,60 @@ class RodaOauthAuthorizeTest < RodaIntegration
     assert oauth_grant[:access_type] == "online"
   end
 
+  def test_authorize_post_authorize_access_type_online_approval_prompt_auto_no_valid_grant
+    setup_application
+    login
+
+    # no previous grant
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scopes=user.read+user.write&" \
+          "access_type=online&approval_prompt=auto"
+    assert page.current_path.start_with?("/oauth-authorize"),
+           "was redirected instead to #{page.current_path}"
+
+    # previous offline grant
+    oauth_grant(access_type: "offline", expires_in: Time.now - 60)
+
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scopes=user.read+user.write&" \
+          "access_type=online&approval_prompt=auto"
+    assert page.current_path.start_with?("/oauth-authorize"),
+           "was redirected instead to #{page.current_path}"
+  end
+
+  def test_authorize_post_authorize_access_type_online_approval_prompt_auto_wrong_scope
+    setup_application
+    login
+
+    # OLD grant
+    oauth_grant(access_type: "online", expires_in: Time.now - 60)
+
+    # extra scope
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scopes=user.read&" \
+          "access_type=online&approval_prompt=auto"
+    assert page.current_path.start_with?("/oauth-authorize"),
+           "was redirected instead to #{page.current_path}"
+  end
+
+  def test_authorize_post_authorize_access_type_online_approval_prompt_auto
+    setup_application
+    login
+
+    # OLD grant
+    oauth_grant(access_type: "online", expires_in: Time.now - 60)
+
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scopes=user.read+user.write&" \
+          "access_type=online&approval_prompt=auto"
+
+    new_grant = db[:oauth_grants].order(:id).last
+
+    assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{new_grant[:code]}",
+           "was redirected instead to #{page.current_url}"
+
+    assert db[:oauth_grants].count == 2,
+           "no new grant has been created"
+
+    assert new_grant[:access_type] == "online"
+  end
+
   def test_authorize_post_authorize_with_state
     setup_application
     login
