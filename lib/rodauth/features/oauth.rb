@@ -15,18 +15,16 @@ module Rodauth
     end
 
     unless String.method_defined?(:delete_suffix!)
-       module SuffixExtensions
+      module SuffixExtensions
         refine(String) do
           def delete_suffix!(suffix)
             suffix = suffix.to_s
             chomp! if frozen?
             len = suffix.length
-            if len > 0 && index(suffix, -len)
-              self[-len..-1] = ''
-              self
-            else
-              nil
-            end
+            return unless len.positive? && index(suffix, -len)
+
+            self[-len..-1] = ""
+            self
           end
         end
       end
@@ -105,6 +103,10 @@ module Rodauth
     ].each do |column|
       auth_value_method :"oauth_tokens_#{column}_column", column
     end
+
+    # Oauth Token Hash
+    auth_value_method :oauth_tokens_token_hash_column, nil
+    auth_value_method :oauth_tokens_refresh_token_hash_column, nil
 
     # OAuth Grants
     auth_value_method :oauth_grants_table, :oauth_grants
@@ -260,10 +262,9 @@ module Rodauth
         # check if there is a token
         # check if token has not expired
         # check if token has been revoked
-        db[oauth_tokens_table].where(oauth_tokens_token_column => token)
-                              .where(Sequel[oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
-                              .where(oauth_tokens_revoked_at_column => nil)
-                              .first
+        oauth_token_by_token(token).where(Sequel[oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
+                                   .where(oauth_tokens_revoked_at_column => nil)
+                                   .first
       end
     end
 
@@ -329,6 +330,77 @@ module Rodauth
 
     def oauth_unique_id_generator
       SecureRandom.hex(32)
+    end
+
+    # this method generates the token hash
+    #
+    # if bcrypt is available, it'll use bcrypt.
+    # else, it'll use S256.
+    #
+    # bear in mind that token hash is not a password hash.
+    def generate_token_hash(token)
+      Base64.urlsafe_encode64(Digest::SHA256.digest(token))
+    end
+
+    def generate_oauth_token(params = {}, should_generate_refresh_token = true)
+      create_params = {
+        oauth_grants_expires_in_column => Time.now + oauth_token_expires_in
+      }.merge(params)
+
+      token = oauth_unique_id_generator
+      refresh_token = nil
+
+      if oauth_tokens_token_hash_column
+        create_params[oauth_tokens_token_hash_column] = generate_token_hash(token)
+      else
+        create_params[oauth_tokens_token_column] = token
+      end
+
+      if should_generate_refresh_token
+        refresh_token = oauth_unique_id_generator
+
+        if oauth_tokens_refresh_token_hash_column
+          create_params[oauth_tokens_refresh_token_hash_column] = generate_token_hash(refresh_token)
+        else
+          create_params[oauth_tokens_refresh_token_column] = refresh_token
+        end
+      end
+      oauth_token = _generate_oauth_token(create_params)
+
+      oauth_token[oauth_tokens_token_column] = token
+      oauth_token[oauth_tokens_refresh_token_column] = refresh_token if refresh_token
+      oauth_token
+    end
+
+    def _generate_oauth_token(params = {})
+      ds = db[oauth_tokens_table]
+
+      begin
+        if ds.supports_returning?(:insert)
+          ds.returning.insert(params)
+        else
+          id = ds.insert(params)
+          ds.where(oauth_tokens_id_column => id).first
+        end
+      rescue Sequel::UniqueConstraintViolation
+        retry
+      end
+    end
+
+    def oauth_token_by_token(token)
+      if oauth_tokens_token_hash_column
+        db[oauth_tokens_table].where(oauth_tokens_token_hash_column => generate_token_hash(token))
+      else
+        db[oauth_tokens_table].where(oauth_tokens_token_column => token)
+      end
+    end
+
+    def oauth_token_by_refresh_token(token)
+      if oauth_tokens_refresh_token_hash_column
+        db[oauth_tokens_table].where(oauth_tokens_refresh_token_hash_column => generate_token_hash(token))
+      else
+        db[oauth_tokens_table].where(oauth_tokens_refresh_token_column => token)
+      end
     end
 
     # Oauth Application
@@ -484,26 +556,6 @@ module Rodauth
       end
     end
 
-    def generate_oauth_token(params = {})
-      create_params = {
-        oauth_grants_expires_in_column => Time.now + oauth_token_expires_in,
-        oauth_tokens_token_column => oauth_unique_id_generator
-      }.merge(params)
-
-      ds = db[oauth_tokens_table]
-
-      begin
-        if ds.supports_returning?(:insert)
-          ds.returning.insert(create_params)
-        else
-          id = ds.insert(create_params)
-          ds.where(oauth_tokens_id_column => id).first
-        end
-      rescue Sequel::UniqueConstraintViolation
-        retry
-      end
-    end
-
     def create_oauth_token
       oauth_application_conds = {
         oauth_applications_client_id_column => param(client_id_param),
@@ -547,41 +599,49 @@ module Rodauth
           oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column]
         }
 
-        if oauth_grant[oauth_grants_access_type_column] == "offline"
-          create_params[oauth_tokens_refresh_token_column] = oauth_unique_id_generator
-        end
         # revoke oauth grant
         db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column])
                               .update(oauth_grants_revoked_at_column => Sequel::CURRENT_TIMESTAMP)
 
-        generate_oauth_token(create_params)
+        generate_oauth_token(create_params, oauth_grant[oauth_grants_access_type_column] == "offline")
+
       when "refresh_token"
-        # fetch oauth grant
-        oauth_token = db[oauth_tokens_table].where(
-          oauth_tokens_refresh_token_column => param(refresh_token_param),
+        # fetch oauth token
+        oauth_token = oauth_token_by_refresh_token(param(refresh_token_param)).where(
           oauth_tokens_oauth_application_id_column =>
             db[oauth_applications_table].where(oauth_application_conds).select(oauth_applications_id_column)
         ).where(oauth_grants_revoked_at_column => nil).first
 
         redirect_response_error("invalid_grant") unless oauth_token
 
+        token = oauth_unique_id_generator
+
         update_params = {
           oauth_tokens_oauth_application_id_column => oauth_token[oauth_grants_oauth_application_id_column],
-          oauth_tokens_expires_in_column => Time.now + oauth_token_expires_in,
-          oauth_tokens_token_column => oauth_unique_id_generator
+          oauth_tokens_expires_in_column => Time.now + oauth_token_expires_in
         }
 
+        if oauth_tokens_token_hash_column
+          update_params[oauth_tokens_token_hash_column] = generate_token_hash(token)
+        else
+          update_params[oauth_tokens_token_column] = token
+        end
+
         ds = db[oauth_tokens_table].where(oauth_tokens_id_column => oauth_token[oauth_tokens_id_column])
-        begin
+
+        oauth_token = begin
           if ds.supports_returning?(:update)
             ds.returning.update(update_params)
           else
             ds.update(update_params)
             ds.first
           end
-        rescue Sequel::UniqueConstraintViolation
-          retry
+                      rescue Sequel::UniqueConstraintViolation
+                        retry
         end
+
+        oauth_token[oauth_tokens_token_column] = token
+        oauth_token
       else
         redirect_response_error("invalid_grant")
       end
@@ -599,39 +659,40 @@ module Rodauth
     end
 
     def revoke_oauth_token
-      # one can only revoke tokens which haven't been revoked before, and which are
-      # either our tokens, or tokens from applications we own.
-      ds = db[oauth_tokens_table]
-           .where(oauth_tokens_revoked_at_column => nil)
-           .where(
-             Sequel.or(
-               oauth_tokens_account_id_column => account_id,
-               oauth_tokens_oauth_application_id_column => db[oauth_applications_table].where(
-                 oauth_applications_client_id_column => param(client_id_param),
-                 oauth_applications_account_id_column => account_id
-               ).select(oauth_applications_id_column)
-             )
-           )
       ds = case token_type_hint
            when "access_token"
-             ds.where(oauth_tokens_token_column => token)
+             oauth_token_by_token(token)
            when "refresh_token"
-             ds.where(oauth_tokens_refresh_token_column => token)
+             oauth_token_by_refresh_token(token)
            end
+      # one can only revoke tokens which haven't been revoked before, and which are
+      # either our tokens, or tokens from applications we own.
+      oauth_token = ds.where(oauth_tokens_revoked_at_column => nil)
+                      .where(
+                        Sequel.or(
+                          oauth_tokens_account_id_column => account_id,
+                          oauth_tokens_oauth_application_id_column => db[oauth_applications_table].where(
+                            oauth_applications_client_id_column => param(client_id_param),
+                            oauth_applications_account_id_column => account_id
+                          ).select(oauth_applications_id_column)
+                        )
+                      ).first
 
-      oauth_token = ds.first
       redirect_response_error("invalid_request") unless oauth_token
 
       update_params = { oauth_tokens_revoked_at_column => Sequel::CURRENT_TIMESTAMP }
 
       ds = db[oauth_tokens_table].where(oauth_tokens_id_column => oauth_token[oauth_tokens_id_column])
 
-      if ds.supports_returning?(:update)
-        ds.returning.update(update_params)
-      else
-        ds.update(update_params)
-        ds.first
-      end
+      oauth_token = if ds.supports_returning?(:update)
+                      ds.returning.update(update_params)
+                    else
+                      ds.update(update_params)
+                      ds.first
+                    end
+
+      oauth_token[oauth_tokens_token_column] = token
+      oauth_token
 
       # If the particular
       # token is a refresh token and the authorization server supports the
@@ -770,12 +831,12 @@ module Rodauth
           response.status = 200
           response["Content-Type"] ||= json_response_content_type
           json_response = {
-            "token" => oauth_token[:token],
+            "token" => oauth_token[oauth_tokens_token_column],
             "token_type" => oauth_token_type,
             "expires_in" => oauth_token_expires_in
           }
 
-          json_response["refresh_token"] = oauth_token[:refresh_token] if oauth_token[:refresh_token]
+          json_response["refresh_token"] = oauth_token[oauth_tokens_refresh_token_column] if oauth_token[:refresh_token]
 
           json_payload = if request.respond_to?(:convert_to_json)
                            request.send(:convert_to_json, json_response)
@@ -810,9 +871,9 @@ module Rodauth
             response.status = 200
             response["Content-Type"] ||= json_response_content_type
             json_response = {
-              "token" => oauth_token[:token],
-              "refresh_token" => oauth_token[:refresh_token],
-              "revoked_at" => oauth_token[:revoked_at]
+              "token" => oauth_token[oauth_tokens_token_column],
+              "refresh_token" => oauth_token[oauth_tokens_refresh_token_column],
+              "revoked_at" => oauth_token[oauth_tokens_revoked_at_column]
             }
             json_payload = if request.respond_to?(:convert_to_json)
                              request.send(:convert_to_json, json_response)
@@ -858,9 +919,9 @@ module Rodauth
               oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
               oauth_tokens_scopes_column => scopes
             }
-            oauth_token = generate_oauth_token(create_params)
+            oauth_token = generate_oauth_token(create_params, false)
 
-            fragment_params << ["access_token=#{oauth_token[:token]}"]
+            fragment_params << ["access_token=#{oauth_token[oauth_tokens_token_column]}"]
             fragment_params << ["token_type=#{oauth_token_type}"]
             fragment_params << ["expires_in=#{oauth_token_expires_in}"]
           when "code", "", nil
