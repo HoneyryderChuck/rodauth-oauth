@@ -4,13 +4,12 @@ class RodauthApp < Rodauth::Rails::App
   configure do
     enable :login, :http_basic_auth, :oauth
 
+    account_password_hash_column :ph
+
     db DB
     rails_controller { RodauthController }
 
     skip_status_checks? true
-    password_match? do |_password|
-      true
-    end
 
     # OAuth
     oauth_application_default_scope TEST_SCOPES.first

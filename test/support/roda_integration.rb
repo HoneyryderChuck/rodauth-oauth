@@ -52,6 +52,7 @@ class RodaIntegration < Minitest::Test
     opts[:json] = jwt_only ? :only : true
 
     app.plugin(:rodauth, opts) do
+      account_password_hash_column :ph
       rodauth_blocks.reverse_each do |rodauth_block|
         instance_exec(&rodauth_block)
       end
@@ -67,9 +68,6 @@ class RodaIntegration < Minitest::Test
       enable :http_basic_auth, :oauth
       oauth_application_default_scope TEST_SCOPES.first
       oauth_application_scopes TEST_SCOPES
-      password_match? do |_password|
-        true
-      end
     end
     roda do |r|
       r.rodauth
