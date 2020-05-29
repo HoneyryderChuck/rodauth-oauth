@@ -80,7 +80,6 @@ class RodaIntegration < Minitest::Test
         flash["error"] || flash["notice"] || "Unauthorized"
       end
 
-      rodauth.require_authentication
       yield(rodauth) if block_given?
       rodauth.require_oauth_authorization
 
