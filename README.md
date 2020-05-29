@@ -290,6 +290,28 @@ end
 
 In this section, the non-standard features are going to be described in more detail.
 
+### Token / Secrets Hashing
+
+Although not human-friendly as passwords, for security reasons, you might not want to store access (and refresh) tokens in the database. If that is the case, You'll have to add the respective hash columns in the table:
+
+```ruby
+# in migration
+String :token_hash, null: false, token: true
+String :refresh_token_hash, token, true
+# and you DO NOT NEED the token and refresh_token columns anymore!
+```
+
+And declare them in the plugin:
+
+```ruby
+plugin :rodauth do
+  enable :oauth
+  oauth_tokens_token_hash_column :token_hash
+  oauth_tokens_token_hash_column :refresh_token_hash
+```
+
+
+
 ### Access Type (default: "offline")
 
 The "access_type" feature allows the authorization server to emit access tokens with no associated refresh token. This means that users with expired access tokens will have to go through the OAuth flow everytime they need a new one.
