@@ -310,7 +310,18 @@ plugin :rodauth do
   oauth_tokens_token_hash_column :refresh_token_hash
 ```
 
+#### Client Secret
 
+By default, it's expected that the "client secret" property from an OAuth application is only known by the owner, and only the hash is stored in the database; this way, the authorization server doesn't know what the client secret is, only the application owner. The provided [OAuth Applications Extensions](#oauth-applications) application form contains a "Client Secret" input field for this reason.
+
+However, this extension is optional, and you might want to generate the secrets and store them as is. In that case, you'll have to re-define some options:
+
+```ruby
+plugin :rodauth do
+  enable :oauth
+  secret_matches? ->(application, secret){ application[:client_secret] == secret }
+end
+```
 
 ### Access Type (default: "offline")
 
