@@ -77,7 +77,7 @@ module Rodauth
     %w[
       grant_type code refresh_token client_id client_secret scope
       state redirect_uri scopes token_type_hint token
-      access_type response_type
+      access_type approval_prompt response_type
       code_challenge code_challenge_method code_verifier
     ].each do |param|
       auth_value_method :"#{param}_param", param
@@ -511,12 +511,31 @@ module Rodauth
     # Authorize
 
     def validate_oauth_grant_params
-      unless oauth_application && check_valid_redirect_uri? && check_valid_access_type? && check_valid_response_type?
+      unless oauth_application && check_valid_redirect_uri? && check_valid_access_type? &&
+             check_valid_approval_prompt? && check_valid_response_type?
         redirect_response_error("invalid_request")
       end
       redirect_response_error("invalid_scope") unless check_valid_scopes?
 
       validate_pkce_challenge_params
+    end
+
+    def try_approval_prompt
+      approval_prompt = param_or_nil(approval_prompt_param)
+
+      return unless approval_prompt && approval_prompt == "auto"
+
+      return if db[oauth_grants_table].where(
+        oauth_grants_account_id_column => account_id,
+        oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+        oauth_grants_redirect_uri_column => redirect_uri,
+        oauth_grants_scopes_column => scopes.join(","),
+        oauth_grants_access_type_column => "online"
+      ).count.zero?
+
+      # if there's a previous oauth grant for the params combo, it means that this user has approved before.
+
+      request.env["REQUEST_METHOD"] = "POST"
     end
 
     def create_oauth_grant
@@ -805,6 +824,13 @@ module Rodauth
       !access_type || ACCESS_TYPES.include?(access_type)
     end
 
+    APPROVAL_PROMPTS = %w[force auto].freeze
+
+    def check_valid_approval_prompt?
+      approval_prompt = param_or_nil(approval_prompt_param)
+      !approval_prompt || APPROVAL_PROMPTS.include?(approval_prompt)
+    end
+
     def check_valid_response_type?
       response_type = param_or_nil(response_type_param)
 
@@ -917,15 +943,14 @@ module Rodauth
     # /oauth-authorize
     route(:oauth_authorize) do |r|
       require_account
+      validate_oauth_grant_params
+      try_approval_prompt if request.get?
 
       r.get do
-        validate_oauth_grant_params
         authorize_view
       end
 
       r.post do
-        validate_oauth_grant_params
-
         code = nil
         query_params = []
         fragment_params = []

@@ -4,7 +4,8 @@
 
 ### Features
 
-* Implementation of PKCE by OAuth Public Clients (https://tools.ietf.org/html/rfc7636).
+* Implementation of PKCE by OAuth Public Clients (https://tools.ietf.org/html/rfc7636);
+* Implementation of grants using "access_type" and "approval_prompt" ([similar to what Google OAuth 2.0 API does](https://wiki.scn.sap.com/wiki/display/Security/Access+Google+APIs+using+the+OAuth+2.0+Client+API));
 
 ### Improvements
 

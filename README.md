@@ -329,7 +329,11 @@ The "access_type" feature allows the authorization server to emit access tokens 
 
 In order to enable this option, add "access_type=online" to the query params section of the authorization url.
 
-**Note**: this feature does not yet support the "approval_prompt" feature.
+#### Approval Prompt
+
+When using "online grants", one can use an extra query param in the URL, "approval_prompt", which when set to "auto", will skip the authorization form (on the other hand, if one wants to force the authorization form for all grants, then you can set it to "force", or don't set it at all, as it's the default).
+
+This will only work **if there was a previous successful online grant** for the same application, scopes and redirect URI.
 
 #### DB schema
 
