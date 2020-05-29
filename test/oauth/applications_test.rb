@@ -16,6 +16,7 @@ class RodaOauthApplicationsTest < RodaIntegration
     fill_in "description", with: "An app starting with Foo"
     fill_in "homepage-url", with: "https://foobar.com"
     fill_in "callback-url", with: "https://foobar.com/callback"
+    fill_in "client-secret", with: "SECRET"
     check "user.read"
     check "user.write"
     click_button "Register"
@@ -23,7 +24,6 @@ class RodaOauthApplicationsTest < RodaIntegration
     # Application page
     assert_equal page.find("#notice_flash").text, "Your oauth application has been registered"
     assert_includes page.html, "Client ID: "
-    assert_includes page.html, "Client Secret: "
     assert_includes page.html, "Scopes: "
     assert db[:oauth_applications].count == 1
   end

@@ -84,10 +84,10 @@ module Rodauth
     end
 
     # Application
-    APPLICATION_REQUIRED_PARAMS = %w[name description scopes homepage_url redirect_uri].freeze
+    APPLICATION_REQUIRED_PARAMS = %w[name description scopes homepage_url redirect_uri client_secret].freeze
     auth_value_method :oauth_application_required_params, APPLICATION_REQUIRED_PARAMS
 
-    (APPLICATION_REQUIRED_PARAMS + %w[client_id client_secret]).each do |param|
+    (APPLICATION_REQUIRED_PARAMS + %w[client_id]).each do |param|
       auth_value_method :"oauth_application_#{param}_param", param
     end
 
@@ -163,7 +163,9 @@ module Rodauth
     auth_value_method :unsupported_transform_algorithm_message, "transform algorithm not supported"
 
     auth_value_methods(
-      :oauth_unique_id_generator
+      :oauth_unique_id_generator,
+      :secret_matches?,
+      :secret_hash
     )
 
     redirect(:oauth_application) do |id|
@@ -326,18 +328,18 @@ module Rodauth
       end
     end
 
-    def get_secret_from_hash(secret_hash)
-      BCrypt::Password.new(secret_hash)
+    private
+
+    def secret_matches?(oauth_application, secret)
+      BCrypt::Password.new(oauth_application[oauth_applications_client_secret_column]) == secret
     end
 
-    private
+    def secret_hash(secret)
+      password_hash(secret)
+    end
 
     def oauth_unique_id_generator
       SecureRandom.hex(32)
-    end
-
-    def secret_matches?(oauth_application, secret)
-      get_secret_from_hash(oauth_application[oauth_applications_client_secret_column]) == secret
     end
 
     def generate_token_hash(token)
@@ -466,11 +468,11 @@ module Rodauth
       }
 
       # set client ID/secret pairs
-      secret = oauth_unique_id_generator
 
       create_params.merge! \
         oauth_applications_client_id_column => oauth_unique_id_generator,
-        oauth_applications_client_secret_column => password_hash(secret)
+        oauth_applications_client_secret_column => \
+          secret_hash(oauth_application_params[oauth_application_client_secret_param])
 
       create_params[oauth_applications_scopes_column] = if create_params[oauth_applications_scopes_column]
                                                           create_params[oauth_applications_scopes_column].join(",")
