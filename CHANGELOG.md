@@ -6,6 +6,11 @@
 
 * Implementation of PKCE by OAuth Public Clients (https://tools.ietf.org/html/rfc7636).
 
+### Improvements
+
+* Store token/refresh token hashes in the database, instead of the "plain" tokens;
+* Client secret hashed by default, and provided by the application owner;
+
 ### Fix
 
 * usage of client secret for authorizing the generation of tokens, as the spec mandates (and refraining from them when doing PKCE).
