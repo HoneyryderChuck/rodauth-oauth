@@ -17,7 +17,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
   def test_token_authorization_code_no_grant
     setup_application
     post("/oauth-token",
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
          code: "CODE")
@@ -32,7 +32,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     grant = oauth_grant(expires_in: Time.now - 60)
 
     post("/oauth-token",
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
          code: grant[:code],
@@ -48,7 +48,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     grant = oauth_grant(revoked_at: Time.now)
 
     post("/oauth-token",
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
          code: grant[:code],
@@ -78,7 +78,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
 
     post("/oauth-token",
          client_id: oauth_application[:client_id],
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",
          code: oauth_grant[:code],
          redirect_uri: oauth_grant[:redirect_uri])
@@ -109,7 +109,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
 
     post("/oauth-token",
          client_id: oauth_application[:client_id],
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",
          code: oauth_grant[:code],
          redirect_uri: oauth_grant[:redirect_uri])
@@ -148,7 +148,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
 
     post("/oauth-token",
          client_id: oauth_application[:client_id],
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",
          code: online_grant[:code],
          redirect_uri: online_grant[:redirect_uri])
@@ -176,7 +176,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
 
     post("/oauth-token",
          client_id: oauth_application[:client_id],
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",
          code: pkce_grant[:code],
          redirect_uri: pkce_grant[:redirect_uri])
@@ -266,7 +266,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     setup_application
 
     post("/oauth-token",
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
          code: oauth_grant[:code],

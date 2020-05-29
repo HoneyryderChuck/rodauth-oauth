@@ -326,20 +326,41 @@ module Rodauth
       end
     end
 
+    def get_secret_from_hash(secret_hash)
+      BCrypt::Password.new(secret_hash)
+    end
+
     private
 
     def oauth_unique_id_generator
       SecureRandom.hex(32)
     end
 
-    # this method generates the token hash
-    #
-    # if bcrypt is available, it'll use bcrypt.
-    # else, it'll use S256.
-    #
-    # bear in mind that token hash is not a password hash.
+    def secret_matches?(oauth_application, secret)
+      get_secret_from_hash(oauth_application[oauth_applications_client_secret_column]) == secret
+    end
+
     def generate_token_hash(token)
       Base64.urlsafe_encode64(Digest::SHA256.digest(token))
+    end
+
+    unless method_defined?(:password_hash)
+      # From login_requirements_base feature
+      if ENV["RACK_ENV"] == "test"
+        def password_hash_cost
+          BCrypt::Engine::MIN_COST
+        end
+      else
+        # :nocov:
+        def password_hash_cost
+          BCrypt::Engine::DEFAULT_COST
+        end
+        # :nocov:
+      end
+
+      def password_hash(password)
+        BCrypt::Password.create(password, cost: password_hash_cost)
+      end
     end
 
     def generate_oauth_token(params = {}, should_generate_refresh_token = true)
@@ -445,9 +466,11 @@ module Rodauth
       }
 
       # set client ID/secret pairs
+      secret = oauth_unique_id_generator
+
       create_params.merge! \
         oauth_applications_client_id_column => oauth_unique_id_generator,
-        oauth_applications_client_secret_column => oauth_unique_id_generator
+        oauth_applications_client_secret_column => password_hash(secret)
 
       create_params[oauth_applications_scopes_column] = if create_params[oauth_applications_scopes_column]
                                                           create_params[oauth_applications_scopes_column].join(",")
@@ -557,13 +580,14 @@ module Rodauth
     end
 
     def create_oauth_token
-      oauth_application_conds = {
-        oauth_applications_client_id_column => param(client_id_param),
-        oauth_applications_account_id_column => oauth_applications_account_id_column
-      }
+      oauth_application = db[oauth_applications_table].where(
+        oauth_applications_client_id_column => param(client_id_param)
+      ).first
+
+      redirect_response_error("invalid_request") unless oauth_application
 
       if (client_secret = param_or_nil(client_secret_param))
-        oauth_application_conds[oauth_applications_client_secret_column] = client_secret
+        redirect_response_error("invalid_request") unless secret_matches?(oauth_application, client_secret)
       end
 
       case param(grant_type_param)
@@ -573,10 +597,9 @@ module Rodauth
         oauth_grant = db[oauth_grants_table].where(
           oauth_grants_code_column => param(code_param),
           oauth_grants_redirect_uri_column => param(redirect_uri_param),
-          oauth_grants_oauth_application_id_column =>
-            db[oauth_applications_table].where(oauth_application_conds).select(oauth_applications_id_column)
+          oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+          oauth_grants_revoked_at_column => nil
         ).where(Sequel[oauth_grants_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
-                                            .where(oauth_grants_revoked_at_column => nil)
                                             .first
 
         redirect_response_error("invalid_grant") unless oauth_grant
@@ -608,8 +631,7 @@ module Rodauth
       when "refresh_token"
         # fetch oauth token
         oauth_token = oauth_token_by_refresh_token(param(refresh_token_param)).where(
-          oauth_tokens_oauth_application_id_column =>
-            db[oauth_applications_table].where(oauth_application_conds).select(oauth_applications_id_column)
+          oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column]
         ).where(oauth_grants_revoked_at_column => nil).first
 
         redirect_response_error("invalid_grant") unless oauth_token

@@ -20,7 +20,7 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
     setup_application
     header "Accept", "application/json"
     post("/oauth-token",
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
          code: "CODE")
@@ -36,7 +36,7 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
 
     header "Accept", "application/json"
     post("/oauth-token",
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
          code: grant[:code],
@@ -53,7 +53,7 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
 
     header "Accept", "application/json"
     post("/oauth-token",
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
          code: grant[:code],
@@ -84,7 +84,7 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
 
     header "Accept", "application/json"
     post("/oauth-token",
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
          code: oauth_grant[:code],
