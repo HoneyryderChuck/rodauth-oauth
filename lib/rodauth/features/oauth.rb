@@ -762,15 +762,21 @@ module Rodauth
              end
       payload = { "error" => code }
       payload["error_description"] = send(:"#{error_code}_message") if respond_to?(:"#{error_code}_message")
-      json_payload = if request.respond_to?(:convert_to_json)
-                       request.send(:convert_to_json, payload)
-                     else
-                       JSON.dump(payload)
-                     end
+      json_payload = _json_response_body(payload)
       response["Content-Type"] ||= json_response_content_type
       response["WWW-Authenticate"] = "Bearer" if status == 401
       response.write(json_payload)
       request.halt
+    end
+
+    unless method_defined?(:_json_response_body)
+      def _json_response_body(hash)
+        if request.respond_to?(:convert_to_json)
+          request.send(:convert_to_json, hash)
+        else
+          JSON.dump(hash)
+        end
+      end
     end
 
     def authorization_required
@@ -862,11 +868,7 @@ module Rodauth
 
           json_response["refresh_token"] = oauth_token[oauth_tokens_refresh_token_column] if oauth_token[:refresh_token]
 
-          json_payload = if request.respond_to?(:convert_to_json)
-                           request.send(:convert_to_json, json_response)
-                         else
-                           JSON.dump(json_response)
-                         end
+          json_payload = _json_response_body(json_response)
           response.write(json_payload)
           request.halt
         end
@@ -899,11 +901,7 @@ module Rodauth
               "refresh_token" => oauth_token[oauth_tokens_refresh_token_column],
               "revoked_at" => oauth_token[oauth_tokens_revoked_at_column]
             }
-            json_payload = if request.respond_to?(:convert_to_json)
-                             request.send(:convert_to_json, json_response)
-                           else
-                             JSON.dump(json_response)
-                           end
+            json_payload = _json_response_body(json_response)
             response.write(json_payload)
             request.halt
           else
