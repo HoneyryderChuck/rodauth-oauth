@@ -8,7 +8,7 @@ class RodaOauthRefreshTokenTest < RodaIntegration
   def test_token_refresh_token_no_token
     setup_application
     post("/oauth-token",
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "refresh_token",
          refresh_token: "CODE")
@@ -23,7 +23,7 @@ class RodaOauthRefreshTokenTest < RodaIntegration
     oauth_token = oauth_token(revoked_at: Time.now)
 
     post("/oauth-token",
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "refresh_token",
          refresh_token: oauth_token[:refresh_token])
@@ -53,7 +53,7 @@ class RodaOauthRefreshTokenTest < RodaIntegration
     prev_expires_in = oauth_token[:expires_in]
 
     post("/oauth-token",
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "refresh_token",
          refresh_token: oauth_token[:refresh_token])
@@ -66,6 +66,35 @@ class RodaOauthRefreshTokenTest < RodaIntegration
     json_body = JSON.parse(last_response.body)
     assert !json_body["token"].nil?
     assert json_body["token"] != prev_token
+    assert((Time.now.utc + json_body["expires_in"]).to_i > prev_expires_in.to_i)
+  end
+
+  def test_token_refresh_token_hash_columns_successful
+    rodauth do
+      oauth_tokens_token_hash_column :token_hash
+    end
+    setup_application
+
+    prev_token = oauth_token[:token]
+    prev_expires_in = oauth_token[:expires_in]
+
+    post("/oauth-token",
+         client_secret: "CLIENT_SECRET",
+         client_id: oauth_application[:client_id],
+         grant_type: "refresh_token",
+         refresh_token: oauth_token[:refresh_token])
+
+    assert last_response.status == 200
+    assert last_response.headers["Content-Type"] == "application/json"
+
+    assert db[:oauth_tokens].count == 1
+
+    oauth_token = db[:oauth_tokens].first
+
+    json_body = JSON.parse(last_response.body)
+    assert !json_body["token"].nil?
+    assert json_body["token"] != prev_token
+    assert json_body["token"] != oauth_token[:token]
     assert((Time.now.utc + json_body["expires_in"]).to_i > prev_expires_in.to_i)
   end
 

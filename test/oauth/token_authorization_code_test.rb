@@ -17,7 +17,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
   def test_token_authorization_code_no_grant
     setup_application
     post("/oauth-token",
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
          code: "CODE")
@@ -32,7 +32,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     grant = oauth_grant(expires_in: Time.now - 60)
 
     post("/oauth-token",
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
          code: grant[:code],
@@ -48,7 +48,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     grant = oauth_grant(revoked_at: Time.now)
 
     post("/oauth-token",
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
          code: grant[:code],
@@ -78,7 +78,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
 
     post("/oauth-token",
          client_id: oauth_application[:client_id],
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",
          code: oauth_grant[:code],
          redirect_uri: oauth_grant[:redirect_uri])
@@ -95,8 +95,50 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
 
     json_body = JSON.parse(last_response.body)
     assert json_body["token"] == access_token[:token]
+
     assert json_body["refresh_token"] == access_token[:refresh_token]
     assert !json_body["expires_in"].nil?
+  end
+
+  def test_token_authorization_code_hash_columns_successful
+    rodauth do
+      oauth_tokens_token_hash_column :token_hash
+      oauth_tokens_refresh_token_hash_column :refresh_token_hash
+    end
+    setup_application
+
+    post("/oauth-token",
+         client_id: oauth_application[:client_id],
+         client_secret: "CLIENT_SECRET",
+         grant_type: "authorization_code",
+         code: oauth_grant[:code],
+         redirect_uri: oauth_grant[:redirect_uri])
+
+    assert last_response.status == 200
+    assert last_response.headers["Content-Type"] == "application/json"
+
+    assert db[:oauth_tokens].count == 1
+
+    access_token = db[:oauth_tokens].first
+
+    oauth_grant = db[:oauth_grants].where(id: access_token[:oauth_grant_id]).first
+    assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
+
+    assert access_token[:token].nil?
+    assert !access_token[:token_hash].nil?
+    assert access_token[:refresh_token].nil?
+    assert !access_token[:refresh_token_hash].nil?
+
+    json_body = JSON.parse(last_response.body)
+    assert json_body["token"] != access_token[:token_hash]
+    assert json_body["refresh_token"] != access_token[:refresh_token_hash]
+    assert !json_body["expires_in"].nil?
+
+    header "Accept", "application/json"
+    header "Authorization", "Bearer #{json_body['token']}"
+    # valid token, and now we're getting somewhere
+    get("/private")
+    assert last_response.status == 200
   end
 
   def test_token_authorization_code_online_successful
@@ -106,7 +148,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
 
     post("/oauth-token",
          client_id: oauth_application[:client_id],
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",
          code: online_grant[:code],
          redirect_uri: online_grant[:redirect_uri])
@@ -134,7 +176,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
 
     post("/oauth-token",
          client_id: oauth_application[:client_id],
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",
          code: pkce_grant[:code],
          redirect_uri: pkce_grant[:redirect_uri])
@@ -224,7 +266,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     setup_application
 
     post("/oauth-token",
-         client_secret: oauth_application[:client_secret],
+         client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
          code: oauth_grant[:code],
@@ -237,14 +279,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
   end
 
   # Access
-  def test_token_access_private_unauthenticated
-    setup_application
-    login
-
-    header "Accept", "application/json"
-    get("/private")
-    assert last_response.status == 401
-  end
 
   def test_token_access_private_revoked_token
     setup_application
@@ -254,6 +288,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     header "Authorization", "Bearer #{oauth_token(revoked_at: Time.now)[:token]}"
     # valid token, and now we're getting somewhere
     get("/private")
+    assert last_response.status == 401
   end
 
   def test_token_access_private_expired_token
@@ -264,6 +299,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     header "Authorization", "Bearer #{oauth_token(expires_in: Time.now - 20)[:token]}"
     # valid token, and now we're getting somewhere
     get("/private")
+    assert last_response.status == 401
   end
 
   def test_token_access_private_invalid_scope
@@ -274,6 +310,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     header "Authorization", "Bearer #{oauth_token(scopes: 'smthelse')[:token]}"
     # valid token, and now we're getting somewhere
     get("/private")
+    assert last_response.status == 401
   end
 
   def test_token_access_private_valid_token

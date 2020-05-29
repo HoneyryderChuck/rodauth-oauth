@@ -43,7 +43,13 @@ class CreateRodauthOAuth < ActiveRecord::Migration<%= migration_version %>
       t.integer :oauth_application_id
       t.foreign_key :oauth_applications, column: :oauth_application_id
       t.string :token, null: false, token: true
+      # uncomment if setting oauth_tokens_token_hash_column
+      # and delete the token column
+      # t.string :token_hash, token: true
       t.string :refresh_token
+      # uncomment if setting oauth_tokens_refresh_token_hash_column
+      # and delete the refresh_token column
+      # t.string :refresh_token_hash, token: true
       t.datetime :expires_in, null: false
       t.datetime :revoked_at
       t.string :scopes, null: false

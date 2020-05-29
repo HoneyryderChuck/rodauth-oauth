@@ -23,6 +23,11 @@
     <input type="text" class="form-control<%= ' error' if rodauth.field_error('redirect_uri') %>" name="redirect_uri" id="callback-url" value="<%= rodauth.param('redirect_url') %>" />
     <%= rodauth.field_error('redirect_uri') %>
   </div>
+  <div class="form-group">
+    <label for="description">Secret (make it random and at least 32 character-long)</label>
+    <input type="text" class="form-control<%= ' error' if rodauth.field_error('client_secret') %>" name="client_secret" id="client_secret" value="<%= rodauth.param('client_secret') %>" />
+    <%= rodauth.field_error('client_secret') %>
+  </div>
   <% rodauth.oauth_application_scopes.each do |scope| %>
 		<div class="form-check">
 			<input id="<%= scope %>" class="form-check-input" type="checkbox" name="scopes[]" value="<%= scope %>">

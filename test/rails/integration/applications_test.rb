@@ -15,6 +15,7 @@ class RodaOauthRailsApplicationsTest < RailsIntegrationTest
     fill_in "description", with: "An app starting with Foo"
     fill_in "homepage_url", with: "https://foobar.com"
     fill_in "redirect_uri", with: "https://foobar.com/callback"
+    fill_in "client_secret", with: "SECRET"
     check "user.read"
     check "user.write"
     click_button "Register"
@@ -22,7 +23,6 @@ class RodaOauthRailsApplicationsTest < RailsIntegrationTest
     # Application page
     assert_equal page.find("#notice").text, "Your oauth application has been registered"
     assert_includes page.html, "Client ID: "
-    assert_includes page.html, "Client Secret: "
     assert_includes page.html, "Scopes: "
     assert db[:oauth_applications].count == 1
   end

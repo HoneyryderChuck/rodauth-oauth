@@ -36,7 +36,7 @@ module OauthDemo
 
       application_id = DB[:oauth_applications].insert(
         client_id: Digest::SHA1.hexdigest("http://localhost:9292/callback"),
-        client_secret: Digest::SHA1.hexdigest("http://localhost:9292/callback"),
+        client_secret: BCrypt::Password.create(client_id),
         name: "Myself",
         description: "About myself",
         redirect_uri: "http://localhost:9292/callback",
@@ -96,12 +96,11 @@ module OauthDemo
         uri = URI("http://localhost:9292/oauth-token")
         http = Net::HTTP.new(uri.host, uri.port)
         request = Net::HTTP::Post.new(uri.request_uri)
-        request.basic_auth("admin@localhost.com", "password")
         request.body = JSON.dump({
                                    "grant_type" => "authorization_code",
                                    "code" => code,
                                    "client_id" => application[:client_id],
-                                   "client_secret" => application[:client_secret],
+                                   "client_secret" => application[:client_id],
                                    "redirect_uri" => application[:redirect_uri]
                                  })
         request["content-type"] = "application/json"

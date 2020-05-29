@@ -21,6 +21,11 @@
   	<%= text_field_tag "redirect_uri", rodauth.param('redirect_uri'), class: "form-control#{' is-invalid' if rodauth.field_error('redirect_uri')}" %>
     <%= rodauth.field_error('redirect_uri') %>
   </div>
+  <div class="form-group">
+    <%= label_tag "Secret (make it random and at least 32 character-long)", "client_secret" %>
+    <%= text_field_tag "client_secret", rodauth.param('client_secret'), class: "form-control#{' is-invalid' if rodauth.field_error('client_secret')}" %>
+    <%= rodauth.field_error('client_secret') %>
+  </div>
   <% rodauth.oauth_application_scopes.each do |scope| %>
     <div class="form-check">
       <%= check_box_tag "scopes[]", scope, scope == rodauth.oauth_application_default_scope, id: scope, class: "form-check-input" %>

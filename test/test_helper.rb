@@ -47,7 +47,7 @@ module OAuthHelpers
         homepage_url: "https://example.com",
         redirect_uri: "https://example.com/callback",
         client_id: "CLIENT_ID",
-        client_secret: "CLIENT_SECRET",
+        client_secret: BCrypt::Password.create("CLIENT_SECRET", cost: BCrypt::Engine::MIN_COST),
         scopes: TEST_SCOPES.join(",")
 
       db[:oauth_applications].filter(id: id).first

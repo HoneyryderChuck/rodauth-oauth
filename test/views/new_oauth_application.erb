@@ -30,6 +30,11 @@
       <%= rodauth.field_error('redirect_uri') %>
     </div>
   </div>
+  <div class="form-group">
+    <label for="description">Secret (make it random and at least 32 character-long)</label>
+    <input type="text" class="form-control<%= ' error' if rodauth.field_error('client_secret') %>" name="client_secret" id="client-secret" value="<%= rodauth.param('client_secret') %>" />
+    <%= rodauth.field_error('client_secret') %>
+  </div>
   <% rodauth.oauth_application_scopes.each do |scope| %>
  	<div>
 	  <input id="<%= scope %>" type="checkbox" name="scopes[]" value="<%= scope %>">
