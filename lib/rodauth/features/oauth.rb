@@ -67,6 +67,8 @@ module Rodauth
     auth_value_method :oauth_grant_expires_in, 60 * 5 # 5 minutes
     auth_value_method :oauth_token_expires_in, 60 * 60 # 60 minutes
     auth_value_method :use_oauth_implicit_grant_type, false
+    auth_value_method :use_oauth_pkce?, true
+    auth_value_method :use_oauth_access_type?, true
 
     auth_value_method :oauth_require_pkce, false
     auth_value_method :oauth_pkce_challenge_method, "S256"
@@ -517,7 +519,7 @@ module Rodauth
       end
       redirect_response_error("invalid_scope") unless check_valid_scopes?
 
-      validate_pkce_challenge_params
+      validate_pkce_challenge_params if use_oauth_pkce?
     end
 
     def try_approval_prompt
@@ -548,18 +550,24 @@ module Rodauth
         oauth_grants_scopes_column => scopes.join(",")
       }
 
-      if (access_type = param_or_nil(access_type_param))
-        create_params[oauth_grants_access_type_column] = access_type
+      # Access Type flow
+      if use_oauth_access_type?
+        if (access_type = param_or_nil(access_type_param))
+          create_params[oauth_grants_access_type_column] = access_type
+        end
       end
 
       # PKCE flow
-      if (code_challenge = param_or_nil(code_challenge_param))
-        code_challenge_method = param_or_nil(code_challenge_method_param)
+      if use_oauth_pkce?
 
-        create_params[oauth_grants_code_challenge_column] = code_challenge
-        create_params[oauth_grants_code_challenge_method_column] = code_challenge_method
-      elsif oauth_require_pkce
-        redirect_response_error("code_challenge_required")
+        if (code_challenge = param_or_nil(code_challenge_param))
+          code_challenge_method = param_or_nil(code_challenge_method_param)
+
+          create_params[oauth_grants_code_challenge_column] = code_challenge
+          create_params[oauth_grants_code_challenge_method_column] = code_challenge_method
+        elsif oauth_require_pkce
+          redirect_response_error("code_challenge_required")
+        end
       end
 
       ds = db[oauth_grants_table]
@@ -626,14 +634,16 @@ module Rodauth
         redirect_response_error("invalid_grant") unless oauth_grant
 
         # PKCE
-        if oauth_grant[oauth_grants_code_challenge_column]
-          code_verifier = param_or_nil(code_verifier_param)
+        if use_oauth_pkce?
+          if oauth_grant[oauth_grants_code_challenge_column]
+            code_verifier = param_or_nil(code_verifier_param)
 
-          unless code_verifier && check_valid_grant_challenge?(oauth_grant, code_verifier)
-            redirect_response_error("invalid_request")
+            unless code_verifier && check_valid_grant_challenge?(oauth_grant, code_verifier)
+              redirect_response_error("invalid_request")
+            end
+          elsif oauth_require_pkce
+            redirect_response_error("code_challenge_required")
           end
-        elsif oauth_require_pkce
-          redirect_response_error("code_challenge_required")
         end
 
         create_params = {
@@ -647,7 +657,8 @@ module Rodauth
         db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column])
                               .update(oauth_grants_revoked_at_column => Sequel::CURRENT_TIMESTAMP)
 
-        generate_oauth_token(create_params, oauth_grant[oauth_grants_access_type_column] == "offline")
+        should_generate_refresh_token = !use_oauth_access_type? || oauth_grant[oauth_grants_access_type_column] == "offline"
+        generate_oauth_token(create_params, should_generate_refresh_token)
 
       when "refresh_token"
         # fetch oauth token
@@ -820,6 +831,8 @@ module Rodauth
     ACCESS_TYPES = %w[offline online].freeze
 
     def check_valid_access_type?
+      return true unless use_oauth_access_type?
+
       access_type = param_or_nil(access_type_param)
       !access_type || ACCESS_TYPES.include?(access_type)
     end
@@ -827,6 +840,8 @@ module Rodauth
     APPROVAL_PROMPTS = %w[force auto].freeze
 
     def check_valid_approval_prompt?
+      return true unless use_oauth_access_type?
+
       approval_prompt = param_or_nil(approval_prompt_param)
       !approval_prompt || APPROVAL_PROMPTS.include?(approval_prompt)
     end
@@ -944,7 +959,7 @@ module Rodauth
     route(:oauth_authorize) do |r|
       require_account
       validate_oauth_grant_params
-      try_approval_prompt if request.get?
+      try_approval_prompt if use_oauth_access_type? && request.get?
 
       r.get do
         authorize_view
