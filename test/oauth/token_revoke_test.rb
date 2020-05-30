@@ -70,6 +70,9 @@ class RodaOauthTokenRevokeTest < RodaIntegration
   end
 
   def setup_application
+    rodauth do
+      check_csrf? false
+    end
     super
     header "Accept", "application/json"
   end
