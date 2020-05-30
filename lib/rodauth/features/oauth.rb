@@ -170,6 +170,8 @@ module Rodauth
       :secret_hash
     )
 
+    auth_value_methods(:only_json?)
+
     redirect(:oauth_application) do |id|
       "/#{oauth_applications_path}/#{id}"
     end
@@ -182,8 +184,7 @@ module Rodauth
       end
     end
 
-    auth_value_method :json_request_accept_regexp, %r{\bapplication/(?:vnd\.api\+)?json\b}i
-    auth_methods(:json_request?)
+    auth_value_method :json_request_regexp, %r{\bapplication/(?:vnd\.api\+)?json\b}i
 
     def check_csrf?
       case request.path
@@ -191,6 +192,8 @@ module Rodauth
         false
       when oauth_revoke_path
         !json_request?
+      when oauth_authorize_path, /#{oauth_applications_path}/
+        only_json? ? false : super
       else
         super
       end
@@ -201,10 +204,19 @@ module Rodauth
       super || authorization_token
     end
 
-    def json_request?
-      return @json_request if defined?(@json_request)
+    def accepts_json?
+      return true if only_json?
 
-      @json_request = request.get_header("HTTP_ACCEPT") =~ json_request_accept_regexp
+      (accept = request.env["HTTP_ACCEPT"]) && accept =~ json_request_regexp
+    end
+
+    unless method_defined?(:json_request?)
+      # copied from the jwt feature
+      def json_request?
+        return @json_request if defined?(@json_request)
+
+        @json_request = request.content_type =~ json_request_regexp
+      end
     end
 
     attr_reader :oauth_application
@@ -657,7 +669,9 @@ module Rodauth
         db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column])
                               .update(oauth_grants_revoked_at_column => Sequel::CURRENT_TIMESTAMP)
 
-        should_generate_refresh_token = !use_oauth_access_type? || oauth_grant[oauth_grants_access_type_column] == "offline"
+        should_generate_refresh_token = !use_oauth_access_type? ||
+                                        oauth_grant[oauth_grants_access_type_column] == "offline"
+
         generate_oauth_token(create_params, should_generate_refresh_token)
 
       when "refresh_token"
@@ -760,7 +774,7 @@ module Rodauth
     # Response helpers
 
     def redirect_response_error(error_code, redirect_url = request.referer || default_redirect)
-      if json_request?
+      if accepts_json?
         throw_json_response_error(invalid_oauth_response_status, error_code)
       else
         redirect_url = URI.parse(redirect_url)
@@ -810,7 +824,7 @@ module Rodauth
     end
 
     def authorization_required
-      if json_request?
+      if accepts_json?
         throw_json_response_error(authorization_required_error_status, "invalid_client")
       else
         set_redirect_error_flash(require_authorization_error_flash)
@@ -934,7 +948,7 @@ module Rodauth
             after_revoke
           end
 
-          if json_request?
+          if accepts_json?
             response.status = 200
             response["Content-Type"] ||= json_response_content_type
             json_response = {
