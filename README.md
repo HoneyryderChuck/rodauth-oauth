@@ -344,6 +344,14 @@ the "oauth_grants" table will have to include the "access_type row":
 String :access_type, null: false, default: "offline"
 ```
 
+If you want to disable this flow altogether, you can:
+
+```ruby
+enable :oauth
+use_oauth_access_type? false
+```
+
+
 ### Implicit Grant (default: disabled)
 
 The implicit grant flow is part of the original OAuth 2.0 RFC, however, if you care about security, you are **strongly recommended** not to enable it.
@@ -395,6 +403,13 @@ plugin :rodauth do
   enable :oauth
   oauth_require_pkce true
 end
+```
+
+If you want, on the other hand. to disable this flow altogether, you can:
+
+```ruby
+enable :oauth
+use_oauth_pkce? false
 ```
 
 ## Ruby support policy
