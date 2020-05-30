@@ -649,6 +649,7 @@ module Rodauth
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
         oauth_grants_revoked_at_column => nil
       ).where(Sequel[oauth_grants_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
+                                          .for_update
                                           .first
 
       redirect_response_error("invalid_grant") unless oauth_grant
@@ -687,7 +688,7 @@ module Rodauth
       # fetch oauth token
       oauth_token = oauth_token_by_refresh_token(param(refresh_token_param)).where(
         oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column]
-      ).where(oauth_grants_revoked_at_column => nil).first
+      ).where(oauth_grants_revoked_at_column => nil).for_update.first
 
       redirect_response_error("invalid_grant") unless oauth_token
 
@@ -750,7 +751,7 @@ module Rodauth
                             oauth_applications_account_id_column => account_id
                           ).select(oauth_applications_id_column)
                         )
-                      ).first
+                      ).for_update.first
 
       redirect_response_error("invalid_request") unless oauth_token
 
