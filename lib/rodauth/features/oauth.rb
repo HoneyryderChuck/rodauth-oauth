@@ -633,86 +633,92 @@ module Rodauth
 
       case param(grant_type_param)
       when "authorization_code"
-
-        # fetch oauth grant
-        oauth_grant = db[oauth_grants_table].where(
-          oauth_grants_code_column => param(code_param),
-          oauth_grants_redirect_uri_column => param(redirect_uri_param),
-          oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-          oauth_grants_revoked_at_column => nil
-        ).where(Sequel[oauth_grants_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
-                                            .first
-
-        redirect_response_error("invalid_grant") unless oauth_grant
-
-        # PKCE
-        if use_oauth_pkce?
-          if oauth_grant[oauth_grants_code_challenge_column]
-            code_verifier = param_or_nil(code_verifier_param)
-
-            unless code_verifier && check_valid_grant_challenge?(oauth_grant, code_verifier)
-              redirect_response_error("invalid_request")
-            end
-          elsif oauth_require_pkce
-            redirect_response_error("code_challenge_required")
-          end
-        end
-
-        create_params = {
-          oauth_tokens_account_id_column => oauth_grant[oauth_grants_account_id_column],
-          oauth_tokens_oauth_application_id_column => oauth_grant[oauth_grants_oauth_application_id_column],
-          oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column],
-          oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column]
-        }
-
-        # revoke oauth grant
-        db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column])
-                              .update(oauth_grants_revoked_at_column => Sequel::CURRENT_TIMESTAMP)
-
-        should_generate_refresh_token = !use_oauth_access_type? ||
-                                        oauth_grant[oauth_grants_access_type_column] == "offline"
-
-        generate_oauth_token(create_params, should_generate_refresh_token)
-
+        create_oauth_token_from_authorization_code(oauth_application)
       when "refresh_token"
-        # fetch oauth token
-        oauth_token = oauth_token_by_refresh_token(param(refresh_token_param)).where(
-          oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column]
-        ).where(oauth_grants_revoked_at_column => nil).first
-
-        redirect_response_error("invalid_grant") unless oauth_token
-
-        token = oauth_unique_id_generator
-
-        update_params = {
-          oauth_tokens_oauth_application_id_column => oauth_token[oauth_grants_oauth_application_id_column],
-          oauth_tokens_expires_in_column => Time.now + oauth_token_expires_in
-        }
-
-        if oauth_tokens_token_hash_column
-          update_params[oauth_tokens_token_hash_column] = generate_token_hash(token)
-        else
-          update_params[oauth_tokens_token_column] = token
-        end
-
-        ds = db[oauth_tokens_table].where(oauth_tokens_id_column => oauth_token[oauth_tokens_id_column])
-
-        oauth_token = begin
-          if ds.supports_returning?(:update)
-            ds.returning.update(update_params)
-          else
-            ds.update(update_params)
-            ds.first
-          end
-                      rescue Sequel::UniqueConstraintViolation
-                        retry
-        end
-
-        oauth_token[oauth_tokens_token_column] = token
-        oauth_token
+        create_oauth_token_from_token(oauth_application)
       else
         redirect_response_error("invalid_grant")
       end
+    end
+
+    def create_oauth_token_from_authorization_code(oauth_application)
+      # fetch oauth grant
+      oauth_grant = db[oauth_grants_table].where(
+        oauth_grants_code_column => param(code_param),
+        oauth_grants_redirect_uri_column => param(redirect_uri_param),
+        oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+        oauth_grants_revoked_at_column => nil
+      ).where(Sequel[oauth_grants_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
+                                          .first
+
+      redirect_response_error("invalid_grant") unless oauth_grant
+
+      # PKCE
+      if use_oauth_pkce?
+        if oauth_grant[oauth_grants_code_challenge_column]
+          code_verifier = param_or_nil(code_verifier_param)
+
+          unless code_verifier && check_valid_grant_challenge?(oauth_grant, code_verifier)
+            redirect_response_error("invalid_request")
+          end
+        elsif oauth_require_pkce
+          redirect_response_error("code_challenge_required")
+        end
+      end
+
+      create_params = {
+        oauth_tokens_account_id_column => oauth_grant[oauth_grants_account_id_column],
+        oauth_tokens_oauth_application_id_column => oauth_grant[oauth_grants_oauth_application_id_column],
+        oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column],
+        oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column]
+      }
+
+      # revoke oauth grant
+      db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column])
+                            .update(oauth_grants_revoked_at_column => Sequel::CURRENT_TIMESTAMP)
+
+      should_generate_refresh_token = !use_oauth_access_type? ||
+                                      oauth_grant[oauth_grants_access_type_column] == "offline"
+
+      generate_oauth_token(create_params, should_generate_refresh_token)
+    end
+
+    def create_oauth_token_from_token(oauth_application)
+      # fetch oauth token
+      oauth_token = oauth_token_by_refresh_token(param(refresh_token_param)).where(
+        oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column]
+      ).where(oauth_grants_revoked_at_column => nil).first
+
+      redirect_response_error("invalid_grant") unless oauth_token
+
+      token = oauth_unique_id_generator
+
+      update_params = {
+        oauth_tokens_oauth_application_id_column => oauth_token[oauth_grants_oauth_application_id_column],
+        oauth_tokens_expires_in_column => Time.now + oauth_token_expires_in
+      }
+
+      if oauth_tokens_token_hash_column
+        update_params[oauth_tokens_token_hash_column] = generate_token_hash(token)
+      else
+        update_params[oauth_tokens_token_column] = token
+      end
+
+      ds = db[oauth_tokens_table].where(oauth_tokens_id_column => oauth_token[oauth_tokens_id_column])
+
+      oauth_token = begin
+        if ds.supports_returning?(:update)
+          ds.returning.update(update_params)
+        else
+          ds.update(update_params)
+          ds.first
+        end
+                    rescue Sequel::UniqueConstraintViolation
+                      retry
+      end
+
+      oauth_token[oauth_tokens_token_column] = token
+      oauth_token
     end
 
     # Token revocation
