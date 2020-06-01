@@ -62,7 +62,7 @@ module Rodauth
 
     auth_value_method :json_response_content_type, "application/json"
 
-    auth_value_method :oauth_grant_expires_in, 60 * 5 # 5 minutes
+    auth_value_method :oauth_grant_expires_in, 60 * 5 # 60 minutes
     auth_value_method :oauth_token_expires_in, 60 * 60 # 60 minutes
     auth_value_method :use_oauth_implicit_grant_type, false
     auth_value_method :use_oauth_pkce?, true
