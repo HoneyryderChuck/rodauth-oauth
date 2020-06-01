@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require_relative "./roda_integration"
+require_relative File.join(__dir__, "roda_integration")
 
 class HTTPMacIntegration < RodaIntegration
   private
@@ -47,7 +47,7 @@ class HTTPMacIntegration < RodaIntegration
     ].join("\n") + ("\n" * 3)
 
     Base64.strict_encode64 \
-      OpenSSL::HMAC.digest(OpenSSL::Digest::SHA256.new, token[:mac_key], request_signature)
+      OpenSSL::HMAC.digest(OpenSSL::Digest.new("SHA256").new, token[:mac_key], request_signature)
   end
 
   def setup_application
