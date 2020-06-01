@@ -2,6 +2,32 @@
 
 module Rodauth
   Feature.define(:oauth_http_mac) do
+
+    unless String.method_defined?(:delete_prefix)
+      module PrefixExtensions
+        refine(String) do
+          def delete_suffix(suffix)
+            suffix = suffix.to_s
+            len = suffix.length
+            if len > 0 && index(suffix, -len)
+              self[0...-len]
+            else
+              dup
+            end
+          end
+
+          def delete_prefix(prefix)
+          prefix = prefix.to_s
+          if rindex(prefix, 0)
+            self[prefix.length..-1]
+          else
+            dup
+          end
+        end
+      end
+      using(SuffixExtensions)
+    end
+
     depends :oauth
 
     auth_value_method :oauth_token_type, "mac"
