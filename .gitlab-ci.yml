@@ -37,8 +37,6 @@ ruby23:
     - *deps_alpine
     - *before_script
   image: "ruby:2.3-alpine"
-  only:
-    - master
   script:
     - *test
 ruby24:
