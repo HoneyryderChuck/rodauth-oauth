@@ -94,7 +94,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
 
     json_body = JSON.parse(last_response.body)
-    assert json_body["token"] == access_token[:token]
+    assert json_body["access_token"] == access_token[:token]
 
     assert json_body["refresh_token"] == access_token[:refresh_token]
     assert !json_body["expires_in"].nil?
@@ -130,12 +130,12 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     assert !access_token[:refresh_token_hash].nil?
 
     json_body = JSON.parse(last_response.body)
-    assert json_body["token"] != access_token[:token_hash]
+    assert json_body["access_token"] != access_token[:token_hash]
     assert json_body["refresh_token"] != access_token[:refresh_token_hash]
     assert !json_body["expires_in"].nil?
 
     header "Accept", "application/json"
-    header "Authorization", "Bearer #{json_body['token']}"
+    header "Authorization", "Bearer #{json_body["access_token"]}"
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 200
@@ -164,7 +164,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
 
     json_body = JSON.parse(last_response.body)
-    assert json_body["token"] == access_token[:token]
+    assert json_body["access_token"] == access_token[:token]
     assert json_body["refresh_token"].nil?
     assert !json_body["expires_in"].nil?
   end
@@ -226,7 +226,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
 
     json_body = JSON.parse(last_response.body)
-    assert json_body["token"] == access_token[:token]
+    assert json_body["access_token"] == access_token[:token]
     assert json_body["refresh_token"].nil?
     assert !json_body["expires_in"].nil?
   end
@@ -254,7 +254,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
 
     json_body = JSON.parse(last_response.body)
-    assert json_body["token"] == access_token[:token]
+    assert json_body["access_token"] == access_token[:token]
     assert json_body["refresh_token"].nil?
     assert !json_body["expires_in"].nil?
   end

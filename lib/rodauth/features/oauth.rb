@@ -442,7 +442,7 @@ module Rodauth
 
     def json_access_token_payload(oauth_token)
       payload = {
-        "token" => oauth_token[oauth_tokens_token_column],
+        "access_token" => oauth_token[oauth_tokens_token_column],
         "token_type" => oauth_token_type,
         "expires_in" => oauth_token_expires_in
       }

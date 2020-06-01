@@ -68,8 +68,8 @@ class RodaOAuthRailsTokenRefreshTokenTest < RailsIntegrationTest
     assert db[:oauth_tokens].count == 1
 
     json_body = JSON.parse(last_response.body)
-    assert !json_body["token"].nil?
-    assert json_body["token"] != prev_token
+    assert !json_body["access_token"].nil?
+    assert json_body["access_token"] != prev_token
     assert Time.now.utc + json_body["expires_in"] > prev_expires_in
   end
 end
