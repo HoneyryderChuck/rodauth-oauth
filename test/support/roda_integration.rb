@@ -103,6 +103,10 @@ class RodaIntegration < Minitest::Test
     click_button "Login"
   end
 
+  def set_authorization_header(token = oauth_token)
+    header "Authorization", "Bearer #{token[:token]}"
+  end
+
   def around
     db.transaction(rollback: :always, savepoint: true, auto_savepoint: true) { super }
   end

@@ -33,8 +33,6 @@ module Rodauth
 
     SCOPES = %w[profile.read].freeze
 
-    depends :login
-
     before "authorize"
     after "authorize"
     after "authorize_failure"
@@ -179,8 +177,10 @@ module Rodauth
     redirect(:require_authorization) do
       if logged_in?
         oauth_authorize_path
-      else
+      elsif respond_to?(:login_redirect)
         login_redirect
+      else
+        default_redirect
       end
     end
 
@@ -438,6 +438,18 @@ module Rodauth
       else
         db[oauth_tokens_table].where(oauth_tokens_refresh_token_column => token)
       end
+    end
+
+    def json_access_token_payload(oauth_token)
+      payload = {
+        "token" => oauth_token[oauth_tokens_token_column],
+        "token_type" => oauth_token_type,
+        "expires_in" => oauth_token_expires_in
+      }
+      if oauth_token[oauth_tokens_refresh_token_column]
+        payload["refresh_token"] = oauth_token[oauth_tokens_refresh_token_column]
+      end
+      payload
     end
 
     # Oauth Application
@@ -922,15 +934,7 @@ module Rodauth
 
           response.status = 200
           response["Content-Type"] ||= json_response_content_type
-          json_response = {
-            "token" => oauth_token[oauth_tokens_token_column],
-            "token_type" => oauth_token_type,
-            "expires_in" => oauth_token_expires_in
-          }
-
-          json_response["refresh_token"] = oauth_token[oauth_tokens_refresh_token_column] if oauth_token[:refresh_token]
-
-          json_payload = _json_response_body(json_response)
+          json_payload = _json_response_body(json_access_token_payload(oauth_token))
           response.write(json_payload)
           request.halt
         end

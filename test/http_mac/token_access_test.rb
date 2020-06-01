@@ -2,14 +2,14 @@
 
 require "test_helper"
 
-class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
+class RodaOauthHTTPMacTokenAuthorizationCodeTest < HTTPMacIntegration
   include Rack::Test::Methods
 
   def test_token_access_private_revoked_token
     setup_application
 
     header "Accept", "application/json"
-    set_authorization_header(oauth_token(revoked_at: Time.now))
+    header "Authorization", set_authorization_header(oauth_token(revoked_at: Time.now))
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 401
@@ -19,7 +19,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     setup_application
 
     header "Accept", "application/json"
-    set_authorization_header(oauth_token(expires_in: Time.now - 20))
+    header "Authorization", set_authorization_header(oauth_token(expires_in: Time.now - 20))
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 401
@@ -29,7 +29,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     setup_application
 
     header "Accept", "application/json"
-    set_authorization_header(oauth_token(scopes: "smthelse"))
+    header "Authorization", set_authorization_header(oauth_token(scopes: "smthelse"))
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 401
@@ -39,7 +39,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     setup_application
 
     header "Accept", "application/json"
-    set_authorization_header
+    header "Authorization", set_authorization_header
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 200
@@ -50,7 +50,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     setup_application
 
     header "Accept", "text/html"
-    set_authorization_header(oauth_token(scopes: "smthelse"))
+    header "Authorization", set_authorization_header(oauth_token(scopes: "smthelse"))
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 302
@@ -63,7 +63,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     end
     setup_application
 
-    set_authorization_header(oauth_token(scopes: "smthelse"))
+    header "Authorization", set_authorization_header(oauth_token(scopes: "smthelse"))
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 401
