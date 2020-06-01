@@ -25,7 +25,7 @@ module Rodauth
           end
         end
       end
-      using(SuffixExtensions)
+      using(PrefixExtensions)
     end
 
     depends :oauth
