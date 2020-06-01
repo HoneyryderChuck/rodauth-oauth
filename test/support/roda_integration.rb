@@ -62,10 +62,15 @@ class RodaIntegration < Minitest::Test
     self.app = app
   end
 
+  def oauth_feature
+    :oauth
+  end
+
   def setup_application
+    feature = oauth_feature
     rodauth do
       db RODADB
-      enable :http_basic_auth, :oauth
+      enable :login, :http_basic_auth, feature
       oauth_application_default_scope TEST_SCOPES.first
       oauth_application_scopes TEST_SCOPES
     end
