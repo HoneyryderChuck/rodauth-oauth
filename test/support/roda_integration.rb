@@ -62,10 +62,15 @@ class RodaIntegration < Minitest::Test
     self.app = app
   end
 
+  def oauth_feature
+    :oauth
+  end
+
   def setup_application
+    feature = oauth_feature
     rodauth do
       db RODADB
-      enable :http_basic_auth, :oauth
+      enable :login, :http_basic_auth, feature
       oauth_application_default_scope TEST_SCOPES.first
       oauth_application_scopes TEST_SCOPES
     end
@@ -96,6 +101,10 @@ class RodaIntegration < Minitest::Test
     fill_in "Login", with: opts.fetch(:login, "foo@example.com")
     fill_in "Password", with: opts.fetch(:pass, "0123456789")
     click_button "Login"
+  end
+
+  def set_authorization_header(token = oauth_token)
+    header "Authorization", "Bearer #{token[:token]}"
   end
 
   def around

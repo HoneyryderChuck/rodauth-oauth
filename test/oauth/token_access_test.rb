@@ -9,7 +9,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     setup_application
 
     header "Accept", "application/json"
-    header "Authorization", "Bearer #{oauth_token(revoked_at: Time.now)[:token]}"
+    set_authorization_header(oauth_token(revoked_at: Time.now))
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 401
@@ -19,7 +19,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     setup_application
 
     header "Accept", "application/json"
-    header "Authorization", "Bearer #{oauth_token(expires_in: Time.now - 20)[:token]}"
+    set_authorization_header(oauth_token(expires_in: Time.now - 20))
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 401
@@ -29,7 +29,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     setup_application
 
     header "Accept", "application/json"
-    header "Authorization", "Bearer #{oauth_token(scopes: 'smthelse')[:token]}"
+    set_authorization_header(oauth_token(scopes: "smthelse"))
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 401
@@ -39,7 +39,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     setup_application
 
     header "Accept", "application/json"
-    header "Authorization", "Bearer #{oauth_token[:token]}"
+    set_authorization_header
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 200
@@ -50,7 +50,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     setup_application
 
     header "Accept", "text/html"
-    header "Authorization", "Bearer #{oauth_token(scopes: 'smthelse')[:token]}"
+    set_authorization_header(oauth_token(scopes: "smthelse"))
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 302
@@ -63,7 +63,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     end
     setup_application
 
-    header "Authorization", "Bearer #{oauth_token(scopes: 'smthelse')[:token]}"
+    set_authorization_header(oauth_token(scopes: "smthelse"))
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 401

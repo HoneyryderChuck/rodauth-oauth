@@ -29,6 +29,10 @@ Naming/FileName:
     - Rakefile
     - Gemfile
 
+Naming/AccessorMethodName:
+  Exclude:
+    - test/**/*
+
 Metrics/ModuleLength:
   Enabled: false
 
