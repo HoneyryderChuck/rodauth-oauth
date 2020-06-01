@@ -31,21 +31,6 @@ module Rodauth
       using(SuffixExtensions)
     end
 
-    unless String.method_defined?(:delete_prefix)
-      module PrefixExtensions
-        refine(String) do
-          def delete_prefix(prefix)
-          prefix = prefix.to_s
-          if rindex(prefix, 0)
-            self[prefix.length..-1]
-          else
-            dup
-          end
-        end
-      end
-      using(SuffixExtensions)
-    end
-
     SCOPES = %w[profile.read].freeze
 
     before "authorize"

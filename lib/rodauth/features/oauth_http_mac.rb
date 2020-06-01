@@ -17,11 +17,12 @@ module Rodauth
           end
 
           def delete_prefix(prefix)
-          prefix = prefix.to_s
-          if rindex(prefix, 0)
-            self[prefix.length..-1]
-          else
-            dup
+            prefix = prefix.to_s
+            if rindex(prefix, 0)
+              self[prefix.length..-1]
+            else
+              dup
+            end
           end
         end
       end
