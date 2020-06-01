@@ -1008,12 +1008,11 @@ module Rodauth
             }
             oauth_token = generate_oauth_token(create_params, false)
 
-            fragment_params << ["access_token=#{oauth_token[oauth_tokens_token_column]}"]
-            fragment_params << ["token_type=#{oauth_token_type}"]
-            fragment_params << ["expires_in=#{oauth_token_expires_in}"]
+            token_payload = json_access_token_payload(oauth_token)
+            fragment_params.replace(token_payload.map{|k, v| "#{k}=#{v}"})
           when "code", "", nil
             code = create_oauth_grant
-            query_params << ["code=#{code}"]
+            query_params << "code=#{code}"
           else
             redirect_response_error("invalid_request")
           end
