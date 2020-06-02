@@ -5,6 +5,7 @@ module Rodauth
     depends :oauth
 
     auth_value_method :oauth_jwt_token_issuer, "Example"
+    auth_value_method :oauth_jwt_algorithm, "HS256"
     auth_value_method :oauth_jwt_secret, nil
     auth_value_method :oauth_jwt_secret_path, nil
 
@@ -19,7 +20,6 @@ module Rodauth
     auth_value_method :oauth_jwt_jwe_encryption_method, nil
     auth_value_method :oauth_jwt_jwe_copyright, nil
 
-    auth_value_method :oauth_jwt_algorithm, "HS256"
     auth_value_method :oauth_jwt_audience, nil
 
     auth_value_methods(
