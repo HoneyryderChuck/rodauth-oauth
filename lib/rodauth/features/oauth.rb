@@ -443,7 +443,7 @@ module Rodauth
     def json_access_token_payload(oauth_token)
       payload = {
         "access_token" => oauth_token[oauth_tokens_token_column],
-        "token_type" => oauth_token_type,
+        "token_type" => oauth_token_type.downcase,
         "expires_in" => oauth_token_expires_in
       }
       if oauth_token[oauth_tokens_refresh_token_column]
@@ -827,7 +827,7 @@ module Rodauth
       payload["error_description"] = send(:"#{error_code}_message") if respond_to?(:"#{error_code}_message")
       json_payload = _json_response_body(payload)
       response["Content-Type"] ||= json_response_content_type
-      response["WWW-Authenticate"] = "Bearer" if status == 401
+      response["WWW-Authenticate"] = oauth_token_type if status == 401
       response.write(json_payload)
       request.halt
     end
@@ -1009,7 +1009,7 @@ module Rodauth
             oauth_token = generate_oauth_token(create_params, false)
 
             token_payload = json_access_token_payload(oauth_token)
-            fragment_params.replace(token_payload.map{|k, v| "#{k}=#{v}"})
+            fragment_params.replace(token_payload.map { |k, v| "#{k}=#{v}" })
           when "code", "", nil
             code = create_oauth_grant
             query_params << "code=#{code}"

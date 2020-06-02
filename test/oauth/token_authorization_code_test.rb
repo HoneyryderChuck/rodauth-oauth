@@ -94,6 +94,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
 
     json_body = JSON.parse(last_response.body)
+    assert json_body["token_type"] == "bearer"
     assert json_body["access_token"] == access_token[:token]
 
     assert json_body["refresh_token"] == access_token[:refresh_token]
@@ -135,7 +136,7 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     assert !json_body["expires_in"].nil?
 
     header "Accept", "application/json"
-    header "Authorization", "Bearer #{json_body["access_token"]}"
+    header "Authorization", "Bearer #{json_body['access_token']}"
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 200
