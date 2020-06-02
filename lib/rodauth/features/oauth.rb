@@ -289,7 +289,7 @@ module Rodauth
 
       scopes << oauth_application_default_scope if scopes.empty?
 
-      token_scopes = authorization_token[:scopes].split(",")
+      token_scopes = authorization_token[oauth_tokens_scopes_column].split(",")
 
       authorization_required unless scopes.any? { |scope| token_scopes.include?(scope) }
     end

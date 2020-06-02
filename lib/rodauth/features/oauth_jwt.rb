@@ -7,13 +7,64 @@ module Rodauth
     auth_value_method :oauth_jwt_token_issuer, "Example"
     auth_value_method :oauth_jwt_secret, nil
     auth_value_method :oauth_jwt_secret_path, nil
-    auth_value_method :oauth_jwt_jwk_key_path, nil
-    auth_value_method :oauth_jwt_encryption_method, "HS256"
+    auth_value_method :oauth_jwt_decoding_secret, nil
+    auth_value_method :oauth_jwt_decoding_secret_path, nil
+    auth_value_method :oauth_jwt_jwk_public_key, nil
+    auth_value_method :oauth_jwt_jwk_public_key_path, nil
+    auth_value_method :oauth_jwt_algorithm, "HS256"
     auth_value_method :oauth_jwt_audience, nil
 
     auth_value_methods :generate_jti
 
+    def require_oauth_authorization(*scopes)
+      authorization_required unless authorization_token
+
+      scopes << oauth_application_default_scope if scopes.empty?
+
+      token_scopes = authorization_token["scopes"].split(",")
+
+      authorization_required unless scopes.any? { |scope| token_scopes.include?(scope) }
+    end
+
     private
+
+    def authorization_token
+      return @authorization_token if defined?(@authorization_token)
+
+      @authorization_token = begin
+        value = request.get_header("HTTP_AUTHORIZATION").to_s
+
+        scheme, token = value.split(/ +/, 2)
+
+        return unless scheme == "Bearer"
+
+        # decode jwt
+
+        headers = { algorithms: [oauth_jwt_algorithm] }
+
+        secret = if _jwk_public_key
+                   # JWK
+                   # The jwk loader would fetch the set of JWKs from a trusted source
+                   jwk_loader = lambda do |options|
+                     @cached_keys = nil if options[:invalidate] # need to reload the keys
+                     @cached_keys ||= { keys: [_jwk_public_key.export] }
+                   end
+
+                   headers[:algorithms] = ["RS512"]
+                   headers[:jwks] = jwk_loader
+
+                   nil
+                 else
+                   # JWS
+                   # worst case scenario, the secret is the application secret
+                   _jwt_decoding_secret
+                 end
+
+        token, = JWT.decode(token, secret, true, headers)
+        token
+      end
+    rescue JWT::DecodeError
+    end
 
     def generate_oauth_token(params = {}, should_generate_refresh_token = true)
       create_params = {
@@ -34,18 +85,19 @@ module Rodauth
 
       issued_at = Time.current.utc.to_i
 
-      secret = oauth_jwt_secret_path ? File.open(oauth_jwt_secret_path) : oauth_jwt_secret
+      headers = {}
 
-      secret ||= oauth_application.secret
+      secret, algorithm = if _jwk_public_key
+                            # JWK
+                            # Currently only supports RSA public keys.
+                            headers[:kid] = _jwk_public_key.kid
 
-      secret = case oauth_jwt_encryption_method
-               when /RS\d{3}/ # RSA
-                 OpenSSL::PKey::RSA.new(secret)
-               when /ES\d{3}/
-                 OpenSSL::PKey::EC.new(secret)
-               else
-                 secret.respond_to?(:read) ? secret.read : secret
-               end
+                            [jwk.keypair, "RS512"]
+                          else
+                            # JWS
+
+                            [_jwt_secret, oauth_jwt_algorithm]
+                          end
 
       iat = Time.current.utc.to_i
 
@@ -68,15 +120,40 @@ module Rodauth
         scopes: oauth_token[oauth_tokens_scopes_column]
       }
 
-      headers = {}
-      if oauth_jwt_jwk_key_path
-        pubkey = OpenSSL::PKey::RSA.new(oauth_jwt_jwk_key_path)
-        headers[:kid] = pubkey.kid
-      end
-
-      token = JWT.encode payload, secret, oauth_jwt_encryption_method, headers
+      token = JWT.encode(payload, secret, algorithm, headers)
       oauth_token[oauth_tokens_token_column] = token
       oauth_token
+    end
+
+    def _jwk_public_key
+      @_jwk_public_key ||= begin
+        key = if oauth_jwt_jwk_public_key_path
+                File.read(oauth_jwt_jwk_public_key_path)
+              else
+                oauth_jwt_jwk_public_key
+              end
+
+        return unless key
+
+        JWT::JWK.new(OpenSSL::PKey::RSA.new(key))
+      end
+    end
+
+    def _jwt_secret
+      @_jwt_secret ||= if oauth_jwt_secret_path
+                         File.read(oauth_jwt_secret_path)
+                       else
+                         # worst case scenario, the secret is the application secret
+                         oauth_jwt_secret || oauth_application.client_secret
+                       end
+    end
+
+    def _jwt_decoding_secret
+      @_jwt_decoding_secret ||= if oauth_jwt_decoding_secret_path
+                                  File.read(oauth_jwt_decoding_secret_path)
+                                else
+                                  oauth_jwt_decoding_secret || _jwt_secret
+                                end
     end
   end
 end
