@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "jwt"
+require "jwe"
 
 class RodaOauthJWTTokenAuthorizationCodeTest < JWTIntegration
   include Rack::Test::Methods
@@ -28,7 +30,7 @@ class RodaOauthJWTTokenAuthorizationCodeTest < JWTIntegration
     verify_response_body(json_body, oauth_token, "SECRET", "HS256")
 
     # use token
-    header "Authorization", "Bearer #{json_body["access_token"]}"
+    header "Authorization", "Bearer #{json_body['access_token']}"
 
     # valid token, and now we're getting somewhere
     get("/private")
@@ -61,7 +63,7 @@ class RodaOauthJWTTokenAuthorizationCodeTest < JWTIntegration
     verify_response_body(json_body, oauth_token, rsa_public, "RS256")
 
     # use token
-   header "Authorization", "Bearer #{json_body["access_token"]}"
+    header "Authorization", "Bearer #{json_body['access_token']}"
 
     # valid token, and now we're getting somewhere
     get("/private")
@@ -69,7 +71,7 @@ class RodaOauthJWTTokenAuthorizationCodeTest < JWTIntegration
   end
 
   def test_oauth_jwt_authorization_code_jws_ecdsa_p256
-    ecdsa_key = OpenSSL::PKey::EC.new 'prime256v1'
+    ecdsa_key = OpenSSL::PKey::EC.new "prime256v1"
     ecdsa_key.generate_key
     ecdsa_public = OpenSSL::PKey::EC.new ecdsa_key
     ecdsa_public.private_key = nil
@@ -97,7 +99,7 @@ class RodaOauthJWTTokenAuthorizationCodeTest < JWTIntegration
     verify_response_body(json_body, oauth_token, ecdsa_public, "ES256")
 
     # use token
-   header "Authorization", "Bearer #{json_body["access_token"]}"
+    header "Authorization", "Bearer #{json_body['access_token']}"
 
     # valid token, and now we're getting somewhere
     get("/private")
@@ -129,14 +131,50 @@ class RodaOauthJWTTokenAuthorizationCodeTest < JWTIntegration
     verify_response_body(json_body, oauth_token, jwk_key, "RS512")
 
     # use token
-   header "Authorization", "Bearer #{json_body["access_token"]}"
+    header "Authorization", "Bearer #{json_body['access_token']}"
 
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 200
   end
 
-  def test_oauth_jwt_authorization_code_jwe; end
+  def test_oauth_jwt_authorization_code_jwe
+    jwe_key = OpenSSL::PKey::RSA.new(2048)
+
+    rodauth do
+      oauth_jwt_secret "SECRET"
+      oauth_jwt_algorithm "HS256"
+      oauth_jwt_jwe_key jwe_key
+      oauth_jwt_jwe_encryption_method "A192GCM"
+    end
+    setup_application
+
+    post("/oauth-token",
+         client_id: oauth_application[:client_id],
+         client_secret: "CLIENT_SECRET",
+         grant_type: "authorization_code",
+         code: oauth_grant[:code],
+         redirect_uri: oauth_grant[:redirect_uri])
+
+    verify_response
+
+    oauth_token = verify_oauth_token
+
+    json_body = JSON.parse(last_response.body)
+
+    encrypted_token = json_body["access_token"]
+
+    token = JWE.decrypt(encrypted_token, jwe_key)
+
+    verify_response_body(json_body.merge("access_token" => token), oauth_token, "SECRET", "HS256")
+
+    # use token
+    header "Authorization", "Bearer #{json_body['access_token']}"
+
+    # valid token, and now we're getting somewhere
+    get("/private")
+    assert last_response.status == 200
+  end
 
   private
 

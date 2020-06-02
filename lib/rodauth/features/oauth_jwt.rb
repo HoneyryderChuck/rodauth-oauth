@@ -7,14 +7,28 @@ module Rodauth
     auth_value_method :oauth_jwt_token_issuer, "Example"
     auth_value_method :oauth_jwt_secret, nil
     auth_value_method :oauth_jwt_secret_path, nil
+
     auth_value_method :oauth_jwt_decoding_secret, nil
     auth_value_method :oauth_jwt_decoding_secret_path, nil
+
     auth_value_method :oauth_jwt_jwk_key, nil
     auth_value_method :oauth_jwt_jwk_key_path, nil
+
+    auth_value_method :oauth_jwt_jwe_key, nil
+    auth_value_method :oauth_jwt_jwe_algorithm, nil
+    auth_value_method :oauth_jwt_jwe_encryption_method, nil
+    auth_value_method :oauth_jwt_jwe_copyright, nil
+
     auth_value_method :oauth_jwt_algorithm, "HS256"
     auth_value_method :oauth_jwt_audience, nil
 
-    auth_value_methods :generate_jti
+    auth_value_methods(
+      :generate_jti,
+      :jwt_encode,
+      :jwe_encrypt,
+      :jwt_decode,
+      :jwe_decrypt
+    )
 
     def require_oauth_authorization(*scopes)
       authorization_required unless authorization_token
@@ -38,8 +52,10 @@ module Rodauth
 
         return unless scheme == "Bearer"
 
-        # decode jwt
+        # decrypt jwe
+        token = jwe_decrypt(token) if oauth_jwt_jwe_key
 
+        # decode jwt
         headers = { algorithms: [oauth_jwt_algorithm] }
 
         secret = if _jwk_key
@@ -60,8 +76,7 @@ module Rodauth
                    _jwt_decoding_secret
                  end
 
-        token, = JWT.decode(token, secret, true, headers)
-        token
+        jwt_decode(token, secret, headers)
       end
     rescue JWT::DecodeError
     end
@@ -120,7 +135,9 @@ module Rodauth
         scopes: oauth_token[oauth_tokens_scopes_column]
       }
 
-      token = JWT.encode(payload, secret, algorithm, headers)
+      token = jwt_encode(payload, secret, algorithm, headers)
+      token = jwe_encrypt(token) if oauth_jwt_jwe_key
+
       oauth_token[oauth_tokens_token_column] = token
       oauth_token
     end
@@ -144,7 +161,7 @@ module Rodauth
                          File.read(oauth_jwt_secret_path)
                        else
                          # worst case scenario, the secret is the application secret
-                         oauth_jwt_secret || oauth_application.client_secret
+                         oauth_jwt_secret || oauth_application[oauth_applications_client_secret_column]
                        end
     end
 
@@ -154,6 +171,29 @@ module Rodauth
                                 else
                                   oauth_jwt_decoding_secret || _jwt_secret
                                 end
+    end
+
+    def jwt_encode(payload, secret, algorithm, headers)
+      JWT.encode(payload, secret, algorithm, headers)
+    end
+
+    def jwe_encrypt(token)
+      params = {
+        zip: "DEF",
+        copyright: oauth_jwt_jwe_copyright
+      }
+      params[:enc] = oauth_jwt_jwe_encryption_method if oauth_jwt_jwe_encryption_method
+      params[:alg] = oauth_jwt_jwe_algorithm if oauth_jwt_jwe_algorithm
+      JWE.encrypt(token, oauth_jwt_jwe_key, **params)
+    end
+
+    def jwt_decode(token, secret, headers)
+      token, = JWT.decode(token, secret, true, headers)
+      token
+    end
+
+    def jwe_decrypt(token)
+      JWE.decrypt(token, oauth_jwt_jwe_key)
     end
   end
 end

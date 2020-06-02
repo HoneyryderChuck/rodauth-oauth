@@ -15,13 +15,14 @@ gem "rails", ">= 4.2"
 gem "roda"
 
 # extension dependencies
+gem "jwe"
+gem "jwt"
 gem "rodauth", github: "jeremyevans/rodauth", branch: "master"
 gem "rodauth-rails"
 gem "sequel", github: "jeremyevans/sequel", branch: "master"
 gem "sequel-activerecord_connection", github: "janko/sequel-activerecord_connection", branch: "master"
 gem "tilt"
 gem "tzinfo-data"
-gem "jwt"
 
 gem "capybara"
 gem "minitest", "~> 5.0"
