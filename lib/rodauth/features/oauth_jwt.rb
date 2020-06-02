@@ -9,8 +9,8 @@ module Rodauth
     auth_value_method :oauth_jwt_secret_path, nil
     auth_value_method :oauth_jwt_decoding_secret, nil
     auth_value_method :oauth_jwt_decoding_secret_path, nil
-    auth_value_method :oauth_jwt_jwk_public_key, nil
-    auth_value_method :oauth_jwt_jwk_public_key_path, nil
+    auth_value_method :oauth_jwt_jwk_key, nil
+    auth_value_method :oauth_jwt_jwk_key_path, nil
     auth_value_method :oauth_jwt_algorithm, "HS256"
     auth_value_method :oauth_jwt_audience, nil
 
@@ -42,12 +42,12 @@ module Rodauth
 
         headers = { algorithms: [oauth_jwt_algorithm] }
 
-        secret = if _jwk_public_key
+        secret = if _jwk_key
                    # JWK
                    # The jwk loader would fetch the set of JWKs from a trusted source
                    jwk_loader = lambda do |options|
                      @cached_keys = nil if options[:invalidate] # need to reload the keys
-                     @cached_keys ||= { keys: [_jwk_public_key.export] }
+                     @cached_keys ||= { keys: [_jwk_key.export] }
                    end
 
                    headers[:algorithms] = ["RS512"]
@@ -87,12 +87,12 @@ module Rodauth
 
       headers = {}
 
-      secret, algorithm = if _jwk_public_key
+      secret, algorithm = if _jwk_key
                             # JWK
                             # Currently only supports RSA public keys.
-                            headers[:kid] = _jwk_public_key.kid
+                            headers[:kid] = _jwk_key.kid
 
-                            [jwk.keypair, "RS512"]
+                            [_jwk_key.keypair, "RS512"]
                           else
                             # JWS
 
@@ -125,12 +125,12 @@ module Rodauth
       oauth_token
     end
 
-    def _jwk_public_key
-      @_jwk_public_key ||= begin
-        key = if oauth_jwt_jwk_public_key_path
-                File.read(oauth_jwt_jwk_public_key_path)
+    def _jwk_key
+      @_jwk_key ||= begin
+        key = if oauth_jwt_jwk_key_path
+                File.read(oauth_jwt_jwk_key_path)
               else
-                oauth_jwt_jwk_public_key
+                oauth_jwt_jwk_key
               end
 
         return unless key
