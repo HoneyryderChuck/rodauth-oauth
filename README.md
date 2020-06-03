@@ -531,11 +531,11 @@ Although very handy for the mentioned use case, one can't revoke a JWT token on 
 
 ## Ruby support policy
 
-The minimum Ruby version required to run `rodauth-oauth` is 2.3 . Besides that, it should support all rubies that rodauth and roda support.
+The minimum Ruby version required to run `rodauth-oauth` is 2.3 . Besides that, it should support all rubies that rodauth and roda support, including JRuby and (potentially, I don't know yet) truffleruby.
 
 ### JRuby
 
-If you're interested in using this library in rails, be warned that `rodauth-rails` doesn't support it yet (although, this is expected to change at some point).
+If you're interested in using this library in rails, be sure to check `rodauth-rails` policy, as it supports rails 5.2 upwards.
 
 ## Development
 
