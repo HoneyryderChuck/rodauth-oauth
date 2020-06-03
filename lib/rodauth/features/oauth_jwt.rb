@@ -79,6 +79,7 @@ module Rodauth
         jwt_decode(token, secret, headers)
       end
     rescue JWT::DecodeError
+      nil
     end
 
     def generate_oauth_token(params = {}, should_generate_refresh_token = true)

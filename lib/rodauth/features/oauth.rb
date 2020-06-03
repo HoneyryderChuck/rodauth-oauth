@@ -71,6 +71,8 @@ module Rodauth
     auth_value_method :oauth_require_pkce, false
     auth_value_method :oauth_pkce_challenge_method, "S256"
 
+    auth_value_method :oauth_valid_uri_schemes, %w[http https]
+
     # URL PARAMS
 
     # Authorize / token
@@ -470,7 +472,9 @@ module Rodauth
         if key == oauth_application_homepage_url_param ||
            key == oauth_application_redirect_uri_param
 
-          set_field_error(key, invalid_url_message) unless URI::DEFAULT_PARSER.make_regexp(%w[http https]).match?(value)
+          unless URI::DEFAULT_PARSER.make_regexp(oauth_valid_uri_schemes).match?(value)
+            set_field_error(key, invalid_url_message)
+          end
 
         elsif key == oauth_application_scopes_param
 
