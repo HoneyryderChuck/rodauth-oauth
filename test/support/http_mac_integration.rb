@@ -27,7 +27,7 @@ class HTTPMacIntegration < RodaIntegration
 
   def set_authorization_header(token = oauth_token)
     id = token[:token]
-    nonce = SecureRandom.alphanumeric(8)
+    nonce = SecureRandom.base64(8)
     # The nonce value MUST consist of the age of the MAC credentials expressed as the number of seconds since
     # the credentials were issued to the client, a colon character (%x25), and a unique string (typically random).
     # The age value MUST be a positive integer and MUST NOT include leading zeros (e.g. "000137131200")

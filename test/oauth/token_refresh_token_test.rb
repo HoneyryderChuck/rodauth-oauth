@@ -64,8 +64,8 @@ class RodaOauthRefreshTokenTest < RodaIntegration
     assert db[:oauth_tokens].count == 1
 
     json_body = JSON.parse(last_response.body)
-    assert !json_body["token"].nil?
-    assert json_body["token"] != prev_token
+    assert !json_body["access_token"].nil?
+    assert json_body["access_token"] != prev_token
     assert((Time.now.utc + json_body["expires_in"]).to_i > prev_expires_in.to_i)
   end
 
@@ -92,9 +92,9 @@ class RodaOauthRefreshTokenTest < RodaIntegration
     oauth_token = db[:oauth_tokens].first
 
     json_body = JSON.parse(last_response.body)
-    assert !json_body["token"].nil?
-    assert json_body["token"] != prev_token
-    assert json_body["token"] != oauth_token[:token]
+    assert !json_body["access_token"].nil?
+    assert json_body["access_token"] != prev_token
+    assert json_body["access_token"] != oauth_token[:token]
     assert((Time.now.utc + json_body["expires_in"]).to_i > prev_expires_in.to_i)
   end
 

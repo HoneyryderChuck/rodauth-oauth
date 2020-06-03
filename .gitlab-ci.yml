@@ -25,7 +25,6 @@ jruby:
   allow_failure: true
   variables:
     JRUBY_OPTS: --debug
-    DATABASE_URL: jdbc:sqlite::memory
   before_script:
     - apt-get update && apt-get install -y git
     - *before_script

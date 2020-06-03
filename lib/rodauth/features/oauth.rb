@@ -71,6 +71,8 @@ module Rodauth
     auth_value_method :oauth_require_pkce, false
     auth_value_method :oauth_pkce_challenge_method, "S256"
 
+    auth_value_method :oauth_valid_uri_schemes, %w[http https]
+
     # URL PARAMS
 
     # Authorize / token
@@ -289,7 +291,7 @@ module Rodauth
 
       scopes << oauth_application_default_scope if scopes.empty?
 
-      token_scopes = authorization_token[:scopes].split(",")
+      token_scopes = authorization_token[oauth_tokens_scopes_column].split(",")
 
       authorization_required unless scopes.any? { |scope| token_scopes.include?(scope) }
     end
@@ -442,8 +444,8 @@ module Rodauth
 
     def json_access_token_payload(oauth_token)
       payload = {
-        "token" => oauth_token[oauth_tokens_token_column],
-        "token_type" => oauth_token_type,
+        "access_token" => oauth_token[oauth_tokens_token_column],
+        "token_type" => oauth_token_type.downcase,
         "expires_in" => oauth_token_expires_in
       }
       if oauth_token[oauth_tokens_refresh_token_column]
@@ -470,7 +472,9 @@ module Rodauth
         if key == oauth_application_homepage_url_param ||
            key == oauth_application_redirect_uri_param
 
-          set_field_error(key, invalid_url_message) unless URI::DEFAULT_PARSER.make_regexp(%w[http https]).match?(value)
+          unless URI::DEFAULT_PARSER.make_regexp(oauth_valid_uri_schemes).match?(value)
+            set_field_error(key, invalid_url_message)
+          end
 
         elsif key == oauth_application_scopes_param
 
@@ -827,7 +831,7 @@ module Rodauth
       payload["error_description"] = send(:"#{error_code}_message") if respond_to?(:"#{error_code}_message")
       json_payload = _json_response_body(payload)
       response["Content-Type"] ||= json_response_content_type
-      response["WWW-Authenticate"] = "Bearer" if status == 401
+      response["WWW-Authenticate"] = oauth_token_type if status == 401
       response.write(json_payload)
       request.halt
     end
@@ -1008,12 +1012,11 @@ module Rodauth
             }
             oauth_token = generate_oauth_token(create_params, false)
 
-            fragment_params << ["access_token=#{oauth_token[oauth_tokens_token_column]}"]
-            fragment_params << ["token_type=#{oauth_token_type}"]
-            fragment_params << ["expires_in=#{oauth_token_expires_in}"]
+            token_payload = json_access_token_payload(oauth_token)
+            fragment_params.replace(token_payload.map { |k, v| "#{k}=#{v}" })
           when "code", "", nil
             code = create_oauth_grant
-            query_params << ["code=#{code}"]
+            query_params << "code=#{code}"
           else
             redirect_response_error("invalid_request")
           end

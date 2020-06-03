@@ -101,7 +101,7 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
     assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
 
     json_body = JSON.parse(last_response.body)
-    assert json_body["token"] == access_token[:token]
+    assert json_body["access_token"] == access_token[:token]
     assert json_body["refresh_token"] == access_token[:refresh_token]
     assert !json_body["expires_in"].nil?
   end
