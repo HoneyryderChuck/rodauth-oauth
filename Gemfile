@@ -16,7 +16,7 @@ gem "roda"
 
 # extension dependencies
 gem "jwe"
-gem "jwt"
+gem "jwt", github: "jwt/ruby-jwt", branch: "master"
 gem "rodauth", github: "jeremyevans/rodauth", branch: "master"
 gem "rodauth-rails"
 gem "sequel", github: "jeremyevans/sequel", branch: "master"
