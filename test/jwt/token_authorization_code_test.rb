@@ -70,41 +70,43 @@ class RodaOauthJWTTokenAuthorizationCodeTest < JWTIntegration
     assert last_response.status == 200
   end
 
-  def test_oauth_jwt_authorization_code_jws_ecdsa_p256
-    ecdsa_key = OpenSSL::PKey::EC.new "prime256v1"
-    ecdsa_key.generate_key
-    ecdsa_public = OpenSSL::PKey::EC.new ecdsa_key
-    ecdsa_public.private_key = nil
+  unless RUBY_ENGINE == "jruby"
+    def test_oauth_jwt_authorization_code_jws_ecdsa_p256
+      ecdsa_key = OpenSSL::PKey::EC.new "prime256v1"
+      ecdsa_key.generate_key
+      ecdsa_public = OpenSSL::PKey::EC.new ecdsa_key
+      ecdsa_public.private_key = nil
 
-    rodauth do
-      oauth_jwt_secret ecdsa_key
-      oauth_jwt_decoding_secret ecdsa_public
-      oauth_jwt_algorithm "ES256"
+      rodauth do
+        oauth_jwt_secret ecdsa_key
+        oauth_jwt_decoding_secret ecdsa_public
+        oauth_jwt_algorithm "ES256"
+      end
+      setup_application
+
+      post("/oauth-token",
+           client_id: oauth_application[:client_id],
+           client_secret: "CLIENT_SECRET",
+           grant_type: "authorization_code",
+           code: oauth_grant[:code],
+           redirect_uri: oauth_grant[:redirect_uri])
+
+      verify_response
+
+      oauth_token = verify_oauth_token
+
+      json_body = JSON.parse(last_response.body)
+
+      verify_response_body(json_body, oauth_token, ecdsa_public, "ES256")
+
+      # use token
+      header "Authorization", "Bearer #{json_body['access_token']}"
+
+      # valid token, and now we're getting somewhere
+      get("/private")
+      assert last_response.status == 200
     end
-    setup_application
-
-    post("/oauth-token",
-         client_id: oauth_application[:client_id],
-         client_secret: "CLIENT_SECRET",
-         grant_type: "authorization_code",
-         code: oauth_grant[:code],
-         redirect_uri: oauth_grant[:redirect_uri])
-
-    verify_response
-
-    oauth_token = verify_oauth_token
-
-    json_body = JSON.parse(last_response.body)
-
-    verify_response_body(json_body, oauth_token, ecdsa_public, "ES256")
-
-    # use token
-    header "Authorization", "Bearer #{json_body['access_token']}"
-
-    # valid token, and now we're getting somewhere
-    get("/private")
-    assert last_response.status == 200
-  end
+  end # jruby doesn't do ecdsa well
 
   def test_oauth_jwt_authorization_code_jwk
     jwk_key = OpenSSL::PKey::RSA.new(2048)
