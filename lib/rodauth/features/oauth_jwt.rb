@@ -77,6 +77,16 @@ module Rodauth
         sub: oauth_token[oauth_tokens_account_id_column],
         iss: oauth_jwt_token_issuer, # issuer
         iat: issued_at, # issued at
+        #
+        # sub  REQUIRED - as defined in section 4.1.2 of [RFC7519].  In case of
+        # access tokens obtained through grants where a resource owner is
+        # involved, such as the authorization code grant, the value of "sub"
+        # SHOULD correspond to the subject identifier of the resource owner.
+        # In case of access tokens obtained through grants where no resource
+        # owner is involved, such as the client credentials grant, the value
+        # of "sub" SHOULD correspond to an identifier the authorization
+        # server uses to indicate the client application.
+        client_id: oauth_token[oauth_tokens_oauth_application_id_column],
 
         exp: issued_at + oauth_token_expires_in,
         aud: oauth_jwt_audience,
