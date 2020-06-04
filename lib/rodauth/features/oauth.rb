@@ -539,6 +539,9 @@ module Rodauth
     end
 
     # Authorize
+    def before_authorize
+      require_account
+    end
 
     def validate_oauth_grant_params
       unless oauth_application && check_valid_redirect_uri? && check_valid_access_type? &&
@@ -739,6 +742,10 @@ module Rodauth
     end
 
     # Token revocation
+
+    def before_revoke
+      require_account
+    end
 
     TOKEN_HINT_TYPES = %w[access_token refresh_token].freeze
 
