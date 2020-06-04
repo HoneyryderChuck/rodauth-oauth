@@ -7,7 +7,7 @@ module Rodauth::OAuth
     module Generators
       class ViewsGenerator < ::Rails::Generators::Base
         source_root "#{__dir__}/templates"
-        namespace "roda:oauth:views"
+        namespace "rodauth:oauth:views"
 
         DEFAULT = %w[oauth_authorize].freeze
         VIEWS = {
@@ -16,11 +16,6 @@ module Rodauth::OAuth
         }.freeze
 
         DEPENDENCIES = {
-          active_sessions: :logout,
-          otp: :two_factor_base,
-          sms_codes: :two_factor_base,
-          recovery_codes: :two_factor_base,
-          webauthn: :two_factor_base
         }.freeze
 
         class_option :features, type: :array,

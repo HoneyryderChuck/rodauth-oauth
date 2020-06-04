@@ -10,7 +10,7 @@ module Rodauth::OAuth::Rails
       include ::Rails::Generators::Migration
 
       source_root "#{__dir__}/templates"
-      namespace "roda:oauth:install"
+      namespace "rodauth:oauth:install"
 
       def create_rodauth_migration
         return unless defined?(ActiveRecord::Base)
