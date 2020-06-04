@@ -15,6 +15,7 @@ gem "rails", ">= 4.2"
 gem "roda"
 
 # extension dependencies
+gem "json-jwt"
 gem "jwe"
 gem "jwt", github: "jwt/ruby-jwt", branch: "master"
 gem "rodauth", github: "jeremyevans/rodauth", branch: "master"

@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require ENV["JSON_LIB"] if ENV["JSON_LIB"]
 require "jwt"
 require "jwe"
 
@@ -113,7 +114,7 @@ class RodaOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
     rodauth do
       oauth_jwt_jwk_key jwk_key
-      oauth_jwt_algorithm "RS512"
+      oauth_jwt_algorithm "RS256"
     end
     setup_application
 
@@ -130,7 +131,7 @@ class RodaOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
     json_body = JSON.parse(last_response.body)
 
-    verify_response_body(json_body, oauth_token, jwk_key, "RS512")
+    verify_response_body(json_body, oauth_token, jwk_key, "RS256")
 
     # use token
     header "Authorization", "Bearer #{json_body['access_token']}"
@@ -147,7 +148,8 @@ class RodaOauthJWTTokenAuthorizationCodeTest < JWTIntegration
       oauth_jwt_secret "SECRET"
       oauth_jwt_algorithm "HS256"
       oauth_jwt_jwe_key jwe_key
-      oauth_jwt_jwe_encryption_method "A192GCM"
+      oauth_jwt_jwe_algorithm "RSA-OAEP"
+      oauth_jwt_jwe_encryption_method "A256GCM"
     end
     setup_application
 
