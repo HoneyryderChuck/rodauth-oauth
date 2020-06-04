@@ -925,13 +925,14 @@ module Rodauth
 
     # /oauth-token
     route(:oauth_token) do |r|
+      before_token
+
       r.post do
         catch_error do
           validate_oauth_token_params
 
           oauth_token = nil
           transaction do
-            before_token
             oauth_token = create_oauth_token
             after_token
           end
@@ -950,6 +951,7 @@ module Rodauth
     # /oauth-revoke
     route(:oauth_revoke) do |r|
       require_account
+      before_revoke
 
       # access-token
       r.post do
@@ -958,7 +960,6 @@ module Rodauth
 
           oauth_token = nil
           transaction do
-            before_revoke
             oauth_token = revoke_oauth_token
             after_revoke
           end
@@ -990,6 +991,8 @@ module Rodauth
       validate_oauth_grant_params
       try_approval_prompt if use_oauth_access_type? && request.get?
 
+      before_authorize
+
       r.get do
         authorize_view
       end
@@ -1000,7 +1003,6 @@ module Rodauth
         fragment_params = []
 
         transaction do
-          before_authorize
           case param(response_type_param)
           when "token"
             redirect_response_error("invalid_request", redirect_uri) unless use_oauth_implicit_grant_type
