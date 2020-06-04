@@ -125,6 +125,8 @@ module Rodauth
         else
           JSON::JWT.decode(token, oauth_jwt_decoding_secret || _jwt_secret)
         end
+      rescue JSON::JWT::Exception
+        nil
       end
       # :nocov:
     elsif defined?(JWT)
