@@ -13,9 +13,9 @@ module Rodauth
     auth_value_method :oauth_jwt_decoding_secret_path, nil
 
     auth_value_method :oauth_jwt_jwk_key, nil
-    auth_value_method :oauth_jwt_jwk_key_path, nil
 
     auth_value_method :oauth_jwt_jwe_key, nil
+    auth_value_method :oauth_jwt_jwe_decrypt_key, nil
     auth_value_method :oauth_jwt_jwe_algorithm, nil
     auth_value_method :oauth_jwt_jwe_encryption_method, nil
     auth_value_method :oauth_jwt_jwe_copyright, nil
@@ -54,32 +54,8 @@ module Rodauth
 
         # decrypt jwe
         token = jwe_decrypt(token) if oauth_jwt_jwe_key
-
-        # decode jwt
-        headers = { algorithms: [oauth_jwt_algorithm] }
-
-        secret = if _jwk_key
-                   # JWK
-                   # The jwk loader would fetch the set of JWKs from a trusted source
-                   jwk_loader = lambda do |options|
-                     @cached_keys = nil if options[:invalidate] # need to reload the keys
-                     @cached_keys ||= { keys: [_jwk_key.export] }
-                   end
-
-                   headers[:algorithms] = ["RS512"]
-                   headers[:jwks] = jwk_loader
-
-                   nil
-                 else
-                   # JWS
-                   # worst case scenario, the secret is the application secret
-                   _jwt_decoding_secret
-                 end
-
-        jwt_decode(token, secret, headers)
+        jwt_decode(token)
       end
-    rescue JWT::DecodeError
-      nil
     end
 
     def generate_oauth_token(params = {}, should_generate_refresh_token = true)
@@ -101,33 +77,11 @@ module Rodauth
 
       issued_at = Time.current.utc.to_i
 
-      headers = {}
-
-      secret, algorithm = if _jwk_key
-                            # JWK
-                            # Currently only supports RSA public keys.
-                            headers[:kid] = _jwk_key.kid
-
-                            [_jwk_key.keypair, "RS512"]
-                          else
-                            # JWS
-
-                            [_jwt_secret, oauth_jwt_algorithm]
-                          end
-
-      iat = Time.current.utc.to_i
-
-      # Use the secret and iat to create a unique key per request to prevent replay attacks
-      jti_raw = [secret, iat].join(":").to_s
-      jti = Digest::MD5.hexdigest(jti_raw)
-
       payload = {
         sub: oauth_token[oauth_tokens_account_id_column],
         iss: oauth_jwt_token_issuer, # issuer
-        iat: iat, # issued at
+        iat: issued_at, # issued at
 
-        # @see JWT reserved claims - https://tools.ietf.org/html/draft-jones-json-web-token-07#page-7
-        jti: jti,
         exp: issued_at + oauth_token_expires_in,
         aud: oauth_jwt_audience,
 
@@ -136,25 +90,11 @@ module Rodauth
         scopes: oauth_token[oauth_tokens_scopes_column]
       }
 
-      token = jwt_encode(payload, secret, algorithm, headers)
+      token = jwt_encode(payload)
       token = jwe_encrypt(token) if oauth_jwt_jwe_key
 
       oauth_token[oauth_tokens_token_column] = token
       oauth_token
-    end
-
-    def _jwk_key
-      @_jwk_key ||= begin
-        key = if oauth_jwt_jwk_key_path
-                File.read(oauth_jwt_jwk_key_path)
-              else
-                oauth_jwt_jwk_key
-              end
-
-        return unless key
-
-        JWT::JWK.new(OpenSSL::PKey::RSA.new(key))
-      end
     end
 
     def _jwt_secret
@@ -174,7 +114,28 @@ module Rodauth
                                 end
     end
 
-    def jwt_encode(payload, secret, algorithm, headers)
+    def jwt_encode(payload)
+      headers = {}
+
+      secret, algorithm = if oauth_jwt_jwk_key
+                            jwk_key = JWT::JWK.new(oauth_jwt_jwk_key)
+                            # JWK
+                            # Currently only supports RSA public keys.
+                            headers[:kid] = jwk_key.kid
+
+                            [jwk_key.keypair, "RS512"]
+                          else
+                            # JWS
+
+                            [_jwt_secret, oauth_jwt_algorithm]
+                          end
+
+      # Use the secret and iat to create a unique key per request to prevent replay attacks
+      jti_raw = [secret, payload[:iat]].join(":").to_s
+      jti = Digest::MD5.hexdigest(jti_raw)
+
+      # @see JWT reserved claims - https://tools.ietf.org/html/draft-jones-json-web-token-07#page-7
+      payload[:jti] = jti
       JWT.encode(payload, secret, algorithm, headers)
     end
 
@@ -188,13 +149,36 @@ module Rodauth
       JWE.encrypt(token, oauth_jwt_jwe_key, **params)
     end
 
-    def jwt_decode(token, secret, headers)
+    def jwt_decode(token)
+      # decode jwt
+      headers = { algorithms: [oauth_jwt_algorithm] }
+
+      secret = if oauth_jwt_jwk_key
+                 jwk_key = JWT::JWK.new(oauth_jwt_jwk_key)
+                 # JWK
+                 # The jwk loader would fetch the set of JWKs from a trusted source
+                 jwk_loader = lambda do |options|
+                   @cached_keys = nil if options[:invalidate] # need to reload the keys
+                   @cached_keys ||= { keys: [jwk_key.export] }
+                 end
+
+                 headers[:algorithms] = ["RS512"]
+                 headers[:jwks] = jwk_loader
+
+                 nil
+               else
+                 # JWS
+                 # worst case scenario, the secret is the application secret
+                 _jwt_decoding_secret
+               end
       token, = JWT.decode(token, secret, true, headers)
       token
+    rescue JWT::DecodeError
+      nil
     end
 
     def jwe_decrypt(token)
-      JWE.decrypt(token, oauth_jwt_jwe_key)
+      JWE.decrypt(token, oauth_jwt_jwe_decrypt_key || oauth_jwt_jwe_key)
     end
   end
 end
