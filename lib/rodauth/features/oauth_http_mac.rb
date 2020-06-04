@@ -42,7 +42,7 @@ module Rodauth
 
         scheme, token = value.split(/ +/, 2)
 
-        return unless scheme.upcase == "MAC"
+        return unless scheme == "MAC"
 
         mac_attributes = parse_mac_authorization_header_props(token)
 

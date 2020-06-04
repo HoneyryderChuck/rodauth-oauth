@@ -48,6 +48,9 @@ Lint/StructNewOverride:
 Lint/DeprecatedOpenSSLConstant:
   Enabled: true
 
+Lint/MixedRegexpCaptureTypes:
+  Enabled: true
+
 Style/ExponentialNotation:
   Enabled: true
 
@@ -71,6 +74,15 @@ Style/HashTransformValues:
 
 Style/SlicingWithRange:
   Enabled: true
+
+Style/CommentedKeyword:
+  Enabled: false
+
+Style/RedundantRegexpCharacterClass:
+  Enabled: false
+
+Style/RedundantRegexpEscape:
+  Enabled: false
 
 Metrics/ClassLength:
   Max: 1500

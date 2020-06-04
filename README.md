@@ -13,12 +13,13 @@ This gem implements:
   * [Authorization grant flow](https://tools.ietf.org/html/rfc6749#section-1.3);
   * [Access Token generation](https://tools.ietf.org/html/rfc6749#section-1.4);
   * [Access Token refresh](https://tools.ietf.org/html/rfc6749#section-1.5);
-  * [Token revocation](https://tools.ietf.org/html/rfc7009);
   * [Implicit grant (off by default)[https://tools.ietf.org/html/rfc6749#section-4.2];
-  * [PKCE](https://tools.ietf.org/html/rfc7636);
+* [Token revocation](https://tools.ietf.org/html/rfc7009);
+* [PKCE](https://tools.ietf.org/html/rfc7636);
 * Access Type (Token refresh online and offline);
+* [MAC Authentication Scheme](https://tools.ietf.org/html/draft-hammer-oauth-v2-mac-token-02);
+* [JWT Acess Tokens](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-07);
 * OAuth application and token management dashboards;
-
 
 This gem supports also rails (through [rodauth-rails]((https://github.com/janko/rodauth-rails))).
 
@@ -105,7 +106,7 @@ response = HTTPX.post("https://auth_server/oauth-token",json: {
                 })
 response.raise_for_status
 payload = JSON.parse(response.to_s)
-puts payload #=> {"token" => "awr23f3h8f9d2h89...", "refresh_token" => "23fkop3kr290kc..." ....
+puts payload #=> {"access_token" => "awr23f3h8f9d2h89...", "refresh_token" => "23fkop3kr290kc..." ....
 ```
 
 ##### cURL
@@ -130,7 +131,7 @@ response = HTTPX.post("https://auth_server/oauth-token",json: {
                 })
 response.raise_for_status
 payload = JSON.parse(response.to_s)
-puts payload #=> {"token" => "awr23f3h8f9d2h89...", "token_type" => "Bearer" ....
+puts payload #=> {"access_token" => "awr23f3h8f9d2h89...", "token_type" => "Bearer" ....
 ```
 
 ##### cURL
@@ -154,7 +155,7 @@ response = httpx.with(headers: { "X-your-auth-scheme" => ENV["SERVER_KEY"] })
                 })
 response.raise_for_status
 payload = JSON.parse(response.to_s)
-puts payload #=> {"token" => "awr23f3h8f9d2h89...", "token_type" => "Bearer" ....
+puts payload #=> {"access_token" => "awr23f3h8f9d2h89...", "token_type" => "Bearer" ....
 ```
 
 ##### cURL
@@ -337,7 +338,7 @@ This will only work **if there was a previous successful online grant** for the 
 
 #### DB schema
 
-the "oauth_grants" table will have to include the "access_type row":
+the "oauth_grants" table will have to include the "access_type" row:
 
 ```ruby
 # in migration
@@ -374,9 +375,7 @@ The "Proof Key for Code Exchange by OAuth Public Clients" (aka PKCE) flow, which
 ```ruby
 # with httpx
 require "httpx"
-httpx = HTTPX.plugin(:authorization)
-response = httpx.with(headers: { "X-your-auth-scheme" => ENV["SERVER_KEY"] })
-                .post("https://auth_server/oauth-token",json: {
+response = HTTPX.post("https://auth_server/oauth-token",json: {
                   client_id: ENV["OAUTH_CLIENT_ID"],
                   grant_type: "authorization_code",
                   code: "oiweicnewdh32fhoi3hf3ihfo2ih3f2o3as",
@@ -384,7 +383,7 @@ response = httpx.with(headers: { "X-your-auth-scheme" => ENV["SERVER_KEY"] })
                 })
 response.raise_for_status
 payload = JSON.parse(response.to_s)
-puts payload #=> {"token" =
+puts payload #=> {"access_token" => ....
 ```
 
 By default, the pkce integration sets "S256" as the default challenge method. If you value security, you **should not use plain**. However, if you really need to, you can set it in the `rodauth` plugin:
@@ -412,13 +411,131 @@ enable :oauth
 use_oauth_pkce? false
 ```
 
+### HTTP Mac Authentication
+
+You can enable HTTP MAC authentication like this:
+
+```ruby
+plugin :rodauth do
+  enable :oauth_http_mac
+end
+```
+
+Generating an access token will deliver the following fields:
+
+```ruby
+# with httpx
+require "httpx"
+response = httpx.post("https://auth_server/oauth-token",json: {
+                  client_id: ENV["OAUTH_CLIENT_ID"],
+                  client_secret: ENV["OAUTH_CLIENT_SECRET"],
+                  grant_type: "authorization_code",
+                  code: "oiweicnewdh32fhoi3hf3ihfo2ih3f2o3as"
+                })
+response.raise_for_status
+payload = JSON.parse(response.to_s)
+puts payload #=> {
+# "access_token" => ....
+# "mac_key" => ....
+# "mac_algorithm" => 
+```
+
+which you'll be able to use to generate the mac signature to send in the "Authorization" header.
+
+#### DB schema
+
+the "oauth_tokens" table will have to include a column for the mac key:
+
+```ruby
+# in migration
+String :mac_key, token: true
+```
+
+
+### JWT Access Tokens
+
+JWT Acess Tokens are great to avoid DB lookups when validation the authorization token. Quoting the RFC, *The approach is particularly common in topologies where the authorization server and resource server are not co-located, are not run by the same entity, or are otherwise separated by some boundary.*
+
+You can enable JWT Access tokens by doing:
+
+```ruby
+plugin :rodauth do
+  enable :oauth_jwt
+end
+```
+
+This will, by default, use the OAuth application as HMAC signature and "HS256" as the algorithm to sign the resulting JWT access tokens. You can tweak those features by editing the following options:
+
+```ruby
+enable :oauth_jwt
+oauth_jwt_secret "SECRET"
+# or oauth_jwt_secret_path "path/to/file"
+oauth_jwt_algorithm "HS512"
+```
+
+You can look for other options in [the jwt gem documentation](https://github.com/jwt/ruby-jwt), as this is used under the hood.
+
+#### Pub/Priv key
+
+You can decide to keep a private key to encode the JWT token, while other clients hace the public key to decode it. You can then do it like:
+
+```ruby
+rsa_private = OpenSSL::PKey::RSA.generate 2048
+rsa_public = rsa_private.public_key
+
+plugin :rodauth do
+  enable :oauth_jwt
+  oauth_jwt_key rsa_private
+  oauth_jwt_decoding_secret rsa_public
+  oauth_jwt_algorithm "RS256" 
+end
+```
+
+#### JWK
+
+One can further encode the JWT token using JSON Web Keys. Here's how you could enable the feature:
+
+```ruby
+plugin :rodauth do
+  enable :oauth_jwt
+  oauth_jwt_jwk_key 2048 # can be key size or the encoded RSA key, which is the only one supported now.
+  # oauth_jwt_jwk_key "path/to/rsa.pem" if you prefer
+end
+```
+
+#### JWE
+
+You can further instruct the jwt feature to encrypt the encoded token using JSON Web Encryption standard:
+
+```ruby
+jwe_key = OpenSSL::PKey::RSA.new(2048)
+
+plugin :rodauth do
+  oauth_jwt_secret "SECRET"
+  oauth_jwt_algorithm "HS256"
+  oauth_jwt_jwe_key jwe_key
+  oauth_jwt_jwe_encryption_method "A192GCM"
+end
+```
+
+which adds an extra layer of protection.
+
+
+#### DB Schema
+
+You'll still need the "oauth_tokens" table, however you can remove the "token" column.
+
+#### Caveats
+
+Although very handy for the mentioned use case, one can't revoke a JWT token on demand (it must expire first).
+
 ## Ruby support policy
 
-The minimum Ruby version required to run `rodauth-oauth` is 2.3 . Besides that, it should support all rubies that rodauth and roda support.
+The minimum Ruby version required to run `rodauth-oauth` is 2.3 . Besides that, it should support all rubies that rodauth and roda support, including JRuby and (potentially, I don't know yet) truffleruby.
 
 ### JRuby
 
-If you're interested in using this library in rails, be warned that `rodauth-rails` doesn't support it yet (although, this is expected to change at some point).
+If you're interested in using this library in rails, be sure to check `rodauth-rails` policy, as it supports rails 5.2 upwards.
 
 ## Development
 
