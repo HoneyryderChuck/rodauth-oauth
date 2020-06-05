@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-class TestController < ApplicationController
+class AuthorizeController < ApplicationController
   def root
     render inline: flash[:alert] || flash[:notice] || "Unauthorized"
   end

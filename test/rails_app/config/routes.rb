@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 Rails.application.routes.draw do
-  root to: "test#root"
+  root to: "authorize#root"
 
-  controller :test do
+  controller :authorize do
     get :callback
     get :private
   end
