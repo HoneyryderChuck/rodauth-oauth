@@ -194,7 +194,7 @@ module Rodauth
         false
       when oauth_revoke_path
         !json_request?
-      when oauth_authorize_path, /#{oauth_applications_path}/
+      when oauth_authorize_path, %r{/#{oauth_applications_path}}
         only_json? ? false : super
       else
         super
