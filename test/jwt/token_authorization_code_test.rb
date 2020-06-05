@@ -10,7 +10,7 @@ class RodaOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
   def test_oauth_jwt_authorization_code_hmac_sha256
     rodauth do
-      oauth_jwt_secret "SECRET"
+      oauth_jwt_key "SECRET"
       oauth_jwt_algorithm "HS256"
     end
     setup_application
@@ -42,8 +42,8 @@ class RodaOauthJWTTokenAuthorizationCodeTest < JWTIntegration
     rsa_private = OpenSSL::PKey::RSA.generate 2048
     rsa_public = rsa_private.public_key
     rodauth do
-      oauth_jwt_secret rsa_private
-      oauth_jwt_decoding_secret rsa_public
+      oauth_jwt_key rsa_private
+      oauth_jwt_public_key rsa_public
       oauth_jwt_algorithm "RS256"
     end
     setup_application
@@ -79,8 +79,8 @@ class RodaOauthJWTTokenAuthorizationCodeTest < JWTIntegration
       ecdsa_public.private_key = nil
 
       rodauth do
-        oauth_jwt_secret ecdsa_key
-        oauth_jwt_decoding_secret ecdsa_public
+        oauth_jwt_key ecdsa_key
+        oauth_jwt_public_key ecdsa_public
         oauth_jwt_algorithm "ES256"
       end
       setup_application
@@ -145,7 +145,7 @@ class RodaOauthJWTTokenAuthorizationCodeTest < JWTIntegration
     jwe_key = OpenSSL::PKey::RSA.new(2048)
 
     rodauth do
-      oauth_jwt_secret "SECRET"
+      oauth_jwt_key "SECRET"
       oauth_jwt_algorithm "HS256"
       oauth_jwt_jwe_key jwe_key
       oauth_jwt_jwe_algorithm "RSA-OAEP"

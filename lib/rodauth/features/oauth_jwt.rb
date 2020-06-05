@@ -6,12 +6,12 @@ module Rodauth
 
     auth_value_method :oauth_jwt_token_issuer, "Example"
 
-    auth_value_method :oauth_jwt_secret, nil
-    auth_value_method :oauth_jwt_decoding_secret, nil
+    auth_value_method :oauth_jwt_key, nil
+    auth_value_method :oauth_jwt_public_key, nil
     auth_value_method :oauth_jwt_algorithm, "HS256"
 
     auth_value_method :oauth_jwt_jwk_key, nil
-    auth_value_method :oauth_jwt_jwk_decoding_key, nil
+    auth_value_method :oauth_jwt_jwk_public_key, nil
     auth_value_method :oauth_jwt_jwk_algorithm, "RS256"
 
     auth_value_method :oauth_jwt_jwe_key, nil
@@ -102,8 +102,8 @@ module Rodauth
       oauth_token
     end
 
-    def _jwt_secret
-      @_jwt_secret ||= oauth_jwt_secret || oauth_application[oauth_applications_client_secret_column]
+    def _jwt_key
+      @_jwt_key ||= oauth_jwt_key || oauth_application[oauth_applications_client_secret_column]
     end
 
     if defined?(JSON::JWT)
@@ -118,7 +118,7 @@ module Rodauth
                 jwt.kid = jwk.thumbprint
                 jwt.sign(oauth_jwt_jwk_key, oauth_jwt_jwk_algorithm)
               else
-                jwt.sign(_jwt_secret, oauth_jwt_algorithm)
+                jwt.sign(_jwt_key, oauth_jwt_algorithm)
               end
         if oauth_jwt_jwe_key
           algorithm = oauth_jwt_jwe_algorithm.to_sym if oauth_jwt_jwe_algorithm
@@ -130,10 +130,10 @@ module Rodauth
       def jwt_decode(token)
         token = JSON::JWT.decode(token, oauth_jwt_jwe_decrypt_key || oauth_jwt_jwe_key).plain_text if oauth_jwt_jwe_key
         if oauth_jwt_jwk_key
-          jwk = JSON::JWK.new(oauth_jwt_jwk_decoding_key || oauth_jwt_jwk_key)
+          jwk = JSON::JWK.new(oauth_jwt_jwk_public_key || oauth_jwt_jwk_key)
           JSON::JWT.decode(token, jwk)
         else
-          JSON::JWT.decode(token, oauth_jwt_decoding_secret || _jwt_secret)
+          JSON::JWT.decode(token, oauth_jwt_public_key || _jwt_key)
         end
       rescue JSON::JWT::Exception
         nil
@@ -146,26 +146,26 @@ module Rodauth
       def jwt_encode(payload)
         headers = {}
 
-        secret, algorithm = if oauth_jwt_jwk_key
-                              jwk_key = JWT::JWK.new(oauth_jwt_jwk_key)
-                              # JWK
-                              # Currently only supports RSA public keys.
-                              headers[:kid] = jwk_key.kid
+        key, algorithm = if oauth_jwt_jwk_key
+                           jwk_key = JWT::JWK.new(oauth_jwt_jwk_key)
+                           # JWK
+                           # Currently only supports RSA public keys.
+                           headers[:kid] = jwk_key.kid
 
-                              [jwk_key.keypair, oauth_jwt_jwk_algorithm]
-                            else
-                              # JWS
+                           [jwk_key.keypair, oauth_jwt_jwk_algorithm]
+                         else
+                           # JWS
 
-                              [_jwt_secret, oauth_jwt_algorithm]
-                            end
+                           [_jwt_key, oauth_jwt_algorithm]
+                         end
 
-        # Use the secret and iat to create a unique key per request to prevent replay attacks
-        jti_raw = [secret, payload[:iat]].join(":").to_s
+        # Use the key and iat to create a unique key per request to prevent replay attacks
+        jti_raw = [key, payload[:iat]].join(":").to_s
         jti = Digest::MD5.hexdigest(jti_raw)
 
         # @see JWT reserved claims - https://tools.ietf.org/html/draft-jones-json-web-token-07#page-7
         payload[:jti] = jti
-        token = JWT.encode(payload, secret, algorithm, headers)
+        token = JWT.encode(payload, key, algorithm, headers)
 
         if oauth_jwt_jwe_key
           params = {
@@ -187,25 +187,25 @@ module Rodauth
         # decode jwt
         headers = { algorithms: [oauth_jwt_algorithm] }
 
-        secret = if oauth_jwt_jwk_key
-                   jwk_key = JWT::JWK.new(oauth_jwt_jwk_key)
-                   # JWK
-                   # The jwk loader would fetch the set of JWKs from a trusted source
-                   jwk_loader = lambda do |options|
-                     @cached_keys = nil if options[:invalidate] # need to reload the keys
-                     @cached_keys ||= { keys: [jwk_key.export] }
-                   end
+        key = if oauth_jwt_jwk_key
+                jwk_key = JWT::JWK.new(oauth_jwt_jwk_key)
+                # JWK
+                # The jwk loader would fetch the set of JWKs from a trusted source
+                jwk_loader = lambda do |options|
+                  @cached_keys = nil if options[:invalidate] # need to reload the keys
+                  @cached_keys ||= { keys: [jwk_key.export] }
+                end
 
-                   headers[:algorithms] = [oauth_jwt_jwk_algorithm]
-                   headers[:jwks] = jwk_loader
+                headers[:algorithms] = [oauth_jwt_jwk_algorithm]
+                headers[:jwks] = jwk_loader
 
-                   nil
-                 else
-                   # JWS
-                   # worst case scenario, the secret is the application secret
-                   oauth_jwt_decoding_secret || _jwt_secret
-                 end
-        token, = JWT.decode(token, secret, true, headers)
+                nil
+              else
+                # JWS
+                # worst case scenario, the key is the application key
+                oauth_jwt_public_key || _jwt_key
+              end
+        token, = JWT.decode(token, key, true, headers)
         token
       rescue JWT::DecodeError
         nil
