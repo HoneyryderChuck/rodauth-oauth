@@ -19,7 +19,7 @@ cache:
 
 variables:
   CI: 1
-  DATABASE_URL: sqlite3::memory:
+  DATABASE_URL: "sqlite3::memory:"
 
 jruby:
   allow_failure: true
