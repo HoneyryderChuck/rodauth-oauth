@@ -207,7 +207,7 @@ class RodaOauthAuthorizeTest < RodaIntegration
 
   def test_authorize_post_authorize_with_implicit_grant
     rodauth do
-      use_oauth_implicit_grant_type true
+      use_oauth_implicit_grant_type? true
     end
     setup_application
 

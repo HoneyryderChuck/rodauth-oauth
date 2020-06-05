@@ -64,7 +64,7 @@ module Rodauth
 
     auth_value_method :oauth_grant_expires_in, 60 * 5 # 60 minutes
     auth_value_method :oauth_token_expires_in, 60 * 60 # 60 minutes
-    auth_value_method :use_oauth_implicit_grant_type, false
+    auth_value_method :use_oauth_implicit_grant_type?, false
     auth_value_method :use_oauth_pkce?, true
     auth_value_method :use_oauth_access_type?, true
 
@@ -895,7 +895,7 @@ module Rodauth
 
       return true if response_type.nil? || response_type == "code"
 
-      return use_oauth_implicit_grant_type if response_type == "token"
+      return use_oauth_implicit_grant_type? if response_type == "token"
 
       false
     end
@@ -1012,7 +1012,7 @@ module Rodauth
         transaction do
           case param(response_type_param)
           when "token"
-            redirect_response_error("invalid_request", redirect_uri) unless use_oauth_implicit_grant_type
+            redirect_response_error("invalid_request", redirect_uri) unless use_oauth_implicit_grant_type?
 
             create_params = {
               oauth_tokens_account_id_column => account_id,
