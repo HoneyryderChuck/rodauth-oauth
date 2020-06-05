@@ -4,7 +4,7 @@ RODADB = begin
   db = if RUBY_ENGINE == "jruby"
          Sequel.connect("jdbc:sqlite::memory:")
        else
-         Sequel.connect("sqlite::memory:")
+         Sequel.sqlite
        end
   db.loggers << Logger.new($stderr) if ENV.key?("RODAUTH_DEBUG")
   Sequel.extension :migration
