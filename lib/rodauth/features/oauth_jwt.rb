@@ -15,7 +15,7 @@ module Rodauth
     auth_value_method :oauth_jwt_jwk_algorithm, "RS256"
 
     auth_value_method :oauth_jwt_jwe_key, nil
-    auth_value_method :oauth_jwt_jwe_decrypt_key, nil
+    auth_value_method :oauth_jwt_jwe_public_key, nil
     auth_value_method :oauth_jwt_jwe_algorithm, nil
     auth_value_method :oauth_jwt_jwe_encryption_method, nil
 
@@ -122,15 +122,17 @@ module Rodauth
               end
         if oauth_jwt_jwe_key
           algorithm = oauth_jwt_jwe_algorithm.to_sym if oauth_jwt_jwe_algorithm
-          jwt = jwt.encrypt(oauth_jwt_jwe_key, algorithm, oauth_jwt_jwe_encryption_method.to_sym)
+          jwt = jwt.encrypt(oauth_jwt_jwe_public_key || oauth_jwt_jwe_key,
+                            algorithm,
+                            oauth_jwt_jwe_encryption_method.to_sym)
         end
         jwt.to_s
       end
 
       def jwt_decode(token)
-        token = JSON::JWT.decode(token, oauth_jwt_jwe_decrypt_key || oauth_jwt_jwe_key).plain_text if oauth_jwt_jwe_key
+        token = JSON::JWT.decode(token, oauth_jwt_jwe_key).plain_text if oauth_jwt_jwe_key
         if oauth_jwt_jwk_key
-          jwk = JSON::JWK.new(oauth_jwt_jwk_public_key || oauth_jwt_jwk_key)
+          jwk = JSON::JWK.new(oauth_jwt_jwk_key)
           JSON::JWT.decode(token, jwk)
         else
           JSON::JWT.decode(token, oauth_jwt_public_key || _jwt_key)
@@ -174,7 +176,7 @@ module Rodauth
           }
           params[:enc] = oauth_jwt_jwe_encryption_method if oauth_jwt_jwe_encryption_method
           params[:alg] = oauth_jwt_jwe_algorithm if oauth_jwt_jwe_algorithm
-          token = JWE.encrypt(token, oauth_jwt_jwe_key, **params)
+          token = JWE.encrypt(token, oauth_jwt_jwe_public_key || oauth_jwt_jwe_key, **params)
         end
 
         token
@@ -182,7 +184,7 @@ module Rodauth
 
       def jwt_decode(token)
         # decrypt jwe
-        token = JWE.decrypt(token, oauth_jwt_jwe_decrypt_key || oauth_jwt_jwe_key) if oauth_jwt_jwe_key
+        token = JWE.decrypt(token, oauth_jwt_jwe_key) if oauth_jwt_jwe_key
 
         # decode jwt
         headers = { algorithms: [oauth_jwt_algorithm] }

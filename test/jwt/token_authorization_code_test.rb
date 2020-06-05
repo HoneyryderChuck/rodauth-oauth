@@ -114,6 +114,7 @@ class RodaOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
     rodauth do
       oauth_jwt_jwk_key jwk_key
+      oauth_jwt_jwk_public_key jwk_key.public_key
       oauth_jwt_algorithm "RS256"
     end
     setup_application
@@ -148,6 +149,7 @@ class RodaOauthJWTTokenAuthorizationCodeTest < JWTIntegration
       oauth_jwt_key "SECRET"
       oauth_jwt_algorithm "HS256"
       oauth_jwt_jwe_key jwe_key
+      oauth_jwt_jwe_public_key jwe_key.public_key
       oauth_jwt_jwe_algorithm "RSA-OAEP"
       oauth_jwt_jwe_encryption_method "A256GCM"
     end
