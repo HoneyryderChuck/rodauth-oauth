@@ -224,8 +224,6 @@ module Rodauth
       end
     end
 
-    attr_reader :oauth_application
-
     def initialize(scope)
       @scope = scope
     end
@@ -274,11 +272,13 @@ module Rodauth
       return @authorization_token if defined?(@authorization_token)
 
       @authorization_token = begin
-        value = request.get_header("HTTP_AUTHORIZATION").to_s
+        value = request.env["HTTP_AUTHORIZATION"]
+
+        return unless value
 
         scheme, token = value.split(" ", 2)
 
-        return unless scheme == "Bearer"
+        return unless scheme.downcase == oauth_token_type
 
         # check if there is a token
         # check if token has not expired
@@ -351,13 +351,24 @@ module Rodauth
     # fetch an authorization basic header
     # parse client id and secret
     #
-    def require_client_secret_basic
-      authorization_required unless (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v[/\A *Basic (.*)\Z/, 1]))
+    def require_oauth_application
+      # get client credenntials
+      client_id = client_secret = nil
 
-      client_id, client_secret = Base64.decode64(token).split(/:/, 2)
-      authorization_required unless client_id && client_secret
+      # client_secret_basic
+      if (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v[/\A *Basic (.*)\Z/, 1]))
+        client_id, client_secret = Base64.decode64(token).split(/:/, 2)
+      else
+        client_id = param_or_nil(client_id_param)
+        client_secret = param_or_nil(client_secret_param)
+      end
+
+      authorization_required unless client_id
 
       @oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => client_id).first
+
+      # skip if using pkce
+      return if @oauth_application && use_oauth_pkce? && param_or_nil(code_verifier_param)
 
       authorization_required unless @oauth_application && secret_matches?(@oauth_application, client_secret)
     end
@@ -643,13 +654,11 @@ module Rodauth
 
     # Access Tokens
 
+    def before_token
+      require_oauth_application
+    end
+
     def validate_oauth_token_params
-      redirect_response_error("invalid_request") unless param_or_nil(client_id_param)
-
-      unless param_or_nil(client_secret_param)
-        redirect_response_error("invalid_request") unless param_or_nil(code_verifier_param)
-      end
-
       unless (grant_type = param_or_nil(grant_type_param))
         redirect_response_error("invalid_request")
       end
@@ -666,16 +675,6 @@ module Rodauth
     end
 
     def create_oauth_token
-      oauth_application = db[oauth_applications_table].where(
-        oauth_applications_client_id_column => param(client_id_param)
-      ).first
-
-      redirect_response_error("invalid_request") unless oauth_application
-
-      if (client_secret = param_or_nil(client_secret_param))
-        redirect_response_error("invalid_request") unless secret_matches?(oauth_application, client_secret)
-      end
-
       case param(grant_type_param)
       when "authorization_code"
         create_oauth_token_from_authorization_code(oauth_application)
@@ -793,13 +792,13 @@ module Rodauth
     end
 
     def before_introspect
-      require_client_secret_basic
+      require_oauth_application
     end
 
     # Token revocation
 
     def before_revoke
-      require_account
+      require_oauth_application
     end
 
     def validate_oauth_revoke_params
@@ -817,8 +816,7 @@ module Rodauth
                       oauth_token_by_refresh_token(token)
                     end
 
-      unless oauth_token && (oauth_token[oauth_tokens_account_id_column] == account_id ||
-                             token_from_application?(oauth_token, oauth_application))
+      unless oauth_token && token_from_application?(oauth_token, oauth_application)
         redirect_response_error("invalid_request")
       end
 
@@ -1032,7 +1030,6 @@ module Rodauth
 
     # /oauth-revoke
     route(:oauth_revoke) do |r|
-      require_account
       before_revoke
 
       # access-token

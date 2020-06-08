@@ -61,8 +61,12 @@ class RodaOauthTokenRevokeTest < RodaIntegration
 
   private
 
+  # overriding to implement the client/secret basic authorization
   def login
-    header "Authorization", "Basic #{authorization_header}"
+    header "Authorization", "Basic #{authorization_header(
+      username: oauth_application[:client_id],
+      password: 'CLIENT_SECRET'
+    )}"
   end
 
   def setup_application

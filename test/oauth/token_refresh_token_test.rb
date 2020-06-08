@@ -39,8 +39,8 @@ class RodaOauthRefreshTokenTest < RodaIntegration
          grant_type: "refresh_token",
          refresh_token: oauth_token[:refresh_token])
 
-    assert last_response.status == 400
-    assert json_body["error"] == "invalid_request"
+    assert last_response.status == 401
+    assert json_body["error"] == "invalid_client"
   end
 
   def test_token_refresh_token_successful

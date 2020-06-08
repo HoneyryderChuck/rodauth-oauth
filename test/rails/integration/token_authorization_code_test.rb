@@ -11,8 +11,8 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
     header "Accept", "application/json"
     post("/oauth-token")
 
-    assert last_response.status == 400
-    assert json_body["error"] == "invalid_request"
+    assert last_response.status == 401
+    assert json_body["error"] == "invalid_client"
   end
 
   def test_token_rails_authorization_code_no_grant
@@ -70,8 +70,8 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
          code: oauth_grant[:code],
          redirect_uri: oauth_grant[:redirect_uri])
 
-    assert last_response.status == 400
-    assert json_body["error"] == "invalid_request"
+    assert last_response.status == 401
+    assert json_body["error"] == "invalid_client"
   end
 
   def test_token_rails_authorization_code_successful
