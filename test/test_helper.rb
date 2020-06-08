@@ -90,6 +90,10 @@ module OAuthHelpers
   def authorization_header(opts = {})
     ["#{opts.delete(:username) || 'foo@example.com'}:#{opts.delete(:password) || '0123456789'}"].pack("m*")
   end
+
+  def json_body
+    @json_body ||= JSON.parse(last_response.body)
+  end
 end
 
 Dir[File.join(".", "test", "support", "*.rb")].sort.each { |f| require f }
