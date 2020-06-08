@@ -47,9 +47,6 @@ module Rodauth
         mac_attributes = parse_mac_authorization_header_props(token)
 
         oauth_token = oauth_token_by_token(mac_attributes["id"])
-                      .where(Sequel[oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
-                      .where(oauth_tokens_revoked_at_column => nil)
-                      .first
 
         return unless oauth_token && mac_signature_matches?(oauth_token, mac_attributes)
 
