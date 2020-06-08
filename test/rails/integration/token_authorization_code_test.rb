@@ -11,9 +11,8 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
     header "Accept", "application/json"
     post("/oauth-token")
 
-    assert last_response.status == 400
-    json_body = JSON.parse(last_response.body)
-    assert json_body["error"] == "invalid_request"
+    assert last_response.status == 401
+    assert json_body["error"] == "invalid_client"
   end
 
   def test_token_rails_authorization_code_no_grant
@@ -26,7 +25,6 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
          code: "CODE")
 
     assert last_response.status == 400
-    json_body = JSON.parse(last_response.body)
     assert json_body["error"] == "invalid_grant"
   end
 
@@ -43,7 +41,6 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
          redirect_uri: grant[:redirect_uri])
 
     assert last_response.status == 400
-    json_body = JSON.parse(last_response.body)
     assert json_body["error"] == "invalid_grant"
   end
 
@@ -60,7 +57,6 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
          redirect_uri: grant[:redirect_uri])
 
     assert last_response.status == 400
-    json_body = JSON.parse(last_response.body)
     assert json_body["error"] == "invalid_grant"
   end
 
@@ -74,9 +70,8 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
          code: oauth_grant[:code],
          redirect_uri: oauth_grant[:redirect_uri])
 
-    assert last_response.status == 400
-    json_body = JSON.parse(last_response.body)
-    assert json_body["error"] == "invalid_request"
+    assert last_response.status == 401
+    assert json_body["error"] == "invalid_client"
   end
 
   def test_token_rails_authorization_code_successful
@@ -100,7 +95,6 @@ class RodaOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
     oauth_grant = db[:oauth_grants].where(id: access_token[:oauth_grant_id]).first
     assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
 
-    json_body = JSON.parse(last_response.body)
     assert json_body["access_token"] == access_token[:token]
     assert json_body["refresh_token"] == access_token[:refresh_token]
     assert !json_body["expires_in"].nil?

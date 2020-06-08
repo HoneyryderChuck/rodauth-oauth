@@ -5,6 +5,7 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "simplecov" if ENV.key?("CI")
 
 ENV["RAILS_ENV"] = "test"
+ENV["DATABASE_URL"] ||= "sqlite3::memory:"
 
 # for rails integration tests
 require_relative "rails_app/config/environment"
@@ -89,6 +90,10 @@ module OAuthHelpers
 
   def authorization_header(opts = {})
     ["#{opts.delete(:username) || 'foo@example.com'}:#{opts.delete(:password) || '0123456789'}"].pack("m*")
+  end
+
+  def json_body
+    @json_body ||= JSON.parse(last_response.body)
   end
 end
 

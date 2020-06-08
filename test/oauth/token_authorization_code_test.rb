@@ -9,9 +9,8 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     setup_application
 
     post("/oauth-token")
-    assert last_response.status == 400
-    json_body = JSON.parse(last_response.body)
-    assert json_body["error"] == "invalid_request"
+    assert last_response.status == 401
+    assert json_body["error"] == "invalid_client"
   end
 
   def test_token_authorization_code_no_grant
@@ -23,7 +22,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
          code: "CODE")
 
     assert last_response.status == 400
-    json_body = JSON.parse(last_response.body)
     assert json_body["error"] == "invalid_grant"
   end
 
@@ -39,7 +37,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
          redirect_uri: grant[:redirect_uri])
 
     assert last_response.status == 400
-    json_body = JSON.parse(last_response.body)
     assert json_body["error"] == "invalid_grant"
   end
 
@@ -55,7 +52,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
          redirect_uri: grant[:redirect_uri])
 
     assert last_response.status == 400
-    json_body = JSON.parse(last_response.body)
     assert json_body["error"] == "invalid_grant"
   end
 
@@ -68,9 +64,8 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
          code: oauth_grant[:code],
          redirect_uri: oauth_grant[:redirect_uri])
 
-    assert last_response.status == 400
-    json_body = JSON.parse(last_response.body)
-    assert json_body["error"] == "invalid_request"
+    assert last_response.status == 401
+    assert json_body["error"] == "invalid_client"
   end
 
   def test_token_authorization_code_successful
@@ -93,7 +88,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     oauth_grant = db[:oauth_grants].where(id: access_token[:oauth_grant_id]).first
     assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
 
-    json_body = JSON.parse(last_response.body)
     assert json_body["token_type"] == "bearer"
     assert json_body["access_token"] == access_token[:token]
 
@@ -130,7 +124,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     assert access_token[:refresh_token].nil?
     assert !access_token[:refresh_token_hash].nil?
 
-    json_body = JSON.parse(last_response.body)
     assert json_body["access_token"] != access_token[:token_hash]
     assert json_body["refresh_token"] != access_token[:refresh_token_hash]
     assert !json_body["expires_in"].nil?
@@ -164,7 +157,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     oauth_grant = db[:oauth_grants].where(id: access_token[:oauth_grant_id]).first
     assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
 
-    json_body = JSON.parse(last_response.body)
     assert json_body["access_token"] == access_token[:token]
     assert json_body["refresh_token"].nil?
     assert !json_body["expires_in"].nil?
@@ -183,7 +175,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
          redirect_uri: pkce_grant[:redirect_uri])
 
     assert last_response.status == 400
-    json_body = JSON.parse(last_response.body)
     assert json_body["error"] == "invalid_request"
   end
 
@@ -200,7 +191,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
          code_verifier: "FAULTY_VERIFIER")
 
     assert last_response.status == 400
-    json_body = JSON.parse(last_response.body)
     assert json_body["error"] == "invalid_request"
   end
 
@@ -226,7 +216,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     oauth_grant = db[:oauth_grants].where(id: access_token[:oauth_grant_id]).first
     assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
 
-    json_body = JSON.parse(last_response.body)
     assert json_body["access_token"] == access_token[:token]
     assert json_body["refresh_token"].nil?
     assert !json_body["expires_in"].nil?
@@ -254,7 +243,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     oauth_grant = db[:oauth_grants].where(id: access_token[:oauth_grant_id]).first
     assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
 
-    json_body = JSON.parse(last_response.body)
     assert json_body["access_token"] == access_token[:token]
     assert json_body["refresh_token"].nil?
     assert !json_body["expires_in"].nil?
@@ -274,7 +262,6 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
          redirect_uri: oauth_grant[:redirect_uri])
 
     assert last_response.status == 400
-    json_body = JSON.parse(last_response.body)
     assert json_body["error"] == "invalid_request"
     assert json_body["error_description"] == "code challenge required"
   end

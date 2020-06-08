@@ -1,5 +1,7 @@
 # frozen-string-literal: true
 
+require "base64"
+
 module Rodauth
   Feature.define(:oauth) do
     # RUBY EXTENSIONS
@@ -38,10 +40,11 @@ module Rodauth
     after "authorize_failure"
 
     before "token"
-    after "token"
 
     before "revoke"
     after "revoke"
+
+    before "introspect"
 
     before "create_oauth_application"
     after "create_oauth_application"
@@ -143,7 +146,7 @@ module Rodauth
 
     auth_value_method :oauth_application_default_scope, SCOPES.first
     auth_value_method :oauth_application_scopes, SCOPES
-    auth_value_method :oauth_token_type, "Bearer"
+    auth_value_method :oauth_token_type, "bearer"
 
     auth_value_method :invalid_request, "Request is missing a required parameter"
     auth_value_method :invalid_client, "Invalid client"
@@ -190,7 +193,7 @@ module Rodauth
 
     def check_csrf?
       case request.path
-      when oauth_token_path
+      when oauth_token_path, oauth_introspect_path
         false
       when oauth_revoke_path
         !json_request?
@@ -220,8 +223,6 @@ module Rodauth
         @json_request = request.content_type =~ json_request_regexp
       end
     end
-
-    attr_reader :oauth_application
 
     def initialize(scope)
       @scope = scope
@@ -271,18 +272,18 @@ module Rodauth
       return @authorization_token if defined?(@authorization_token)
 
       @authorization_token = begin
-        value = request.get_header("HTTP_AUTHORIZATION").to_s
+        value = request.env["HTTP_AUTHORIZATION"]
+
+        return unless value
 
         scheme, token = value.split(" ", 2)
 
-        return unless scheme == "Bearer"
+        return unless scheme.downcase == oauth_token_type
 
         # check if there is a token
         # check if token has not expired
         # check if token has been revoked
-        oauth_token_by_token(token).where(Sequel[oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
-                                   .where(oauth_tokens_revoked_at_column => nil)
-                                   .first
+        oauth_token_by_token(token)
       end
     end
 
@@ -346,6 +347,32 @@ module Rodauth
 
     private
 
+    # to be used internally. Same semantics as require account, must:
+    # fetch an authorization basic header
+    # parse client id and secret
+    #
+    def require_oauth_application
+      # get client credenntials
+      client_id = client_secret = nil
+
+      # client_secret_basic
+      if (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v[/\A *Basic (.*)\Z/, 1]))
+        client_id, client_secret = Base64.decode64(token).split(/:/, 2)
+      else
+        client_id = param_or_nil(client_id_param)
+        client_secret = param_or_nil(client_secret_param)
+      end
+
+      authorization_required unless client_id
+
+      @oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => client_id).first
+
+      # skip if using pkce
+      return if @oauth_application && use_oauth_pkce? && param_or_nil(code_verifier_param)
+
+      authorization_required unless @oauth_application && secret_matches?(@oauth_application, client_secret)
+    end
+
     def secret_matches?(oauth_application, secret)
       BCrypt::Password.new(oauth_application[oauth_applications_client_secret_column]) == secret
     end
@@ -360,6 +387,10 @@ module Rodauth
 
     def generate_token_hash(token)
       Base64.urlsafe_encode64(Digest::SHA256.digest(token))
+    end
+
+    def token_from_application?(oauth_token, oauth_application)
+      oauth_token[oauth_tokens_oauth_application_id_column] == oauth_application[oauth_applications_id_column]
     end
 
     unless method_defined?(:password_hash)
@@ -426,26 +457,32 @@ module Rodauth
       end
     end
 
-    def oauth_token_by_token(token)
-      if oauth_tokens_token_hash_column
-        db[oauth_tokens_table].where(oauth_tokens_token_hash_column => generate_token_hash(token))
-      else
-        db[oauth_tokens_table].where(oauth_tokens_token_column => token)
-      end
+    def oauth_token_by_token(token, dataset = db[oauth_tokens_table])
+      ds = if oauth_tokens_token_hash_column
+             dataset.where(oauth_tokens_token_hash_column => generate_token_hash(token))
+           else
+             dataset.where(oauth_tokens_token_column => token)
+           end
+
+      ds.where(Sequel[oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
+        .where(oauth_tokens_revoked_at_column => nil).first
     end
 
-    def oauth_token_by_refresh_token(token)
-      if oauth_tokens_refresh_token_hash_column
-        db[oauth_tokens_table].where(oauth_tokens_refresh_token_hash_column => generate_token_hash(token))
-      else
-        db[oauth_tokens_table].where(oauth_tokens_refresh_token_column => token)
-      end
+    def oauth_token_by_refresh_token(token, dataset = db[oauth_tokens_table])
+      ds = if oauth_tokens_refresh_token_hash_column
+             dataset.where(oauth_tokens_refresh_token_hash_column => generate_token_hash(token))
+           else
+             dataset.where(oauth_tokens_refresh_token_column => token)
+           end
+
+      ds.where(Sequel[oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
+        .where(oauth_tokens_revoked_at_column => nil).first
     end
 
     def json_access_token_payload(oauth_token)
       payload = {
         "access_token" => oauth_token[oauth_tokens_token_column],
-        "token_type" => oauth_token_type.downcase,
+        "token_type" => oauth_token_type,
         "expires_in" => oauth_token_expires_in
       }
       if oauth_token[oauth_tokens_refresh_token_column]
@@ -617,13 +654,11 @@ module Rodauth
 
     # Access Tokens
 
+    def before_token
+      require_oauth_application
+    end
+
     def validate_oauth_token_params
-      redirect_response_error("invalid_request") unless param_or_nil(client_id_param)
-
-      unless param_or_nil(client_secret_param)
-        redirect_response_error("invalid_request") unless param_or_nil(code_verifier_param)
-      end
-
       unless (grant_type = param_or_nil(grant_type_param))
         redirect_response_error("invalid_request")
       end
@@ -640,16 +675,6 @@ module Rodauth
     end
 
     def create_oauth_token
-      oauth_application = db[oauth_applications_table].where(
-        oauth_applications_client_id_column => param(client_id_param)
-      ).first
-
-      redirect_response_error("invalid_request") unless oauth_application
-
-      if (client_secret = param_or_nil(client_secret_param))
-        redirect_response_error("invalid_request") unless secret_matches?(oauth_application, client_secret)
-      end
-
       case param(grant_type_param)
       when "authorization_code"
         create_oauth_token_from_authorization_code(oauth_application)
@@ -705,11 +730,11 @@ module Rodauth
 
     def create_oauth_token_from_token(oauth_application)
       # fetch oauth token
-      oauth_token = oauth_token_by_refresh_token(param(refresh_token_param)).where(
-        oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column]
-      ).where(oauth_grants_revoked_at_column => nil).for_update.first
+      oauth_token = oauth_token_by_refresh_token(param(refresh_token_param))
 
-      redirect_response_error("invalid_grant") unless oauth_token
+      unless oauth_token && token_from_application?(oauth_token, oauth_application)
+        redirect_response_error("invalid_grant")
+      end
 
       token = oauth_unique_id_generator
 
@@ -741,42 +766,59 @@ module Rodauth
       oauth_token
     end
 
+    TOKEN_HINT_TYPES = %w[access_token refresh_token].freeze
+
+    # Token introspect
+
+    def validate_oauth_introspect_params
+      # check if valid token hint type
+      if token_type_hint
+        redirect_response_error("unsupported_token_type") unless TOKEN_HINT_TYPES.include?(token_type_hint)
+      end
+
+      redirect_response_error("invalid_request") unless param_or_nil(token_param)
+    end
+
+    def json_token_introspect_payload(token)
+      return { active: false } unless token
+
+      {
+        active: true,
+        scope: token[oauth_tokens_scopes_column].gsub(",", " "),
+        client_id: oauth_application[oauth_applications_client_id_column],
+        # username
+        token_type: oauth_token_type
+      }
+    end
+
+    def before_introspect
+      require_oauth_application
+    end
+
     # Token revocation
 
     def before_revoke
-      require_account
+      require_oauth_application
     end
-
-    TOKEN_HINT_TYPES = %w[access_token refresh_token].freeze
 
     def validate_oauth_revoke_params
       # check if valid token hint type
       redirect_response_error("unsupported_token_type") unless TOKEN_HINT_TYPES.include?(token_type_hint)
 
-      redirect_response_error("invalid_request") unless param(token_param)
+      redirect_response_error("invalid_request") unless param_or_nil(token_param)
     end
 
     def revoke_oauth_token
-      ds = case token_type_hint
-           when "access_token"
-             oauth_token_by_token(token)
-           when "refresh_token"
-             oauth_token_by_refresh_token(token)
-           end
-      # one can only revoke tokens which haven't been revoked before, and which are
-      # either our tokens, or tokens from applications we own.
-      oauth_token = ds.where(oauth_tokens_revoked_at_column => nil)
-                      .where(
-                        Sequel.or(
-                          oauth_tokens_account_id_column => account_id,
-                          oauth_tokens_oauth_application_id_column => db[oauth_applications_table].where(
-                            oauth_applications_client_id_column => param(client_id_param),
-                            oauth_applications_account_id_column => account_id
-                          ).select(oauth_applications_id_column)
-                        )
-                      ).for_update.first
+      oauth_token = case token_type_hint
+                    when "access_token"
+                      oauth_token_by_token(token)
+                    when "refresh_token"
+                      oauth_token_by_refresh_token(token)
+                    end
 
-      redirect_response_error("invalid_request") unless oauth_token
+      unless oauth_token && token_from_application?(oauth_token, oauth_application)
+        redirect_response_error("invalid_request")
+      end
 
       update_params = { oauth_tokens_revoked_at_column => Sequel::CURRENT_TIMESTAMP }
 
@@ -838,7 +880,7 @@ module Rodauth
       payload["error_description"] = send(:"#{error_code}_message") if respond_to?(:"#{error_code}_message")
       json_payload = _json_response_body(payload)
       response["Content-Type"] ||= json_response_content_type
-      response["WWW-Authenticate"] = oauth_token_type if status == 401
+      response["WWW-Authenticate"] = oauth_token_type.upcase if status == 401
       response.write(json_payload)
       request.halt
     end
@@ -941,7 +983,6 @@ module Rodauth
           oauth_token = nil
           transaction do
             oauth_token = create_oauth_token
-            after_token
           end
 
           response.status = 200
@@ -955,9 +996,40 @@ module Rodauth
       end
     end
 
+    # /oauth-introspect
+    route(:oauth_introspect) do |r|
+      before_introspect
+
+      r.post do
+        catch_error do
+          validate_oauth_introspect_params
+
+          oauth_token = case param(token_type_hint_param)
+                        when "access_token"
+                          oauth_token_by_token(param(token_param))
+                        when "refresh_token"
+                          oauth_token_by_refresh_token(param(token_param))
+                        else
+                          oauth_token_by_token(param(token_param)) || oauth_token_by_refresh_token(param(token_param))
+                        end
+
+          if oauth_token && !token_from_application?(oauth_token, oauth_application)
+            redirect_response_error("invalid_request")
+          end
+
+          response.status = 200
+          response["Content-Type"] ||= json_response_content_type
+          json_payload = _json_response_body(json_token_introspect_payload(oauth_token))
+          response.write(json_payload)
+          request.halt
+        end
+
+        throw_json_response_error(invalid_oauth_response_status, "invalid_request")
+      end
+    end
+
     # /oauth-revoke
     route(:oauth_revoke) do |r|
-      require_account
       before_revoke
 
       # access-token

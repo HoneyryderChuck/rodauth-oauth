@@ -23,7 +23,6 @@ module Rodauth
     auth_value_method :oauth_jwt_audience, nil
 
     auth_value_methods(
-      :generate_jti,
       :jwt_encode,
       :jwt_decode
     )
@@ -33,7 +32,7 @@ module Rodauth
 
       scopes << oauth_application_default_scope if scopes.empty?
 
-      token_scopes = authorization_token["scopes"].split(",")
+      token_scopes = authorization_token["scope"].split(" ")
 
       authorization_required unless scopes.any? { |scope| token_scopes.include?(scope) }
     end
@@ -86,20 +85,51 @@ module Rodauth
         # owner is involved, such as the client credentials grant, the value
         # of "sub" SHOULD correspond to an identifier the authorization
         # server uses to indicate the client application.
-        client_id: oauth_token[oauth_tokens_oauth_application_id_column],
+        client_id: oauth_application[oauth_applications_client_id_column],
 
         exp: issued_at + oauth_token_expires_in,
         aud: oauth_jwt_audience,
 
         # one of the points of using jwt is avoiding database lookups, so we put here all relevant
         # token data.
-        scopes: oauth_token[oauth_tokens_scopes_column]
+        scope: oauth_token[oauth_tokens_scopes_column].gsub(",", " ")
       }
 
       token = jwt_encode(payload)
 
       oauth_token[oauth_tokens_token_column] = token
       oauth_token
+    end
+
+    def oauth_token_by_token(token, *)
+      jwt_decode(token)
+    end
+
+    def json_token_introspect_payload(oauth_token)
+      return { active: false } unless oauth_token
+
+      return super unless oauth_token["sub"] # naive check on whether it's a jwt token
+
+      {
+        active: true,
+        scope: oauth_token["scope"],
+        client_id: oauth_token["client_id"],
+        # username
+        token_type: "access_token",
+        exp: oauth_token["exp"],
+        iat: oauth_token["iat"],
+        nbf: oauth_token["nbf"],
+        sub: oauth_token["sub"],
+        aud: oauth_token["aud"],
+        iss: oauth_token["iss"],
+        jti: oauth_token["jti"]
+      }
+    end
+
+    def token_from_application?(oauth_token, oauth_application)
+      return super unless oauth_token["sub"] # naive check on whether it's a jwt token
+
+      oauth_token["client_id"] == oauth_application[oauth_applications_client_id_column]
     end
 
     def _jwt_key
@@ -130,13 +160,16 @@ module Rodauth
       end
 
       def jwt_decode(token)
+        return @jwt_token if defined?(@jwt_token)
+
         token = JSON::JWT.decode(token, oauth_jwt_jwe_key).plain_text if oauth_jwt_jwe_key
-        if oauth_jwt_jwk_key
-          jwk = JSON::JWK.new(oauth_jwt_jwk_key)
-          JSON::JWT.decode(token, jwk)
-        else
-          JSON::JWT.decode(token, oauth_jwt_public_key || _jwt_key)
-        end
+
+        @jwt_token = if oauth_jwt_jwk_key
+                       jwk = JSON::JWK.new(oauth_jwt_jwk_key)
+                       JSON::JWT.decode(token, jwk)
+                     else
+                       JSON::JWT.decode(token, oauth_jwt_public_key || _jwt_key)
+                     end
       rescue JSON::JWT::Exception
         nil
       end
@@ -163,7 +196,7 @@ module Rodauth
 
         # Use the key and iat to create a unique key per request to prevent replay attacks
         jti_raw = [key, payload[:iat]].join(":").to_s
-        jti = Digest::MD5.hexdigest(jti_raw)
+        jti = Digest::SHA256.hexdigest(jti_raw)
 
         # @see JWT reserved claims - https://tools.ietf.org/html/draft-jones-json-web-token-07#page-7
         payload[:jti] = jti
@@ -183,6 +216,8 @@ module Rodauth
       end
 
       def jwt_decode(token)
+        return @jwt_token if defined?(@jwt_token)
+
         # decrypt jwe
         token = JWE.decrypt(token, oauth_jwt_jwe_key) if oauth_jwt_jwe_key
 
@@ -207,8 +242,8 @@ module Rodauth
                 # worst case scenario, the key is the application key
                 oauth_jwt_public_key || _jwt_key
               end
-        token, = JWT.decode(token, key, true, headers)
-        token
+        @jwt_token, = JWT.decode(token, key, true, headers)
+        @jwt_token
       rescue JWT::DecodeError
         nil
       end

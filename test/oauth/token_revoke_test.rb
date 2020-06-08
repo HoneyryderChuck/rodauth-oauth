@@ -11,7 +11,6 @@ class RodaOauthTokenRevokeTest < RodaIntegration
     post("/oauth-revoke", token_type_hint: "hinterz", token: "CODE")
 
     assert last_response.status == 400
-    json_body = JSON.parse(last_response.body)
     assert json_body["error"] == "unsupported_token_type"
   end
 
@@ -21,7 +20,6 @@ class RodaOauthTokenRevokeTest < RodaIntegration
     post("/oauth-revoke", token_type_hint: "access_token", token: "CODE")
 
     assert last_response.status == 400
-    json_body = JSON.parse(last_response.body)
     assert json_body["error"] == "invalid_request"
   end
 
@@ -33,7 +31,6 @@ class RodaOauthTokenRevokeTest < RodaIntegration
     post("/oauth-revoke", token_type_hint: "access_token", token: oauth_token[:token])
 
     assert last_response.status == 400
-    json_body = JSON.parse(last_response.body)
     assert json_body["error"] == "invalid_request"
   end
 
@@ -54,7 +51,6 @@ class RodaOauthTokenRevokeTest < RodaIntegration
     post("/oauth-revoke", token_type_hint: "access_token", token: oauth_token[:refresh_token])
 
     assert last_response.status == 400
-    json_body = JSON.parse(last_response.body)
     assert json_body["error"] == "invalid_request"
 
     post("/oauth-revoke", token_type_hint: "refresh_token", token: oauth_token[:refresh_token])
@@ -65,8 +61,12 @@ class RodaOauthTokenRevokeTest < RodaIntegration
 
   private
 
+  # overriding to implement the client/secret basic authorization
   def login
-    header "Authorization", "Basic #{authorization_header}"
+    header "Authorization", "Basic #{authorization_header(
+      username: oauth_application[:client_id],
+      password: 'CLIENT_SECRET'
+    )}"
   end
 
   def setup_application

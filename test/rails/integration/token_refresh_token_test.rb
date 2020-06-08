@@ -15,7 +15,6 @@ class RodaOAuthRailsTokenRefreshTokenTest < RailsIntegrationTest
          refresh_token: "CODE")
 
     assert last_response.status == 400
-    json_body = JSON.parse(last_response.body)
     assert json_body["error"] == "invalid_grant"
   end
 
@@ -31,7 +30,6 @@ class RodaOAuthRailsTokenRefreshTokenTest < RailsIntegrationTest
          refresh_token: oauth_token[:refresh_token])
 
     assert last_response.status == 400
-    json_body = JSON.parse(last_response.body)
     assert json_body["error"] == "invalid_grant"
   end
 
@@ -44,9 +42,8 @@ class RodaOAuthRailsTokenRefreshTokenTest < RailsIntegrationTest
          grant_type: "refresh_token",
          refresh_token: oauth_token[:refresh_token])
 
-    assert last_response.status == 400
-    json_body = JSON.parse(last_response.body)
-    assert json_body["error"] == "invalid_request"
+    assert last_response.status == 401
+    assert json_body["error"] == "invalid_client"
   end
 
   def test_token_rails_refresh_token_successful
@@ -67,7 +64,6 @@ class RodaOAuthRailsTokenRefreshTokenTest < RailsIntegrationTest
 
     assert db[:oauth_tokens].count == 1
 
-    json_body = JSON.parse(last_response.body)
     assert !json_body["access_token"].nil?
     assert json_body["access_token"] != prev_token
     assert Time.now.utc + json_body["expires_in"] > prev_expires_in
