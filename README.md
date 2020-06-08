@@ -15,6 +15,7 @@ This gem implements:
   * [Access Token refresh](https://tools.ietf.org/html/rfc6749#section-1.5);
   * [Implicit grant (off by default)[https://tools.ietf.org/html/rfc6749#section-4.2];
 * [Token revocation](https://tools.ietf.org/html/rfc7009);
+* [Token introspection](https://tools.ietf.org/html/rfc7662);
 * [PKCE](https://tools.ietf.org/html/rfc7636);
 * Access Type (Token refresh online and offline);
 * [MAC Authentication Scheme](https://tools.ietf.org/html/draft-hammer-oauth-v2-mac-token-02);
