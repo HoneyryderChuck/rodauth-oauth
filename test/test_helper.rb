@@ -5,6 +5,7 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 require "simplecov" if ENV.key?("CI")
 
 ENV["RAILS_ENV"] = "test"
+ENV["DATABASE_URL"] ||= "sqlite3::memory:"
 
 # for rails integration tests
 require_relative "rails_app/config/environment"
