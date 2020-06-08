@@ -147,16 +147,38 @@ Token revocation can be done both by the idenntity owner or the application owne
 
 ```ruby
 require "httpx"
-httpx = HTTPX.plugin(:authorization)
-response = httpx.with(headers: { "X-your-auth-scheme" => ENV["SERVER_KEY"] })
+httpx = HTTPX.plugin(:basic_authorization)
+response = httpx.basic_authentication(ENV["CLIENT_ID"], ENV["CLIENT_SECRET"])
                 .post("https://auth_server/oauth-revoke",json: {
-                  client_id: ENV["OAUTH_CLIENT_ID"],
                   token_type_hint: "access_token", # can also be "refresh:tokn"
                   token: "2r89hfef4j9f90d2j2390jf390g"
                 })
 response.raise_for_status
 payload = JSON.parse(response.to_s)
 puts payload #=> {"access_token" => "awr23f3h8f9d2h89...", "token_type" => "Bearer" ....
+```
+
+##### cURL
+
+```
+> curl -H "X-your-auth-scheme: $SERVER_KEY" --data '{"client_id":"$OAUTH_CLIENT_ID","token_type_hint":"access_token","token":"2r89hfef4j9f90d2j2390jf390g"}' https://auth_server/oauth-revoke
+```
+
+#### Token introspection
+
+Token revocation can be used to determine the state of a token (whether active, what's the scope...) . Here's an example using server-to-server:
+
+```ruby
+require "httpx"
+httpx = HTTPX.plugin(:basic_authorization)
+response = httpx.basic_authentication(ENV["CLIENT_ID"], ENV["CLIENT_SECRET"])
+                .post("https://auth_server/oauth-introspect",json: {
+                  token_type_hint: "access_token", # can also be "refresh:tokn"
+                  token: "2r89hfef4j9f90d2j2390jf390g"
+                })
+response.raise_for_status
+payload = JSON.parse(response.to_s)
+puts payload #=> {"active" => true, "scope" => "read write" ....
 ```
 
 ##### cURL
