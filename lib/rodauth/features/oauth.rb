@@ -1,5 +1,7 @@
 # frozen-string-literal: true
 
+require "base64"
+
 module Rodauth
   Feature.define(:oauth) do
     # RUBY EXTENSIONS
@@ -352,7 +354,7 @@ module Rodauth
     def require_client_secret_basic
       authorization_required unless (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v[/\A *Basic (.*)\Z/, 1]))
 
-      client_id, client_secret = token.unpack1("m*").split(/:/, 2)
+      client_id, client_secret = Base64.decode64(token).split(/:/, 2)
       authorization_required unless client_id && client_secret
 
       @oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => client_id).first
