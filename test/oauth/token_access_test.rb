@@ -69,4 +69,16 @@ class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
     assert last_response.status == 401
     assert last_response.headers["Content-Type"] == "application/json"
   end
+
+  def test_token_access_private_from_query_params
+    rodauth do
+      fetch_access_token { param_or_nil("access_token") }
+    end
+    setup_application
+
+    header "Accept", "application/json"
+
+    get("/private", access_token: oauth_token[:token])
+    assert last_response.status == 200
+  end
 end
