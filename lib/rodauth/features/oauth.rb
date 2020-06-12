@@ -167,6 +167,12 @@ module Rodauth
     auth_value_method :unsupported_transform_algorithm_error_code, "invalid_request"
     auth_value_method :unsupported_transform_algorithm_message, "transform algorithm not supported"
 
+    # METADATA
+    auth_value_method :oauth_metadata_service_documentation, nil
+    auth_value_method :oauth_metadata_ui_locales_supported, nil
+    auth_value_method :oauth_metadata_op_policy_uri, nil
+    auth_value_method :oauth_metadata_op_tos_uri, nil
+
     auth_value_methods(
       :oauth_unique_id_generator,
       :secret_matches?,
@@ -341,6 +347,16 @@ module Rodauth
           end
           set_error_flash create_oauth_application_error_flash
           new_oauth_application_view
+        end
+      end
+    end
+
+    def oauth_server_metadata(issuer = nil)
+      request.on(".well-known") do
+        request.on("oauth-authorization-server") do
+          request.get do
+            json_response_success(oauth_server_metadata_body(issuer))
+          end
         end
       end
     end
@@ -869,6 +885,14 @@ module Rodauth
       end
     end
 
+    def json_response_success(body)
+      response.status = 200
+      response["Content-Type"] ||= json_response_content_type
+      json_payload = _json_response_body(body)
+      response.write(json_payload)
+      request.halt
+    end
+
     def throw_json_response_error(status, error_code)
       set_response_error_status(status)
       code = if respond_to?(:"#{error_code}_error_code")
@@ -972,6 +996,43 @@ module Rodauth
       end
     end
 
+    # Server metadata
+
+    def oauth_server_metadata_body(path)
+      issuer = base_url
+      issuer += "/#{path}" if issuer
+
+      responses_supported = %w[code]
+      response_modes_supported = %w[query]
+      grant_types_supported = %w[authorization_code]
+
+      if use_oauth_implicit_grant_type?
+        responses_supported << "token"
+        response_modes_supported << "fragment"
+        grant_types_supported << "implicit"
+      end
+      {
+        issuer: issuer,
+        authorization_endpoint: oauth_authorize_url,
+        token_endpoint: oauth_token_url,
+        registration_endpoint: "#{base_url}/#{oauth_applications_path}",
+        scopes_supported: oauth_application_scopes,
+        response_types_supported: responses_supported,
+        response_modes_supported: response_modes_supported,
+        grant_types_supported: grant_types_supported,
+        token_endpoint_auth_methods_supported: %w[client_secret_basic client_secret_post],
+        service_documentation: oauth_metadata_service_documentation,
+        ui_locales_supported: oauth_metadata_ui_locales_supported,
+        op_policy_uri: oauth_metadata_op_policy_uri,
+        op_tos_uri: oauth_metadata_op_tos_uri,
+        revocation_endpoint: oauth_revoke_url,
+        revocation_endpoint_auth_methods_supported: nil, # because it's client_secret_basic
+        introspection_endpoint: oauth_introspect_url,
+        introspection_endpoint_auth_methods_supported: %w[client_secret_basic],
+        code_challenge_methods_supported: (use_oauth_pkce? ? oauth_pkce_challenge_method : nil)
+      }
+    end
+
     # /oauth-token
     route(:oauth_token) do |r|
       before_token
@@ -985,11 +1046,7 @@ module Rodauth
             oauth_token = create_oauth_token
           end
 
-          response.status = 200
-          response["Content-Type"] ||= json_response_content_type
-          json_payload = _json_response_body(json_access_token_payload(oauth_token))
-          response.write(json_payload)
-          request.halt
+          json_response_success(json_access_token_payload(oauth_token))
         end
 
         throw_json_response_error(invalid_oauth_response_status, "invalid_request")
@@ -1017,11 +1074,7 @@ module Rodauth
             redirect_response_error("invalid_request")
           end
 
-          response.status = 200
-          response["Content-Type"] ||= json_response_content_type
-          json_payload = _json_response_body(json_token_introspect_payload(oauth_token))
-          response.write(json_payload)
-          request.halt
+          json_response_success(json_token_introspect_payload(oauth_token))
         end
 
         throw_json_response_error(invalid_oauth_response_status, "invalid_request")
@@ -1044,16 +1097,10 @@ module Rodauth
           end
 
           if accepts_json?
-            response.status = 200
-            response["Content-Type"] ||= json_response_content_type
-            json_response = {
+            json_response_success \
               "token" => oauth_token[oauth_tokens_token_column],
               "refresh_token" => oauth_token[oauth_tokens_refresh_token_column],
               "revoked_at" => oauth_token[oauth_tokens_revoked_at_column]
-            }
-            json_payload = _json_response_body(json_response)
-            response.write(json_payload)
-            request.halt
           else
             set_notice_flash revoke_oauth_token_notice_flash
             redirect request.referer || "/"

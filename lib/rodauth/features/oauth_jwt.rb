@@ -24,7 +24,8 @@ module Rodauth
 
     auth_value_methods(
       :jwt_encode,
-      :jwt_decode
+      :jwt_decode,
+      :jwks_set
     )
 
     def require_oauth_authorization(*scopes)
@@ -124,6 +125,14 @@ module Rodauth
         iss: oauth_token["iss"],
         jti: oauth_token["jti"]
       }
+    end
+
+    def oauth_server_metadata_body(path)
+      metadata = super
+      metadata.merge! \
+        jwks_uri: oauth_jwks_url,
+        token_endpoint_auth_signing_alg_values_supported: [oauth_jwt_algorithm]
+      metadata
     end
 
     def token_from_application?(oauth_token, oauth_application)
