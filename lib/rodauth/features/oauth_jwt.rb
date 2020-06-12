@@ -165,13 +165,24 @@ module Rodauth
         token = JSON::JWT.decode(token, oauth_jwt_jwe_key).plain_text if oauth_jwt_jwe_key
 
         @jwt_token = if oauth_jwt_jwk_key
-                       jwk = JSON::JWK.new(oauth_jwt_jwk_key)
+                       jwk = JSON::JWK.new(oauth_jwt_jwk_public_key || oauth_jwt_jwk_key)
                        JSON::JWT.decode(token, jwk)
                      else
                        JSON::JWT.decode(token, oauth_jwt_public_key || _jwt_key)
                      end
       rescue JSON::JWT::Exception
         nil
+      end
+
+      def jwks_set
+        [
+          (if oauth_jwt_jwk_public_key
+             JSON::JWK.new(oauth_jwt_jwk_public_key).merge(use: "sig", alg: oauth_jwt_jwk_algorithm)
+           end),
+          (if oauth_jwt_jwe_public_key
+             JSON::JWK.new(oauth_jwt_jwe_public_key).merge(use: "enc", alg: oauth_jwt_jwe_algorithm)
+           end)
+        ].compact
       end
       # :nocov:
     elsif defined?(JWT)
@@ -225,7 +236,7 @@ module Rodauth
         headers = { algorithms: [oauth_jwt_algorithm] }
 
         key = if oauth_jwt_jwk_key
-                jwk_key = JWT::JWK.new(oauth_jwt_jwk_key)
+                jwk_key = JWT::JWK.new(oauth_jwt_jwk_public_key || oauth_jwt_jwk_key)
                 # JWK
                 # The jwk loader would fetch the set of JWKs from a trusted source
                 jwk_loader = lambda do |options|
@@ -248,6 +259,16 @@ module Rodauth
         nil
       end
 
+      def jwks_set
+        [
+          (if oauth_jwt_jwk_public_key
+             JWT::JWK.new(oauth_jwt_jwk_public_key).export.merge(use: "sig", alg: oauth_jwt_jwk_algorithm)
+           end),
+          (if oauth_jwt_jwe_public_key
+             JWT::JWK.new(oauth_jwt_jwe_public_key).export.merge(use: "enc", alg: oauth_jwt_jwe_algorithm)
+           end)
+        ].compact
+      end
     else
       # :nocov:
       def jwt_encode(_token)
@@ -257,7 +278,17 @@ module Rodauth
       def jwt_decode(_token)
         raise "#{__method__} is undefined, redefine it or require either \"jwt\" or \"json-jwt\""
       end
+
+      def jwks_set
+        raise "#{__method__} is undefined, redefine it or require either \"jwt\" or \"json-jwt\""
+      end
       # :nocov:
+    end
+
+    route(:oauth_jwks) do |r|
+      r.get do
+        json_response_success(jwks_set)
+      end
     end
   end
 end
