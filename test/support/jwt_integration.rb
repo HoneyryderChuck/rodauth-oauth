@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require ENV["JSON_LIB"] if ENV["JSON_LIB"]
+require ENV["JWT_LIB"] if ENV["JWT_LIB"]
 require "jwt"
 require "jwe"
 require_relative File.join(__dir__, "roda_integration")

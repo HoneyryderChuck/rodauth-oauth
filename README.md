@@ -16,6 +16,7 @@ This gem implements:
   * [Implicit grant (off by default)[https://tools.ietf.org/html/rfc6749#section-4.2];
 * [Token revocation](https://tools.ietf.org/html/rfc7009);
 * [Token introspection](https://tools.ietf.org/html/rfc7662);
+* [Authorization Server Metadata](https://tools.ietf.org/html/rfc8414);
 * [PKCE](https://tools.ietf.org/html/rfc7636);
 * Access Type (Token refresh online and offline);
 * [MAC Authentication Scheme](https://tools.ietf.org/html/draft-hammer-oauth-v2-mac-token-02);
@@ -185,6 +186,32 @@ puts payload #=> {"active" => true, "scope" => "read write" ....
 
 ```
 > curl -H "X-your-auth-scheme: $SERVER_KEY" --data '{"client_id":"$OAUTH_CLIENT_ID","token_type_hint":"access_token","token":"2r89hfef4j9f90d2j2390jf390g"}' https://auth_server/oauth-revoke
+```
+
+### Authorization Server Metadata
+
+The Authorization Server Metadata endpoint can be used by clients to obtain the information needed to interact with an
+   OAuth 2.0 authorization server, i.e. know which endpoint is used to authorize clients.
+
+Because this endpoint **must be https://AUTHSERVER/.well-known/oauth-authorization-server**, you'll have to define it at the root-level of your app:
+
+```ruby
+plugin :rodauth do
+  # enable it in the plugin
+  enable :login, :oauth
+  oauth_application_default_scope %w[profile.read]
+  oauth_application_scopes %w[profile.read profile.write]
+end
+
+# then, inside roda
+
+route do |r|
+  r.rodauth
+  # server metadata endpoint
+  rodauth.oauth_server_metadata
+
+  # now, your oauth and app code...
+
 ```
 
 ### Database migrations
