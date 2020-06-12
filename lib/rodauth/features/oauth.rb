@@ -174,6 +174,7 @@ module Rodauth
     auth_value_method :oauth_metadata_op_tos_uri, nil
 
     auth_value_methods(
+      :fetch_access_token,
       :oauth_unique_id_generator,
       :secret_matches?,
       :secret_hash
@@ -274,23 +275,25 @@ module Rodauth
       end
     end
 
+    def fetch_access_token
+      value = request.env["HTTP_AUTHORIZATION"]
+
+      return unless value
+
+      scheme, token = value.split(" ", 2)
+
+      return unless scheme.downcase == oauth_token_type
+
+      token
+    end
+
     def authorization_token
       return @authorization_token if defined?(@authorization_token)
 
-      @authorization_token = begin
-        value = request.env["HTTP_AUTHORIZATION"]
-
-        return unless value
-
-        scheme, token = value.split(" ", 2)
-
-        return unless scheme.downcase == oauth_token_type
-
-        # check if there is a token
-        # check if token has not expired
-        # check if token has been revoked
-        oauth_token_by_token(token)
-      end
+      # check if there is a token
+      # check if token has not expired
+      # check if token has been revoked
+      @authorization_token = oauth_token_by_token(fetch_access_token)
     end
 
     def require_oauth_authorization(*scopes)

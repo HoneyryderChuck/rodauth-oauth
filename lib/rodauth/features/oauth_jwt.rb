@@ -43,15 +43,7 @@ module Rodauth
     def authorization_token
       return @authorization_token if defined?(@authorization_token)
 
-      @authorization_token = begin
-        value = request.get_header("HTTP_AUTHORIZATION").to_s
-
-        scheme, token = value.split(/ +/, 2)
-
-        return unless scheme == "Bearer"
-
-        jwt_decode(token)
-      end
+      @authorization_token = jwt_decode(fetch_access_token)
     end
 
     def generate_oauth_token(params = {}, should_generate_refresh_token = true)
