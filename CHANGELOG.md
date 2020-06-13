@@ -5,6 +5,7 @@
 ### Improvements
 
 * store scopes with whitespace instead of comma; set separator as `oauth_scope_separator` option, to keep backwards-compatibility;
+* client application can now store multiple redirect uris; the POST API parameters can accept the redirect_uri param value both as a string or an array of string; internally, they'll be stored in a whitespace-separated string;
 
 ## 0.0.4 (13/6/2020)
 

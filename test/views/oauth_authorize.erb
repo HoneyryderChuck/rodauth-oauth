@@ -2,8 +2,8 @@
   <%=  csrf_tag(rodauth.oauth_authorize_path) if respond_to?(:csrf_tag) %>
   <p>Grants: <%= rodauth.scopes.join(", ") %></p>
   <input type="hidden" name="client_id" value="<%= rodauth.client_id %>"/>
-  <% if rodauth.param_or_nil("state") %>
-    <input type="hidden" name="scope" value="<%= rodauth.scopes %>"/>
+  <% if rodauth.param_or_nil("scope") %>
+    <input type="hidden" name="scope" value="<%= rodauth.param_or_nil("scope") %>"/>
   <% end %>
   <% if rodauth.param_or_nil("state") %>
     <input type="hidden" name="state" value="<%= rodauth.state %>"/>

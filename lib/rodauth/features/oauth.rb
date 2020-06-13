@@ -83,7 +83,7 @@ module Rodauth
     # Authorize / token
     %w[
       grant_type code refresh_token client_id client_secret scope
-      state redirect_uri scopes token_type_hint token
+      state redirect_uri scope token_type_hint token
       access_type approval_prompt response_type
       code_challenge code_challenge_method code_verifier
     ].each do |param|
@@ -242,7 +242,7 @@ module Rodauth
     end
 
     def scopes
-      (param_or_nil(scopes_param) || oauth_application_default_scope).split(" ")
+      (param_or_nil(scope_param) || oauth_application_default_scope).split(" ")
     end
 
     def client_id
@@ -254,7 +254,10 @@ module Rodauth
     end
 
     def redirect_uri
-      param_or_nil(redirect_uri_param) || oauth_application[oauth_applications_redirect_uri_column]
+      param_or_nil(redirect_uri_param) || begin
+        redirect_uris = oauth_application[oauth_applications_redirect_uri_column].split(" ")
+        redirect_uris.size == 1 ? redirect_uris.first : nil
+      end
     end
 
     def token_type_hint
@@ -525,11 +528,21 @@ module Rodauth
 
     def validate_oauth_application_params
       oauth_application_params.each do |key, value|
-        if key == oauth_application_homepage_url_param ||
-           key == oauth_application_redirect_uri_param
+        if key == oauth_application_homepage_url_param
 
-          set_field_error(key, invalid_url_message) unless URI::DEFAULT_PARSER.make_regexp(oauth_valid_uri_schemes).match?(value)
+          set_field_error(key, invalid_url_message) unless check_valid_uri?(value)
 
+        elsif key == oauth_application_redirect_uri_param
+
+          if value.respond_to?(:each)
+            value.each do |uri|
+              next if uri.empty?
+
+              set_field_error(key, invalid_url_message) unless check_valid_uri?(uri)
+            end
+          else
+            set_field_error(key, invalid_url_message) unless check_valid_uri?(value)
+          end
         elsif key == oauth_application_scopes_param
 
           value.each do |scope|
@@ -547,10 +560,12 @@ module Rodauth
         oauth_applications_name_column => oauth_application_params[oauth_application_name_param],
         oauth_applications_description_column => oauth_application_params[oauth_application_description_param],
         oauth_applications_scopes_column => oauth_application_params[oauth_application_scopes_param],
-        oauth_applications_homepage_url_column => oauth_application_params[oauth_application_homepage_url_param],
-        oauth_applications_redirect_uri_column => oauth_application_params[oauth_application_redirect_uri_param]
+        oauth_applications_homepage_url_column => oauth_application_params[oauth_application_homepage_url_param]
       }
 
+      redirect_uris = oauth_application_params[oauth_application_redirect_uri_param]
+      redirect_uris = redirect_uris.to_a.reject(&:empty?).join(" ") if redirect_uris.respond_to?(:each)
+      create_params[oauth_applications_redirect_uri_column] = redirect_uris unless redirect_uris.empty?
       # set client ID/secret pairs
 
       create_params.merge! \
@@ -923,6 +938,10 @@ module Rodauth
       end
     end
 
+    def check_valid_uri?(uri)
+      URI::DEFAULT_PARSER.make_regexp(oauth_valid_uri_schemes).match?(uri)
+    end
+
     def check_valid_scopes?
       return false unless scopes
 
@@ -930,7 +949,7 @@ module Rodauth
     end
 
     def check_valid_redirect_uri?
-      redirect_uri == oauth_application[oauth_applications_redirect_uri_column]
+      oauth_application[oauth_applications_redirect_uri_column].split(" ").include?(redirect_uri)
     end
 
     ACCESS_TYPES = %w[offline online].freeze
