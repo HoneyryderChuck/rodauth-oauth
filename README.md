@@ -477,13 +477,13 @@ Generating an access token will deliver the following fields:
 # with httpx
 require "httpx"
 response = httpx.post("https://auth_server/oauth-token",json: {
-                  client_id: ENV["OAUTH_CLIENT_ID"],
-                  client_secret: ENV["OAUTH_CLIENT_SECRET"],
+                  client_id: env["oauth_client_id"],
+                  client_secret: env["oauth_client_secret"],
                   grant_type: "authorization_code",
                   code: "oiweicnewdh32fhoi3hf3ihfo2ih3f2o3as"
                 })
 response.raise_for_status
-payload = JSON.parse(response.to_s)
+payload = json.parse(response.to_s)
 puts payload #=> {
 # "access_token" => ....
 # "mac_key" => ....
@@ -519,7 +519,6 @@ This will, by default, use the OAuth application as HMAC signature and "HS256" a
 ```ruby
 enable :oauth_jwt
 oauth_jwt_secret "SECRET"
-# or oauth_jwt_secret_path "path/to/file"
 oauth_jwt_algorithm "HS512"
 ```
 
@@ -536,7 +535,7 @@ rsa_public = rsa_private.public_key
 plugin :rodauth do
   enable :oauth_jwt
   oauth_jwt_key rsa_private
-  oauth_jwt_decoding_secret rsa_public
+  oauth_jwt_public_key rsa_public
   oauth_jwt_algorithm "RS256" 
 end
 ```
@@ -546,10 +545,14 @@ end
 One can further encode the JWT token using JSON Web Keys. Here's how you could enable the feature:
 
 ```ruby
+rsa_private = OpenSSL::PKey::RSA.generate 2048
+rsa_public = rsa_private.public_key
+
 plugin :rodauth do
   enable :oauth_jwt
-  oauth_jwt_jwk_key 2048 # can be key size or the encoded RSA key, which is the only one supported now.
-  # oauth_jwt_jwk_key "path/to/rsa.pem" if you prefer
+  oauth_jwt_jwk_key rsa_private
+  oauth_jwt_jwk_public_key rsa_public
+  oauth_jwt_jwk_algorithm "RS256" 
 end
 ```
 
@@ -570,6 +573,26 @@ end
 
 which adds an extra layer of protection.
 
+#### JWKS URI
+
+A route is defined for getting the JWK Set in a JSON format; this is typically used by client applications, who need the JWK set to decode the JWT token. This URL is typically `https://oauth-server/oauth-jwks`.
+
+#### JWT Bearer as authorization grant
+
+One can emit a new access token by using the bearer access token as grant. This can be done emitting a request similar to this:
+
+```ruby
+# with httpx
+require "httpx"
+response = httpx.post("https://auth_server/oauth-token",json: {
+                  grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+                  assertion: "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjEsImlzcyI6IkV4YW1wbGUiLCJpYXQiOjE1OTIwMDk1MDEsImNsaWVudF9pZCI6IkNMSUVOVF9JRCIsImV4cCI6MTU5MjAxMzEwMSwiYXVkIjpudWxsLCJzY29wZSI6InVzZXIucmVhZCB1c2VyLndyaXRlIiwianRpIjoiOGM1NTVjMjdiOWRjNDdmOTcyNWRkYzBhMjk0NzA1ZTA4NzFkY2JlN2Q5ZTNlMmVkNGE1ZTBiOGZlNTZlYzcxMSJ9.AlxKRtE3ec0mtyBSDx4VseND4eC6cH5ubtv8gfYxxsc"
+                })
+response.raise_for_status
+payload = json.parse(response.to_s)
+puts payload #=> {
+# "access_token" => "ey....
+```
 
 #### DB Schema
 
