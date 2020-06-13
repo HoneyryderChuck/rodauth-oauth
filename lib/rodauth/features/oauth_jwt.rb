@@ -177,12 +177,8 @@ module Rodauth
 
       def jwks_set
         [
-          (if oauth_jwt_jwk_public_key
-             JSON::JWK.new(oauth_jwt_jwk_public_key).merge(use: "sig", alg: oauth_jwt_jwk_algorithm)
-           end),
-          (if oauth_jwt_jwe_public_key
-             JSON::JWK.new(oauth_jwt_jwe_public_key).merge(use: "enc", alg: oauth_jwt_jwe_algorithm)
-           end)
+          (JSON::JWK.new(oauth_jwt_jwk_public_key).merge(use: "sig", alg: oauth_jwt_jwk_algorithm) if oauth_jwt_jwk_public_key),
+          (JSON::JWK.new(oauth_jwt_jwe_public_key).merge(use: "enc", alg: oauth_jwt_jwe_algorithm) if oauth_jwt_jwe_public_key)
         ].compact
       end
       # :nocov:
@@ -262,12 +258,8 @@ module Rodauth
 
       def jwks_set
         [
-          (if oauth_jwt_jwk_public_key
-             JWT::JWK.new(oauth_jwt_jwk_public_key).export.merge(use: "sig", alg: oauth_jwt_jwk_algorithm)
-           end),
-          (if oauth_jwt_jwe_public_key
-             JWT::JWK.new(oauth_jwt_jwe_public_key).export.merge(use: "enc", alg: oauth_jwt_jwe_algorithm)
-           end)
+          (JWT::JWK.new(oauth_jwt_jwk_public_key).export.merge(use: "sig", alg: oauth_jwt_jwk_algorithm) if oauth_jwt_jwk_public_key),
+          (JWT::JWK.new(oauth_jwt_jwe_public_key).export.merge(use: "enc", alg: oauth_jwt_jwe_algorithm) if oauth_jwt_jwe_public_key)
         ].compact
       end
     else
