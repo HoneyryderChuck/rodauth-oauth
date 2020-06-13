@@ -39,9 +39,9 @@ module OAuthHelpers
     @app = Capybara.app = app
   end
 
-  def oauth_application
+  def oauth_application(params = {})
     @oauth_application ||= begin
-      id = db[:oauth_applications].insert \
+      id = db[:oauth_applications].insert({
         account_id: account[:id],
         name: "Foo",
         description: "this is a foo",
@@ -50,7 +50,7 @@ module OAuthHelpers
         client_id: "CLIENT_ID",
         client_secret: BCrypt::Password.create("CLIENT_SECRET", cost: BCrypt::Engine::MIN_COST),
         scopes: TEST_SCOPES.join(" ")
-
+      }.merge(params))
       db[:oauth_applications].filter(id: id).first
     end
   end

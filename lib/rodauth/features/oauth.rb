@@ -254,7 +254,10 @@ module Rodauth
     end
 
     def redirect_uri
-      param_or_nil(redirect_uri_param) || oauth_application[oauth_applications_redirect_uri_column]
+      param_or_nil(redirect_uri_param) || begin
+        redirect_uris = oauth_application[oauth_applications_redirect_uri_column].split(" ")
+        redirect_uris.size == 1 ? redirect_uris.first : nil
+      end
     end
 
     def token_type_hint
@@ -946,7 +949,7 @@ module Rodauth
     end
 
     def check_valid_redirect_uri?
-      redirect_uri == oauth_application[oauth_applications_redirect_uri_column]
+      oauth_application[oauth_applications_redirect_uri_column].split(" ").include?(redirect_uri)
     end
 
     ACCESS_TYPES = %w[offline online].freeze

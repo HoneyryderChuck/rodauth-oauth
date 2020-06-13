@@ -50,6 +50,24 @@ class RodaOauthAuthorizeTest < RodaIntegration
            "was redirected instead to #{page.current_url}"
   end
 
+  def test_authorize_get_authorize_multiple_uris
+    setup_application
+    login
+
+    application = oauth_application(redirect_uri: "http://redirect1 http://redirect2")
+
+    visit "/oauth-authorize?client_id=#{application[:client_id]}&" \
+          "scope=user.read+user.write"
+    assert page.current_url.include?("?error=invalid_request"),
+           "was redirected instead to #{page.current_url}"
+
+    visit "/oauth-authorize?client_id=#{application[:client_id]}&" \
+          "redirect_uri=http://redirect2&" \
+          "scope=user.read+user.write"
+    assert page.current_path == "/oauth-authorize",
+           "was redirected instead to #{page.current_url}"
+  end
+
   def test_authorize_post_authorize
     setup_application
     login
