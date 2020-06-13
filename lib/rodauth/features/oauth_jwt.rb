@@ -4,6 +4,9 @@ module Rodauth
   Feature.define(:oauth_jwt) do
     depends :oauth
 
+    auth_value_method :grant_type_param, "grant_type"
+    auth_value_method :assertion_param, "assertion"
+
     auth_value_method :oauth_jwt_token_issuer, "Example"
 
     auth_value_method :oauth_jwt_key, nil
@@ -44,6 +47,51 @@ module Rodauth
       return @authorization_token if defined?(@authorization_token)
 
       @authorization_token = jwt_decode(fetch_access_token)
+    end
+
+    # /token
+
+    def before_token
+      # requset authentication optional for assertions
+      return if param(grant_type_param) == "urn:ietf:params:oauth:grant-type:jwt-bearer"
+
+      super
+    end
+
+    def validate_oauth_token_params
+      if param(grant_type_param) == "urn:ietf:params:oauth:grant-type:jwt-bearer"
+        redirect_response_error("invalid_client") unless param_or_nil(assertion_param)
+      else
+        super
+      end
+    end
+
+    def create_oauth_token
+      if param(grant_type_param) == "urn:ietf:params:oauth:grant-type:jwt-bearer"
+        create_oauth_token_from_assertion
+      else
+        super
+      end
+    end
+
+    def create_oauth_token_from_assertion
+      claims = jwt_decode(param(assertion_param))
+
+      redirect_response_error("invalid_grant") unless claims
+
+      @oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => claims["client_id"]).first
+
+      account = account_ds(claims["sub"]).first
+
+      redirect_response_error("invalid_client") unless oauth_application && account
+
+      create_params = {
+        oauth_tokens_account_id_column => claims["sub"],
+        oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+        oauth_tokens_scopes_column => claims["scope"]
+      }
+
+      generate_oauth_token(create_params, false)
     end
 
     def generate_oauth_token(params = {}, should_generate_refresh_token = true)
