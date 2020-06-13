@@ -83,7 +83,7 @@ module Rodauth
     # Authorize / token
     %w[
       grant_type code refresh_token client_id client_secret scope
-      state redirect_uri scopes token_type_hint token
+      state redirect_uri scope token_type_hint token
       access_type approval_prompt response_type
       code_challenge code_challenge_method code_verifier
     ].each do |param|
@@ -242,7 +242,7 @@ module Rodauth
     end
 
     def scopes
-      (param_or_nil(scopes_param) || oauth_application_default_scope).split(" ")
+      (param_or_nil(scope_param) || oauth_application_default_scope).split(" ")
     end
 
     def client_id

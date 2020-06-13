@@ -45,7 +45,7 @@ class RodaOauthAuthorizeTest < RodaIntegration
     login
     visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}& "\
           "redirect_uri=#{oauth_application[:redirect_uri]}&" \
-          "scopes=marvel"
+          "scope=marvel"
     assert page.current_url.include?("?error=invalid_scope"),
            "was redirected instead to #{page.current_url}"
   end
@@ -55,7 +55,7 @@ class RodaOauthAuthorizeTest < RodaIntegration
     login
 
     # show the authorization form
-    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scopes=user.read+user.write"
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write"
     assert page.current_path == "/oauth-authorize",
            "was redirected instead to #{page.current_path}"
 
@@ -80,7 +80,7 @@ class RodaOauthAuthorizeTest < RodaIntegration
     login
 
     # show the authorization form
-    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scopes=user.read+user.write&access_type=online"
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&access_type=online"
     assert page.current_path == "/oauth-authorize",
            "was redirected instead to #{page.current_path}"
 
@@ -102,7 +102,7 @@ class RodaOauthAuthorizeTest < RodaIntegration
     login
 
     # show the authorization form
-    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scopes=user.read+user.write&access_type=online"
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&access_type=online"
     assert page.current_path == "/oauth-authorize",
            "was redirected instead to #{page.current_path}"
 
@@ -124,7 +124,7 @@ class RodaOauthAuthorizeTest < RodaIntegration
     login
 
     # no previous grant
-    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scopes=user.read+user.write&" \
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&" \
           "access_type=online&approval_prompt=auto"
     assert page.current_path.start_with?("/oauth-authorize"),
            "was redirected instead to #{page.current_path}"
@@ -132,7 +132,7 @@ class RodaOauthAuthorizeTest < RodaIntegration
     # previous offline grant
     oauth_grant(access_type: "offline", expires_in: Time.now - 60)
 
-    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scopes=user.read+user.write&" \
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&" \
           "access_type=online&approval_prompt=auto"
     assert page.current_path.start_with?("/oauth-authorize"),
            "was redirected instead to #{page.current_path}"
@@ -146,7 +146,7 @@ class RodaOauthAuthorizeTest < RodaIntegration
     oauth_grant(access_type: "online", expires_in: Time.now - 60)
 
     # extra scope
-    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scopes=user.read&" \
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scope=user.read&" \
           "access_type=online&approval_prompt=auto"
     assert page.current_path.start_with?("/oauth-authorize"),
            "was redirected instead to #{page.current_path}"
@@ -159,7 +159,7 @@ class RodaOauthAuthorizeTest < RodaIntegration
     # OLD grant
     oauth_grant(access_type: "online", expires_in: Time.now - 60)
 
-    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scopes=user.read+user.write&" \
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&" \
           "access_type=online&approval_prompt=auto"
 
     new_grant = db[:oauth_grants].order(:id).last
@@ -199,7 +199,7 @@ class RodaOauthAuthorizeTest < RodaIntegration
     login
 
     # show the authorization form
-    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scopes=user.read+user.write&response_type=token"
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&response_type=token"
 
     assert page.current_url.include?("?error=invalid_request"),
            "was redirected instead to #{page.current_url}"

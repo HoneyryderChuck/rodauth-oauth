@@ -45,7 +45,7 @@ class RodaOAuthRailsAuthorizeTest < RailsIntegrationTest
     login
     visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}& "\
           "redirect_uri=#{oauth_application[:redirect_uri]}&" \
-          "scopes=marvel"
+          "scope=marvel"
     assert page.current_url.include?("?error=invalid_scope"),
            "was redirected instead to #{page.current_url}"
   end
@@ -55,7 +55,7 @@ class RodaOAuthRailsAuthorizeTest < RailsIntegrationTest
     login
 
     # show the authorization form
-    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scopes=user.read+user.write"
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write"
     assert page.current_path == "/oauth-authorize",
            "was redirected instead to #{page.current_path}"
 
