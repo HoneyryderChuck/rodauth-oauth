@@ -5,6 +5,7 @@ require "base64"
 module Rodauth
   Feature.define(:oauth) do
     # RUBY EXTENSIONS
+    # :nocov:
     unless Regexp.method_defined?(:match?)
       module RegexpExtensions
         refine(Regexp) do
@@ -32,6 +33,7 @@ module Rodauth
       end
       using(SuffixExtensions)
     end
+    # :nocov:
 
     SCOPES = %w[profile.read].freeze
 
@@ -65,7 +67,7 @@ module Rodauth
 
     auth_value_method :json_response_content_type, "application/json"
 
-    auth_value_method :oauth_grant_expires_in, 60 * 5 # 60 minutes
+    auth_value_method :oauth_grant_expires_in, 60 * 5 # 5 minutes
     auth_value_method :oauth_token_expires_in, 60 * 60 # 60 minutes
     auth_value_method :use_oauth_implicit_grant_type?, false
     auth_value_method :use_oauth_pkce?, true
@@ -225,12 +227,14 @@ module Rodauth
     end
 
     unless method_defined?(:json_request?)
+      # :nocov:
       # copied from the jwt feature
       def json_request?
         return @json_request if defined?(@json_request)
 
         @json_request = request.content_type =~ json_request_regexp
       end
+      # :nocov:
     end
 
     def initialize(scope)
@@ -418,22 +422,22 @@ module Rodauth
     end
 
     unless method_defined?(:password_hash)
+      # :nocov:
       # From login_requirements_base feature
       if ENV["RACK_ENV"] == "test"
         def password_hash_cost
           BCrypt::Engine::MIN_COST
         end
       else
-        # :nocov:
         def password_hash_cost
           BCrypt::Engine::DEFAULT_COST
         end
-        # :nocov:
       end
 
       def password_hash(password)
         BCrypt::Password.create(password, cost: password_hash_cost)
       end
+      # :nocov:
     end
 
     def generate_oauth_token(params = {}, should_generate_refresh_token = true)
@@ -920,6 +924,7 @@ module Rodauth
     end
 
     unless method_defined?(:_json_response_body)
+      # :nocov:
       def _json_response_body(hash)
         if request.respond_to?(:convert_to_json)
           request.send(:convert_to_json, hash)
@@ -927,6 +932,7 @@ module Rodauth
           JSON.dump(hash)
         end
       end
+      # :nocov:
     end
 
     def authorization_required
