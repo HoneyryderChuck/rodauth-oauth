@@ -76,6 +76,8 @@ module Rodauth
 
     auth_value_method :oauth_valid_uri_schemes, %w[http https]
 
+    auth_value_method :oauth_scope_separator, " "
+
     # URL PARAMS
 
     # Authorize / token
@@ -301,7 +303,7 @@ module Rodauth
 
       scopes << oauth_application_default_scope if scopes.empty?
 
-      token_scopes = authorization_token[oauth_tokens_scopes_column].split(",")
+      token_scopes = authorization_token[oauth_tokens_scopes_column].split(oauth_scope_separator)
 
       authorization_required unless scopes.any? { |scope| token_scopes.include?(scope) }
     end
@@ -557,7 +559,7 @@ module Rodauth
           secret_hash(oauth_application_params[oauth_application_client_secret_param])
 
       create_params[oauth_applications_scopes_column] = if create_params[oauth_applications_scopes_column]
-                                                          create_params[oauth_applications_scopes_column].join(",")
+                                                          create_params[oauth_applications_scopes_column].join(oauth_scope_separator)
                                                         else
                                                           oauth_application_default_scope
                                                         end
@@ -614,7 +616,7 @@ module Rodauth
         oauth_grants_account_id_column => account_id,
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
         oauth_grants_redirect_uri_column => redirect_uri,
-        oauth_grants_scopes_column => scopes.join(","),
+        oauth_grants_scopes_column => scopes.join(oauth_scope_separator),
         oauth_grants_access_type_column => "online"
       ).count.zero?
 
@@ -630,7 +632,7 @@ module Rodauth
         oauth_grants_redirect_uri_column => redirect_uri,
         oauth_grants_code_column => oauth_unique_id_generator,
         oauth_grants_expires_in_column => Time.now + oauth_grant_expires_in,
-        oauth_grants_scopes_column => scopes.join(",")
+        oauth_grants_scopes_column => scopes.join(oauth_scope_separator)
       }
 
       # Access Type flow
@@ -795,7 +797,7 @@ module Rodauth
 
       {
         active: true,
-        scope: token[oauth_tokens_scopes_column].gsub(",", " "),
+        scope: token[oauth_tokens_scopes_column],
         client_id: oauth_application[oauth_applications_client_id_column],
         # username
         token_type: oauth_token_type
@@ -924,7 +926,7 @@ module Rodauth
     def check_valid_scopes?
       return false unless scopes
 
-      (scopes - oauth_application[oauth_applications_scopes_column].split(",")).empty?
+      (scopes - oauth_application[oauth_applications_scopes_column].split(oauth_scope_separator)).empty?
     end
 
     def check_valid_redirect_uri?

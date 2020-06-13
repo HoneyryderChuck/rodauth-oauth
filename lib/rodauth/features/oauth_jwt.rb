@@ -133,7 +133,7 @@ module Rodauth
 
         # one of the points of using jwt is avoiding database lookups, so we put here all relevant
         # token data.
-        scope: oauth_token[oauth_tokens_scopes_column].gsub(",", " ")
+        scope: oauth_token[oauth_tokens_scopes_column]
       }
 
       token = jwt_encode(payload)

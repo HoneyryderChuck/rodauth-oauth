@@ -35,7 +35,7 @@ class RodaOauthJwtTokenIntrospectTest < JWTIntegration
     oauth_token = verify_oauth_token
 
     assert json_body["active"] == true
-    assert json_body["scope"] == oauth_token[:scopes].gsub(",", " ")
+    assert json_body["scope"] == oauth_token[:scopes]
     assert json_body["client_id"] == oauth_application[:client_id]
     assert json_body["token_type"] == "access_token"
 
