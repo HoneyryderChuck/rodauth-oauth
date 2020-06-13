@@ -88,7 +88,7 @@ Metrics/ClassLength:
   Max: 1500
 
 Layout/LineLength:
-  Max: 120
+  Max: 140
 
 Style/StringLiterals:
   EnforcedStyle: double_quotes

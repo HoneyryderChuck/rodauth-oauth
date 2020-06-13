@@ -504,9 +504,7 @@ module Rodauth
         "token_type" => oauth_token_type,
         "expires_in" => oauth_token_expires_in
       }
-      if oauth_token[oauth_tokens_refresh_token_column]
-        payload["refresh_token"] = oauth_token[oauth_tokens_refresh_token_column]
-      end
+      payload["refresh_token"] = oauth_token[oauth_tokens_refresh_token_column] if oauth_token[oauth_tokens_refresh_token_column]
       payload
     end
 
@@ -528,9 +526,7 @@ module Rodauth
         if key == oauth_application_homepage_url_param ||
            key == oauth_application_redirect_uri_param
 
-          unless URI::DEFAULT_PARSER.make_regexp(oauth_valid_uri_schemes).match?(value)
-            set_field_error(key, invalid_url_message)
-          end
+          set_field_error(key, invalid_url_message) unless URI::DEFAULT_PARSER.make_regexp(oauth_valid_uri_schemes).match?(value)
 
         elsif key == oauth_application_scopes_param
 
@@ -722,9 +718,7 @@ module Rodauth
         if oauth_grant[oauth_grants_code_challenge_column]
           code_verifier = param_or_nil(code_verifier_param)
 
-          unless code_verifier && check_valid_grant_challenge?(oauth_grant, code_verifier)
-            redirect_response_error("invalid_request")
-          end
+          redirect_response_error("invalid_request") unless code_verifier && check_valid_grant_challenge?(oauth_grant, code_verifier)
         elsif oauth_require_pkce
           redirect_response_error("code_challenge_required")
         end
@@ -751,9 +745,7 @@ module Rodauth
       # fetch oauth token
       oauth_token = oauth_token_by_refresh_token(param(refresh_token_param))
 
-      unless oauth_token && token_from_application?(oauth_token, oauth_application)
-        redirect_response_error("invalid_grant")
-      end
+      redirect_response_error("invalid_grant") unless oauth_token && token_from_application?(oauth_token, oauth_application)
 
       token = oauth_unique_id_generator
 
@@ -835,9 +827,7 @@ module Rodauth
                       oauth_token_by_refresh_token(token)
                     end
 
-      unless oauth_token && token_from_application?(oauth_token, oauth_application)
-        redirect_response_error("invalid_request")
-      end
+      redirect_response_error("invalid_request") unless oauth_token && token_from_application?(oauth_token, oauth_application)
 
       update_params = { oauth_tokens_revoked_at_column => Sequel::CURRENT_TIMESTAMP }
 
@@ -1073,9 +1063,7 @@ module Rodauth
                           oauth_token_by_token(param(token_param)) || oauth_token_by_refresh_token(param(token_param))
                         end
 
-          if oauth_token && !token_from_application?(oauth_token, oauth_application)
-            redirect_response_error("invalid_request")
-          end
+          redirect_response_error("invalid_request") if oauth_token && !token_from_application?(oauth_token, oauth_application)
 
           json_response_success(json_token_introspect_payload(oauth_token))
         end
