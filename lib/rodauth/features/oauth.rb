@@ -80,18 +80,6 @@ module Rodauth
 
     auth_value_method :oauth_scope_separator, " "
 
-    # URL PARAMS
-
-    # Authorize / token
-    %w[
-      grant_type code refresh_token client_id client_secret scope
-      state redirect_uri scope token_type_hint token
-      access_type approval_prompt response_type
-      code_challenge code_challenge_method code_verifier
-    ].each do |param|
-      auth_value_method :"#{param}_param", param
-    end
-
     # Application
     APPLICATION_REQUIRED_PARAMS = %w[name description scopes homepage_url redirect_uri client_secret].freeze
     auth_value_method :oauth_application_required_params, APPLICATION_REQUIRED_PARAMS
@@ -242,41 +230,37 @@ module Rodauth
     end
 
     def state
-      param_or_nil(state_param)
+      param_or_nil("state")
     end
 
     def scopes
-      (param_or_nil(scope_param) || oauth_application_default_scope).split(" ")
+      (param_or_nil("scope") || oauth_application_default_scope).split(" ")
     end
 
     def client_id
-      param_or_nil(client_id_param)
-    end
-
-    def client_secret
-      param_or_nil(client_secret_param)
+      param_or_nil("client_id")
     end
 
     def redirect_uri
-      param_or_nil(redirect_uri_param) || begin
+      param_or_nil("redirect_uri") || begin
         redirect_uris = oauth_application[oauth_applications_redirect_uri_column].split(" ")
         redirect_uris.size == 1 ? redirect_uris.first : nil
       end
     end
 
     def token_type_hint
-      param_or_nil(token_type_hint_param) || "access_token"
+      param_or_nil("token_type_hint") || "access_token"
     end
 
     def token
-      param_or_nil(token_param)
+      param_or_nil("token")
     end
 
     def oauth_application
       return @oauth_application if defined?(@oauth_application)
 
       @oauth_application = begin
-        client_id = param(client_id_param)
+        client_id = param("client_id")
 
         return unless client_id
 
@@ -387,8 +371,8 @@ module Rodauth
       if (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v[/\A *Basic (.*)\Z/, 1]))
         client_id, client_secret = Base64.decode64(token).split(/:/, 2)
       else
-        client_id = param_or_nil(client_id_param)
-        client_secret = param_or_nil(client_secret_param)
+        client_id = param_or_nil("client_id")
+        client_secret = param_or_nil("client_secret")
       end
 
       authorization_required unless client_id
@@ -396,7 +380,7 @@ module Rodauth
       @oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => client_id).first
 
       # skip if using pkce
-      return if @oauth_application && use_oauth_pkce? && param_or_nil(code_verifier_param)
+      return if @oauth_application && use_oauth_pkce? && param_or_nil("code_verifier")
 
       authorization_required unless @oauth_application && secret_matches?(@oauth_application, client_secret)
     end
@@ -627,7 +611,7 @@ module Rodauth
     end
 
     def try_approval_prompt
-      approval_prompt = param_or_nil(approval_prompt_param)
+      approval_prompt = param_or_nil("approval_prompt")
 
       return unless approval_prompt && approval_prompt == "auto"
 
@@ -656,7 +640,7 @@ module Rodauth
 
       # Access Type flow
       if use_oauth_access_type?
-        if (access_type = param_or_nil(access_type_param))
+        if (access_type = param_or_nil("access_type"))
           create_params[oauth_grants_access_type_column] = access_type
         end
       end
@@ -664,8 +648,8 @@ module Rodauth
       # PKCE flow
       if use_oauth_pkce?
 
-        if (code_challenge = param_or_nil(code_challenge_param))
-          code_challenge_method = param_or_nil(code_challenge_method_param)
+        if (code_challenge = param_or_nil("code_challenge"))
+          code_challenge_method = param_or_nil("code_challenge_method")
 
           create_params[oauth_grants_code_challenge_column] = code_challenge
           create_params[oauth_grants_code_challenge_method_column] = code_challenge_method
@@ -695,23 +679,23 @@ module Rodauth
     end
 
     def validate_oauth_token_params
-      unless (grant_type = param_or_nil(grant_type_param))
+      unless (grant_type = param_or_nil("grant_type"))
         redirect_response_error("invalid_request")
       end
 
       case grant_type
       when "authorization_code"
-        redirect_response_error("invalid_request") unless param_or_nil(code_param)
+        redirect_response_error("invalid_request") unless param_or_nil("code")
 
       when "refresh_token"
-        redirect_response_error("invalid_request") unless param_or_nil(refresh_token_param)
+        redirect_response_error("invalid_request") unless param_or_nil("refresh_token")
       else
         redirect_response_error("invalid_request")
       end
     end
 
     def create_oauth_token
-      case param(grant_type_param)
+      case param("grant_type")
       when "authorization_code"
         create_oauth_token_from_authorization_code(oauth_application)
       when "refresh_token"
@@ -724,8 +708,8 @@ module Rodauth
     def create_oauth_token_from_authorization_code(oauth_application)
       # fetch oauth grant
       oauth_grant = db[oauth_grants_table].where(
-        oauth_grants_code_column => param(code_param),
-        oauth_grants_redirect_uri_column => param(redirect_uri_param),
+        oauth_grants_code_column => param("code"),
+        oauth_grants_redirect_uri_column => param("redirect_uri"),
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
         oauth_grants_revoked_at_column => nil
       ).where(Sequel[oauth_grants_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
@@ -737,7 +721,7 @@ module Rodauth
       # PKCE
       if use_oauth_pkce?
         if oauth_grant[oauth_grants_code_challenge_column]
-          code_verifier = param_or_nil(code_verifier_param)
+          code_verifier = param_or_nil("code_verifier")
 
           redirect_response_error("invalid_request") unless code_verifier && check_valid_grant_challenge?(oauth_grant, code_verifier)
         elsif oauth_require_pkce
@@ -764,7 +748,7 @@ module Rodauth
 
     def create_oauth_token_from_token(oauth_application)
       # fetch oauth token
-      oauth_token = oauth_token_by_refresh_token(param(refresh_token_param))
+      oauth_token = oauth_token_by_refresh_token(param("refresh_token"))
 
       redirect_response_error("invalid_grant") unless oauth_token && token_from_application?(oauth_token, oauth_application)
 
@@ -808,7 +792,7 @@ module Rodauth
         redirect_response_error("unsupported_token_type") unless TOKEN_HINT_TYPES.include?(token_type_hint)
       end
 
-      redirect_response_error("invalid_request") unless param_or_nil(token_param)
+      redirect_response_error("invalid_request") unless param_or_nil("token")
     end
 
     def json_token_introspect_payload(token)
@@ -837,7 +821,7 @@ module Rodauth
       # check if valid token hint type
       redirect_response_error("unsupported_token_type") unless TOKEN_HINT_TYPES.include?(token_type_hint)
 
-      redirect_response_error("invalid_request") unless param_or_nil(token_param)
+      redirect_response_error("invalid_request") unless param_or_nil("token")
     end
 
     def revoke_oauth_token
@@ -963,7 +947,7 @@ module Rodauth
     def check_valid_access_type?
       return true unless use_oauth_access_type?
 
-      access_type = param_or_nil(access_type_param)
+      access_type = param_or_nil("access_type")
       !access_type || ACCESS_TYPES.include?(access_type)
     end
 
@@ -972,12 +956,12 @@ module Rodauth
     def check_valid_approval_prompt?
       return true unless use_oauth_access_type?
 
-      approval_prompt = param_or_nil(approval_prompt_param)
+      approval_prompt = param_or_nil("approval_prompt")
       !approval_prompt || APPROVAL_PROMPTS.include?(approval_prompt)
     end
 
     def check_valid_response_type?
-      response_type = param_or_nil(response_type_param)
+      response_type = param_or_nil("response_type")
 
       return true if response_type.nil? || response_type == "code"
 
@@ -989,9 +973,9 @@ module Rodauth
     # PKCE
 
     def validate_pkce_challenge_params
-      if param_or_nil(code_challenge_param)
+      if param_or_nil("code_challenge")
 
-        challenge_method = param_or_nil(code_challenge_method_param)
+        challenge_method = param_or_nil("code_challenge_method")
         redirect_response_error("code_challenge_required") unless oauth_pkce_challenge_method == challenge_method
       else
         return unless oauth_require_pkce
@@ -1081,13 +1065,13 @@ module Rodauth
         catch_error do
           validate_oauth_introspect_params
 
-          oauth_token = case param(token_type_hint_param)
+          oauth_token = case param("token_type_hint")
                         when "access_token"
-                          oauth_token_by_token(param(token_param))
+                          oauth_token_by_token(param("token"))
                         when "refresh_token"
-                          oauth_token_by_refresh_token(param(token_param))
+                          oauth_token_by_refresh_token(param("token"))
                         else
-                          oauth_token_by_token(param(token_param)) || oauth_token_by_refresh_token(param(token_param))
+                          oauth_token_by_token(param("token")) || oauth_token_by_refresh_token(param("token"))
                         end
 
           redirect_response_error("invalid_request") if oauth_token && !token_from_application?(oauth_token, oauth_application)
@@ -1147,7 +1131,7 @@ module Rodauth
         fragment_params = []
 
         transaction do
-          case param(response_type_param)
+          case param("response_type")
           when "token"
             redirect_response_error("invalid_request", redirect_uri) unless use_oauth_implicit_grant_type?
 
