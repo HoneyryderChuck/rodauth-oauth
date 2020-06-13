@@ -2,6 +2,43 @@
 
 ## master
 
+## 0.0.4 (13/6/2020)
+
+### Features
+
+#### Token introspection
+
+`rodauth-oauth` now ships with an introspection endpoint (`/oauth-introspect`).
+
+#### Authorization Server Metadata
+
+`rodauth-oauth` now allows to define an authorization metadata endpoint, which has to be defined at the route of the router:
+
+```ruby
+route do |r|
+  r.rodauth
+  rodauth.oauth_server_metadata
+  ...
+```
+
+#### JWKs URI
+
+the `oauth_jwt` feature now ships with an endpoint, `/oauth-jwks`, where client applications can retrieve the JWK set to verify generated tokens.
+
+#### JWT access tokens as authorization grants
+
+The `oauth_jwt` feature now allows the usage of access tokens to authorize the generation of new tokens, [as per the RFC](https://tools.ietf.org/html/rfc7523#section-4);
+
+### Improvements
+
+* using `client_secret_basic` authorization where client id/secret params were allowed (i.e. in the token and revoke endpoints, for example);
+* improved JWK usage for both supported jwt libraries;
+* marked `fetch_access_token` as auth_value_method, thereby allowing users to fetch the access token from other sources than the "Authorization" header (i.e. form body, query params, etc...)
+
+### Bugfixes
+
+* Fixed scope claim of JWT ("scopes" -> "scope");
+
 ## 0.0.3 (5/6/2020)
 
 ### Features
