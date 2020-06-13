@@ -4,7 +4,7 @@
   <div class="form-group">
     <h3>Requested grants:</h3>
 
-    <% rodauth.oauth_application[rodauth.oauth_applications_scopes_column].split(",").each do |scope| %>
+    <% rodauth.oauth_application[rodauth.oauth_applications_scopes_column].split(" ").each do |scope| %>
       <% is_default = scope == rodauth.oauth_application_default_scope %>
       <div class="form-check">
         <%= check_box_tag scope, scope, is_default, disabled: is_default, class: "form-check-input" %>

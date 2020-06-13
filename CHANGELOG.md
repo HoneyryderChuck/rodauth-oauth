@@ -2,6 +2,10 @@
 
 ## master
 
+### Improvements
+
+* store scopes with whitespace instead of comma; set separator as `oauth_scope_separator` option, to keep backwards-compatibility;
+
 ## 0.0.4 (13/6/2020)
 
 ### Features
