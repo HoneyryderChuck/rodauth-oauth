@@ -1,7 +1,9 @@
 # frozen_string_literal: true
 
 RODADB = begin
-  db = if RUBY_ENGINE == "jruby"
+  db = if ENV.key?("DATABASE_URL")
+         Sequel.connect(ENV["DATABASE_URL"])
+       elsif RUBY_ENGINE == "jruby"
          Sequel.connect("jdbc:sqlite::memory:")
        else
          Sequel.sqlite
