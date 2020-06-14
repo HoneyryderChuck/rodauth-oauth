@@ -21,7 +21,7 @@ class CreateRodauthOauth < superclass
       t.string :client_secret, null: false, index: { unique: true }
       t.string :scopes, null: false
       t.datetime :created_at, null: false, default: -> { "CURRENT_TIMESTAMP" }
-    end
+    end unless table_exists?(:oauth_applications)
 
     create_table :oauth_grants do |t|
       t.integer :account_id
@@ -40,7 +40,7 @@ class CreateRodauthOauth < superclass
       # t.string :code_challenge
       # t.string :code_challenge_method
       t.index(%i[oauth_application_id code], unique: true)
-    end
+    end unless table_exists?(:oauth_grants)
 
     create_table :oauth_tokens do |t|
       t.integer :account_id
@@ -57,6 +57,6 @@ class CreateRodauthOauth < superclass
       t.datetime :revoked_at
       t.string :scopes, null: false
       t.datetime :created_at, null: false, default: -> { "CURRENT_TIMESTAMP" }
-    end
+    end unless table_exists?(:oauth_tokens)
   end
 end

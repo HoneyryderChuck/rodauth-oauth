@@ -3,7 +3,7 @@
 Sequel.migration do
   up do
     create_table :oauth_tokens do |_t|
-      Integer :id, primary_key: true
+      primary_key :id, type: Integer
       foreign_key :account_id, :accounts
       foreign_key :oauth_grant_id, :oauth_grants
       foreign_key :oauth_token_id, :oauth_tokens
