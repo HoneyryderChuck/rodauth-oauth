@@ -459,7 +459,7 @@ module Rodauth
 
       begin
         if ds.supports_returning?(:insert)
-          ds.returning.insert(params)
+          ds.returning.insert(params).first
         else
           id = ds.insert(params)
           ds.where(oauth_tokens_id_column => id).first
@@ -567,20 +567,13 @@ module Rodauth
                                                           oauth_application_default_scope
                                                         end
 
-      ds = db[oauth_applications_table]
-
       id = nil
       raised = begin
-        id = if ds.supports_returning?(:insert)
-               ds.returning(oauth_applications_id_column).insert(create_params)
-             else
-               id = db[oauth_applications_table].insert(create_params)
-               db[oauth_applications_table].where(oauth_applications_id_column => id).get(oauth_applications_id_column)
-             end
-        false
+                 id = db[oauth_applications_table].insert(create_params)
+                 false
                rescue Sequel::ConstraintViolation => e
                  e
-      end
+               end
 
       if raised
         field = raised.message[/\.(.*)$/, 1]
@@ -633,7 +626,6 @@ module Rodauth
         oauth_grants_account_id_column => account_id,
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
         oauth_grants_redirect_uri_column => redirect_uri,
-        oauth_grants_code_column => oauth_unique_id_generator,
         oauth_grants_expires_in_column => Time.now + oauth_grant_expires_in,
         oauth_grants_scopes_column => scopes.join(oauth_scope_separator)
       }
@@ -661,12 +653,10 @@ module Rodauth
       ds = db[oauth_grants_table]
 
       begin
-        if ds.supports_returning?(:insert)
-          ds.returning(authorize_code_column).insert(create_params)
-        else
-          id = ds.insert(create_params)
-          ds.where(oauth_grants_id_column => id).get(oauth_grants_code_column)
-        end
+        authorization_code = oauth_unique_id_generator
+        create_params[oauth_grants_code_column] = authorization_code
+        ds.insert(create_params)
+        authorization_code
       rescue Sequel::UniqueConstraintViolation
         retry
       end
@@ -769,7 +759,7 @@ module Rodauth
 
       oauth_token = begin
         if ds.supports_returning?(:update)
-          ds.returning.update(update_params)
+          ds.returning.update(update_params).first
         else
           ds.update(update_params)
           ds.first
@@ -839,7 +829,7 @@ module Rodauth
       ds = db[oauth_tokens_table].where(oauth_tokens_id_column => oauth_token[oauth_tokens_id_column])
 
       oauth_token = if ds.supports_returning?(:update)
-                      ds.returning.update(update_params)
+                      ds.returning.update(update_params).first
                     else
                       ds.update(update_params)
                       ds.first
