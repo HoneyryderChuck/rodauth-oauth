@@ -11,6 +11,7 @@ Rails.backtrace_cleaner.remove_silencers! # show full stack traces
 
 class RailsIntegrationTest < Minitest::Test
   include OAuthHelpers
+  include Minitest::Hooks
   include Capybara::DSL
 
   def setup_application
@@ -46,8 +47,19 @@ class RailsIntegrationTest < Minitest::Test
     else
       ActiveRecord::Migrator.up(Rails.application.paths["db/migrate"].to_a)
     end
-    hash = BCrypt::Password.create("0123456789", cost: BCrypt::Engine::MIN_COST)
-    db[:accounts].insert(email: "foo@example.com", ph: hash)
+    BCrypt::Password.create("0123456789", cost: BCrypt::Engine::MIN_COST)
+  end
+
+  def around
+    db.transaction(rollback: :always, savepoint: true, auto_savepoint: true) { super }
+  end
+
+  def around_all
+    db.transaction(rollback: :always) do
+      hash = BCrypt::Password.create("0123456789", cost: BCrypt::Engine::MIN_COST)
+      db[:accounts].insert(email: "foo@example.com", status_id: 2, ph: hash)
+      super
+    end
   end
 
   def teardown
