@@ -2,7 +2,7 @@
 
 require "sequel/core"
 
-db = if ENV.key?("DATABASE_URL")
+db = if ENV.key?("DATABASE_URL") && ENV["DATABASE_URL"] !~ /sqlite/
        ENV["DATABASE_URL"]
      elsif RUBY_ENGINE == "jruby"
        "jdbc:sqlite::memory:"

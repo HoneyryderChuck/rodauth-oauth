@@ -41,29 +41,26 @@ class RailsIntegrationTest < Minitest::Test
 
   def setup
     super
-    self.app = Rails.application
     if ActiveRecord.version >= Gem::Version.new("5.2.0")
       ActiveRecord::Base.connection.migration_context.up
     else
       ActiveRecord::Migrator.up(Rails.application.paths["db/migrate"].to_a)
     end
-    BCrypt::Password.create("0123456789", cost: BCrypt::Engine::MIN_COST)
-  end
 
-  def around
-    db.transaction(rollback: :always, savepoint: true, auto_savepoint: true) { super }
-  end
-
-  def around_all
-    db.transaction(rollback: :always) do
-      hash = BCrypt::Password.create("0123456789", cost: BCrypt::Engine::MIN_COST)
-      db[:accounts].insert(email: "foo@example.com", status_id: 2, ph: hash)
-      super
-    end
+    ActiveRecord::Base.connection.transaction {}
+    ActiveRecord::Base.connection.begin_transaction joinable: false
+    hash = BCrypt::Password.create("0123456789", cost: BCrypt::Engine::MIN_COST)
+    db[:accounts].insert(email: "foo@example.com", ph: hash)
+    self.app = Rails.application
   end
 
   def teardown
     super
+    ActiveRecord::Base.connection_pool.connections.each do |connection|
+      next unless connection.open_transactions.positive?
+
+      connection.rollback_transaction
+    end
     if ActiveRecord.version >= Gem::Version.new("5.2.0")
       ActiveRecord::Base.connection.migration_context.down
     else
