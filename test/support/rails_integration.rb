@@ -11,6 +11,7 @@ Rails.backtrace_cleaner.remove_silencers! # show full stack traces
 
 class RailsIntegrationTest < Minitest::Test
   include OAuthHelpers
+  include Minitest::Hooks
   include Capybara::DSL
 
   def setup_application
@@ -40,18 +41,26 @@ class RailsIntegrationTest < Minitest::Test
 
   def setup
     super
-    self.app = Rails.application
     if ActiveRecord.version >= Gem::Version.new("5.2.0")
       ActiveRecord::Base.connection.migration_context.up
     else
       ActiveRecord::Migrator.up(Rails.application.paths["db/migrate"].to_a)
     end
+
+    ActiveRecord::Base.connection.transaction {}
+    ActiveRecord::Base.connection.begin_transaction joinable: false
     hash = BCrypt::Password.create("0123456789", cost: BCrypt::Engine::MIN_COST)
     db[:accounts].insert(email: "foo@example.com", ph: hash)
+    self.app = Rails.application
   end
 
   def teardown
     super
+    ActiveRecord::Base.connection_pool.connections.each do |connection|
+      next unless connection.open_transactions.positive?
+
+      connection.rollback_transaction
+    end
     if ActiveRecord.version >= Gem::Version.new("5.2.0")
       ActiveRecord::Base.connection.migration_context.down
     else

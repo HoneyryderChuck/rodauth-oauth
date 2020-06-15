@@ -15,6 +15,6 @@ class CreateRodauth < superclass
     create_table :accounts do |t|
       t.string :email, null: false, index: { unique: true }
       t.string :ph
-    end
+    end unless table_exists?(:accounts)
   end
 end

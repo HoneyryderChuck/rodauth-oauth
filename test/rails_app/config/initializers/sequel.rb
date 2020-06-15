@@ -2,10 +2,13 @@
 
 require "sequel/core"
 
-db = if RUBY_ENGINE == "jruby"
+db = if ENV.key?("DATABASE_URL") && ENV["DATABASE_URL"] !~ /sqlite/
+       ENV["DATABASE_URL"]
+     elsif RUBY_ENGINE == "jruby"
        "jdbc:sqlite::memory:"
      else
        "sqlite::memory:"
      end
+
 DB = Sequel.connect(db, test: false)
 DB.extension :activerecord_connection

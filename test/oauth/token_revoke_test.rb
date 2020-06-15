@@ -70,10 +70,12 @@ class RodaOauthTokenRevokeTest < RodaIntegration
   end
 
   def setup_application
-    rodauth do
-      check_csrf? false
-    end
     super
     header "Accept", "application/json"
+  end
+
+  def post(uri, params = {}, _env = {}, &block)
+    header "Content-Type", "application/json"
+    super(uri, {}, { input: params.to_json }, &block)
   end
 end

@@ -4,7 +4,7 @@ Sequel.migration do
   up do
     # Used by the account verification and close account features
     create_table(:oauth_applications) do
-      Integer :id, primary_key: true
+      primary_key :id, type: Integer
       foreign_key :account_id, :accounts, null: false
       String :name, null: false
       String :description, null: false
