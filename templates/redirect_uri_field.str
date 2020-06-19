@@ -1,0 +1,4 @@
+<div class="form-group">
+  <label for="redirect_uri">#{rodauth.redirect_uri_label}#{rodauth.input_field_label_suffix}</label>
+  #{rodauth.input_field_string(rodauth.oauth_application_redirect_uri_param, "redirect_uri", :type=>rodauth.login_input_type)}
+</div>

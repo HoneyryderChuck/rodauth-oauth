@@ -1,0 +1,10 @@
+<form method="post" action="#{rodauth.oauth_applications_path}" class="rodauth" role="form" id="oauth-application-form">
+  #{rodauth.csrf_tag}
+  #{rodauth.render('name_field')}
+  #{rodauth.render('description_field')}
+  #{rodauth.render('homepage_url_field')}
+  #{rodauth.render('redirect_uri_field')}
+  #{rodauth.render('client_secret_field')}
+  #{rodauth.render('scope_field')}
+  #{rodauth.button(rodauth.oauth_application_button)}
+</form>

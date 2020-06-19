@@ -86,7 +86,10 @@ module Rodauth
 
     (APPLICATION_REQUIRED_PARAMS + %w[client_id]).each do |param|
       auth_value_method :"oauth_application_#{param}_param", param
+      translatable_method :"#{param}_label", param.gsub("_", " ").capitalize
     end
+    button "Register", "oauth_application"
+    button "Revoke", "oauth_token_revoke"
 
     # OAuth Token
     auth_value_method :oauth_tokens_path, "oauth-tokens"
@@ -307,6 +310,7 @@ module Rodauth
         request.get "new" do
           new_oauth_application_view
         end
+
         request.on(oauth_applications_id_pattern) do |id|
           oauth_application = db[oauth_applications_table].where(oauth_applications_id_column => id).first
           scope.instance_variable_set(:@oauth_application, oauth_application)
@@ -358,6 +362,13 @@ module Rodauth
     end
 
     private
+
+    def template_path(page)
+      _template_path = File.join(File.dirname(__FILE__), '../../../templates', "#{page}.str")
+      return super unless File.exist?(_template_path)
+
+      _template_path
+    end
 
     # to be used internally. Same semantics as require account, must:
     # fetch an authorization basic header
