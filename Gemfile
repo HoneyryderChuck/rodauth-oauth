@@ -37,6 +37,8 @@ gem "pry"
 platform :mri do
   gem "pry-byebug"
   gem "sqlite3"
+  # unblock if testing against a postgresql database
+  # gem "pg"
 end
 
 platform :jruby do
