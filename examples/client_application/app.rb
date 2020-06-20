@@ -6,6 +6,7 @@ require "securerandom"
 require "roda"
 
 AUTHORIZATION_SERVER = ENV.fetch("AUTHORIZATION_SERVER_URI", "http://localhost:9292")
+RESOURCE_SERVER = ENV.fetch("RESOURCE_SERVER_URI", "http://localhost:9292")
 REDIRECT_URI = "http://localhost:9293/callback"
 CLIENT_ID = ENV.fetch("CLIENT_APPLICATION_ID", "http://localhost:9293")
 
@@ -90,7 +91,7 @@ class ClientApplication < Roda
 
   route do |r|
     r.root do
-      view inline: <<-HTML
+      view inline: <<-html
         <div class="container"><div id="root"></div></div>
         <!-- JAVASCRIPT GOES HERE */ -->
         <script type="text/babel">
@@ -100,26 +101,49 @@ class ClientApplication < Roda
           class App extends React.Component {
             state = {
               profile: null,
+              isLoading: false,
               books: null,
             };
 
+            async componentDidMount() {
+              try {
+                const response = await fetch("#{RESOURCE_SERVER}/books", {
+                  method: "GET",
+                  headers: {
+                    'Authorization': `Bearer ${TOKEN}`,
+                    'Accept': 'application/json'
+                  },
+                  mode: 'cors'
+                });
+                const books = await response.json();
+                this.setState({ books });
+              } catch (error) {
+                console.log("error: ", error);
+              }
+            }
 
             render() {
-
               if (!TOKEN) {
-                return (
-                  <div className="row">
-                    <h2>Not authorized to read books, please authorize!</h2>
-                  </div>
-                );
+                return (<div className="row"><h2>Not authorized to read books, please authorize!</h2></div>);
+              }
+
+              const { books, isLoading } = this.state;
+              if (this.state.isLoading) {
+                return (<div className="row">Loading...</div>);
+              }
+
+              if (!this.state.books) {
+                return (<div className="row"><h2>Not authorized to read books, please authorize!</h2></div>);
               }
 
               return (
-                <div className="row books-app">
+                <div className="books-app">
                   <h1>Books</h1>
-                  <ul>
-                    <li>Test</li>
-                  </ul>
+                  <div className="row">
+                    <ul className="list-group">
+                      {books.map((book, idx) => (<li key={idx} className="list-group-item">"{book.name}" by <b>{book.author}</b></li>))}
+                    </ul>
+                  </div>
                 </div>
               );
             }
@@ -127,7 +151,7 @@ class ClientApplication < Roda
 
           ReactDOM.render(<App />, document.getElementById("root"));
         </script>
-      HTML
+      html
     end
 
     r.on "authorize" do
@@ -183,6 +207,22 @@ class ClientApplication < Roda
         r.redirect "/"
       end
     end
+
+    r.on "logout" do
+      r.post do
+        json_request(:post, "#{AUTHORIZATION_SERVER}/oauth-revoke", {
+                       "client_id" => CLIENT_ID,
+                       "client_secret" => CLIENT_ID,
+                       "token_type_hint" => "access_token",
+                       "token" => session["access_token"]
+                     })
+
+        session.delete("access_token")
+        session.delete("refresh_token")
+        flash["notice"] = "You are logged out!"
+        r.redirect "/"
+      end
+    end
   end
 
   private
@@ -209,6 +249,7 @@ end
 
 if $PROGRAM_NAME == __FILE__
   require "rack"
+
   Rack::Server.start(
     app: ClientApplication, Port: 9293
   )

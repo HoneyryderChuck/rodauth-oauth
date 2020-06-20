@@ -207,13 +207,46 @@ class AuthorizationServer < Roda
         <% end %>
       HTML
     end
+
+    r.on "books" do
+      rodauth.require_oauth_authorization("books.read")
+      r.get do
+        [
+          { "name" => "Anna Karenina", "author" => "Leo Tolstoy" },
+          { "name" => "Madame Bovary", "author" => "Gustave Flaubert" },
+          { "name" => "War and Peace", "author" => "Leo Tolstoy" },
+          { "name" => "The Adventures of Huckleberry Finn", "author" => "Mark Twain" },
+          { "name" => "The stories", "author" => "Anton Chekhov" },
+          { "name" => "Middlemarch", "author" => "George Eliot" },
+          { "name" => "Moby-Dick", "author" => "Herman Melville" },
+          { "name" => "Great Expectations", "author" => "Charles Dickens" },
+          { "name" => "Crime and Punishment", "author" => "Fyodor Dostoevsky" },
+          { "name" => "Emma", "author" => "Jane Austen" }
+        ]
+      end
+    end
   end
   freeze
 end
 
 if $PROGRAM_NAME == __FILE__
   require "rack"
+  require "rack/cors"
+
+  app = Rack::Builder.app do
+    use Rack::Cors, debug: true, logger: Logger.new(STDOUT) do
+      allow do
+        origins "*"
+
+        resource "*",
+                 headers: :any,
+                 methods: %i[get post]
+      end
+    end
+    run AuthorizationServer
+  end
+
   Rack::Server.start(
-    app: AuthorizationServer, Port: 9292
+    app: app, Port: 9292
   )
 end
