@@ -89,6 +89,7 @@ module Rodauth
       translatable_method :"#{param}_label", param.gsub("_", " ").capitalize
     end
     button "Register", "oauth_application"
+    button "Authorize", "oauth_authorize"
     button "Revoke", "oauth_token_revoke"
 
     # OAuth Token
@@ -246,6 +247,8 @@ module Rodauth
 
     def redirect_uri
       param_or_nil("redirect_uri") || begin
+        return unless oauth_application
+
         redirect_uris = oauth_application[oauth_applications_redirect_uri_column].split(" ")
         redirect_uris.size == 1 ? redirect_uris.first : nil
       end
@@ -364,10 +367,10 @@ module Rodauth
     private
 
     def template_path(page)
-      _template_path = File.join(File.dirname(__FILE__), '../../../templates', "#{page}.str")
-      return super unless File.exist?(_template_path)
+      path = File.join(File.dirname(__FILE__), "../../../templates", "#{page}.str")
+      return super unless File.exist?(path)
 
-      _template_path
+      path
     end
 
     # to be used internally. Same semantics as require account, must:
@@ -605,6 +608,8 @@ module Rodauth
     end
 
     def validate_oauth_grant_params
+      redirect_response_error("invalid_request", request.referer || default_redirect) unless oauth_application && check_valid_redirect_uri?
+
       unless oauth_application && check_valid_redirect_uri? && check_valid_access_type? &&
              check_valid_approval_prompt? && check_valid_response_type?
         redirect_response_error("invalid_request")
@@ -860,7 +865,7 @@ module Rodauth
 
     # Response helpers
 
-    def redirect_response_error(error_code, redirect_url = request.referer || default_redirect)
+    def redirect_response_error(error_code, redirect_url = redirect_uri || request.referer || default_redirect)
       if accepts_json?
         throw_json_response_error(invalid_oauth_response_status, error_code)
       else
@@ -1134,7 +1139,7 @@ module Rodauth
         transaction do
           case param("response_type")
           when "token"
-            redirect_response_error("invalid_request", redirect_uri) unless use_oauth_implicit_grant_type?
+            redirect_response_error("invalid_request") unless use_oauth_implicit_grant_type?
 
             create_params = {
               oauth_tokens_account_id_column => account_id,

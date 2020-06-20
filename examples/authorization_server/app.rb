@@ -68,118 +68,120 @@ DB.extension :date_arithmetic
 DB.freeze
 
 # OAuth with myself
-client_id = Digest::SHA1.hexdigest("http://localhost:9292/callback")
+client_id = "http://localhost:9293"
 hash = ::BCrypt::Password.create("password", cost: BCrypt::Engine::MIN_COST)
 
 # test user
 DB[:accounts].insert_conflict(target: :email).insert(email: "foo@bar.com", ph: hash)
 
 # test application
-$application = DB[:oauth_applications].where(client_id: client_id).first || begin
+TEST_APPLICATION = DB[:oauth_applications].where(client_id: client_id).first || begin
   email = "admin@localhost.com"
   account_id = DB[:accounts].where(email: email).get(:id) || begin
-
     DB[:accounts].insert(email: email, ph: hash)
   end
 
   application_id = DB[:oauth_applications].insert(
-    client_id: Digest::SHA1.hexdigest("http://localhost:9292/callback"),
+    client_id: client_id,
     client_secret: BCrypt::Password.create(client_id),
     name: "Myself",
     description: "About myself",
-    redirect_uri: "http://localhost:9292/callback",
-    homepage_url: "http://localhost:9292",
-    scopes: "profile.read",
+    redirect_uri: "http://localhost:9293/callback",
+    homepage_url: "http://localhost:9293",
+    scopes: "profile.read books.read",
     account_id: account_id
   )
   DB[:oauth_applications].where(id: application_id).first
 end
 
 class AuthorizationServer < Roda
-  plugin :render, layout: { inline: <<-LAYOUT }
-<!DOCTYPE html>
-<html>
-<head>
-<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
-      rel="stylesheet"
-      integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
-      crossorigin="anonymous"></link>
-<title>Roda Oauth Demo - <%= @page_title %></title>
-<style>
-.error {border: 1px #a00 solid;
-span.error_message {
-  color: #a00;
-  background-color: #ffffe0;
-  border-color: 1px solid #eeeed0;
-  padding: 5px 2px;
-  display: inline-block; 
-}
-span.error_message:before {
-    content: "(!) "
-}
-input.rodauth_hidden {
-  display: none;
-}
-</style>
-</head>
-<body>
-<nav class="navbar navbar-default" role="navigation">
-  <div class="container">
-    <a class="navbar-brand" href="/">Roda Oauth Demo - Authorization Server</a>
-      <% if rodauth.logged_in? %>
-        <ul class="navbar-nav mr-auto">
-          <li class="nav-item">
-            <a class="nav-link" href="oauth-applications">Client Applications</a>
-          </li>
-        </ul>
-        <ul class="navbar-nav ml-auto nav-flex-icons">
-          <li>
-            <%= DB[:accounts].where(:id=>rodauth.session_value).get(:email) %>
-          </li>
-          <li class="nav-item">
-            <form action="/logout" class="navbar-form pull-right" method="post">
-              <%= csrf_tag("/logout") %>
-              <input class="btn btn-primary form-control auth-button" type="submit" value="Logout" />
-            </form>
-          </li>
-        </ul>
+  plugin :render, layout: { inline: <<~LAYOUT }
+    <!DOCTYPE html>
+    <html>
+    <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+          rel="stylesheet"
+          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+          crossorigin="anonymous"></link>
+    <title>Roda Oauth Demo - <%= @page_title %></title>
+    <style>
+    .error {border: 1px #a00 solid;
+    span.error_message {
+      color: #a00;
+      background-color: #ffffe0;
+      border-color: 1px solid #eeeed0;
+      padding: 5px 2px;
+      display: inline-block; 
+    }
+    span.error_message:before {
+        content: "(!) "
+    }
+    input.rodauth_hidden {
+      display: none;
+    }
+    </style>
+    </head>
+    <body>
+    <nav class="navbar navbar-default" role="navigation">
+      <div class="container">
+        <a class="navbar-brand" href="/">Roda Oauth Demo - Authorization Server</a>
+          <% if rodauth.logged_in? %>
+            <ul class="navbar-nav mr-auto">
+              <li class="nav-item">
+                <a class="nav-link" href="oauth-applications">Client Applications</a>
+              </li>
+            </ul>
+            <ul class="navbar-nav ml-auto nav-flex-icons">
+              <li>
+                <%= DB[:accounts].where(:id=>rodauth.session_value).get(:email) %>
+              </li>
+              <li class="nav-item">
+                <form action="/logout" class="navbar-form pull-right" method="post">
+                  <%= csrf_tag("/logout") %>
+                  <input class="btn btn-primary form-control auth-button" type="submit" value="Logout" />
+                </form>
+              </li>
+            </ul>
+          <% end %>
+        </div>
+      </div>
+    </nav>
+    <div class="container">
+      <% if flash['notice'] %>
+        <div class="alert alert-success"><p><%= flash['notice'] %></p></div>
       <% end %>
+      <% if flash['error'] %>
+        <div class="alert alert-danger"><p><%= flash['error'] %></p></div>
+      <% end %>
+      <h1><%= @page_title %></h1>
+    
+      <%= yield %>
     </div>
-  </div>
-</nav>
-<div class="container">
-  <% if flash['notice'] %>
-    <div class="alert alert-success"><p><%= flash['notice'] %></p></div>
-  <% end %>
-  <% if flash['error'] %>
-    <div class="alert alert-danger"><p><%= flash['error'] %></p></div>
-  <% end %>
-  <h1><%= @page_title %></h1>
-
-  <%= yield %>
-</div>
-</body>
-</html>
-LAYOUT
+    </body>
+    </html>
+  LAYOUT
 
   plugin :flash
   plugin :common_logger
 
   secret = ENV.delete("RODAUTH_SESSION_SECRET") || SecureRandom.random_bytes(64)
-  plugin :sessions, secret: secret
+  plugin :sessions, secret: secret, key: "authorization-server.session"
 
-  plugin :rodauth do
+  plugin :rodauth, json: true do
     db DB
     enable :login, :logout, :create_account, :oauth
     account_password_hash_column :ph
     title_instance_variable :@page_title
+    login_return_to_requested_location? true
+    oauth_application_scopes %w[profile.read books.read books.write]
+    oauth_application_default_scope %w[profile.read]
   end
 
   plugin :not_found do
     @page_title = "Not Found"
-    "Not Found" 
+    "Not Found"
   end
 
   route do |r|
@@ -187,32 +189,31 @@ LAYOUT
     rodauth.oauth_applications
 
     r.root do
-      @application = $application
-      view inline: <<-HTML
-<% if rodauth.logged_in? %>
- <p>Now you can <a href="/oauth-applications">create oauth applications</a>
-<% else %>
-  <p>
-    This is the demo authorization server for <a href="https://gitlab.com/honeyryderchuck/roda-oauth">Roda Oauth</a>.
-    Roda Oauth extends Rodauth to support the OAuth 2.0 authorization protocol, while adhering to the same principles of the parent library.
-  </p>
-  <p>In the authorization server, you can setup your account, and also register client applications.</p>
-
-  <a class="btn btn-primary btn-lg" href="/login">Login</a>
-  <a class="btn btn-info btn-lg" href="/create-account">Sign Up</a>
-
-  <footer>This demo site is part of the Rodauth repository, so if you want to know how it works, you can <a href="https://gitlab.com/honeyryderchuck/roda-oauth/tree/master/examples/roda">review the source</a>.</footer>
-<% end %>
+      @application = TEST_APPLICATION
+      view inline: <<~HTML
+        <% if rodauth.logged_in? %>
+         <p>Now you can <a href="/oauth-applications">create oauth applications</a>
+        <% else %>
+          <p>
+            This is the demo authorization server for <a href="https://gitlab.com/honeyryderchuck/roda-oauth">Roda Oauth</a>.
+            Roda Oauth extends Rodauth to support the OAuth 2.0 authorization protocol, while adhering to the same principles of the parent library.
+          </p>
+          <p>In the authorization server, you can setup your account, and also register client applications.</p>
+        
+          <a class="btn btn-primary btn-lg" href="/login">Login</a>
+          <a class="btn btn-info btn-lg" href="/create-account">Sign Up</a>
+        
+          <footer>This demo site is part of the Rodauth repository, so if you want to know how it works, you can <a href="https://gitlab.com/honeyryderchuck/roda-oauth/tree/master/examples/roda">review the source</a>.</footer>
+        <% end %>
       HTML
     end
   end
   freeze
 end
 
-if $0 == __FILE__
+if $PROGRAM_NAME == __FILE__
   require "rack"
   Rack::Server.start(
     app: AuthorizationServer, Port: 9292
   )
 end
-
