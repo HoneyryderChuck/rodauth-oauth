@@ -33,6 +33,10 @@ Naming/AccessorMethodName:
   Exclude:
     - test/**/*
 
+Naming/HeredocDelimiterCase:
+  Exclude:
+    - examples/**/*
+
 Metrics/ModuleLength:
   Enabled: false
 

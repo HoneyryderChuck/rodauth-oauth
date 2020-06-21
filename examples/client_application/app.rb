@@ -6,9 +6,10 @@ require "securerandom"
 require "roda"
 
 AUTHORIZATION_SERVER = ENV.fetch("AUTHORIZATION_SERVER_URI", "http://localhost:9292")
-RESOURCE_SERVER = ENV.fetch("RESOURCE_SERVER_URI", "http://localhost:9292")
+RESOURCE_SERVER = ENV.fetch("RESOURCE_SERVER_URI", "http://localhost:9292/books")
 REDIRECT_URI = "http://localhost:9293/callback"
-CLIENT_ID = ENV.fetch("CLIENT_APPLICATION_ID", "http://localhost:9293")
+CLIENT_ID = ENV.fetch("CLIENT_ID", "CLIENT_ID")
+CLIENT_SECRET = ENV.fetch("CLIENT_SECRET", CLIENT_ID)
 
 class ClientApplication < Roda
   plugin :render, layout: { inline: <<~LAYOUT }
@@ -107,7 +108,7 @@ class ClientApplication < Roda
 
             async componentDidMount() {
               try {
-                const response = await fetch("#{RESOURCE_SERVER}/books", {
+                const response = await fetch("#{RESOURCE_SERVER}", {
                   method: "GET",
                   headers: {
                     'Authorization': `Bearer ${TOKEN}`,
@@ -155,6 +156,9 @@ class ClientApplication < Roda
     end
 
     r.on "authorize" do
+      #
+      # This link redirects the user to the authorization server, to perform the authorization step.
+      #
       r.post do
         state = Base64.urlsafe_encode64(SecureRandom.hex(32))
         session["state"] = state
@@ -175,6 +179,10 @@ class ClientApplication < Roda
     end
 
     r.on "callback" do
+      #
+      # This is the redirect uri, where the authorization server redirects to with grant information for
+      # the user to generate an access token.
+      #
       r.get do
         session_state = session.delete("state")
 
@@ -197,7 +205,7 @@ class ClientApplication < Roda
                                   "grant_type" => "authorization_code",
                                   "code" => code,
                                   "client_id" => CLIENT_ID,
-                                  "client_secret" => CLIENT_ID,
+                                  "client_secret" => CLIENT_SECRET,
                                   "redirect_uri" => REDIRECT_URI
                                 })
 
@@ -209,10 +217,13 @@ class ClientApplication < Roda
     end
 
     r.on "logout" do
+      #
+      # This endpoint uses the OAuth revoke endpoint to invalidate an access token.
+      #
       r.post do
         json_request(:post, "#{AUTHORIZATION_SERVER}/oauth-revoke", {
                        "client_id" => CLIENT_ID,
-                       "client_secret" => CLIENT_ID,
+                       "client_secret" => CLIENT_SECRET,
                        "token_type_hint" => "access_token",
                        "token" => session["access_token"]
                      })

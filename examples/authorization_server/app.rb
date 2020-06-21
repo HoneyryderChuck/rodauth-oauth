@@ -59,7 +59,7 @@ else
   end
 end
 
-if ENV.delete("RODAUTH_DEMO_LOGGER")
+if ENV.delete("RODAUTH_DEBUG")
   require "logger"
   DB.loggers << Logger.new($stdout)
 end
@@ -68,22 +68,22 @@ DB.extension :date_arithmetic
 DB.freeze
 
 # OAuth with myself
-client_id = "http://localhost:9293"
+CLIENT_ID = ENV.fetch("CLIENT_ID", "CLIENT_ID")
 hash = ::BCrypt::Password.create("password", cost: BCrypt::Engine::MIN_COST)
 
 # test user
 DB[:accounts].insert_conflict(target: :email).insert(email: "foo@bar.com", ph: hash)
 
 # test application
-TEST_APPLICATION = DB[:oauth_applications].where(client_id: client_id).first || begin
+TEST_APPLICATION = DB[:oauth_applications].where(client_id: CLIENT_ID).first || begin
   email = "admin@localhost.com"
   account_id = DB[:accounts].where(email: email).get(:id) || begin
     DB[:accounts].insert(email: email, ph: hash)
   end
 
   application_id = DB[:oauth_applications].insert(
-    client_id: client_id,
-    client_secret: BCrypt::Password.create(client_id),
+    client_id: CLIENT_ID,
+    client_secret: BCrypt::Password.create(CLIENT_ID),
     name: "Myself",
     description: "About myself",
     redirect_uri: "http://localhost:9293/callback",
@@ -177,6 +177,8 @@ class AuthorizationServer < Roda
     login_return_to_requested_location? true
     oauth_application_scopes %w[profile.read books.read books.write]
     oauth_application_default_scope %w[profile.read]
+    oauth_tokens_token_hash_column :token
+    oauth_tokens_refresh_token_hash_column :refresh_token
   end
 
   plugin :not_found do
