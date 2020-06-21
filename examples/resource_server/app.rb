@@ -8,8 +8,6 @@ require "bcrypt"
 require "digest/sha1"
 
 AUTHORIZATION_SERVER = ENV.fetch("AUTHORIZATION_SERVER_URI", "http://localhost:9292")
-CLIENT_ID = ENV.fetch("CLIENT_ID", "CLIENT_ID")
-CLIENT_SECRET = ENV.fetch("CLIENT_SECRET", CLIENT_ID)
 
 class ResourceServer < Roda
   plugin :common_logger
@@ -19,8 +17,6 @@ class ResourceServer < Roda
     use_date_arithmetic? false
     is_authorization_server? false
     authorization_server_url AUTHORIZATION_SERVER
-    oauth_client_id CLIENT_ID
-    oauth_client_secret CLIENT_SECRET
   end
 
   plugin :not_found do

@@ -71,8 +71,6 @@ class ResourceServerTest < RodaIntegration
       enable :oauth
       is_authorization_server? false
       authorization_server_url "https://auth-server"
-      oauth_client_id "CLIENT_ID"
-      oauth_client_secret "CLIENT_SECRET"
     end
     resource_server.route do |r|
       r.rodauth

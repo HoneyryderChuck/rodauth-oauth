@@ -172,8 +172,6 @@ module Rodauth
     # Resource Server params
     # Only required to use if the plugin is to be used in a resource server
     auth_value_method :is_authorization_server?, true
-    auth_value_method :oauth_client_id, nil
-    auth_value_method :oauth_client_secret, nil
 
     auth_value_methods(
       :fetch_access_token,
@@ -181,7 +179,8 @@ module Rodauth
       :secret_matches?,
       :secret_hash,
       :generate_token_hash,
-      :authorization_server_url
+      :authorization_server_url,
+      :before_introspection_request
     )
 
     auth_value_methods(:only_json?)
@@ -322,22 +321,9 @@ module Rodauth
                        scopes << oauth_application_default_scope if scopes.empty?
 
                        # where in resource server, NOT the authorization server.
-                       introspection_url = URI(authorization_server_url)
-                       http = Net::HTTP.new(introspection_url.host, introspection_url.port)
-                       http.use_ssl = introspection_url.scheme == "https"
-                       http.set_debug_output $stderr
-                       request = Net::HTTP::Post.new(oauth_introspect_path)
-                       request["content-type"] = json_response_content_type
-                       request["accept"] = json_response_content_type
-                       request.basic_auth(oauth_client_id, oauth_client_secret)
-                       request.body = JSON.dump({ "token_type_hint" => "access_token", "token" => bearer_token })
+                       payload = introspection_request("access_token", bearer_token)
 
-                       response = http.request(request)
-                       authorization_required unless response.code.to_i == 200
-
-                       payload = JSON.parse(response.body)
-
-                       authorization_required unless payload["active"] && payload["client_id"] == oauth_client_id
+                       authorization_required unless payload["active"]
 
                        payload["scope"].split(oauth_scope_separator)
                      end
@@ -409,6 +395,25 @@ module Rodauth
     def authorization_server_url
       base_url
     end
+
+    def introspection_request(token_type_hint, token)
+      introspection_url = URI(authorization_server_url)
+      http = Net::HTTP.new(introspection_url.host, introspection_url.port)
+      http.use_ssl = introspection_url.scheme == "https"
+
+      request = Net::HTTP::Post.new(oauth_introspect_path)
+      request["content-type"] = json_response_content_type
+      request["accept"] = json_response_content_type
+      request.body = JSON.dump({ "token_type_hint" => token_type_hint, "token" => token })
+
+      before_introspection_request(request)
+      response = http.request(request)
+      authorization_required unless response.code.to_i == 200
+
+      JSON.parse(response.body)
+    end
+
+    def before_introspection_request(request); end
 
     def template_path(page)
       path = File.join(File.dirname(__FILE__), "../../../templates", "#{page}.str")
@@ -857,9 +862,7 @@ module Rodauth
       }
     end
 
-    def before_introspect
-      require_oauth_application
-    end
+    def before_introspect; end
 
     # Token revocation
 
@@ -882,7 +885,12 @@ module Rodauth
                       oauth_token_by_refresh_token(token)
                     end
 
-      redirect_response_error("invalid_request") unless oauth_token && token_from_application?(oauth_token, oauth_application)
+      if oauth_application
+        redirect_response_error("invalid_request") unless oauth_token && token_from_application?(oauth_token, oauth_application)
+      elsif oauth_token
+        @oauth_application = db[oauth_applications_table].where(oauth_applications_id_column =>
+          oauth_token[oauth_tokens_oauth_application_id_column]).first
+      end
 
       update_params = { oauth_tokens_revoked_at_column => Sequel::CURRENT_TIMESTAMP }
 
@@ -1124,7 +1132,12 @@ module Rodauth
                           oauth_token_by_token(param("token")) || oauth_token_by_refresh_token(param("token"))
                         end
 
-          redirect_response_error("invalid_request") if oauth_token && !token_from_application?(oauth_token, oauth_application)
+          if oauth_application
+            redirect_response_error("invalid_request") if oauth_token && !token_from_application?(oauth_token, oauth_application)
+          elsif oauth_token
+            @oauth_application = db[oauth_applications_table].where(oauth_applications_id_column =>
+              oauth_token[oauth_tokens_oauth_application_id_column]).first
+          end
 
           json_response_success(json_token_introspect_payload(oauth_token))
         end
