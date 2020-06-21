@@ -169,11 +169,19 @@ module Rodauth
     auth_value_method :oauth_metadata_op_policy_uri, nil
     auth_value_method :oauth_metadata_op_tos_uri, nil
 
+    # Resource Server params
+    # Only required to use if the plugin is to be used in a resource server
+    auth_value_method :is_authorization_server?, true
+    auth_value_method :oauth_client_id, nil
+    auth_value_method :oauth_client_secret, nil
+
     auth_value_methods(
       :fetch_access_token,
       :oauth_unique_id_generator,
       :secret_matches?,
-      :secret_hash
+      :secret_hash,
+      :generate_token_hash,
+      :authorization_server_url
     )
 
     auth_value_methods(:only_json?)
@@ -290,17 +298,49 @@ module Rodauth
       return @authorization_token if defined?(@authorization_token)
 
       # check if there is a token
+      bearer_token = fetch_access_token
+
+      return unless bearer_token
+
       # check if token has not expired
       # check if token has been revoked
-      @authorization_token = oauth_token_by_token(fetch_access_token)
+      @authorization_token = oauth_token_by_token(bearer_token)
     end
 
     def require_oauth_authorization(*scopes)
-      authorization_required unless authorization_token
+      token_scopes = if is_authorization_server?
+                       authorization_required unless authorization_token
 
-      scopes << oauth_application_default_scope if scopes.empty?
+                       scopes << oauth_application_default_scope if scopes.empty?
 
-      token_scopes = authorization_token[oauth_tokens_scopes_column].split(oauth_scope_separator)
+                       authorization_token[oauth_tokens_scopes_column].split(oauth_scope_separator)
+                     else
+                       bearer_token = fetch_access_token
+
+                       authorization_required unless bearer_token
+
+                       scopes << oauth_application_default_scope if scopes.empty?
+
+                       # where in resource server, NOT the authorization server.
+                       introspection_url = URI(authorization_server_url)
+                       http = Net::HTTP.new(introspection_url.host, introspection_url.port)
+                       http.use_ssl = introspection_url.scheme == "https"
+                       http.set_debug_output $stderr
+                       request = Net::HTTP::Post.new(oauth_introspect_path)
+                       request["content-type"] = json_response_content_type
+                       request["accept"] = json_response_content_type
+                       request.basic_auth(oauth_client_id, oauth_client_secret)
+                       request.body = JSON.dump({ "token_type_hint" => "access_token", "token" => bearer_token })
+
+                       response = http.request(request)
+                       authorization_required unless response.code.to_i == 200
+
+                       payload = JSON.parse(response.body)
+
+                       authorization_required unless payload["active"] && payload["client_id"] == oauth_client_id
+
+                       payload["scope"].split(oauth_scope_separator)
+                     end
 
       authorization_required unless scopes.any? { |scope| token_scopes.include?(scope) }
     end
@@ -365,6 +405,10 @@ module Rodauth
     end
 
     private
+
+    def authorization_server_url
+      base_url
+    end
 
     def template_path(page)
       path = File.join(File.dirname(__FILE__), "../../../templates", "#{page}.str")
