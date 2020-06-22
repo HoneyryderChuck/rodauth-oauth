@@ -44,7 +44,11 @@ module Rodauth
       return @authorization_token if defined?(@authorization_token)
 
       @authorization_token = begin
-        jwt_token = jwt_decode(fetch_access_token)
+        bearer_token = fetch_access_token
+
+        return unless bearer_token
+
+        jwt_token = jwt_decode(bearer_token)
 
         return if jwt_token["iss"] != oauth_jwt_token_issuer ||
                   jwt_token["aud"] != oauth_jwt_audience ||

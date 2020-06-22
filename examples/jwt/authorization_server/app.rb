@@ -6,6 +6,7 @@ require "securerandom"
 require "net/http"
 require "bcrypt"
 require "digest/sha1"
+require "json/jwt"
 
 if (url = ENV.delete("DATABASE_URL"))
   DB = Sequel.connect(url)
@@ -49,7 +50,6 @@ else
     foreign_key :oauth_grant_id, :oauth_grants
     foreign_key :oauth_token_id, :oauth_tokens
     foreign_key :oauth_application_id, :oauth_applications, null: false
-    String :token, token: true
     String :refresh_token, token: true
     DateTime :expires_in, null: false
     DateTime :revoked_at
@@ -91,6 +91,8 @@ TEST_APPLICATION = DB[:oauth_applications].where(client_id: CLIENT_ID).first || 
   )
   DB[:oauth_applications].where(id: application_id).first
 end
+
+PRIV_KEY = OpenSSL::PKey::EC.new(File.read(File.join(__dir__, "..", "ecprivkey.pem")))
 
 class AuthorizationServer < Roda
   plugin :render, layout: { inline: <<~LAYOUT }
@@ -169,13 +171,14 @@ class AuthorizationServer < Roda
 
   plugin :rodauth, json: true do
     db DB
-    enable :login, :logout, :create_account, :oauth
+    enable :login, :logout, :create_account, :oauth_jwt
     account_password_hash_column :ph
     title_instance_variable :@page_title
     login_return_to_requested_location? true
     oauth_application_scopes %w[profile.read books.read books.write]
     oauth_application_default_scope %w[profile.read]
-    oauth_tokens_token_hash_column :token
+    oauth_jwt_key PRIV_KEY
+    oauth_jwt_algorithm "ES256"
     oauth_tokens_refresh_token_hash_column :refresh_token
   end
 
