@@ -73,7 +73,6 @@ class ResourceServerTest < RodaIntegration
       authorization_server_url "https://auth-server"
     end
     resource_server.route do |r|
-      r.rodauth
       rodauth.require_oauth_authorization("profile.read")
       r.get "private" do
         r.get do

@@ -273,7 +273,7 @@ module Rodauth
       return @oauth_application if defined?(@oauth_application)
 
       @oauth_application = begin
-        client_id = param("client_id")
+        client_id = param_or_nil("client_id")
 
         return unless client_id
 
@@ -396,10 +396,27 @@ module Rodauth
       base_url
     end
 
+    def authorization_server_metadata
+      return @authorization_server_metadata if defined?(@authorization_server_metadata)
+
+      @authorization_server_metadata ||= begin
+        auth_url = URI(authorization_server_url)
+        http = Net::HTTP.new(auth_url.host, auth_url.port)
+        http.use_ssl = auth_url.scheme == "https"
+
+        request = Net::HTTP::Get.new("/.well-known/oauth-authorization-server")
+        request["accept"] = json_response_content_type
+        response = http.request(request)
+        authorization_required unless response.code.to_i == 200
+
+        JSON.parse(response.body)
+      end
+    end
+
     def introspection_request(token_type_hint, token)
-      introspection_url = URI(authorization_server_url)
-      http = Net::HTTP.new(introspection_url.host, introspection_url.port)
-      http.use_ssl = introspection_url.scheme == "https"
+      auth_url = URI(authorization_server_url)
+      http = Net::HTTP.new(auth_url.host, auth_url.port)
+      http.use_ssl = auth_url.scheme == "https"
 
       request = Net::HTTP::Post.new(oauth_introspect_path)
       request["content-type"] = json_response_content_type
