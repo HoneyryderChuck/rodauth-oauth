@@ -418,7 +418,15 @@ module Rodauth
         response = http.request(request)
         authorization_required unless response.code.to_i == 200
 
-        JSON.parse(response.body, symbolize_names: true)
+        # time-to-live
+        ttl = if response.key?("cache-control")
+                cache_control = response["cache_control"]
+                cache_control[/max-age=(\d+)/, 1]
+              elsif response.key?("expires")
+                Time.httpdate(response["expires"]).utc.to_i - Time.now.utc.to_i
+              end
+
+        [JSON.parse(response.body, symbolize_names: true), ttl]
       end
     end
 

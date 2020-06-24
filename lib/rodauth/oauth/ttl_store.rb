@@ -20,12 +20,13 @@ class Rodauth::OAuth::TtlStore
     lookup(key, now)
   end
 
-  def set(key, ttl = nil, &payload)
+  def set(key, &block)
     @store_mutex.synchronize do
       # short circuit
       return @store[key][:payload] if @store[key] && @store[key][:ttl] < now
 
-      @store[key] = { payload: payload.call, ttl: (ttl || (now + DEFAULT_TTL)) }
+      payload, ttl = block.call
+      @store[key] = { payload: payload, ttl: (ttl || (now + DEFAULT_TTL)) }
 
       @store[key][:payload]
     end
