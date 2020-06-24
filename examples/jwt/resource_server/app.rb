@@ -6,11 +6,13 @@ require "securerandom"
 require "net/http"
 require "bcrypt"
 require "digest/sha1"
-require "json/jwt"
+require "jwt"
+# require "json/jwt"
 
 AUTHORIZATION_SERVER = ENV.fetch("AUTHORIZATION_SERVER_URI", "http://localhost:9292")
 
-PUB_KEY = OpenSSL::PKey::EC.new(File.read(File.join(__dir__, "..", "ecpubkey.pem")))
+# PUB_KEY = OpenSSL::PKey::EC.new(File.read(File.join(__dir__, "..", "ecpubkey.pem")))
+PUB_KEY = OpenSSL::PKey::RSA.new(File.read(File.join(__dir__, "..", "rsapubkey.pem")))
 
 class ResourceServer < Roda
   plugin :common_logger
@@ -20,8 +22,6 @@ class ResourceServer < Roda
     use_date_arithmetic? false
     is_authorization_server? false
     authorization_server_url AUTHORIZATION_SERVER
-    oauth_jwt_public_key PUB_KEY
-    oauth_jwt_algorithm "ES256"
   end
 
   plugin :not_found do

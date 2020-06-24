@@ -6,7 +6,8 @@ require "securerandom"
 require "net/http"
 require "bcrypt"
 require "digest/sha1"
-require "json/jwt"
+require "jwt"
+# require "json/jwt"
 
 if (url = ENV.delete("DATABASE_URL"))
   DB = Sequel.connect(url)
@@ -92,7 +93,10 @@ TEST_APPLICATION = DB[:oauth_applications].where(client_id: CLIENT_ID).first || 
   DB[:oauth_applications].where(id: application_id).first
 end
 
-PRIV_KEY = OpenSSL::PKey::EC.new(File.read(File.join(__dir__, "..", "ecprivkey.pem")))
+# PRIV_KEY = OpenSSL::PKey::EC.new(File.read(File.join(__dir__, "..", "ecprivkey.pem")))
+PRIV_KEY = OpenSSL::PKey::RSA.new(File.read(File.join(__dir__, "..", "rsaprivkey.pem")))
+# PUB_KEY = OpenSSL::PKey::EC.new(File.read(File.join(__dir__, "..", "ecpubkey.pem")))
+PUB_KEY = OpenSSL::PKey::RSA.new(File.read(File.join(__dir__, "..", "rsapubkey.pem")))
 
 class AuthorizationServer < Roda
   plugin :render, layout: { inline: <<~LAYOUT }
@@ -178,7 +182,9 @@ class AuthorizationServer < Roda
     oauth_application_scopes %w[profile.read books.read books.write]
     oauth_application_default_scope %w[profile.read]
     oauth_jwt_key PRIV_KEY
-    oauth_jwt_algorithm "ES256"
+    oauth_jwt_public_key PUB_KEY
+    #     oauth_jwt_algorithm "ES256"
+    oauth_jwt_algorithm "RS256"
     oauth_tokens_refresh_token_hash_column :refresh_token
   end
 
@@ -190,6 +196,7 @@ class AuthorizationServer < Roda
   route do |r|
     r.rodauth
     rodauth.oauth_applications
+    rodauth.oauth_server_metadata
 
     r.root do
       @application = TEST_APPLICATION
