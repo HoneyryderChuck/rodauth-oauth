@@ -120,7 +120,7 @@ module Rodauth
 
       oauth_token = _generate_oauth_token(create_params)
 
-      issued_at = Time.current.utc.to_i
+      issued_at = Time.now.utc.to_i
 
       payload = {
         sub: oauth_token[oauth_tokens_account_id_column],
