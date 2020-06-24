@@ -50,6 +50,8 @@ module Rodauth
 
         jwt_token = jwt_decode(bearer_token)
 
+        return unless jwt_token
+
         return if jwt_token["iss"] != oauth_jwt_token_issuer ||
                   jwt_token["aud"] != oauth_jwt_audience ||
                   !jwt_token["sub"]
