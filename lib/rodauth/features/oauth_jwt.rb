@@ -1,5 +1,7 @@
 # frozen-string-literal: true
 
+require "rodauth/oauth/ttl_store"
+
 module Rodauth
   Feature.define(:oauth_jwt) do
     depends :oauth
@@ -23,6 +25,8 @@ module Rodauth
       :jwt_decode,
       :jwks_set
     )
+
+    JWKS = OAuth::TtlStore.new
 
     def require_oauth_authorization(*scopes)
       authorization_required unless authorization_token
@@ -191,10 +195,17 @@ module Rodauth
     end
 
     def auth_server_jwks_set
-      return @auth_server_jwks_set if defined?(@auth_server_jwks_set)
+      metadata = authorization_server_metadata
 
-      @auth_server_jwks_set = begin
-        jwks_uri = URI(authorization_server_metadata["jwks_uri"])
+      return unless metadata && (jwks_uri = metadata[:jwks_uri])
+
+      jwks_uri = URI(jwks_uri)
+
+      jwks = JWKS[jwks_uri]
+
+      return jwks if jwks
+
+      JWKS.set(jwks_uri) do
         http = Net::HTTP.new(jwks_uri.host, jwks_uri.port)
         http.use_ssl = jwks_uri.scheme == "https"
 

@@ -1,6 +1,10 @@
 # frozen-string-literal: true
 
 require "base64"
+require "securerandom"
+require "net/http"
+
+require "rodauth/oauth/ttl_store"
 
 module Rodauth
   Feature.define(:oauth) do
@@ -201,6 +205,8 @@ module Rodauth
 
     auth_value_method :json_request_regexp, %r{\bapplication/(?:vnd\.api\+)?json\b}i
 
+    SERVER_METADATA = OAuth::TtlStore.new
+
     def check_csrf?
       case request.path
       when oauth_token_path, oauth_introspect_path
@@ -397,10 +403,13 @@ module Rodauth
     end
 
     def authorization_server_metadata
-      return @authorization_server_metadata if defined?(@authorization_server_metadata)
+      auth_url = URI(authorization_server_url)
 
-      @authorization_server_metadata ||= begin
-        auth_url = URI(authorization_server_url)
+      server_metadata = SERVER_METADATA[auth_url]
+
+      return server_metadata if server_metadata
+
+      SERVER_METADATA.set(auth_url) do
         http = Net::HTTP.new(auth_url.host, auth_url.port)
         http.use_ssl = auth_url.scheme == "https"
 
@@ -409,7 +418,7 @@ module Rodauth
         response = http.request(request)
         authorization_required unless response.code.to_i == 200
 
-        JSON.parse(response.body)
+        JSON.parse(response.body, symbolize_names: true)
       end
     end
 
