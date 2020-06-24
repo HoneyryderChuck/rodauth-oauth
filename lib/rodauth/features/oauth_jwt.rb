@@ -187,11 +187,7 @@ module Rodauth
     end
 
     def _jwt_key
-      @_jwt_key ||= oauth_jwt_key || begin
-        oauth_application[oauth_applications_client_secret_column] if oauth_application
-
-        nil
-      end
+      @_jwt_key ||= oauth_jwt_key || (oauth_application[oauth_applications_client_secret_column] if oauth_application)
     end
 
     def auth_server_jwks_set
@@ -236,9 +232,13 @@ module Rodauth
 
         token = JSON::JWT.decode(token, oauth_jwt_jwe_key).plain_text if oauth_jwt_jwe_key
 
-        jwk = oauth_jwt_public_key || _jwt_key || JSON::JWK::Set.new(auth_server_jwks_set)
+        jwk = oauth_jwt_public_key || _jwt_key
 
-        @jwt_token = JSON::JWT.decode(token, jwk)
+        @jwt_token = if jwk
+                       JSON::JWT.decode(token, jwk)
+                     elsif auth_server_jwks_set
+                       JSON::JWT.decode(token, JSON::JWK::Set.new(auth_server_jwks_set))
+                     end
       rescue JSON::JWT::Exception
         nil
       end
@@ -295,13 +295,13 @@ module Rodauth
         token = JWE.decrypt(token, oauth_jwt_jwe_key) if oauth_jwt_jwe_key
 
         # decode jwt
-        key = oauth_jwt_public_key || _jwt_key || auth_server_jwks_set
+        key = oauth_jwt_public_key || _jwt_key
 
-        @jwt_token = if key.is_a?(Array)
-                       algorithms = key.select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
-                       JWT.decode(token, nil, true, jwks: { keys: key }, algorithms: algorithms).first
-                     else
+        @jwt_token = if key
                        JWT.decode(token, key, true, algorithms: [oauth_jwt_algorithm]).first
+                     elsif auth_server_jwks_set
+                       algorithms = auth_server_jwks_set[:keys].select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
+                       JWT.decode(token, nil, true, jwks: auth_server_jwks_set, algorithms: algorithms).first
                      end
       rescue JWT::DecodeError, JWT::JWKError
         nil
@@ -331,7 +331,7 @@ module Rodauth
 
     route(:oauth_jwks) do |r|
       r.get do
-        json_response_success(jwks_set)
+        json_response_success({ keys: jwks_set })
       end
     end
   end
