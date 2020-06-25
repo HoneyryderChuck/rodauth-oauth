@@ -196,6 +196,9 @@ module Rodauth
       @_jwt_key ||= oauth_jwt_key || (oauth_application[oauth_applications_client_secret_column] if oauth_application)
     end
 
+    # Resource Server only!
+    #
+    # returns the jwks set from the authorization server.
     def auth_server_jwks_set
       metadata = authorization_server_metadata
 
@@ -257,7 +260,7 @@ module Rodauth
 
         @jwt_token = if jwk
                        JSON::JWT.decode(token, jwk)
-                     elsif auth_server_jwks_set
+                     elsif !is_authorization_server? && auth_server_jwks_set
                        JSON::JWT.decode(token, JSON::JWK::Set.new(auth_server_jwks_set))
                      end
       rescue JSON::JWT::Exception
@@ -320,7 +323,7 @@ module Rodauth
 
         @jwt_token = if key
                        JWT.decode(token, key, true, algorithms: [oauth_jwt_algorithm]).first
-                     elsif auth_server_jwks_set
+                     elsif !is_authorization_server? && auth_server_jwks_set
                        algorithms = auth_server_jwks_set[:keys].select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
                        JWT.decode(token, nil, true, jwks: auth_server_jwks_set, algorithms: algorithms).first
                      end
