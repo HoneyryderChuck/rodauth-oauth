@@ -2,10 +2,42 @@
 
 ## master
 
-### Improvements
+### 0.0.5 (26/6/2020)
 
+#### Features
+
+* new option: `oauth_scope_separator` (default: `" "`), to define how scopes are stored;
+
+##### Resource Server mode
+
+`rodauth-oauth` can now be used in a resource server, i.e. only for authorizing access to resources:
+
+
+```ruby
+plugin :rodauth do
+  enable :oauth
+
+  is_authorization_server? false
+  authorization_server_url "https://auth-server"
+end
+```
+
+It **requires** the authorization to implement the server metadata endpoint (`/.well-known/oauth-authorization-server`), and if using JWS, the JWKs URI endpoint (unless `oauth_jwt_public_key` is defined).
+
+#### Improvements
+
+* Multiple Redirect URIs are now allowed for client applications out-of-the-box. In order to use it in API mode, you can pass the `redirect_uri` with an array of strings (the URLs) as values; in the new client application form, you can add several input fields with name field as `redirect_uri[]`. **ATTENTION!!** When using multiple redirect URIs, passing the desired redirect URI to the authorize form becomes mandatory.
 * store scopes with whitespace instead of comma; set separator as `oauth_scope_separator` option, to keep backwards-compatibility;
 * client application can now store multiple redirect uris; the POST API parameters can accept the redirect_uri param value both as a string or an array of string; internally, they'll be stored in a whitespace-separated string;
+
+#### Bugfixes
+
+* Fixed `RETURNING` support in the databases supporting it (such as postgres).
+
+#### Chore
+
+* option `scopes_param` renamed to `scope_param`;
+*
 
 ## 0.0.4 (13/6/2020)
 
