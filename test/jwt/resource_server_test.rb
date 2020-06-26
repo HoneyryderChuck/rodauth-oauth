@@ -80,12 +80,14 @@ class JwtResourceServerTest < JWTIntegration
   private
 
   def generate_access_token(priv_key, alg, params = {})
+    exp = oauth_token[:expires_in]
+    exp = Time.parse(oauth_token[:expires_in]) unless exp.is_a?(Time)
     params = {
       sub: oauth_token[:account_id],
       iss: "https://auth-server", # issuer
       iat: Time.now.utc.to_i, # issued at
       client_id: oauth_application[:client_id],
-      exp: Time.now.utc.to_i + oauth_token[:expires_in].utc.to_i,
+      exp: exp.utc.to_i,
       aud: "resource-server",
       scope: oauth_token[:scopes]
     }.merge(params)
