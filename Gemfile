@@ -30,6 +30,7 @@ gem "minitest", "~> 5.0"
 gem "minitest-hooks"
 gem "rack-test"
 gem "simplecov"
+gem "webmock"
 
 gem "rubocop"
 
@@ -37,6 +38,8 @@ gem "pry"
 platform :mri do
   gem "pry-byebug"
   gem "sqlite3"
+  # unblock if testing against a postgresql database
+  # gem "pg"
 end
 
 platform :jruby do
@@ -46,3 +49,5 @@ end
 
 # For demo
 gem "erubi"
+
+gem "rack-cors", require: false

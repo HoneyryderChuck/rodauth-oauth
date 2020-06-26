@@ -1,0 +1,30 @@
+<form method="post" class="form-horizontal" role="form" id="authorize-form">
+  #{csrf_tag("/oauth-authorize") if respond_to?(:csrf_tag)}
+  <p>The application #{rodauth.oauth_application[rodauth.oauth_applications_name_column]} would like to access your data.</p>
+
+  <div class="form-group">
+    <h3>#{rodauth.scopes_label}</h3>
+
+    #{
+      rodauth.oauth_application[rodauth.oauth_applications_scopes_column].split(" ").map do |scope|
+        <<-HTML
+         	<div class="form-check">
+            <input id="#{scope}" class="form-check-input" type="checkbox" name="scope" value="#{scope}" #{"checked disabled" if scope == rodauth.oauth_application_default_scope}>
+            <label class="form-check-label" for="#{scope}">#{scope}</label>
+          </div>
+        HTML
+      end.join
+    }
+    <input type="hidden" name="client_id" value="#{rodauth.client_id}"/>
+    #{"<input type=\"hidden\" name=\"state\" value=\"#{rodauth.state}\"/>" if rodauth.param_or_nil("state")}
+    #{"<input type=\"hidden\" name=\"redirect_uri\" value=\"#{rodauth.redirect_uri}\"/>" if rodauth.param_or_nil("redirect_uri")}
+    #{"<input type=\"hidden\" name=\"code_challenge\" value=\"#{rodauth.code_challenge}\"/>" if rodauth.param_or_nil("code_challenge")}
+    #{"<input type=\"hidden\" name=\"code_challenge_method\" value=\"#{rodauth.code_challenge_method}\"/>" if rodauth.param_or_nil("code_challenge_method")}
+  </div>
+  <div class="btn-group">
+    #{rodauth.button(rodauth.oauth_authorize_button)}
+    <div class="form-group">
+      <a href="#{rodauth.redirect_uri}?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request#{ "&state=#{rodauth.state}" if rodauth.state}" class="btn btn-danger">Cancel</a>
+    </div>
+  </div>
+</form>

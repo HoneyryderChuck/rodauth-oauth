@@ -5,15 +5,6 @@ require "test_helper"
 class RodaOauthTokenIntrospectTest < RodaIntegration
   include Rack::Test::Methods
 
-  def test_oauth_introspect_unauthenticated
-    setup_application
-
-    header "Accept", "application/json"
-    post("/oauth-introspect")
-    assert last_response.status == 401
-    assert json_body["error"] == "invalid_client"
-  end
-
   def test_oauth_introspect_missing_token
     setup_application
     login

@@ -1,0 +1,10 @@
+<fieldset class="form-group">
+  #{
+    rodauth.oauth_application_scopes.map do |scope|
+      "<div class=\"form-check checkbox\">" +
+      "<input id=\"#{scope}\" type=\"checkbox\" name=\"#{rodauth.oauth_application_scopes_param}[]\" value=\"#{scope}\">" +
+      "<label for=\"#{scope}\">#{scope}</label>" +
+      "</div>"
+    end.join
+  }
+</fieldset>

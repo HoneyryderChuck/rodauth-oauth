@@ -1,0 +1,14 @@
+<div>
+  <a href="/oauth-applications/new">Register new Oauth Application</a>
+  #{
+    if @oauth_applications.count.zero?
+      "<p>No oauth applications yet!</p>"
+    else
+      "<ul>" + 
+        @oauth_applications.map do |application|
+          "<li><a href=\"/oauth-applications/#{application[:id]}\">#{application[:name]}</a></li>"
+        end.join +
+      "</ul>"
+    end
+  }
+</div>

@@ -1,0 +1,4 @@
+<div class="form-group">
+  <label for="description">#{rodauth.description_label}#{rodauth.input_field_label_suffix}</label>
+  #{rodauth.input_field_string(rodauth.oauth_application_description_param, "description", :type=>rodauth.login_input_type, :required => false)}
+</div>
