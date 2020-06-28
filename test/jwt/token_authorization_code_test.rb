@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthJWTTokenAuthorizationCodeTest < JWTIntegration
+class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
   include Rack::Test::Methods
 
   def test_oauth_jwt_authorization_code_hmac_sha256

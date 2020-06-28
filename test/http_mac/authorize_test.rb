@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthHTTPMacAuthorizeTest < HTTPMacIntegration
+class RodauthOAuthHTTPMacAuthorizeTest < HTTPMacIntegration
   def test_http_mac_authorize_post_authorize_with_implicit_grant
     rodauth do
       use_oauth_implicit_grant_type? true

@@ -2,5 +2,5 @@
 
 require "test_helper"
 
-class RodaOauthTest < Minitest::Test
+class RodauthOauthTest < Minitest::Test
 end

@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthHTTPMacTokenAuthorizationCodeTest < HTTPMacIntegration
+class RodauthOAuthHTTPMacTokenAuthorizationCodeTest < HTTPMacIntegration
   include Rack::Test::Methods
 
   def test_http_mac_token_no_mac_token

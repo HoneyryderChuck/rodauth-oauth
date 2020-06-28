@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthTokenRevokeTest < RodaIntegration
+class RodauthOAuthTokenRevokeTest < RodaIntegration
   include Rack::Test::Methods
 
   def test_oauth_token_revoke_invalid_hint

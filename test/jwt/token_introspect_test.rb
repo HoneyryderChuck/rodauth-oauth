@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthJwtTokenIntrospectTest < JWTIntegration
+class RodauthOauthJwtTokenIntrospectTest < JWTIntegration
   include Rack::Test::Methods
 
   def test_oauth_introspect_access_token

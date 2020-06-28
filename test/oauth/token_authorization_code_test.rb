@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthTokenAuthorizationCodeTest < RodaIntegration
+class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
   include Rack::Test::Methods
 
   def test_token_authorization_code_no_params

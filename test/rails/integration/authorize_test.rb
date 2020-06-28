@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOAuthRailsAuthorizeTest < RailsIntegrationTest
+class RodauthOAuthRailsAuthorizeTest < RailsIntegrationTest
   def test_authorize_rails_get_public_area
     setup_application
     visit "/"

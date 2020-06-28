@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthAuthorizeTest < RodaIntegration
+class RodauthOauthAuthorizeTest < RodaIntegration
   def test_authorize_get_public_area
     setup_application
     visit "/"

@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthTokenIntrospectTest < RodaIntegration
+class RodauthOAuthTokenIntrospectTest < RodaIntegration
   include Rack::Test::Methods
 
   def test_oauth_introspect_missing_token
