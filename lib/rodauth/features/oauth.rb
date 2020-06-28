@@ -1228,7 +1228,7 @@ module Rodauth
         end
 
         redirect_url = URI.parse(redirect_uri)
-        query_params << "state=#{param("state")}" if param_or_nil("state")
+        query_params << "state=#{param('state')}" if param_or_nil("state")
         query_params << redirect_url.query if redirect_url.query
         redirect_url.query = query_params.join("&") unless query_params.empty?
         redirect_url.fragment = fragment_params.join("&") unless fragment_params.empty?
