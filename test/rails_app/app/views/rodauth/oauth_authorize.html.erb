@@ -4,19 +4,19 @@
   <div class="form-group">
     <h3>Requested grants:</h3>
 
-    <% rodauth.oauth_application[rodauth.oauth_applications_scopes_column].split(" ").each do |scope| %>
+    <% rodauth.scopes.each do |scope| %>
       <% is_default = scope == rodauth.oauth_application_default_scope %>
       <div class="form-check">
         <%= check_box_tag scope, scope, is_default, disabled: is_default, class: "form-check-input" %>
         <%= label_tag scope, scope, class: "form-check-label" %>
       </div>
     <% end %>
-    <%= hidden_field_tag :client_id, rodauth.client_id %>
+    <%= hidden_field_tag :client_id, params[:client_id] %>
     <% if params[:state] %>
-      <%= hidden_field_tag :state, rodauth.state %>
+      <%= hidden_field_tag :state, params[:state] %>
     <% end %>
     <% if params[:redirect_uri] %>
-      <%= hidden_field_tag :redirect_uri, rodauth.redirect_uri %>
+      <%= hidden_field_tag :redirect_uri, params[:redirect_uri] %>
     <% end %>
     <% if params[:code_challenge] %>
       <%= hidden_field_tag :code_challenge, params[:code_challenge] %>
@@ -27,6 +27,6 @@
   </div>
   <div class="form-group">
     <%= submit_tag "Authorize", class: "btn btn-primary" %>
-    <%= link_to "Cancel", "#{rodauth.redirect_uri}?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request#{"&state=\#{rodauth.state}" if rodauth.state}", class: "btn btn-danger" %>
+    <%= link_to "Cancel", "#{rodauth.redirect_uri}?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request#{"&state=\#{params[:state]}" if params[:state]}", class: "btn btn-danger" %>
   </div>
 <% end %>

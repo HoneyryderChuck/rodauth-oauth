@@ -246,16 +246,8 @@ module Rodauth
       @scope = scope
     end
 
-    def state
-      param_or_nil("state")
-    end
-
     def scopes
       (param_or_nil("scope") || oauth_application_default_scope).split(" ")
-    end
-
-    def client_id
-      param_or_nil("client_id")
     end
 
     def redirect_uri
@@ -265,14 +257,6 @@ module Rodauth
         redirect_uris = oauth_application[oauth_applications_redirect_uri_column].split(" ")
         redirect_uris.size == 1 ? redirect_uris.first : nil
       end
-    end
-
-    def token_type_hint
-      param_or_nil("token_type_hint") || "access_token"
-    end
-
-    def token
-      param_or_nil("token")
     end
 
     def oauth_application
@@ -877,8 +861,8 @@ module Rodauth
 
     def validate_oauth_introspect_params
       # check if valid token hint type
-      if token_type_hint
-        redirect_response_error("unsupported_token_type") unless TOKEN_HINT_TYPES.include?(token_type_hint)
+      if param_or_nil("token_type_hint")
+        redirect_response_error("unsupported_token_type") unless TOKEN_HINT_TYPES.include?(param("token_type_hint"))
       end
 
       redirect_response_error("invalid_request") unless param_or_nil("token")
@@ -906,17 +890,20 @@ module Rodauth
 
     def validate_oauth_revoke_params
       # check if valid token hint type
-      redirect_response_error("unsupported_token_type") unless TOKEN_HINT_TYPES.include?(token_type_hint)
+      if param_or_nil("token_type_hint")
+        redirect_response_error("unsupported_token_type") unless TOKEN_HINT_TYPES.include?(param("token_type_hint"))
+      end
 
       redirect_response_error("invalid_request") unless param_or_nil("token")
     end
 
     def revoke_oauth_token
-      oauth_token = case token_type_hint
-                    when "access_token"
-                      oauth_token_by_token(token)
-                    when "refresh_token"
+      token = param("token")
+
+      oauth_token = if param("token_type_hint") == "refresh_token"
                       oauth_token_by_refresh_token(token)
+                    else
+                      oauth_token_by_token(token)
                     end
 
       redirect_response_error("invalid_request") unless oauth_token
@@ -1253,7 +1240,7 @@ module Rodauth
         end
 
         redirect_url = URI.parse(redirect_uri)
-        query_params << "state=#{state}" if state
+        query_params << "state=#{param("state")}" if param_or_nil("state")
         query_params << redirect_url.query if redirect_url.query
         redirect_url.query = query_params.join("&") unless query_params.empty?
         redirect_url.fragment = fragment_params.join("&") unless fragment_params.empty?

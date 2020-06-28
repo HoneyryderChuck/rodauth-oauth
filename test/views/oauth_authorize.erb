@@ -1,12 +1,12 @@
 <form method="post" class="form-horizontal" role="form" id="login-form">
   <%=  csrf_tag(rodauth.oauth_authorize_path) if respond_to?(:csrf_tag) %>
   <p>Grants: <%= rodauth.scopes.join(", ") %></p>
-  <input type="hidden" name="client_id" value="<%= rodauth.client_id %>"/>
+  <input type="hidden" name="client_id" value="<%= rodauth.param("client_id") %>"/>
   <% if rodauth.param_or_nil("scope") %>
     <input type="hidden" name="scope" value="<%= rodauth.param_or_nil("scope") %>"/>
   <% end %>
   <% if rodauth.param_or_nil("state") %>
-    <input type="hidden" name="state" value="<%= rodauth.state %>"/>
+    <input type="hidden" name="state" value="<%= rodauth.param("state") %>"/>
   <% end %>
   <% if rodauth.param_or_nil("redirect_uri") %>
     <input type="hidden" name="redirect_uri" value="<%= rodauth.redirect_uri %>"/>
