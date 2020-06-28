@@ -353,6 +353,12 @@ module Rodauth
       # :nocov:
     end
 
+    def before_revoke
+      token_hint = param_or_nil("token_type_hint")
+
+      throw(:rodauth_error) if !token_hint && token_hint == "access_token"
+    end
+
     route(:oauth_jwks) do |r|
       r.get do
         json_response_success({ keys: jwks_set })
