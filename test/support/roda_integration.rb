@@ -73,6 +73,7 @@ class RodaIntegration < Minitest::Test
     rodauth do
       db RODADB
       enable :login, :http_basic_auth, feature
+      login_return_to_requested_location? true
       oauth_application_default_scope TEST_SCOPES.first
       oauth_application_scopes TEST_SCOPES
     end

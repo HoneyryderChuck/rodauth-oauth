@@ -170,6 +170,7 @@ class AuthorizationServer < Roda
   plugin :rodauth, json: true do
     db DB
     enable :login, :logout, :create_account, :oauth
+    login_return_to_requested_location? true
     account_password_hash_column :ph
     title_instance_variable :@page_title
     login_return_to_requested_location? true

@@ -193,16 +193,6 @@ module Rodauth
       "/#{oauth_applications_path}/#{id}"
     end
 
-    redirect(:require_authorization) do
-      if logged_in?
-        oauth_authorize_path
-      elsif respond_to?(:login_redirect)
-        login_redirect
-      else
-        default_redirect
-      end
-    end
-
     auth_value_method :json_request_regexp, %r{\bapplication/(?:vnd\.api\+)?json\b}i
 
     SERVER_METADATA = OAuth::TtlStore.new
@@ -343,7 +333,9 @@ module Rodauth
           request.on(oauth_tokens_path) do
             oauth_tokens = db[oauth_tokens_table].where(oauth_tokens_oauth_application_id_column => id)
             scope.instance_variable_set(:@oauth_tokens, oauth_tokens)
-            oauth_tokens_view
+            request.get do
+              oauth_tokens_view
+            end
           end
         end
 
@@ -1005,7 +997,7 @@ module Rodauth
         throw_json_response_error(authorization_required_error_status, "invalid_client")
       else
         set_redirect_error_flash(require_authorization_error_flash)
-        redirect(require_authorization_redirect)
+        redirect(oauth_authorize_path)
       end
     end
 
