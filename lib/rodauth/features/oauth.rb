@@ -189,10 +189,6 @@ module Rodauth
 
     auth_value_methods(:only_json?)
 
-    redirect(:oauth_application) do |id|
-      "/#{oauth_applications_path}/#{id}"
-    end
-
     auth_value_method :json_request_regexp, %r{\bapplication/(?:vnd\.api\+)?json\b}i
 
     SERVER_METADATA = OAuth::TtlStore.new
@@ -353,7 +349,7 @@ module Rodauth
               id = create_oauth_application
               after_create_oauth_application
               set_notice_flash create_oauth_application_notice_flash
-              redirect oauth_application_redirect(id)
+              redirect "#{request.path}/#{id}"
             end
           end
           set_error_flash create_oauth_application_error_flash
