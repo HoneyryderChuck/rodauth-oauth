@@ -99,53 +99,7 @@ PRIV_KEY = OpenSSL::PKey::RSA.new(File.read(File.join(__dir__, "..", "rsaprivkey
 PUB_KEY = OpenSSL::PKey::RSA.new(File.read(File.join(__dir__, "..", "rsapubkey.pem")))
 
 class AuthorizationServer < Roda
-  plugin :render, layout: { inline: <<~LAYOUT }
-    <!DOCTYPE html>
-    <html>
-    <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
-          rel="stylesheet"
-          integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
-          crossorigin="anonymous"></link>
-    <title>Roda Oauth Demo - <%= @page_title %></title>
-    <%= assets(:css) %>
-    </head>
-    <body>
-      <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
-        <h5 class="my-0 mr-md-auto font-weight-normal">Rodauth Oauth Demo - Authorization Server</h5>
-        <nav class="my-2 my-md-0 mr-md-3">
-          <% if rodauth.logged_in? %>
-            <a class="p-2 text-dark" href="oauth-applications">Client Applications</a>
-          <% end %>
-        </nav>
-        <% if rodauth.logged_in? %>
-          <form action="/logout" class="navbar-form pull-right" method="post">
-            <%= csrf_tag("/logout") %>
-            <input class="btn btn-outline-primary" type="submit" value="Logout" />
-          </form>
-        <% else %>
-          <a class="btn btn-outline-primary" href="/create-account">Sign Up</a>
-        <% end %>
-      </div>
-
-      <div class="container">
-        <% if flash['notice'] %>
-          <div class="alert alert-success"><p><%= flash['notice'] %></p></div>
-        <% end %>
-        <% if flash['error'] %>
-          <div class="alert alert-danger"><p><%= flash['error'] %></p></div>
-        <% end %>
-        <div class="main px-3 py-3 pt-md-5 pb-md-4 mx-auto">
-          <h1 class="display-4"><%= @page_title %></h1>
-          <%= yield %>
-        </div>
-      </div>
-    </body>
-    </html>
-  LAYOUT
-
+  plugin :render, views: File.expand_path("../../assets/html", __dir__)
   plugin :flash
   plugin :common_logger
   plugin :assets, css: "layout.scss", path: File.expand_path("../../assets", __dir__)
