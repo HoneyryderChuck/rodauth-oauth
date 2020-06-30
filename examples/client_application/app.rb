@@ -23,11 +23,7 @@ class ClientApplication < Roda
             integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
             crossorigin="anonymous"></link>
       <title>Rodauth Oauth Demo - Book Store Client Application</title>
-      <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
-      <script crossorigin src="https://unpkg.com/react@16.3.1/umd/react.development.js"></script>
-      <script crossorigin src="https://unpkg.com/react-dom@16.3.1/umd/react-dom.development.js"></script>
       <%= assets(:css) %>
-      <meta id="access-token" name="access-token" content="<%= session["access_token"] %>" />
       </head>
       <body>
         <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
@@ -80,74 +76,27 @@ class ClientApplication < Roda
   route do |r|
     r.assets
     r.root do
-      view inline: <<-html
-        <div class="container"><div id="root"></div></div>
-        <!-- JAVASCRIPT GOES HERE */ -->
-        <script type="text/babel">
+      inline = if (token = session["access_token"])
+                 @books = json_request(:get, RESOURCE_SERVER, headers: { "authorization" => "Bearer #{token}" })
+                 <<-HTML
+                  <div class="books-app">
+                    <ul class="list-group">
+                      <% @books.each do |book| %>
+                        <li class="list-group-item">"<%= book[:name] %>" by <b><%= book[:author] %></b></li>
+                      <% end %>
+                    </ul>
+                  </div>
+                 HTML
+               else
+                 <<-HTML
+                  <p class="lead">
+                    You can use this application to test the OAuth 2.0 authorization framework.
+                    Once you authorize, you'll see a list of books available in the resource server.
+                  </p>
+                 HTML
+               end
 
-          const TOKEN = document.getElementById('access-token').getAttribute('content');
-
-          class App extends React.Component {
-            state = {
-              profile: null,
-              isLoading: false,
-              books: null,
-            };
-
-            async componentDidMount() {
-              try {
-                const response = await fetch("#{RESOURCE_SERVER}", {
-                  method: "GET",
-                  headers: {
-                    'Authorization': `Bearer ${TOKEN}`,
-                    'Accept': 'application/json'
-                  },
-                  mode: 'cors'
-                });
-                const books = await response.json();
-                this.setState({ books });
-              } catch (error) {
-                console.log("error: ", error);
-              }
-            }
-
-            renderAuthorize() {
-              return (
-                <p className="lead">
-                  You can use this application to test the OAuth 2.0 authorization framework.
-                  Once you authorize, you'll see a list of books available in the resource server.
-                </p>
-              )
-            }
-
-            render() {
-              if (!TOKEN || TOKEN.length == 0) {
-                return this.renderAuthorize();
-              }
-
-              const { books, isLoading } = this.state;
-              if (this.state.isLoading) {
-                return (<div className="row">Loading...</div>);
-              }
-
-              if (!this.state.books) {
-                return this.renderAuthorize();
-              }
-
-              return (
-                <div className="books-app">
-                  <h1 className="display-5">Books</h1>
-                  <ul className="list-group">
-                    {books.map((book, idx) => (<li key={idx} className="list-group-item">"{book.name}" by <b>{book.author}</b></li>))}
-                  </ul>
-                </div>
-              );
-            }
-          }
-
-          ReactDOM.render(<App />, document.getElementById("root"));
-        </script>
-      html
+      view inline: inline
     end
 
     r.on "authorize" do
@@ -196,7 +145,7 @@ class ClientApplication < Roda
 
         code = r.params["code"]
 
-        response = json_request(:post, "#{AUTHORIZATION_SERVER}/oauth-token", {
+        response = json_request(:post, "#{AUTHORIZATION_SERVER}/oauth-token", params: {
                                   "grant_type" => "authorization_code",
                                   "code" => code,
                                   "client_id" => CLIENT_ID,
@@ -204,8 +153,8 @@ class ClientApplication < Roda
                                   "redirect_uri" => REDIRECT_URI
                                 })
 
-        session["access_token"] = response["access_token"]
-        session["refresh_token"] = response["refresh_token"]
+        session["access_token"] = response[:access_token]
+        session["refresh_token"] = response[:refresh_token]
 
         r.redirect "/"
       end
@@ -216,7 +165,7 @@ class ClientApplication < Roda
       # This endpoint uses the OAuth revoke endpoint to invalidate an access token.
       #
       r.post do
-        json_request(:post, "#{AUTHORIZATION_SERVER}/oauth-revoke", {
+        json_request(:post, "#{AUTHORIZATION_SERVER}/oauth-revoke", params: {
                        "client_id" => CLIENT_ID,
                        "client_secret" => CLIENT_SECRET,
                        "token_type_hint" => "access_token",
@@ -233,20 +182,32 @@ class ClientApplication < Roda
 
   private
 
-  def json_request(meth, uri, params = {})
+  def json_request(meth, uri, headers: {}, params: {})
     uri = URI(uri)
     http = Net::HTTP.new(uri.host, uri.port)
     case meth
-    # when :get
+    when :get
+      request = Net::HTTP::Get.new(uri.request_uri)
+      request["accept"] = "application/json"
+      headers.each do |k, v|
+        request[k] = v
+      end
+      response = http.request(request)
+      raise "Unexpected error on token generation, #{response.body}" unless response.code.to_i == 200
+
+      JSON.parse(response.body, symbolize_names: true)
     when :post
       request = Net::HTTP::Post.new(uri.request_uri)
       request.body = JSON.dump(params)
       request["content-type"] = "application/json"
       request["accept"] = "application/json"
+      headers.each do |k, v|
+        request[k] = v
+      end
       response = http.request(request)
       raise "Unexpected error on token generation, #{response.body}" unless response.code.to_i == 200
 
-      JSON.parse(response.body)
+      JSON.parse(response.body, symbolize_names: true)
     end
   end
 

@@ -48,22 +48,8 @@ end
 
 if $PROGRAM_NAME == __FILE__
   require "rack"
-  require "rack/cors"
-
-  app = Rack::Builder.app do
-    use Rack::Cors, debug: true, logger: Logger.new(STDOUT) do
-      allow do
-        origins "*"
-
-        resource "*",
-                 headers: :any,
-                 methods: %i[get post]
-      end
-    end
-    run ResourceServer
-  end
 
   Rack::Server.start(
-    app: app, Port: 9294
+    app: ResourceServer, Port: 9294
   )
 end
