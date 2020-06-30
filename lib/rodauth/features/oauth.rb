@@ -1163,7 +1163,6 @@ module Rodauth
     route(:oauth_revoke) do |r|
       before_revoke
 
-      # access-token
       r.post do
         catch_error do
           validate_oauth_revoke_params
@@ -1185,7 +1184,7 @@ module Rodauth
           end
         end
 
-        throw_json_response_error(invalid_oauth_response_status, "invalid_request")
+        redirect_response_error("invalid_request", request.referer || "/")
       end
     end
 

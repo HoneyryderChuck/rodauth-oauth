@@ -40,12 +40,10 @@ class ClientApplication < Roda
               <button type="submit" class="btn btn-outline-primary">Authorize</button>
             </form>
           <% else %>
-            <li class="nav-item">
-              <form action="/logout" class="navbar-form pull-right" method="post">
-                <%= csrf_tag("/logout") %>
-                <input class="btn btn-outline-primary" type="submit" value="Logout" />
-              </form>
-            </li>
+            <form action="/logout" class="navbar-form pull-right" method="post">
+              <%= csrf_tag("/logout") %>
+              <input class="btn btn-outline-primary" type="submit" value="Logout" />
+            </form>
           <% end %>
         </div>
         <div class="container">
@@ -165,12 +163,15 @@ class ClientApplication < Roda
       # This endpoint uses the OAuth revoke endpoint to invalidate an access token.
       #
       r.post do
-        json_request(:post, "#{AUTHORIZATION_SERVER}/oauth-revoke", params: {
-                       "client_id" => CLIENT_ID,
-                       "client_secret" => CLIENT_SECRET,
-                       "token_type_hint" => "access_token",
-                       "token" => session["access_token"]
-                     })
+        begin
+          json_request(:post, "#{AUTHORIZATION_SERVER}/oauth-revoke", params: {
+                         "client_id" => CLIENT_ID,
+                         "client_secret" => CLIENT_SECRET,
+                         "token_type_hint" => "access_token",
+                         "token" => session["access_token"]
+                       })
+        rescue StandardError # rubocop:disable Lint/SuppressedException
+        end
 
         session.delete("access_token")
         session.delete("refresh_token")

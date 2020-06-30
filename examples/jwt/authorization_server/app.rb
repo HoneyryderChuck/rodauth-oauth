@@ -110,65 +110,45 @@ class AuthorizationServer < Roda
           integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
           crossorigin="anonymous"></link>
     <title>Roda Oauth Demo - <%= @page_title %></title>
-    <style>
-    .error {border: 1px #a00 solid;
-    span.error_message {
-      color: #a00;
-      background-color: #ffffe0;
-      border-color: 1px solid #eeeed0;
-      padding: 5px 2px;
-      display: inline-block; 
-    }
-    span.error_message:before {
-        content: "(!) "
-    }
-    input.rodauth_hidden {
-      display: none;
-    }
-    </style>
+    <%= assets(:css) %>
     </head>
     <body>
-    <nav class="navbar navbar-default" role="navigation">
-      <div class="container">
-        <a class="navbar-brand" href="/">Roda Oauth Demo - Authorization Server</a>
+      <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
+        <h5 class="my-0 mr-md-auto font-weight-normal">Rodauth Oauth Demo - Authorization Server</h5>
+        <nav class="my-2 my-md-0 mr-md-3">
           <% if rodauth.logged_in? %>
-            <ul class="navbar-nav mr-auto">
-              <li class="nav-item">
-                <a class="nav-link" href="oauth-applications">Client Applications</a>
-              </li>
-            </ul>
-            <ul class="navbar-nav ml-auto nav-flex-icons">
-              <li>
-                <%= DB[:accounts].where(:id=>rodauth.session_value).get(:email) %>
-              </li>
-              <li class="nav-item">
-                <form action="/logout" class="navbar-form pull-right" method="post">
-                  <%= csrf_tag("/logout") %>
-                  <input class="btn btn-primary form-control auth-button" type="submit" value="Logout" />
-                </form>
-              </li>
-            </ul>
+            <a class="p-2 text-dark" href="oauth-applications">Client Applications</a>
           <% end %>
+        </nav>
+        <% if rodauth.logged_in? %>
+          <form action="/logout" class="navbar-form pull-right" method="post">
+            <%= csrf_tag("/logout") %>
+            <input class="btn btn-outline-primary" type="submit" value="Logout" />
+          </form>
+        <% else %>
+          <a class="btn btn-outline-primary" href="/create-account">Sign Up</a>
+        <% end %>
+      </div>
+
+      <div class="container">
+        <% if flash['notice'] %>
+          <div class="alert alert-success"><p><%= flash['notice'] %></p></div>
+        <% end %>
+        <% if flash['error'] %>
+          <div class="alert alert-danger"><p><%= flash['error'] %></p></div>
+        <% end %>
+        <div class="main px-3 py-3 pt-md-5 pb-md-4 mx-auto">
+          <h1 class="display-4"><%= @page_title %></h1>
+          <%= yield %>
         </div>
       </div>
-    </nav>
-    <div class="container">
-      <% if flash['notice'] %>
-        <div class="alert alert-success"><p><%= flash['notice'] %></p></div>
-      <% end %>
-      <% if flash['error'] %>
-        <div class="alert alert-danger"><p><%= flash['error'] %></p></div>
-      <% end %>
-      <h1><%= @page_title %></h1>
-    
-      <%= yield %>
-    </div>
     </body>
     </html>
   LAYOUT
 
   plugin :flash
   plugin :common_logger
+  plugin :assets, css: "layout.scss", path: File.expand_path("../../assets", __dir__)
 
   secret = ENV.delete("RODAUTH_SESSION_SECRET") || SecureRandom.random_bytes(64)
   plugin :sessions, secret: secret, key: "authorization-server.session"
@@ -195,6 +175,7 @@ class AuthorizationServer < Roda
   end
 
   route do |r|
+    r.assets
     r.rodauth
     rodauth.oauth_applications
     rodauth.oauth_server_metadata
@@ -203,18 +184,22 @@ class AuthorizationServer < Roda
       @application = TEST_APPLICATION
       view inline: <<~HTML
         <% if rodauth.logged_in? %>
-         <p>Now you can <a href="/oauth-applications">create oauth applications</a>
+        <p class="lead">
+          You are now logged in to the authorization server. You're able to add client applications, and authorize access to your account.
+        </p>
         <% else %>
-          <p>
+          <p class="lead">
             This is the demo authorization server for <a href="https://gitlab.com/honeyryderchuck/roda-oauth">Roda Oauth</a>.
             Roda Oauth extends Rodauth to support the OAuth 2.0 authorization protocol, while adhering to the same principles of the parent library.
           </p>
-          <p>In the authorization server, you can setup your account, and also register client applications.</p>
+          <p class="lead">In the authorization server, you can setup your account, and also register client applications.</p>
         
-          <a class="btn btn-primary btn-lg" href="/login">Login</a>
-          <a class="btn btn-info btn-lg" href="/create-account">Sign Up</a>
+          <p class="text-center">
+            <a class="btn btn-outline-primary btn-padded" href="/login">Login</a>
+            <a class="btn btn-outline-secondary btn-padded" href="/create-account">Sign Up</a>
+          </p>
         
-          <footer>This demo site is part of the Rodauth repository, so if you want to know how it works, you can <a href="https://gitlab.com/honeyryderchuck/roda-oauth/tree/master/examples/roda">review the source</a>.</footer>
+          <footer class="lead">This demo site is part of the Rodauth repository, so if you want to know how it works, you can <a href="https://gitlab.com/honeyryderchuck/roda-oauth/tree/master/examples/roda">review the source</a>.</footer>
         <% end %>
       HTML
     end
@@ -242,22 +227,8 @@ end
 
 if $PROGRAM_NAME == __FILE__
   require "rack"
-  require "rack/cors"
-
-  app = Rack::Builder.app do
-    use Rack::Cors, debug: true, logger: Logger.new(STDOUT) do
-      allow do
-        origins "*"
-
-        resource "*",
-                 headers: :any,
-                 methods: %i[get post]
-      end
-    end
-    run AuthorizationServer
-  end
 
   Rack::Server.start(
-    app: app, Port: 9292
+    app: AuthorizationServer, Port: 9292
   )
 end

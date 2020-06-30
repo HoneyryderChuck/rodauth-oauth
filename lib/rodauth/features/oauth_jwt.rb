@@ -353,10 +353,12 @@ module Rodauth
       # :nocov:
     end
 
-    def before_revoke
+    def validate_oauth_revoke_params
       token_hint = param_or_nil("token_type_hint")
 
-      throw(:rodauth_error) if !token_hint && token_hint == "access_token"
+      throw(:rodauth_error) if !token_hint || token_hint == "access_token"
+
+      super
     end
 
     route(:oauth_jwks) do |r|
