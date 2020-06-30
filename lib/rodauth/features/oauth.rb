@@ -318,6 +318,8 @@ module Rodauth
 
         request.on(oauth_applications_id_pattern) do |id|
           oauth_application = db[oauth_applications_table].where(oauth_applications_id_column => id).first
+          next unless oauth_application
+
           scope.instance_variable_set(:@oauth_application, oauth_application)
 
           request.is do

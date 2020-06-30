@@ -49,5 +49,6 @@ end
 
 # For demo
 gem "erubi"
+gem "sassc"
 
 gem "rack-cors", require: false

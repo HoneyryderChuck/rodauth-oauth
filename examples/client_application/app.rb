@@ -26,64 +26,51 @@ class ClientApplication < Roda
       <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/6.26.0/babel.min.js"></script>
       <script crossorigin src="https://unpkg.com/react@16.3.1/umd/react.development.js"></script>
       <script crossorigin src="https://unpkg.com/react-dom@16.3.1/umd/react-dom.development.js"></script>
-      <style>
-      .error {border: 1px #a00 solid;
-      span.error_message {
-        color: #a00;
-        background-color: #ffffe0;
-        border-color: 1px solid #eeeed0;
-        padding: 5px 2px;
-        display: inline-block; 
-      }
-      span.error_message:before {
-          content: "(!) "
-      }
-      input.rodauth_hidden {
-        display: none;
-      }
-      </style>
-    
+      <%= assets(:css) %>
       <meta id="access-token" name="access-token" content="<%= session["access_token"] %>" />
       </head>
       <body>
-      <nav class="navbar navbar-default" role="navigation">
-        <div class="container">
-          <a class="navbar-brand" href="/">Rodauth Oauth Demo - Book Store Client Application</a>
-          <ul class="navbar-nav ml-auto nav-flex-icons">
-            <% if !session["access_token"] %>
-              <form action="/authorize" class="navbar-form pull-right" method="post">
-                <%= csrf_tag("/authorize") %>
-                <button type="submit" class="btn btn-primary form-control auth-button">Authorize</a>
+        <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
+          <h5 class="my-0 mr-md-auto font-weight-normal">Rodauth Oauth Demo - Book Store Application</h5>
+          <nav class="my-2 my-md-0 mr-md-3">
+            <!-- a class="p-2 text-dark" href="#">Features</a-->
+            <!-- a class="p-2 text-dark" href="#">Enterprise</a-->
+            <!-- a class="p-2 text-dark" href="#">Support</a-->
+            <!-- a class="p-2 text-dark" href="#">Pricing</a-->
+          </nav>
+          <% if !session["access_token"] %>
+            <form action="/authorize" class="navbar-form pull-right" method="post">
+              <%= csrf_tag("/authorize") %>
+              <button type="submit" class="btn btn-outline-primary">Authorize</button>
+            </form>
+          <% else %>
+            <li class="nav-item">
+              <form action="/logout" class="navbar-form pull-right" method="post">
+                <%= csrf_tag("/logout") %>
+                <input class="btn btn-outline-primary" type="submit" value="Logout" />
               </form>
-            <% else %>
-              <li id="oauth-username"></li>
-              <li class="nav-item">
-                <form action="/logout" class="navbar-form pull-right" method="post">
-                  <%= csrf_tag("/logout") %>
-                  <input class="btn btn-primary form-control auth-button" type="submit" value="Logout" />
-                </form>
-              </li>
-            <% end %>
-          </ul>
+            </li>
+          <% end %>
         </div>
-      </nav>
-      <div class="container">
-        <% if flash['notice'] %>
-          <div class="alert alert-success"><p><%= flash['notice'] %></p></div>
-        <% end %>
-        <% if flash['error'] %>
-          <div class="alert alert-danger"><p><%= flash['error'] %></p></div>
-        <% end %>
-        <h1><%= @page_title %></h1>
-    
-        <%= yield %>
-      </div>
+        <div class="container">
+          <% if flash['notice'] %>
+            <div class="alert alert-success"><p><%= flash['notice'] %></p></div>
+          <% end %>
+          <% if flash['error'] %>
+            <div class="alert alert-danger"><p><%= flash['error'] %></p></div>
+          <% end %>
+          <div class="main px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
+            <h1 class="display-4">Book Store</h1>
+            <%= yield %>
+          </div>
+        </div>
       </body>
     </html>
   LAYOUT
 
   plugin :flash
   plugin :common_logger
+  plugin :assets, css: "layout.scss", path: File.expand_path("../assets", __dir__)
 
   secret = ENV.delete("RODAUTH_SESSION_SECRET") || SecureRandom.random_bytes(64)
   plugin :sessions, secret: secret, key: "client-application.session"
@@ -91,6 +78,7 @@ class ClientApplication < Roda
   plugin :route_csrf
 
   route do |r|
+    r.assets
     r.root do
       view inline: <<-html
         <div class="container"><div id="root"></div></div>
@@ -123,9 +111,18 @@ class ClientApplication < Roda
               }
             }
 
+            renderAuthorize() {
+              return (
+                <p className="lead">
+                  You can use this application to test the OAuth 2.0 authorization framework.
+                  Once you authorize, you'll see a list of books available in the resource server.
+                </p>
+              )
+            }
+
             render() {
-              if (!TOKEN) {
-                return (<div className="row"><h2>Not authorized to read books, please authorize!</h2></div>);
+              if (!TOKEN || TOKEN.length == 0) {
+                return this.renderAuthorize();
               }
 
               const { books, isLoading } = this.state;
@@ -134,17 +131,15 @@ class ClientApplication < Roda
               }
 
               if (!this.state.books) {
-                return (<div className="row"><h2>Not authorized to read books, please authorize!</h2></div>);
+                return this.renderAuthorize();
               }
 
               return (
                 <div className="books-app">
-                  <h1>Books</h1>
-                  <div className="row">
-                    <ul className="list-group">
-                      {books.map((book, idx) => (<li key={idx} className="list-group-item">"{book.name}" by <b>{book.author}</b></li>))}
-                    </ul>
-                  </div>
+                  <h1 className="display-5">Books</h1>
+                  <ul className="list-group">
+                    {books.map((book, idx) => (<li key={idx} className="list-group-item">"{book.name}" by <b>{book.author}</b></li>))}
+                  </ul>
                 </div>
               );
             }

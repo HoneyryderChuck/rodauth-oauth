@@ -1,9 +1,9 @@
 <form method="post" class="form-horizontal" role="form" id="authorize-form">
   #{csrf_tag("/oauth-authorize") if respond_to?(:csrf_tag)}
-  <p>The application #{rodauth.oauth_application[rodauth.oauth_applications_name_column]} would like to access your data.</p>
+  <p class="lead">The application #{rodauth.oauth_application[rodauth.oauth_applications_name_column]} would like to access your data.</p>
 
   <div class="form-group">
-    <h3>#{rodauth.scopes_label}</h3>
+    <h1 class="display-6">#{rodauth.scopes_label}</h1>
 
     #{
       rodauth.scopes.map do |scope|
@@ -23,10 +23,8 @@
     #{"<input type=\"hidden\" name=\"code_challenge\" value=\"#{rodauth.code_challenge}\"/>" if rodauth.param_or_nil("code_challenge")}
     #{"<input type=\"hidden\" name=\"code_challenge_method\" value=\"#{rodauth.code_challenge_method}\"/>" if rodauth.param_or_nil("code_challenge_method")}
   </div>
-  <div class="btn-group">
-    #{rodauth.button(rodauth.oauth_authorize_button)}
-    <div class="form-group">
-      <a href="#{rodauth.redirect_uri}?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request#{ "&state=#{rodauth.state}" if rodauth.state}" class="btn btn-danger">Cancel</a>
-    </div>
-  </div>
+  <p class="text-center">
+    <input type="submit" class="btn btn-outline-primary" value="#{h(rodauth.oauth_authorize_button)}"/>
+    <a href="#{rodauth.redirect_uri}?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request#{ "&state=#{rodauth.param("state")}" if rodauth.param_or_nil("state")}" class="btn btn-outline-danger">Cancel</a>
+  </p>
 </form>

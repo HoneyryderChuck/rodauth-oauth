@@ -1,12 +1,12 @@
-<div>
-  <a href="/oauth-applications/new">Register new Oauth Application</a>
+<div id="oauth-applications">
+  <a class="btn btn-outline-primary" href="/oauth-applications/new">Register new Oauth Application</a>
   #{
     if @oauth_applications.count.zero?
       "<p>No oauth applications yet!</p>"
     else
-      "<ul>" + 
+      "<ul class=\"list-group\">" + 
         @oauth_applications.map do |application|
-          "<li><a href=\"/oauth-applications/#{application[:id]}\">#{application[:name]}</a></li>"
+          "<li class=\"list-group-item\"><a href=\"/oauth-applications/#{application[:id]}\">#{application[:name]}</a></li>"
         end.join +
       "</ul>"
     end
