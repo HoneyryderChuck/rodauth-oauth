@@ -3,7 +3,7 @@
 require "test_helper"
 require "webmock/minitest"
 
-class JwtResourceServerTest < JWTIntegration
+class RodauthOAuthJwtResourceServerTest < JWTIntegration
   include Rack::Test::Methods
   include WebMock::API
 

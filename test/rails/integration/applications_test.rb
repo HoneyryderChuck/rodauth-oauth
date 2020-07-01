@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthRailsApplicationsTest < RailsIntegrationTest
+class RodauthOauthRailsApplicationsTest < RailsIntegrationTest
   def test_oauth_rails_applications_successful
     login
     # List

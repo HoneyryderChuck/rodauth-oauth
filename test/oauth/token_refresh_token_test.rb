@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthRefreshTokenTest < RodaIntegration
+class RodauthOAuthRefreshTokenTest < RodaIntegration
   include Rack::Test::Methods
 
   def test_token_refresh_token_no_token

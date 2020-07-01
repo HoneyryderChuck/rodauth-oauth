@@ -1,0 +1,73 @@
+body {
+  background-color: #f8f9fa;
+}
+
+.main {
+  max-width: 700px;
+};
+
+.text-center {
+  text-align: center !important;
+}
+
+.error {
+  border: 1px #a00 solid;
+}
+
+span.error_message {
+  color: #a00;
+  background-color: #ffffe0;
+  border-color: 1px solid #eeeed0;
+  padding: 5px 2px;
+  display: inline-block;
+
+  &:before {
+    content: "(!) "
+  }
+}
+
+input.rodauth_hidden {
+  display: none;
+}
+
+#login-form, #authorize-form {
+  box-shadow: 0 .25rem .75rem rgba(0, 0, 0, .05);
+  word-wrap: break-word;
+  background-color: #fff;
+  background-clip: border-box;
+  border: 1px solid rgba(0,0,0,.125);
+  border-radius: .25rem;
+  padding: 2.25rem 1.25rem;
+  margin-bottom: 1.25rem;
+
+  input[type="submit"] {
+
+  } 
+}
+
+.rodauth-login-form-footer-links-heading {
+  font-size: 1rem;
+}
+
+.rodauth-login-footer-links {
+  list-style-type: none;
+  padding: 0;
+}
+
+.rodauth-login-form-footer-links-heading,
+.rodauth-login-footer-links {
+  padding-left: 1.25rem;
+}
+
+.btn-padded {
+  padding-left: 3.25rem;
+  padding-right: 3.25rem;
+}
+
+#oauth-application {
+  text-align: center;
+
+  dt {
+    margin: 1.25rem 0;
+  }
+}

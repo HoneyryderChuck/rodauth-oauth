@@ -40,14 +40,13 @@ platform :mri do
   gem "sqlite3"
   # unblock if testing against a postgresql database
   # gem "pg"
+
+  # For demo
+  gem "erubi"
+  gem "sassc"
 end
 
 platform :jruby do
   gem "activerecord-jdbc-adapter"
   gem "jdbc-sqlite3"
 end
-
-# For demo
-gem "erubi"
-
-gem "rack-cors", require: false

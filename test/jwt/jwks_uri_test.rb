@@ -13,7 +13,7 @@ class RodauthOauthJwtJwksUriTest < JWTIntegration
     get("/oauth-jwks")
 
     assert last_response.status == 200
-    assert json_body == []
+    assert json_body == { "keys" => [] }
   end
 
   def test_oauth_jwt_jwks_signing_key
@@ -21,18 +21,18 @@ class RodauthOauthJwtJwksUriTest < JWTIntegration
     pub_key = priv_key.public_key
 
     rodauth do
-      oauth_jwt_jwk_key priv_key
-      oauth_jwt_jwk_public_key pub_key
+      oauth_jwt_key priv_key
+      oauth_jwt_public_key pub_key
       oauth_jwt_algorithm "RS256"
     end
     setup_application
     get("/oauth-jwks")
 
     assert last_response.status == 200
-    assert json_body[0]["use"] == "sig"
-    assert json_body[0]["alg"] == "RS256"
-    assert json_body[0]["kty"] == "RSA"
-    assert json_body[0].key?("kid")
+    assert json_body["keys"][0]["use"] == "sig"
+    assert json_body["keys"][0]["alg"] == "RS256"
+    assert json_body["keys"][0]["kty"] == "RSA"
+    assert json_body["keys"][0].key?("kid")
   end
 
   def test_oauth_jwt_jwks_encryption_key
@@ -43,8 +43,8 @@ class RodauthOauthJwtJwksUriTest < JWTIntegration
     jwe_pub_key = jwe_key.public_key
 
     rodauth do
-      oauth_jwt_jwk_key priv_key
-      oauth_jwt_jwk_public_key pub_key
+      oauth_jwt_key priv_key
+      oauth_jwt_public_key pub_key
       oauth_jwt_algorithm "RS256"
       oauth_jwt_jwe_key jwe_key
       oauth_jwt_jwe_public_key jwe_pub_key
@@ -55,14 +55,14 @@ class RodauthOauthJwtJwksUriTest < JWTIntegration
     get("/oauth-jwks")
 
     assert last_response.status == 200
-    assert json_body[0]["use"] == "sig"
-    assert json_body[0]["alg"] == "RS256"
-    assert json_body[0]["kty"] == "RSA"
-    assert json_body[0].key?("kid")
+    assert json_body["keys"][0]["use"] == "sig"
+    assert json_body["keys"][0]["alg"] == "RS256"
+    assert json_body["keys"][0]["kty"] == "RSA"
+    assert json_body["keys"][0].key?("kid")
 
-    assert json_body[1]["use"] == "enc"
-    assert json_body[1]["alg"] == "RSA-OAEP"
-    assert json_body[1]["kty"] == "RSA"
-    assert json_body[1].key?("kid")
+    assert json_body["keys"][1]["use"] == "enc"
+    assert json_body["keys"][1]["alg"] == "RSA-OAEP"
+    assert json_body["keys"][1]["kty"] == "RSA"
+    assert json_body["keys"][1].key?("kid")
   end
 end

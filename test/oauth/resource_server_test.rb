@@ -3,7 +3,7 @@
 require "test_helper"
 require "webmock/minitest"
 
-class ResourceServerTest < RodaIntegration
+class RodauthOAuthResourceServerTest < RodaIntegration
   include Rack::Test::Methods
   include WebMock::API
 

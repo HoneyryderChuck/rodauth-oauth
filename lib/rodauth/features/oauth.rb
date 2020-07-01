@@ -189,20 +189,6 @@ module Rodauth
 
     auth_value_methods(:only_json?)
 
-    redirect(:oauth_application) do |id|
-      "/#{oauth_applications_path}/#{id}"
-    end
-
-    redirect(:require_authorization) do
-      if logged_in?
-        oauth_authorize_path
-      elsif respond_to?(:login_redirect)
-        login_redirect
-      else
-        default_redirect
-      end
-    end
-
     auth_value_method :json_request_regexp, %r{\bapplication/(?:vnd\.api\+)?json\b}i
 
     SERVER_METADATA = OAuth::TtlStore.new
@@ -246,16 +232,8 @@ module Rodauth
       @scope = scope
     end
 
-    def state
-      param_or_nil("state")
-    end
-
     def scopes
       (param_or_nil("scope") || oauth_application_default_scope).split(" ")
-    end
-
-    def client_id
-      param_or_nil("client_id")
     end
 
     def redirect_uri
@@ -265,14 +243,6 @@ module Rodauth
         redirect_uris = oauth_application[oauth_applications_redirect_uri_column].split(" ")
         redirect_uris.size == 1 ? redirect_uris.first : nil
       end
-    end
-
-    def token_type_hint
-      param_or_nil("token_type_hint") || "access_token"
-    end
-
-    def token
-      param_or_nil("token")
     end
 
     def oauth_application
@@ -348,6 +318,8 @@ module Rodauth
 
         request.on(oauth_applications_id_pattern) do |id|
           oauth_application = db[oauth_applications_table].where(oauth_applications_id_column => id).first
+          next unless oauth_application
+
           scope.instance_variable_set(:@oauth_application, oauth_application)
 
           request.is do
@@ -359,7 +331,9 @@ module Rodauth
           request.on(oauth_tokens_path) do
             oauth_tokens = db[oauth_tokens_table].where(oauth_tokens_oauth_application_id_column => id)
             scope.instance_variable_set(:@oauth_tokens, oauth_tokens)
-            oauth_tokens_view
+            request.get do
+              oauth_tokens_view
+            end
           end
         end
 
@@ -377,7 +351,7 @@ module Rodauth
               id = create_oauth_application
               after_create_oauth_application
               set_notice_flash create_oauth_application_notice_flash
-              redirect oauth_application_redirect(id)
+              redirect "#{request.path}/#{id}"
             end
           end
           set_error_flash create_oauth_application_error_flash
@@ -877,8 +851,8 @@ module Rodauth
 
     def validate_oauth_introspect_params
       # check if valid token hint type
-      if token_type_hint
-        redirect_response_error("unsupported_token_type") unless TOKEN_HINT_TYPES.include?(token_type_hint)
+      if param_or_nil("token_type_hint")
+        redirect_response_error("unsupported_token_type") unless TOKEN_HINT_TYPES.include?(param("token_type_hint"))
       end
 
       redirect_response_error("invalid_request") unless param_or_nil("token")
@@ -906,17 +880,20 @@ module Rodauth
 
     def validate_oauth_revoke_params
       # check if valid token hint type
-      redirect_response_error("unsupported_token_type") unless TOKEN_HINT_TYPES.include?(token_type_hint)
+      if param_or_nil("token_type_hint")
+        redirect_response_error("unsupported_token_type") unless TOKEN_HINT_TYPES.include?(param("token_type_hint"))
+      end
 
       redirect_response_error("invalid_request") unless param_or_nil("token")
     end
 
     def revoke_oauth_token
-      oauth_token = case token_type_hint
-                    when "access_token"
-                      oauth_token_by_token(token)
-                    when "refresh_token"
+      token = param("token")
+
+      oauth_token = if param("token_type_hint") == "refresh_token"
                       oauth_token_by_refresh_token(token)
+                    else
+                      oauth_token_by_token(token)
                     end
 
       redirect_response_error("invalid_request") unless oauth_token
@@ -1018,7 +995,7 @@ module Rodauth
         throw_json_response_error(authorization_required_error_status, "invalid_client")
       else
         set_redirect_error_flash(require_authorization_error_flash)
-        redirect(require_authorization_redirect)
+        redirect(oauth_authorize_path)
       end
     end
 
@@ -1186,7 +1163,6 @@ module Rodauth
     route(:oauth_revoke) do |r|
       before_revoke
 
-      # access-token
       r.post do
         catch_error do
           validate_oauth_revoke_params
@@ -1208,7 +1184,7 @@ module Rodauth
           end
         end
 
-        throw_json_response_error(invalid_oauth_response_status, "invalid_request")
+        redirect_response_error("invalid_request", request.referer || "/")
       end
     end
 
@@ -1253,7 +1229,7 @@ module Rodauth
         end
 
         redirect_url = URI.parse(redirect_uri)
-        query_params << "state=#{state}" if state
+        query_params << "state=#{param('state')}" if param_or_nil("state")
         query_params << redirect_url.query if redirect_url.query
         redirect_url.query = query_params.join("&") unless query_params.empty?
         redirect_url.fragment = fragment_params.join("&") unless fragment_params.empty?

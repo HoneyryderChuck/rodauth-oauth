@@ -1,14 +1,11 @@
-<div>
-  <div class="btn-group" role="group" aria-label="Basic example">
-    <a href="/#{"#{rodauth.oauth_applications_path}/#{@oauth_application[:id]}/#{rodauth.oauth_tokens_path}"}" class="btn btn-secondary">Oauth Tokens</a>
-  </div>
-
+<div id="oauth-application">
   <dl>
     #{
       (rodauth.oauth_application_required_params + %w[client_id] - %w[client_secret]).map do |param|
-        "<dt>#{rodauth.send(:"#{param}_label")}:</dt>" +
-        "<dd>#{@oauth_application[rodauth.send(:"oauth_applications_#{param}_column")]}</dd>"
+        "<dt class=\"#{param}\">#{rodauth.send(:"#{param}_label")}</dt>" +
+        "<dd class=\"#{param}\">#{@oauth_application[rodauth.send(:"oauth_applications_#{param}_column")]}</dd>"
       end.join
     }
   </dl>
+  <a href="/#{"#{rodauth.oauth_applications_path}/#{@oauth_application[:id]}/#{rodauth.oauth_tokens_path}"}" class="btn btn-outline-secondary">Oauth Tokens</a>
 </div>

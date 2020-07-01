@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodaOauthJWTTokenJwtBearerTest < JWTIntegration
+class RodauthOauthJWTTokenJwtBearerTest < JWTIntegration
   include Rack::Test::Methods
 
   def test_oauth_jwt_as_authorization_grant

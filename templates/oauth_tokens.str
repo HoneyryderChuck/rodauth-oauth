@@ -1,4 +1,4 @@
-<div>
+<div id="oauth-tokens">
   #{
     if @oauth_tokens.count.zero?
       "<p>No oauth tokens yet!</p>"
