@@ -8,6 +8,8 @@ module Rodauth
 
     auth_value_method :oauth_jwt_token_issuer, "Example"
 
+    auth_value_method :oauth_application_jws_jwk_column, nil
+
     auth_value_method :oauth_jwt_key, nil
     auth_value_method :oauth_jwt_public_key, nil
     auth_value_method :oauth_jwt_algorithm, "HS256"
@@ -19,6 +21,9 @@ module Rodauth
 
     auth_value_method :oauth_jwt_jwe_copyright, nil
     auth_value_method :oauth_jwt_audience, nil
+
+    auth_value_method :request_uri_not_supported_message, "request uri is unsupported"
+    auth_value_method :invalid_request_object_message, "request object is invalid"
 
     auth_value_methods(
       :jwt_encode,
@@ -58,6 +63,48 @@ module Rodauth
 
         jwt_token
       end
+    end
+
+    # /authorize
+
+    def validate_oauth_grant_params
+      # TODO: add support for requst_uri
+      redirect_response_error("request_uri_not_supported") if param_or_nil("request_uri")
+
+      request_object = param_or_nil("request")
+
+      return super unless request_object && oauth_application
+
+      jws_jwk = if oauth_application[oauth_application_jws_jwk_column]
+                  jwk = oauth_application[oauth_application_jws_jwk_column]
+
+                  if jwk
+                    jwk = JSON.parse(jwk, symbolize_names: true) if jwk.is_a?(String)
+                  end
+                else
+                  redirect_response_error("invalid_request_object")
+                end
+
+      claims = jwt_decode(request_object, jws_key: jwk_import(jws_jwk), jws_algorithm: jwk[:alg])
+
+      redirect_response_error("invalid_request_object") unless claims
+
+      # If signed, the Authorization Request
+      # Object SHOULD contain the Claims "iss" (issuer) and "aud" (audience)
+      # as members, with their semantics being the same as defined in the JWT
+      # [RFC7519] specification.  The value of "aud" should be the value of
+      # the Authorization Server (AS) "issuer" as defined in RFC8414
+      # [RFC8414].
+      claims.delete(:iss)
+      audience = claims.delete(:aud)
+
+      redirect_response_error("invalid_request_object") if audience && audience != authorization_server_url
+
+      claims.each do |k, v|
+        request.params[k.to_s] = v
+      end
+
+      super
     end
 
     # /token
@@ -234,6 +281,10 @@ module Rodauth
     if defined?(JSON::JWT)
       # :nocov:
 
+      def jwk_import(data)
+        JSON::JWK.new(data)
+      end
+
       # json-jwt
       def jwt_encode(payload)
         jwt = JSON::JWT.new(payload)
@@ -251,15 +302,11 @@ module Rodauth
         jwt.to_s
       end
 
-      def jwt_decode(token)
-        return @jwt_token if defined?(@jwt_token)
-
+      def jwt_decode(token, jws_key: oauth_jwt_public_key || _jwt_key, **)
         token = JSON::JWT.decode(token, oauth_jwt_jwe_key).plain_text if oauth_jwt_jwe_key
 
-        jwk = oauth_jwt_public_key || _jwt_key
-
-        @jwt_token = if jwk
-                       JSON::JWT.decode(token, jwk)
+        @jwt_token = if jws_key
+                       JSON::JWT.decode(token, jws_key)
                      elsif !is_authorization_server? && auth_server_jwks_set
                        JSON::JWT.decode(token, JSON::JWK::Set.new(auth_server_jwks_set))
                      end
@@ -278,6 +325,10 @@ module Rodauth
     elsif defined?(JWT)
 
       # ruby-jwt
+
+      def jwk_import(data)
+        JWT::JWK.import(data).keypair
+      end
 
       def jwt_encode(payload)
         headers = {}
@@ -312,17 +363,13 @@ module Rodauth
         token
       end
 
-      def jwt_decode(token)
-        return @jwt_token if defined?(@jwt_token)
-
+      def jwt_decode(token, jws_key: oauth_jwt_public_key || _jwt_key, jws_algorithm: oauth_jwt_algorithm)
         # decrypt jwe
         token = JWE.decrypt(token, oauth_jwt_jwe_key) if oauth_jwt_jwe_key
 
         # decode jwt
-        key = oauth_jwt_public_key || _jwt_key
-
-        @jwt_token = if key
-                       JWT.decode(token, key, true, algorithms: [oauth_jwt_algorithm]).first
+        @jwt_token = if jws_key
+                       JWT.decode(token, jws_key, true, algorithms: [jws_algorithm]).first
                      elsif !is_authorization_server? && auth_server_jwks_set
                        algorithms = auth_server_jwks_set[:keys].select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
                        JWT.decode(token, nil, true, jwks: auth_server_jwks_set, algorithms: algorithms).first
@@ -339,11 +386,15 @@ module Rodauth
       end
     else
       # :nocov:
+      def jwk_import(_data)
+        raise "#{__method__} is undefined, redefine it or require either \"jwt\" or \"json-jwt\""
+      end
+
       def jwt_encode(_token)
         raise "#{__method__} is undefined, redefine it or require either \"jwt\" or \"json-jwt\""
       end
 
-      def jwt_decode(_token)
+      def jwt_decode(_token, **)
         raise "#{__method__} is undefined, redefine it or require either \"jwt\" or \"json-jwt\""
       end
 
