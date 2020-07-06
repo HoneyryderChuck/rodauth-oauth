@@ -2,6 +2,8 @@
 
 ## master
 
+### 0.0.6
+
 #### Features
 
 The `oauth_jwt` feature now supports JWT Secured Authorization Request (JAR) (see https://tools.ietf.org/html/draft-ietf-oauth-jwsreq-20). This means that client applications can send the authorization parameters inside a signed JWT. The client applications keeps the private key, while the authorization server **must** store a public key for the client application. For encrypted JWTs, the client application should use one of the public encryption keys exposed in the JWKs URI, to encrypt the JWT. Remember, **tokens must be signed then encrypted** (or just signed).
