@@ -90,7 +90,7 @@ You'll have to do a bit more boilerplate, so here's the instructions.
 
 ### Example (TL;DR)
 
-If you're familiar with the technology and want to skip the next paragraphs, just [check our roda example](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/tree/master/examples/roda).
+If you're familiar with the technology and want to skip the next paragraphs, just [check our example applications](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/tree/master/examples/).
 
 
 Generating tokens happens mostly server-to-server, so here's an example using:
