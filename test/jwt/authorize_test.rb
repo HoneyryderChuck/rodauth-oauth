@@ -97,7 +97,7 @@ class RodauthOauthJwtAuthorizeTest < JWTIntegration
       response_type: "code",
       client_id: application[:client_id],
       redirect_uri: application[:redirect_uri],
-      scope: application[:scope],
+      scope: application[:scopes],
       state: "ABCDEF"
     }
 
