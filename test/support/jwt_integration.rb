@@ -36,6 +36,7 @@ class JWTIntegration < RodaIntegration
     assert !data["expires_in"].nil?
     assert data["token_type"] == "bearer"
 
+    assert data.key?("access_token")
     payload, headers = JWT.decode(data["access_token"], secret, true, algorithms: [algorithm])
 
     assert headers["alg"] == algorithm

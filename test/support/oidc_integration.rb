@@ -9,6 +9,14 @@ class OIDCIntegration < JWTIntegration
     super({ scopes: "openid" }.merge(params))
   end
 
+  def oauth_grant(params = {})
+    super({ scopes: "openid" }.merge(params))
+  end
+
+  def oauth_token(params = {})
+    super({ scopes: "openid" }.merge(params))
+  end
+
   def test_scopes
     %w[openid]
   end
