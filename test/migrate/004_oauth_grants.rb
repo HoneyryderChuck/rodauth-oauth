@@ -17,6 +17,7 @@ Sequel.migration do
       # if using PKCE flow
       String :code_challenge
       String :code_challenge_method
+      String :nonce
     end
   end
 
