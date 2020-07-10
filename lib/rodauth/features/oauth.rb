@@ -694,14 +694,14 @@ module Rodauth
       request.env["REQUEST_METHOD"] = "POST"
     end
 
-    def create_oauth_grant
-      create_params = {
+    def create_oauth_grant(create_params = {})
+      create_params.merge!(
         oauth_grants_account_id_column => account_id,
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
         oauth_grants_redirect_uri_column => redirect_uri,
         oauth_grants_expires_in_column => Time.now + oauth_grant_expires_in,
         oauth_grants_scopes_column => scopes.join(oauth_scope_separator)
-      }
+      )
 
       # Access Type flow
       if use_oauth_access_type?
@@ -760,27 +760,42 @@ module Rodauth
     def create_oauth_token
       case param("grant_type")
       when "authorization_code"
-        create_oauth_token_from_authorization_code(oauth_application)
+        # fetch oauth grant
+        oauth_grant = db[oauth_grants_table].where(
+          oauth_grants_code_column => param("code"),
+          oauth_grants_redirect_uri_column => param("redirect_uri"),
+          oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+          oauth_grants_revoked_at_column => nil
+        ).where(Sequel[oauth_grants_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
+                                            .for_update
+                                            .first
+
+        redirect_response_error("invalid_grant") unless oauth_grant
+
+        create_params = {
+          oauth_tokens_account_id_column => oauth_grant[oauth_grants_account_id_column],
+          oauth_tokens_oauth_application_id_column => oauth_grant[oauth_grants_oauth_application_id_column],
+          oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column],
+          oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column]
+        }
+        create_oauth_token_from_authorization_code(oauth_grant, create_params)
       when "refresh_token"
-        create_oauth_token_from_token(oauth_application)
+        # fetch oauth token
+        oauth_token = oauth_token_by_refresh_token(param("refresh_token"))
+
+        redirect_response_error("invalid_grant") unless oauth_token
+
+        update_params = {
+          oauth_tokens_oauth_application_id_column => oauth_token[oauth_grants_oauth_application_id_column],
+          oauth_tokens_expires_in_column => Time.now + oauth_token_expires_in
+        }
+        create_oauth_token_from_token(oauth_token, update_params)
       else
         redirect_response_error("invalid_grant")
       end
     end
 
-    def create_oauth_token_from_authorization_code(oauth_application)
-      # fetch oauth grant
-      oauth_grant = db[oauth_grants_table].where(
-        oauth_grants_code_column => param("code"),
-        oauth_grants_redirect_uri_column => param("redirect_uri"),
-        oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-        oauth_grants_revoked_at_column => nil
-      ).where(Sequel[oauth_grants_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
-                                          .for_update
-                                          .first
-
-      redirect_response_error("invalid_grant") unless oauth_grant
-
+    def create_oauth_token_from_authorization_code(oauth_grant, create_params)
       # PKCE
       if use_oauth_pkce?
         if oauth_grant[oauth_grants_code_challenge_column]
@@ -792,13 +807,6 @@ module Rodauth
         end
       end
 
-      create_params = {
-        oauth_tokens_account_id_column => oauth_grant[oauth_grants_account_id_column],
-        oauth_tokens_oauth_application_id_column => oauth_grant[oauth_grants_oauth_application_id_column],
-        oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column],
-        oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column]
-      }
-
       # revoke oauth grant
       db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column])
                             .update(oauth_grants_revoked_at_column => Sequel::CURRENT_TIMESTAMP)
@@ -809,18 +817,10 @@ module Rodauth
       generate_oauth_token(create_params, should_generate_refresh_token)
     end
 
-    def create_oauth_token_from_token(oauth_application)
-      # fetch oauth token
-      oauth_token = oauth_token_by_refresh_token(param("refresh_token"))
-
-      redirect_response_error("invalid_grant") unless oauth_token && token_from_application?(oauth_token, oauth_application)
+    def create_oauth_token_from_token(oauth_token, update_params)
+      redirect_response_error("invalid_grant") unless token_from_application?(oauth_token, oauth_application)
 
       token = oauth_unique_id_generator
-
-      update_params = {
-        oauth_tokens_oauth_application_id_column => oauth_token[oauth_grants_oauth_application_id_column],
-        oauth_tokens_expires_in_column => Time.now + oauth_token_expires_in
-      }
 
       if oauth_tokens_token_hash_column
         update_params[oauth_tokens_token_hash_column] = generate_token_hash(token)
