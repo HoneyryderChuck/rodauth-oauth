@@ -9,6 +9,10 @@ class OIDCIntegration < JWTIntegration
     super({ scopes: "openid" }.merge(params))
   end
 
+  def test_scopes
+    %w[openid]
+  end
+
   def oauth_feature
     :oidc
   end
