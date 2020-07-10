@@ -26,17 +26,15 @@ class OIDCIntegration < JWTIntegration
   end
 
   def verify_response_body(data, oauth_token, secret, algorithm)
-    assert data["refresh_token"] == oauth_token[:refresh_token]
-
-    assert !data["expires_in"].nil?
-    assert data["token_type"] == "bearer"
-
-    payload, headers = JWT.decode(data["access_token"], secret, true, algorithms: [algorithm])
+    super
+    assert data.key?("id_token")
+    payload, headers = JWT.decode(data["id_token"], secret, true, algorithms: [algorithm])
 
     assert headers["alg"] == algorithm
     assert payload["iss"] == "Example"
     assert payload["sub"] == account[:id]
-
-    # TODO: verify id_token
+    assert payload.key?("aud")
+    assert payload.key?("exp")
+    assert payload.key?("iat")
   end
 end

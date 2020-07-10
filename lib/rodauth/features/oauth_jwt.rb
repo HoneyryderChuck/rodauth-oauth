@@ -169,10 +169,22 @@ module Rodauth
 
       oauth_token = _generate_oauth_token(create_params)
 
+      claims = jwt_claims(oauth_token)
+
+      # one of the points of using jwt is avoiding database lookups, so we put here all relevant
+      # token data.
+      claims[:scope] = oauth_token[oauth_tokens_scopes_column]
+
+      token = jwt_encode(claims)
+
+      oauth_token[oauth_tokens_token_column] = token
+      oauth_token
+    end
+
+    def jwt_claims(oauth_token)
       issued_at = Time.now.utc.to_i
 
-      payload = {
-        sub: oauth_token[oauth_tokens_account_id_column],
+      {
         iss: oauth_jwt_token_issuer, # issuer
         iat: issued_at, # issued at
         #
@@ -184,20 +196,12 @@ module Rodauth
         # owner is involved, such as the client credentials grant, the value
         # of "sub" SHOULD correspond to an identifier the authorization
         # server uses to indicate the client application.
+        sub: oauth_token[oauth_tokens_account_id_column],
         client_id: oauth_application[oauth_applications_client_id_column],
 
         exp: issued_at + oauth_token_expires_in,
-        aud: oauth_jwt_audience,
-
-        # one of the points of using jwt is avoiding database lookups, so we put here all relevant
-        # token data.
-        scope: oauth_token[oauth_tokens_scopes_column]
+        aud: oauth_jwt_audience
       }
-
-      token = jwt_encode(payload)
-
-      oauth_token[oauth_tokens_token_column] = token
-      oauth_token
     end
 
     def oauth_token_by_token(token, *)
