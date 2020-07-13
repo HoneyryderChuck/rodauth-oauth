@@ -6,6 +6,7 @@ module Rodauth
   Feature.define(:oauth_jwt) do
     depends :oauth
 
+    auth_value_method :oauth_subject_type, "public" # public, pairwise
     auth_value_method :oauth_jwt_token_issuer, "Example"
 
     auth_value_method :oauth_application_jws_jwk_column, nil
@@ -196,12 +197,23 @@ module Rodauth
         # owner is involved, such as the client credentials grant, the value
         # of "sub" SHOULD correspond to an identifier the authorization
         # server uses to indicate the client application.
-        sub: oauth_token[oauth_tokens_account_id_column],
+        sub: jwt_subject(oauth_token),
         client_id: oauth_application[oauth_applications_client_id_column],
 
         exp: issued_at + oauth_token_expires_in,
         aud: oauth_jwt_audience
       }
+    end
+
+    def jwt_subject(oauth_token)
+      case oauth_subject_type
+      when "public"
+        oauth_token[oauth_tokens_account_id_column]
+      when "pairwise"
+        Digest::SHA256.hexdigest("#{oauth_token[oauth_tokens_account_id_column]}#{oauth_token[oauth_tokens_application_id_column]}")
+      else
+        raise StandardError, "unexpected subject (#{oauth_subject_type})"
+      end
     end
 
     def oauth_token_by_token(token, *)
