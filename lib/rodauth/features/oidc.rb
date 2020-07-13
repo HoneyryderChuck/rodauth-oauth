@@ -36,10 +36,14 @@ module Rodauth
 
     def create_oauth_token
       oauth_token = super
+      generate_id_token(oauth_token)
+      oauth_token
+    end
 
+    def generate_id_token(oauth_token)
       oauth_scopes = oauth_token[oauth_tokens_scopes_column].split(oauth_scope_separator)
 
-      return oauth_token unless oauth_scopes.include?("openid")
+      return unless oauth_scopes.include?("openid")
 
       id_token_claims = jwt_claims(oauth_token)
       id_token_claims[:nonce] = oauth_token[oauth_tokens_nonce_column] if oauth_token[oauth_tokens_nonce_column]
@@ -64,13 +68,42 @@ module Rodauth
       end
 
       oauth_token[:id_token] = jwt_encode(id_token_claims)
-      oauth_token
     end
 
     def json_access_token_payload(oauth_token)
       payload = super
       payload["id_token"] = oauth_token[:id_token] if oauth_token[:id_token]
       payload
+    end
+
+    # Authorize
+
+    def check_valid_response_type?
+      case param_or_nil("response_type")
+      when "none", "id_token"
+        true
+      else
+        super
+      end
+    end
+
+    def do_authorize(redirect_url, query_params = [], fragment_params = [])
+      case param("response_type")
+      when "id_token"
+        create_params = {
+          oauth_tokens_account_id_column => account_id,
+          oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+          oauth_tokens_scopes_column => scopes
+        }
+        oauth_token = generate_oauth_token(create_params, false)
+        generate_id_token(oauth_token)
+        params = json_access_token_payload(oauth_token)
+        params.delete("access_token")
+
+        fragment_params.replace(params.map { |k, v| "#{k}=#{v}" })
+      end
+
+      super(redirect_url, query_params, fragment_params)
     end
   end
 end

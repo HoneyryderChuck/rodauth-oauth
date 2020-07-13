@@ -735,6 +735,29 @@ module Rodauth
       end
     end
 
+    def do_authorize(redirect_url, query_params = [], fragment_params = [])
+      case param("response_type")
+      when "token"
+        redirect_response_error("invalid_request") unless use_oauth_implicit_grant_type?
+
+        create_params = {
+          oauth_tokens_account_id_column => account_id,
+          oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+          oauth_tokens_scopes_column => scopes
+        }
+        oauth_token = generate_oauth_token(create_params, false)
+
+        fragment_params.replace(json_access_token_payload(oauth_token).map { |k, v| "#{k}=#{v}" })
+      when "code", "", nil
+        query_params << "code=#{create_oauth_grant}"
+      end
+
+      query_params << "state=#{param('state')}" if param_or_nil("state")
+      query_params << redirect_url.query if redirect_url.query
+      redirect_url.query = query_params.join("&") unless query_params.empty?
+      redirect_url.fragment = fragment_params.join("&") unless fragment_params.empty?
+    end
+
     # Access Tokens
 
     def before_token
@@ -1201,39 +1224,11 @@ module Rodauth
       end
 
       r.post do
-        code = nil
-        query_params = []
-        fragment_params = []
+        redirect_url = URI.parse(redirect_uri)
 
         transaction do
-          case param("response_type")
-          when "token"
-            redirect_response_error("invalid_request") unless use_oauth_implicit_grant_type?
-
-            create_params = {
-              oauth_tokens_account_id_column => account_id,
-              oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-              oauth_tokens_scopes_column => scopes
-            }
-            oauth_token = generate_oauth_token(create_params, false)
-
-            token_payload = json_access_token_payload(oauth_token)
-            fragment_params.replace(token_payload.map { |k, v| "#{k}=#{v}" })
-          when "code", "", nil
-            code = create_oauth_grant
-            query_params << "code=#{code}"
-          else
-            redirect_response_error("invalid_request")
-          end
-          after_authorize
+          do_authorize(redirect_url)
         end
-
-        redirect_url = URI.parse(redirect_uri)
-        query_params << "state=#{param('state')}" if param_or_nil("state")
-        query_params << redirect_url.query if redirect_url.query
-        redirect_url.query = query_params.join("&") unless query_params.empty?
-        redirect_url.fragment = fragment_params.join("&") unless fragment_params.empty?
-
         redirect(redirect_url.to_s)
       end
     end
