@@ -244,9 +244,9 @@ class RodauthOauthAuthorizeTest < RodaIntegration
 
     oauth_token = db[:oauth_tokens].first
 
-    skip page.current_url == "#{oauth_application[:redirect_uri]}#access_token=#{oauth_token[:token]}& " \
-                             "token_type=Bearer&expires_in=3600",
-         "was redirected instead to #{page.current_url}"
+    assert page.current_url == "#{oauth_application[:redirect_uri]}?#access_token=#{oauth_token[:token]}&" \
+                             "token_type=bearer&expires_in=3600",
+           "was redirected instead to #{page.current_url}"
   end
 
   def test_authorize_post_authorize_with_pkce
