@@ -752,8 +752,16 @@ module Rodauth
         query_params << "code=#{create_oauth_grant}"
       end
 
-      query_params << "state=#{param('state')}" if param_or_nil("state")
+      if param_or_nil("state")
+        if !fragment_params.empty?
+          fragment_params << "state=#{param('state')}"
+        else
+          query_params << "state=#{param('state')}"
+        end
+      end
+
       query_params << redirect_url.query if redirect_url.query
+
       redirect_url.query = query_params.join("&") unless query_params.empty?
       redirect_url.fragment = fragment_params.join("&") unless fragment_params.empty?
     end
