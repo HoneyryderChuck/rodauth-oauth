@@ -266,6 +266,8 @@ module Rodauth
 
       return unless scheme.downcase == oauth_token_type
 
+      return if token.empty?
+
       token
     end
 
