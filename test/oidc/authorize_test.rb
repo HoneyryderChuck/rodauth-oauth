@@ -172,6 +172,98 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
            "was redirected instead to #{page.current_url}"
   end
 
+  # Multiple Response Types
+
+  def test_oidc_authorize_post_authorize_with_code_token_response_type
+    rodauth do
+      use_oauth_implicit_grant_type? true
+    end
+    setup_application
+    login
+
+    # show the authorization form
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code+token"
+    assert page.current_path == "/oauth-authorize",
+           "was redirected instead to #{page.current_path}"
+
+    # submit authorization request
+    click_button "Authorize"
+
+    assert db[:oauth_grants].count == 1,
+           "no grant has been created"
+
+    assert db[:oauth_tokens].count == 1,
+           "no token has been created"
+
+    assert page.current_url =~ /#{oauth_application[:redirect_uri]}\?#code=([^&]+)&access_token=([^&]+)&token_type=bearer&expires_in=3600/,
+           "was redirected instead to #{page.current_url}"
+  end
+
+  def test_oidc_authorize_post_authorize_with_code_id_token_response_type
+    setup_application
+    login
+
+    # show the authorization form
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code+id_token"
+    assert page.current_path == "/oauth-authorize",
+           "was redirected instead to #{page.current_path}"
+
+    # submit authorization request
+    click_button "Authorize"
+
+    assert db[:oauth_grants].count == 1,
+           "no grant has been created"
+
+    assert db[:oauth_tokens].count == 1,
+           "no token has been created"
+
+    assert page.current_url =~ /#{oauth_application[:redirect_uri]}\?#code=([^&]+)&token_type=bearer&expires_in=3600&id_token=([^&]+)/,
+           "was redirected instead to #{page.current_url}"
+  end
+
+  def test_oidc_authorize_post_authorize_with_id_token_token_response_type
+    rodauth do
+      use_oauth_implicit_grant_type? true
+    end
+    setup_application
+    login
+
+    # show the authorization form
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=id_token+token"
+    assert page.current_path == "/oauth-authorize",
+           "was redirected instead to #{page.current_path}"
+
+    # submit authorization request
+    click_button "Authorize"
+
+    assert page.current_url =~ /#{oauth_application[:redirect_uri]}\?#token_type=bearer&|
+                                expires_in=3600&id_token=([^&]+)&access_token=([^&]+)/,
+           "was redirected instead to #{page.current_url}"
+  end
+
+  def test_oidc_authorize_post_authorize_with_code_id_token_token_response_type
+    rodauth do
+      use_oauth_implicit_grant_type? true
+    end
+    setup_application
+    login
+
+    # show the authorization form
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code+id_token+token"
+    assert page.current_path == "/oauth-authorize",
+           "was redirected instead to #{page.current_path}"
+
+    # submit authorization request
+    click_button "Authorize"
+
+    assert db[:oauth_grants].count == 1,
+           "no grant has been created"
+
+    assert page.current_url =~ /#{oauth_application[:redirect_uri]}\?#code=([^&]+)&|
+                                token_type=bearer&expires_in=3600&id_token=([^&]+)&access_token=([^&]+)/,
+           "was redirected instead to #{page.current_url}"
+  end
+
   private
 
   def setup_application

@@ -740,16 +740,9 @@ module Rodauth
       when "token"
         redirect_response_error("invalid_request") unless use_oauth_implicit_grant_type?
 
-        create_params = {
-          oauth_tokens_account_id_column => account_id,
-          oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-          oauth_tokens_scopes_column => scopes
-        }
-        oauth_token = generate_oauth_token(create_params, false)
-
-        fragment_params.replace(json_access_token_payload(oauth_token).map { |k, v| "#{k}=#{v}" })
+        fragment_params.replace(_do_authorize_token.map { |k, v| "#{k}=#{v}" })
       when "code", "", nil
-        query_params << "code=#{create_oauth_grant}"
+        query_params.replace(_do_authorize_code.map { |k, v| "#{k}=#{v}" })
       end
 
       if param_or_nil("state")
@@ -764,6 +757,21 @@ module Rodauth
 
       redirect_url.query = query_params.join("&") unless query_params.empty?
       redirect_url.fragment = fragment_params.join("&") unless fragment_params.empty?
+    end
+
+    def _do_authorize_code
+      { "code" => create_oauth_grant }
+    end
+
+    def _do_authorize_token
+      create_params = {
+        oauth_tokens_account_id_column => account_id,
+        oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+        oauth_tokens_scopes_column => scopes
+      }
+      oauth_token = generate_oauth_token(create_params, false)
+
+      json_access_token_payload(oauth_token)
     end
 
     # Access Tokens

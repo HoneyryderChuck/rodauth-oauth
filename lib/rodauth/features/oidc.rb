@@ -80,7 +80,8 @@ module Rodauth
 
     def check_valid_response_type?
       case param_or_nil("response_type")
-      when "none", "id_token"
+      when "none", "id_token",
+           "code token", "code id_token", "id_token token", "code id_token token" # multiple
         true
       else
         super
@@ -90,20 +91,41 @@ module Rodauth
     def do_authorize(redirect_url, query_params = [], fragment_params = [])
       case param("response_type")
       when "id_token"
-        create_params = {
-          oauth_tokens_account_id_column => account_id,
-          oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-          oauth_tokens_scopes_column => scopes
-        }
-        oauth_token = generate_oauth_token(create_params, false)
-        generate_id_token(oauth_token)
-        params = json_access_token_payload(oauth_token)
-        params.delete("access_token")
+        fragment_params.replace(_do_authorize_id_token.map { |k, v| "#{k}=#{v}" })
+      when "code token"
+        redirect_response_error("invalid_request") unless use_oauth_implicit_grant_type?
+
+        params = { **_do_authorize_code, **_do_authorize_token }
+
+        fragment_params.replace(params.map { |k, v| "#{k}=#{v}" })
+      when "code id_token"
+        params = { **_do_authorize_code, **_do_authorize_id_token }
+
+        fragment_params.replace(params.map { |k, v| "#{k}=#{v}" })
+      when "id_token token"
+        params = { **_do_authorize_id_token, **_do_authorize_token }
+
+        fragment_params.replace(params.map { |k, v| "#{k}=#{v}" })
+      when "code id_token token"
+        params = { **_do_authorize_code, **_do_authorize_id_token, **_do_authorize_token }
 
         fragment_params.replace(params.map { |k, v| "#{k}=#{v}" })
       end
 
       super(redirect_url, query_params, fragment_params)
+    end
+
+    def _do_authorize_id_token
+      create_params = {
+        oauth_tokens_account_id_column => account_id,
+        oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+        oauth_tokens_scopes_column => scopes
+      }
+      oauth_token = generate_oauth_token(create_params, false)
+      generate_id_token(oauth_token)
+      params = json_access_token_payload(oauth_token)
+      params.delete("access_token")
+      params
     end
   end
 end
