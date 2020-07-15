@@ -24,7 +24,7 @@ class RodauthOAuthHTTPMacAuthorizeTest < HTTPMacIntegration
 
     oauth_token = db[:http_mac_oauth_tokens].first
 
-    assert page.current_url == "#{oauth_application[:redirect_uri]}?#access_token=#{oauth_token[:token]}&" \
+    assert page.current_url == "#{oauth_application[:redirect_uri]}#access_token=#{oauth_token[:token]}&" \
                              "token_type=mac&expires_in=3600&mac_key=#{oauth_token[:mac_key]}&" \
                              "mac_algorithm=hmac-sha-256",
            "was redirected instead to #{page.current_url}"

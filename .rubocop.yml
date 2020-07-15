@@ -37,6 +37,9 @@ Naming/HeredocDelimiterCase:
   Exclude:
     - examples/**/*
 
+Bundler/DuplicatedGem:
+  Enabled: false
+
 Metrics/ModuleLength:
   Enabled: false
 

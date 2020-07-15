@@ -112,19 +112,19 @@ module Rodauth
       when "code token"
         redirect_response_error("invalid_request") unless use_oauth_implicit_grant_type?
 
-        params = { **_do_authorize_code, **_do_authorize_token }
+        params = _do_authorize_code.merge(_do_authorize_token)
 
         fragment_params.replace(params.map { |k, v| "#{k}=#{v}" })
       when "code id_token"
-        params = { **_do_authorize_code, **_do_authorize_id_token }
+        params = _do_authorize_code.merge(_do_authorize_id_token)
 
         fragment_params.replace(params.map { |k, v| "#{k}=#{v}" })
       when "id_token token"
-        params = { **_do_authorize_id_token, **_do_authorize_token }
+        params = _do_authorize_id_token.merge(_do_authorize_token)
 
         fragment_params.replace(params.map { |k, v| "#{k}=#{v}" })
       when "code id_token token"
-        params = { **_do_authorize_code, **_do_authorize_id_token, **_do_authorize_token }
+        params = _do_authorize_code.merge(_do_authorize_id_token).merge(_do_authorize_token)
 
         fragment_params.replace(params.map { |k, v| "#{k}=#{v}" })
       end

@@ -25,7 +25,12 @@ gem "sequel-activerecord_connection", github: "janko/sequel-activerecord_connect
 gem "tilt"
 gem "tzinfo-data"
 
-gem "capybara"
+if RUBY_VERSION < "2.5"
+  gem "capybara"
+else
+  gem "capybara", github: "teamcapybara/capybara", branch: "master"
+end
+
 gem "minitest", "~> 5.0"
 gem "minitest-hooks"
 gem "rack-test"
