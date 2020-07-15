@@ -18,6 +18,8 @@ module Rodauth
     auth_value_method :oauth_grants_nonce_column, :nonce
     auth_value_method :oauth_tokens_nonce_column, :nonce
 
+    auth_value_method :invalid_scope_message, "The Access Token expired"
+
     auth_value_methods(:get_oidc_param)
 
     private
@@ -53,21 +55,36 @@ module Rodauth
       # Sounds like the same as issued at claim.
       id_token_claims[:auth_time] = id_token_claims[:iat]
 
-      oidc_scopes = (OIDC_SCOPES_MAP.keys & oauth_scopes)
-
-      unless oidc_scopes.empty?
-        if respond_to?(:get_oidc_param)
-          oidc_scopes.each do |scope|
-            OIDC_SCOPES_MAP[scope].each do |param|
-              id_token_claims[param] = __send__(:get_oidc_param, oauth_token, param)
-            end
-          end
-        else
-          warn "`get_oidc_param(token, param)` must be implemented to use oidc scopes."
-        end
-      end
+      fill_with_user_claims(id_token_claims, oauth_token, oauth_scopes)
 
       oauth_token[:id_token] = jwt_encode(id_token_claims)
+    end
+
+    def fill_with_user_claims(claims, oauth_token, scopes)
+      scopes_by_oidc = scopes.each_with_object({}) do |scope, by_oidc|
+        oidc, param = scope.split(".", 2)
+
+        by_oidc[oidc] ||= []
+
+        by_oidc[oidc] << param.to_sym if param
+      end
+
+      oidc_scopes = (OIDC_SCOPES_MAP.keys & scopes_by_oidc.keys)
+
+      return if oidc_scopes.empty?
+
+      if respond_to?(:get_oidc_param)
+        oidc_scopes.each do |scope|
+          params = scopes_by_oidc[scope]
+          params = params.empty? ? OIDC_SCOPES_MAP[scope] : (OIDC_SCOPES_MAP[scope] & params)
+
+          params.each do |param|
+            claims[param] = __send__(:get_oidc_param, oauth_token, param)
+          end
+        end
+      else
+        warn "`get_oidc_param(token, param)` must be implemented to use oidc scopes."
+      end
     end
 
     def json_access_token_payload(oauth_token)
@@ -126,6 +143,31 @@ module Rodauth
       params = json_access_token_payload(oauth_token)
       params.delete("access_token")
       params
+    end
+
+    # /userinfo
+    route(:userinfo) do |r|
+      r.get do
+        catch_error do
+          oauth_token = authorization_token
+
+          redirect_response_error("invalid_token") unless oauth_token
+
+          oauth_scopes = oauth_token["scope"].split(" ")
+
+          throw_json_response_error(authorization_required_error_status, "invalid_token") unless oauth_scopes.include?("openid")
+
+          oauth_scopes.delete("openid")
+
+          oidc_claims = { "sub" => oauth_token["sub"] }
+
+          fill_with_user_claims(oidc_claims, oauth_token, oauth_scopes)
+
+          json_response_success(oidc_claims)
+        end
+
+        throw_json_response_error(authorization_required_error_status, "invalid_token")
+      end
     end
   end
 end
