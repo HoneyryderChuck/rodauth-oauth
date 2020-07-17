@@ -147,7 +147,7 @@ module Rodauth
 
     # /userinfo
     route(:userinfo) do |r|
-      r.get do
+      r.on method: %i[get post] do
         catch_error do
           oauth_token = authorization_token
 
