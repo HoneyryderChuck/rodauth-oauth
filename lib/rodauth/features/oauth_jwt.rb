@@ -29,7 +29,8 @@ module Rodauth
     auth_value_methods(
       :jwt_encode,
       :jwt_decode,
-      :jwks_set
+      :jwks_set,
+      :last_account_login_at
     )
 
     JWKS = OAuth::TtlStore.new
@@ -45,6 +46,12 @@ module Rodauth
     end
 
     private
+
+    unless method_defined?(:last_account_login_at)
+      def last_account_login_at
+        nil
+      end
+    end
 
     def authorization_token
       return @authorization_token if defined?(@authorization_token)
@@ -185,7 +192,7 @@ module Rodauth
     def jwt_claims(oauth_token)
       issued_at = Time.now.utc.to_i
 
-      {
+      claims = {
         iss: oauth_jwt_token_issuer, # issuer
         iat: issued_at, # issued at
         #
@@ -203,6 +210,10 @@ module Rodauth
         exp: issued_at + oauth_token_expires_in,
         aud: oauth_jwt_audience
       }
+
+      claims[:auth_time] = last_account_login_at.utc.to_i if last_account_login_at
+
+      claims
     end
 
     def jwt_subject(oauth_token)

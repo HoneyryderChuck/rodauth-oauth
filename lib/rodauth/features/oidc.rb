@@ -22,6 +22,16 @@ module Rodauth
 
     auth_value_methods(:get_oidc_param)
 
+    def openid_configuration(issuer = nil)
+      request.on(".well-known") do
+        request.on("openid-configuration") do
+          request.get do
+            json_response_success(openid_configuration_body(issuer))
+          end
+        end
+      end
+    end
+
     private
 
     def create_oauth_grant(create_params = {})
@@ -143,6 +153,50 @@ module Rodauth
       params = json_access_token_payload(oauth_token)
       params.delete("access_token")
       params
+    end
+
+    # Metadata
+
+    def openid_configuration_body(path)
+      metadata = oauth_server_metadata_body(path)
+
+      scope_claims = oauth_application_scopes.each_with_object([]) do |scope, claims|
+        oidc, param = scope.split(".", 2)
+        if param
+          claims << param
+        else
+          oidc_claims = OIDC_SCOPES_MAP[oidc]
+          claims.concat(oidc_claims) if oidc_claims
+        end
+      end
+
+      scope_claims.unshift("auth_time") if last_account_login_at
+
+      metadata.merge({
+                       userinfo_endpoint: userinfo_url,
+                       response_types_supported: metadata[:response_types_supported] +
+                         ["none", "id_token", %w[code token], %w[code id_token], %w[id_token token], %w[code id_token token]],
+                       response_modes_supported: %w[query fragment],
+                       grant_types_supported: %w[authorization_code implicit],
+
+                       id_token_signing_alg_values_supported: metadata[:token_endpoint_auth_signing_alg_values_supported],
+                       id_token_encryption_alg_values_supported: [oauth_jwt_jwe_algorithm].compact,
+                       id_token_encryption_enc_values_supported: [oauth_jwt_jwe_encryption_method].compact,
+
+                       userinfo_signing_alg_values_supported: [],
+                       userinfo_encryption_alg_values_supported: [],
+                       userinfo_encryption_enc_values_supported: [],
+
+                       request_object_signing_alg_values_supported: [],
+                       request_object_encryption_alg_values_supported: [],
+                       request_object_encryption_enc_values_supported: [],
+
+                       # These Claim Types are described in Section 5.6 of OpenID Connect Core 1.0 [OpenID.Core].
+                       # Values defined by this specification are normal, aggregated, and distributed.
+                       # If omitted, the implementation supports only normal Claims.
+                       claim_types_supported: %w[normal],
+                       claims_supported: %w[sub iss iat exp aud] | scope_claims
+                     })
     end
 
     # /userinfo
