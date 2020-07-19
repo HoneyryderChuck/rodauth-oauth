@@ -138,6 +138,9 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
   end
 
   def test_oidc_authorize_post_authorize_with_id_token_response_type
+    rodauth do
+      use_oauth_implicit_grant_type? true
+    end
     setup_application
     login
 
@@ -200,6 +203,9 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
   end
 
   def test_oidc_authorize_post_authorize_with_code_id_token_response_type
+    rodauth do
+      use_oauth_implicit_grant_type? true
+    end
     setup_application
     login
 

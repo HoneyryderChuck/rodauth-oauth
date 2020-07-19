@@ -116,6 +116,8 @@ module Rodauth
     end
 
     def do_authorize(redirect_url, query_params = [], fragment_params = [])
+      return super unless use_oauth_implicit_grant_type?
+
       case param("response_type")
       when "id_token"
         fragment_params.replace(_do_authorize_id_token.map { |k, v| "#{k}=#{v}" })
