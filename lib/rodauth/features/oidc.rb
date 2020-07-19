@@ -20,6 +20,8 @@ module Rodauth
 
     auth_value_method :invalid_scope_message, "The Access Token expired"
 
+    auth_value_method :webfinger_relation, "http://openid.net/specs/connect/1.0/issuer"
+
     auth_value_methods(:get_oidc_param)
 
     def openid_configuration(issuer = nil)
@@ -27,6 +29,34 @@ module Rodauth
         request.on("openid-configuration") do
           request.get do
             json_response_success(openid_configuration_body(issuer))
+          end
+        end
+      end
+    end
+
+    def webfinger
+      request.on(".well-known") do
+        request.on("webfinger") do
+          request.get do
+            resource = param_or_nil("resource")
+
+            throw_json_response_error(400, "invalid_request") unless resource
+
+            account = db[accounts_table].where(login_column => resource).first
+
+            throw_json_response_error(404, "invalid_request") unless account
+
+            response.status = 200
+            response["Content-Type"] ||= "application/jrd+json"
+            json_payload = JSON.dump({
+                                       subject: resource,
+                                       links: [{
+                                         rel: webfinger_relation,
+                                         href: authorization_server_url
+                                       }]
+                                     })
+            response.write(json_payload)
+            request.halt
           end
         end
       end
