@@ -13,7 +13,7 @@ class RodauthOauthServerMetadataTest < RodaIntegration
     get("/.well-known/oauth-authorization-server")
 
     assert last_response.status == 200
-    assert json_body["issuer"] == "http://example.org/"
+    assert json_body["issuer"] == "http://example.org"
     assert json_body["authorization_endpoint"] == "http://example.org/oauth-authorize"
     assert json_body["token_endpoint"] == "http://example.org/oauth-token"
     assert json_body["registration_endpoint"] == "http://example.org/oauth-applications"

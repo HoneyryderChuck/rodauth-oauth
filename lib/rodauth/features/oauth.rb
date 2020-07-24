@@ -1124,7 +1124,7 @@ module Rodauth
 
     def oauth_server_metadata_body(path)
       issuer = base_url
-      issuer += "/#{path}" if issuer
+      issuer += "/#{path}" if path
 
       responses_supported = %w[code]
       response_modes_supported = %w[query]
