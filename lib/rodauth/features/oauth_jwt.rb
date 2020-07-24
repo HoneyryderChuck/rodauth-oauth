@@ -7,7 +7,7 @@ module Rodauth
     depends :oauth
 
     auth_value_method :oauth_subject_type, "public" # public, pairwise
-    auth_value_method :oauth_jwt_token_issuer, "Example"
+    auth_value_method :oauth_jwt_token_issuer, nil
 
     auth_value_method :oauth_application_jws_jwk_column, nil
 
@@ -65,8 +65,8 @@ module Rodauth
 
         return unless jwt_token
 
-        return if jwt_token["iss"] != oauth_jwt_token_issuer ||
-                  jwt_token["aud"] != oauth_jwt_audience ||
+        return if jwt_token["iss"] != (oauth_jwt_token_issuer || authorization_server_url) ||
+                  (oauth_jwt_audience && jwt_token["aud"] != oauth_jwt_audience) ||
                   !jwt_token["sub"]
 
         jwt_token
@@ -193,7 +193,7 @@ module Rodauth
       issued_at = Time.now.utc.to_i
 
       claims = {
-        iss: oauth_jwt_token_issuer, # issuer
+        iss: (oauth_jwt_token_issuer || authorization_server_url), # issuer
         iat: issued_at, # issued at
         #
         # sub  REQUIRED - as defined in section 4.1.2 of [RFC7519].  In case of
@@ -208,7 +208,7 @@ module Rodauth
         client_id: oauth_application[oauth_applications_client_id_column],
 
         exp: issued_at + oauth_token_expires_in,
-        aud: oauth_jwt_audience
+        aud: (oauth_jwt_audience || oauth_application[oauth_applications_client_id_column])
       }
 
       claims[:auth_time] = last_account_login_at.utc.to_i if last_account_login_at

@@ -8,6 +8,14 @@ require_relative File.join(__dir__, "roda_integration")
 class JWTIntegration < RodaIntegration
   private
 
+  def setup_application
+    rodauth do
+      oauth_jwt_token_issuer "Example"
+      oauth_jwt_audience "Audience"
+    end
+    super
+  end
+
   def oauth_feature
     :oauth_jwt
   end
@@ -41,6 +49,7 @@ class JWTIntegration < RodaIntegration
 
     assert headers["alg"] == algorithm
     assert payload["iss"] == "Example"
+    assert payload["aud"] == "Audience"
     assert payload["sub"] == account[:id]
     assert payload["nonce"] == oauth_token[:nonce]
   end
