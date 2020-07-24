@@ -4,12 +4,18 @@ require "base64"
 require "net/http"
 require "securerandom"
 require "roda"
+require "roda/session_middleware"
+require "omniauth/openid_connect"
 
 AUTHORIZATION_SERVER = ENV.fetch("AUTHORIZATION_SERVER_URI", "http://localhost:9292")
 RESOURCE_SERVER = ENV.fetch("RESOURCE_SERVER_URI", "http://localhost:9292/books")
-REDIRECT_URI = "http://localhost:9293/callback"
+REDIRECT_URI = "http://localhost:9293/auth/openid_connect/callback"
 CLIENT_ID = ENV.fetch("CLIENT_ID", "CLIENT_ID")
 CLIENT_SECRET = ENV.fetch("CLIENT_SECRET", CLIENT_ID)
+
+OpenIDConnect.debug!
+WebFinger.url_builder = URI::HTTP
+SWD.url_builder = URI::HTTP
 
 class ClientApplication < Roda
   plugin :render, layout: { inline: <<~LAYOUT }
@@ -24,6 +30,17 @@ class ClientApplication < Roda
             crossorigin="anonymous"></link>
       <title>Rodauth Oauth Demo - Book Store Client Application</title>
       <%= assets(:css) %>
+      <style>
+        .profile {
+          display: block;
+          padding: .5rem 1rem;
+          border: 1px solid;
+          border-radius: .25rem;
+          line-height: 1.5;
+          padding: .375rem .75rem;
+          margin-right: 1.5rem;
+        }
+      </style>
       </head>
       <body>
         <div class="d-flex flex-column flex-md-row align-items-center p-3 px-md-4 mb-3 bg-white border-bottom box-shadow">
@@ -34,17 +51,26 @@ class ClientApplication < Roda
             <!-- a class="p-2 text-dark" href="#">Support</a-->
             <!-- a class="p-2 text-dark" href="#">Pricing</a-->
           </nav>
-          <% if !session["access_token"] %>
-            <form action="/authorize" class="navbar-form pull-right" method="post">
-              <%= csrf_tag("/authorize") %>
-              <button type="submit" class="btn btn-outline-primary">Authenticate</button>
-            </form>
-          <% else %>
-            <form action="/logout" class="navbar-form pull-right" method="post">
-              <%= csrf_tag("/logout") %>
-              <input class="btn btn-outline-primary" type="submit" value="Logout" />
-            </form>
-          <% end %>
+          <ul class="navbar-nav flex-row ml-md-auto d-none d-md-flex">
+            <% if !session["access_token"] %>
+              <li class="nav-item">
+                <form action="/auth/openid_connect" class="navbar-form pull-right" method="post">
+                  <%= csrf_tag("/auth/openid_connect") %>
+                  <button type="submit" class="btn btn-outline-primary">Authenticate</button>
+                </form>
+              </li>
+            <% else %>
+              <li class="nav-item">
+                <div class="profile">Welcome, <b><%= @profile["name"] %></b></div>
+              </li>
+              <li class="nav-item">
+                <form action="/logout" class="navbar-form pull-right" method="post">
+                  <%= csrf_tag("/logout") %>
+                  <input class="btn btn-outline-primary" type="submit" value="Logout" />
+                </form>
+              </li>
+            <% end %>
+          </ul>
         </div>
         <div class="container">
           <% if flash['notice'] %>
@@ -65,14 +91,33 @@ class ClientApplication < Roda
   plugin :flash
   plugin :common_logger
   plugin :assets, css: "layout.scss", path: File.expand_path("../assets", __dir__)
+  plugin :route_csrf
 
   secret = ENV.delete("RODAUTH_SESSION_SECRET") || SecureRandom.random_bytes(64)
-  plugin :sessions, secret: secret, key: "client-application.session"
+  use RodaSessionMiddleware, secret: secret, key: "client-application.session"
 
-  plugin :route_csrf
+  auth_server_uri = URI(AUTHORIZATION_SERVER)
+
+  use OmniAuth::Strategies::OpenIDConnect,
+      identifier: AUTHORIZATION_SERVER,
+      scope: %i[openid email profile books.read],
+      response_type: :code,
+      discovery: true,
+      uid_field: "sub",
+      state: -> { Base64.urlsafe_encode64(SecureRandom.hex(32)) },
+      client_options: {
+        port: auth_server_uri.port,
+        scheme: auth_server_uri.scheme,
+        host: auth_server_uri.host,
+        identifier: CLIENT_ID,
+        secret: CLIENT_SECRET,
+        redirect_uri: REDIRECT_URI
+      }
 
   route do |r|
     r.assets
+    verify_openid_session
+
     r.root do
       inline = if (token = session["access_token"])
                  @books = json_request(:get, RESOURCE_SERVER, headers: { "authorization" => "Bearer #{token}" })
@@ -97,30 +142,14 @@ class ClientApplication < Roda
       view inline: inline
     end
 
-    r.on "authorize" do
-      #
-      # This link redirects the user to the authorization server, to perform the authorization step.
-      #
-      r.post do
-        state = Base64.urlsafe_encode64(SecureRandom.hex(32))
-        session["state"] = state
-
-        query_params = {
-          "redirect_uri" => REDIRECT_URI,
-          "client_id" => CLIENT_ID,
-          "scope" => "openid email profile books.read",
-          "state" => state
-        }.map { |k, v| "#{CGI.escape(k)}=#{CGI.escape(v)}" }.join("&")
-
-        authorize_url = URI.parse(AUTHORIZATION_SERVER)
-        authorize_url.path = "/oauth-authorize"
-        authorize_url.query = query_params
-
-        r.redirect authorize_url.to_s
+    r.on "auth/failure" do
+      r.get do
+        flash[:error] = "Authorization failed: #{r.params['message']}"
+        r.redirect "/"
       end
     end
 
-    r.on "callback" do
+    r.on "auth/openid_connect/callback" do
       #
       # This is the redirect uri, where the authorization server redirects to with grant information for
       # the user to generate an access token.
@@ -141,19 +170,13 @@ class ClientApplication < Roda
           r.redirect "/"
         end
 
-        code = r.params["code"]
+        authinfo = request.env["omniauth.auth"]
 
-        response = json_request(:post, "#{AUTHORIZATION_SERVER}/oauth-token", params: {
-                                  "grant_type" => "authorization_code",
-                                  "code" => code,
-                                  "client_id" => CLIENT_ID,
-                                  "client_secret" => CLIENT_SECRET,
-                                  "redirect_uri" => REDIRECT_URI
-                                })
-
-        session["id_token"] = response[:id_token]
-        session["access_token"] = response[:access_token]
-        session["refresh_token"] = response[:refresh_token]
+        session["info"] = authinfo.info
+        session["token_expires"] = authinfo.extra.raw_info.exp
+        session["id_token"] = authinfo.credentials.id_token
+        session["access_token"] = authinfo.credentials.token
+        session["refresh_token"] = authinfo.credentials.refresh_token
 
         r.redirect "/"
       end
@@ -174,6 +197,7 @@ class ClientApplication < Roda
         rescue StandardError # rubocop:disable Lint/SuppressedException
         end
 
+        session.delete("info")
         session.delete("id_token")
         session.delete("access_token")
         session.delete("refresh_token")
@@ -184,6 +208,24 @@ class ClientApplication < Roda
   end
 
   private
+
+  def verify_openid_session
+    @profile = if (expiration_time = session["token_expires"])
+
+                 if expiration_time < Time.now.utc.to_i
+                   session.delete("info")
+                   session.delete("id_token")
+                   session.delete("access_token")
+                   session.delete("refresh_token")
+                   session.delete("token_expires")
+                   {}
+                 else
+                   session["info"]
+                 end
+               else
+                 {}
+               end
+  end
 
   def json_request(meth, uri, headers: {}, params: {})
     uri = URI(uri)

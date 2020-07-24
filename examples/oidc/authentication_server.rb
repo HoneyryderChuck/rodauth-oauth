@@ -57,6 +57,7 @@ else
     DateTime :expires_in, null: false
     DateTime :revoked_at
     String :scopes, null: false
+    String :nonce
   end
 end
 
@@ -87,14 +88,13 @@ TEST_APPLICATION = DB[:oauth_applications].where(client_id: CLIENT_ID).first || 
     client_secret: BCrypt::Password.create(CLIENT_ID),
     name: "Myself",
     description: "About myself",
-    redirect_uri: "http://localhost:9293/callback",
+    redirect_uri: "http://localhost:9293/auth/openid_connect/callback",
     homepage_url: "http://localhost:9293",
     scopes: "openid email profile books.read",
     account_id: account_id
   )
   DB[:oauth_applications].where(id: application_id).first
 end
-
 
 # PRIV_KEY = OpenSSL::PKey::EC.new(File.read(File.join(__dir__, "..", "ecprivkey.pem")))
 PRIV_KEY = OpenSSL::PKey::RSA.new(File.read(File.join(__dir__, "rsaprivkey.pem")))
@@ -128,9 +128,10 @@ class AuthenticationServer < Roda
 
     get_oidc_param do |token, param|
       @account ||= begin
-        account_id = token[:account_id]
+        account_id = token[:account_id] || token["sub"]
         account = db[:accounts].where(id: account_id).first
         raise "no account" unless account
+
         account
       end
 
@@ -154,6 +155,8 @@ class AuthenticationServer < Roda
     r.assets
     r.rodauth
     rodauth.oauth_applications
+    rodauth.openid_configuration
+    rodauth.webfinger
 
     r.root do
       @application = TEST_APPLICATION
