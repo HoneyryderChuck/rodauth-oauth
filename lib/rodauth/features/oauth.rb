@@ -233,7 +233,15 @@ module Rodauth
     end
 
     def scopes
-      (param_or_nil("scope") || oauth_application_default_scope).split(" ")
+      scope = request.params["scope"]
+      case scope
+      when Array
+        scope
+      when String
+        scope.split(" ")
+      when nil
+        [oauth_application_default_scope]
+      end
     end
 
     def redirect_uri
