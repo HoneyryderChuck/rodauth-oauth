@@ -33,6 +33,7 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
     ]
     assert json_body["response_modes_supported"] == %w[query fragment]
     assert json_body["grant_types_supported"] == %w[authorization_code implicit]
+    assert json_body["subject_types_supported"] == %w[public]
 
     assert json_body["id_token_signing_alg_values_supported"] == %w[HS256]
     assert json_body["id_token_encryption_alg_values_supported"] == %w[]

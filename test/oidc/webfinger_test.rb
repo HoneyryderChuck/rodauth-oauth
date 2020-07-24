@@ -15,6 +15,7 @@ class RodauthOauthOidcWebfingerTest < OIDCIntegration
   end
 
   def test_oidc_webfinger_no_resource
+    skip
     setup_application
     get("/.well-known/webfinger?resource=user@example.com")
 

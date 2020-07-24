@@ -25,39 +25,32 @@ module Rodauth
     auth_value_methods(:get_oidc_param)
 
     def openid_configuration(issuer = nil)
-      request.on(".well-known") do
-        request.on("openid-configuration") do
-          request.get do
-            json_response_success(openid_configuration_body(issuer))
-          end
+      request.on(".well-known/openid-configuration") do
+        request.get do
+          json_response_success(openid_configuration_body(issuer))
         end
       end
     end
 
     def webfinger
-      request.on(".well-known") do
-        request.on("webfinger") do
-          request.get do
-            resource = param_or_nil("resource")
+      request.on(".well-known/webfinger") do
+        request.get do
+          resource = param_or_nil("resource")
 
-            throw_json_response_error(400, "invalid_request") unless resource
+          throw_json_response_error(400, "invalid_request") unless resource
 
-            account = db[accounts_table].where(login_column => resource).first
+          response.status = 200
+          response["Content-Type"] ||= "application/jrd+json"
 
-            throw_json_response_error(404, "invalid_request") unless account
-
-            response.status = 200
-            response["Content-Type"] ||= "application/jrd+json"
-            json_payload = JSON.dump({
-                                       subject: resource,
-                                       links: [{
-                                         rel: webfinger_relation,
-                                         href: authorization_server_url
-                                       }]
-                                     })
-            response.write(json_payload)
-            request.halt
-          end
+          json_payload = JSON.dump({
+                                     subject: resource,
+                                     links: [{
+                                       rel: webfinger_relation,
+                                       href: authorization_server_url
+                                     }]
+                                   })
+          response.write(json_payload)
+          request.halt
         end
       end
     end
@@ -210,6 +203,8 @@ module Rodauth
                          ["none", "id_token", %w[code token], %w[code id_token], %w[id_token token], %w[code id_token token]],
                        response_modes_supported: %w[query fragment],
                        grant_types_supported: %w[authorization_code implicit],
+
+                       subject_types_supported: [oauth_subject_type],
 
                        id_token_signing_alg_values_supported: metadata[:token_endpoint_auth_signing_alg_values_supported],
                        id_token_encryption_alg_values_supported: [oauth_jwt_jwe_algorithm].compact,
