@@ -88,12 +88,19 @@ module Rodauth
       # Sounds like the same as issued at claim.
       id_token_claims[:auth_time] = id_token_claims[:iat]
 
-      fill_with_user_claims(id_token_claims, oauth_token, oauth_scopes)
+      account = db[accounts_table].where(account_id_column => oauth_token[oauth_tokens_account_id_column]).first
+
+      # this should never happen!
+      # a newly minted oauth token from a grant should have been assigned to an account
+      # who just authorized its generation.
+      return unless account
+
+      fill_with_account_claims(id_token_claims, account, oauth_scopes)
 
       oauth_token[:id_token] = jwt_encode(id_token_claims)
     end
 
-    def fill_with_user_claims(claims, oauth_token, scopes)
+    def fill_with_account_claims(claims, account, scopes)
       scopes_by_oidc = scopes.each_with_object({}) do |scope, by_oidc|
         oidc, param = scope.split(".", 2)
 
@@ -112,7 +119,7 @@ module Rodauth
           params = params.empty? ? OIDC_SCOPES_MAP[scope] : (OIDC_SCOPES_MAP[scope] & params)
 
           params.each do |param|
-            claims[param] = __send__(:get_oidc_param, oauth_token, param)
+            claims[param] = __send__(:get_oidc_param, account, param)
           end
         end
       else
@@ -232,17 +239,21 @@ module Rodauth
         catch_error do
           oauth_token = authorization_token
 
-          redirect_response_error("invalid_token") unless oauth_token
+          throw_json_response_error(authorization_required_error_status, "invalid_token") unless oauth_token
 
           oauth_scopes = oauth_token["scope"].split(" ")
 
           throw_json_response_error(authorization_required_error_status, "invalid_token") unless oauth_scopes.include?("openid")
 
+          account = db[accounts_table].where(account_id_column => oauth_token["sub"]).first
+
+          throw_json_response_error(authorization_required_error_status, "invalid_token") unless account
+
           oauth_scopes.delete("openid")
 
           oidc_claims = { "sub" => oauth_token["sub"] }
 
-          fill_with_user_claims(oidc_claims, oauth_token, oauth_scopes)
+          fill_with_account_claims(oidc_claims, account, oauth_scopes)
 
           json_response_success(oidc_claims)
         end

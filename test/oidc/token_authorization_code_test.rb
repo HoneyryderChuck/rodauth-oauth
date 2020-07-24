@@ -10,18 +10,12 @@ class RodauthOauthOIDCTokenAuthorizationCodeTest < OIDCIntegration
       oauth_jwt_key "SECRET"
       oauth_jwt_algorithm "HS256"
 
-      get_oidc_param do |token, param|
-        @account ||= begin
-          account_id = token[:account_id]
-          db[:accounts].where(id: account_id).first
-          # TODO: raise error? otherwise?
-        end
-
+      get_oidc_param do |account, param|
         case param
         when :email
-          @account[:email]
+          account[:email]
         when :email_verified
-          @account[:status_id] == 2
+          account[:status_id] == 2
         end
       end
     end

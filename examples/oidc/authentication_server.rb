@@ -126,22 +126,14 @@ class AuthenticationServer < Roda
     oauth_jwt_algorithm "RS256"
     oauth_tokens_refresh_token_hash_column :refresh_token
 
-    get_oidc_param do |token, param|
-      @account ||= begin
-        account_id = token[:account_id] || token["sub"]
-        account = db[:accounts].where(id: account_id).first
-        raise "no account" unless account
-
-        account
-      end
-
+    get_oidc_param do |account, param|
       case param
       when :email
-        @account[:email]
+        account[:email]
       when :email_verified
         true
       when :name
-        @account[:name]
+        account[:name]
       end
     end
   end
