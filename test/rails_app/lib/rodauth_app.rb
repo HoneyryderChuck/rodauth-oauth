@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 class RodauthApp < Rodauth::Rails::App
+  TEST_SCOPES = %w[user.read user.write].freeze
+
   configure do
     enable :login, :http_basic_auth, :oauth
 

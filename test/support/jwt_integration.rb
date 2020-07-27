@@ -8,20 +8,16 @@ require_relative File.join(__dir__, "roda_integration")
 class JWTIntegration < RodaIntegration
   private
 
-  def oauth_feature
-    :oauth_jwt
+  def setup_application
+    rodauth do
+      oauth_jwt_token_issuer "Example"
+      oauth_jwt_audience "Audience"
+    end
+    super
   end
 
-  def set_authorization_header(token = oauth_token)
-    id = token[:token]
-    nonce = SecureRandom.alphanumeric(8)
-    # The nonce value MUST consist of the age of the MAC credentials expressed as the number of seconds since
-    # the credentials were issued to the client, a colon character (%x25), and a unique string (typically random).
-    # The age value MUST be a positive integer and MUST NOT include leading zeros (e.g. "000137131200")
-    nonce = "#{Time.now.to_i - token[:expires_in].to_i}:#{nonce}"
-    signature = generate_mac_signature(token, nonce)
-
-    header "Authorization", "MAC id=\"#{id}\", nonce=\"#{nonce}\", mac=\"#{signature}\""
+  def oauth_feature
+    :oauth_jwt
   end
 
   def verify_oauth_token
@@ -48,10 +44,13 @@ class JWTIntegration < RodaIntegration
     assert !data["expires_in"].nil?
     assert data["token_type"] == "bearer"
 
+    assert data.key?("access_token")
     payload, headers = JWT.decode(data["access_token"], secret, true, algorithms: [algorithm])
 
     assert headers["alg"] == algorithm
     assert payload["iss"] == "Example"
+    assert payload["aud"] == "Audience"
     assert payload["sub"] == account[:id]
+    assert payload["nonce"] == oauth_token[:nonce]
   end
 end

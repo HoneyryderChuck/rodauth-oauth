@@ -25,8 +25,6 @@ require "rodauth/oauth"
 require "rodauth/version"
 require "bcrypt"
 
-TEST_SCOPES = %w[user.read user.write].freeze
-
 PKCE_VERIFIER = "VERIFIER"
 PKCE_CHALLENGE = "a1Y-Z7sHPycP84FUZMgqhDyqVo6DdP5EUEXrLaTUge0" # using S256
 
@@ -39,6 +37,10 @@ module OAuthHelpers
     @app = Capybara.app = app
   end
 
+  def test_scopes
+    %w[user.read user.write]
+  end
+
   def oauth_application(params = {})
     @oauth_application ||= begin
       id = db[:oauth_applications].insert({
@@ -49,7 +51,7 @@ module OAuthHelpers
         redirect_uri: "https://example.com/callback",
         client_id: "CLIENT_ID",
         client_secret: BCrypt::Password.create("CLIENT_SECRET", cost: BCrypt::Engine::MIN_COST),
-        scopes: TEST_SCOPES.join(" ")
+        scopes: test_scopes.join(" ")
       }.merge(params))
       db[:oauth_applications].filter(id: id).first
     end

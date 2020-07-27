@@ -232,7 +232,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     login
 
     # show the authorization form
-    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&response_type=token"
+    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&response_type=token&state=STATE"
     assert page.current_path == "/oauth-authorize",
            "was redirected instead to #{page.current_path}"
 
@@ -244,9 +244,9 @@ class RodauthOauthAuthorizeTest < RodaIntegration
 
     oauth_token = db[:oauth_tokens].first
 
-    skip page.current_url == "#{oauth_application[:redirect_uri]}#access_token=#{oauth_token[:token]}& " \
-                             "token_type=Bearer&expires_in=3600",
-         "was redirected instead to #{page.current_url}"
+    assert page.current_url == "#{oauth_application[:redirect_uri]}#access_token=#{oauth_token[:token]}&" \
+                             "token_type=bearer&expires_in=3600&state=STATE",
+           "was redirected instead to #{page.current_url}"
   end
 
   def test_authorize_post_authorize_with_pkce

@@ -15,6 +15,7 @@ Sequel.migration do
       DateTime :expires_in, null: false
       DateTime :revoked_at
       String :scopes, null: false
+      String :nonce
     end
   end
 

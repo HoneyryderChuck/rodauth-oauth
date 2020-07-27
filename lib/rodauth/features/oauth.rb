@@ -233,7 +233,15 @@ module Rodauth
     end
 
     def scopes
-      (param_or_nil("scope") || oauth_application_default_scope).split(" ")
+      scope = request.params["scope"]
+      case scope
+      when Array
+        scope
+      when String
+        scope.split(" ")
+      when nil
+        [oauth_application_default_scope]
+      end
     end
 
     def redirect_uri
@@ -265,6 +273,8 @@ module Rodauth
       scheme, token = value.split(" ", 2)
 
       return unless scheme.downcase == oauth_token_type
+
+      return if token.empty?
 
       token
     end
@@ -694,14 +704,14 @@ module Rodauth
       request.env["REQUEST_METHOD"] = "POST"
     end
 
-    def create_oauth_grant
-      create_params = {
+    def create_oauth_grant(create_params = {})
+      create_params.merge!(
         oauth_grants_account_id_column => account_id,
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
         oauth_grants_redirect_uri_column => redirect_uri,
         oauth_grants_expires_in_column => Time.now + oauth_grant_expires_in,
         oauth_grants_scopes_column => scopes.join(oauth_scope_separator)
-      }
+      )
 
       # Access Type flow
       if use_oauth_access_type?
@@ -735,6 +745,45 @@ module Rodauth
       end
     end
 
+    def do_authorize(redirect_url, query_params = [], fragment_params = [])
+      case param("response_type")
+      when "token"
+        redirect_response_error("invalid_request") unless use_oauth_implicit_grant_type?
+
+        fragment_params.replace(_do_authorize_token.map { |k, v| "#{k}=#{v}" })
+      when "code", "", nil
+        query_params.replace(_do_authorize_code.map { |k, v| "#{k}=#{v}" })
+      end
+
+      if param_or_nil("state")
+        if !fragment_params.empty?
+          fragment_params << "state=#{param('state')}"
+        else
+          query_params << "state=#{param('state')}"
+        end
+      end
+
+      query_params << redirect_url.query if redirect_url.query
+
+      redirect_url.query = query_params.join("&") unless query_params.empty?
+      redirect_url.fragment = fragment_params.join("&") unless fragment_params.empty?
+    end
+
+    def _do_authorize_code
+      { "code" => create_oauth_grant }
+    end
+
+    def _do_authorize_token
+      create_params = {
+        oauth_tokens_account_id_column => account_id,
+        oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+        oauth_tokens_scopes_column => scopes
+      }
+      oauth_token = generate_oauth_token(create_params, false)
+
+      json_access_token_payload(oauth_token)
+    end
+
     # Access Tokens
 
     def before_token
@@ -760,27 +809,42 @@ module Rodauth
     def create_oauth_token
       case param("grant_type")
       when "authorization_code"
-        create_oauth_token_from_authorization_code(oauth_application)
+        # fetch oauth grant
+        oauth_grant = db[oauth_grants_table].where(
+          oauth_grants_code_column => param("code"),
+          oauth_grants_redirect_uri_column => param("redirect_uri"),
+          oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+          oauth_grants_revoked_at_column => nil
+        ).where(Sequel[oauth_grants_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
+                                            .for_update
+                                            .first
+
+        redirect_response_error("invalid_grant") unless oauth_grant
+
+        create_params = {
+          oauth_tokens_account_id_column => oauth_grant[oauth_grants_account_id_column],
+          oauth_tokens_oauth_application_id_column => oauth_grant[oauth_grants_oauth_application_id_column],
+          oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column],
+          oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column]
+        }
+        create_oauth_token_from_authorization_code(oauth_grant, create_params)
       when "refresh_token"
-        create_oauth_token_from_token(oauth_application)
+        # fetch oauth token
+        oauth_token = oauth_token_by_refresh_token(param("refresh_token"))
+
+        redirect_response_error("invalid_grant") unless oauth_token
+
+        update_params = {
+          oauth_tokens_oauth_application_id_column => oauth_token[oauth_grants_oauth_application_id_column],
+          oauth_tokens_expires_in_column => Time.now + oauth_token_expires_in
+        }
+        create_oauth_token_from_token(oauth_token, update_params)
       else
         redirect_response_error("invalid_grant")
       end
     end
 
-    def create_oauth_token_from_authorization_code(oauth_application)
-      # fetch oauth grant
-      oauth_grant = db[oauth_grants_table].where(
-        oauth_grants_code_column => param("code"),
-        oauth_grants_redirect_uri_column => param("redirect_uri"),
-        oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-        oauth_grants_revoked_at_column => nil
-      ).where(Sequel[oauth_grants_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
-                                          .for_update
-                                          .first
-
-      redirect_response_error("invalid_grant") unless oauth_grant
-
+    def create_oauth_token_from_authorization_code(oauth_grant, create_params)
       # PKCE
       if use_oauth_pkce?
         if oauth_grant[oauth_grants_code_challenge_column]
@@ -792,13 +856,6 @@ module Rodauth
         end
       end
 
-      create_params = {
-        oauth_tokens_account_id_column => oauth_grant[oauth_grants_account_id_column],
-        oauth_tokens_oauth_application_id_column => oauth_grant[oauth_grants_oauth_application_id_column],
-        oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column],
-        oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column]
-      }
-
       # revoke oauth grant
       db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column])
                             .update(oauth_grants_revoked_at_column => Sequel::CURRENT_TIMESTAMP)
@@ -809,18 +866,10 @@ module Rodauth
       generate_oauth_token(create_params, should_generate_refresh_token)
     end
 
-    def create_oauth_token_from_token(oauth_application)
-      # fetch oauth token
-      oauth_token = oauth_token_by_refresh_token(param("refresh_token"))
-
-      redirect_response_error("invalid_grant") unless oauth_token && token_from_application?(oauth_token, oauth_application)
+    def create_oauth_token_from_token(oauth_token, update_params)
+      redirect_response_error("invalid_grant") unless token_from_application?(oauth_token, oauth_application)
 
       token = oauth_unique_id_generator
-
-      update_params = {
-        oauth_tokens_oauth_application_id_column => oauth_token[oauth_grants_oauth_application_id_column],
-        oauth_tokens_expires_in_column => Time.now + oauth_token_expires_in
-      }
 
       if oauth_tokens_token_hash_column
         update_params[oauth_tokens_token_hash_column] = generate_token_hash(token)
@@ -1075,7 +1124,7 @@ module Rodauth
 
     def oauth_server_metadata_body(path)
       issuer = base_url
-      issuer += "/#{path}" if issuer
+      issuer += "/#{path}" if path
 
       responses_supported = %w[code]
       response_modes_supported = %w[query]
@@ -1201,39 +1250,11 @@ module Rodauth
       end
 
       r.post do
-        code = nil
-        query_params = []
-        fragment_params = []
+        redirect_url = URI.parse(redirect_uri)
 
         transaction do
-          case param("response_type")
-          when "token"
-            redirect_response_error("invalid_request") unless use_oauth_implicit_grant_type?
-
-            create_params = {
-              oauth_tokens_account_id_column => account_id,
-              oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-              oauth_tokens_scopes_column => scopes
-            }
-            oauth_token = generate_oauth_token(create_params, false)
-
-            token_payload = json_access_token_payload(oauth_token)
-            fragment_params.replace(token_payload.map { |k, v| "#{k}=#{v}" })
-          when "code", "", nil
-            code = create_oauth_grant
-            query_params << "code=#{code}"
-          else
-            redirect_response_error("invalid_request")
-          end
-          after_authorize
+          do_authorize(redirect_url)
         end
-
-        redirect_url = URI.parse(redirect_uri)
-        query_params << "state=#{param('state')}" if param_or_nil("state")
-        query_params << redirect_url.query if redirect_url.query
-        redirect_url.query = query_params.join("&") unless query_params.empty?
-        redirect_url.fragment = fragment_params.join("&") unless fragment_params.empty?
-
         redirect(redirect_url.to_s)
       end
     end

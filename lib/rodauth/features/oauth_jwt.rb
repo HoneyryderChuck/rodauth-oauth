@@ -6,7 +6,8 @@ module Rodauth
   Feature.define(:oauth_jwt) do
     depends :oauth
 
-    auth_value_method :oauth_jwt_token_issuer, "Example"
+    auth_value_method :oauth_subject_type, "public" # public, pairwise
+    auth_value_method :oauth_jwt_token_issuer, nil
 
     auth_value_method :oauth_application_jws_jwk_column, nil
 
@@ -28,7 +29,8 @@ module Rodauth
     auth_value_methods(
       :jwt_encode,
       :jwt_decode,
-      :jwks_set
+      :jwks_set,
+      :last_account_login_at
     )
 
     JWKS = OAuth::TtlStore.new
@@ -45,6 +47,12 @@ module Rodauth
 
     private
 
+    unless method_defined?(:last_account_login_at)
+      def last_account_login_at
+        nil
+      end
+    end
+
     def authorization_token
       return @authorization_token if defined?(@authorization_token)
 
@@ -57,8 +65,8 @@ module Rodauth
 
         return unless jwt_token
 
-        return if jwt_token["iss"] != oauth_jwt_token_issuer ||
-                  jwt_token["aud"] != oauth_jwt_audience ||
+        return if jwt_token["iss"] != (oauth_jwt_token_issuer || authorization_server_url) ||
+                  (oauth_jwt_audience && jwt_token["aud"] != oauth_jwt_audience) ||
                   !jwt_token["sub"]
 
         jwt_token
@@ -169,11 +177,23 @@ module Rodauth
 
       oauth_token = _generate_oauth_token(create_params)
 
+      claims = jwt_claims(oauth_token)
+
+      # one of the points of using jwt is avoiding database lookups, so we put here all relevant
+      # token data.
+      claims[:scope] = oauth_token[oauth_tokens_scopes_column]
+
+      token = jwt_encode(claims)
+
+      oauth_token[oauth_tokens_token_column] = token
+      oauth_token
+    end
+
+    def jwt_claims(oauth_token)
       issued_at = Time.now.utc.to_i
 
-      payload = {
-        sub: oauth_token[oauth_tokens_account_id_column],
-        iss: oauth_jwt_token_issuer, # issuer
+      claims = {
+        iss: (oauth_jwt_token_issuer || authorization_server_url), # issuer
         iat: issued_at, # issued at
         #
         # sub  REQUIRED - as defined in section 4.1.2 of [RFC7519].  In case of
@@ -184,20 +204,27 @@ module Rodauth
         # owner is involved, such as the client credentials grant, the value
         # of "sub" SHOULD correspond to an identifier the authorization
         # server uses to indicate the client application.
+        sub: jwt_subject(oauth_token),
         client_id: oauth_application[oauth_applications_client_id_column],
 
         exp: issued_at + oauth_token_expires_in,
-        aud: oauth_jwt_audience,
-
-        # one of the points of using jwt is avoiding database lookups, so we put here all relevant
-        # token data.
-        scope: oauth_token[oauth_tokens_scopes_column]
+        aud: (oauth_jwt_audience || oauth_application[oauth_applications_client_id_column])
       }
 
-      token = jwt_encode(payload)
+      claims[:auth_time] = last_account_login_at.utc.to_i if last_account_login_at
 
-      oauth_token[oauth_tokens_token_column] = token
-      oauth_token
+      claims
+    end
+
+    def jwt_subject(oauth_token)
+      case oauth_subject_type
+      when "public"
+        oauth_token[oauth_tokens_account_id_column]
+      when "pairwise"
+        Digest::SHA256.hexdigest("#{oauth_token[oauth_tokens_account_id_column]}#{oauth_token[oauth_tokens_application_id_column]}")
+      else
+        raise StandardError, "unexpected subject (#{oauth_subject_type})"
+      end
     end
 
     def oauth_token_by_token(token, *)

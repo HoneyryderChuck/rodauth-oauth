@@ -9,7 +9,7 @@
       rodauth.scopes.map do |scope|
         <<-HTML
          	<div class="form-check">
-            <input id="#{scope}" class="form-check-input" type="checkbox" name="scope" value="#{scope}" #{"checked disabled" if scope == rodauth.oauth_application_default_scope}>
+            <input id="#{scope}" class="form-check-input" type="checkbox" name="scope[]" value="#{scope}" #{"checked disabled" if scope == rodauth.oauth_application_default_scope}>
             <label class="form-check-label" for="#{scope}">#{scope}</label>
           </div>
         HTML
@@ -19,6 +19,7 @@
     <input type="hidden" name="client_id" value="#{rodauth.param("client_id")}"/>
 
     #{"<input type=\"hidden\" name=\"state\" value=\"#{rodauth.param("state")}\"/>" if rodauth.param_or_nil("state")}
+    #{"<input type=\"hidden\" name=\"nonce\" value=\"#{rodauth.param("nonce")}\"/>" if rodauth.param_or_nil("nonce")}
     #{"<input type=\"hidden\" name=\"redirect_uri\" value=\"#{rodauth.redirect_uri}\"/>" if rodauth.param_or_nil("redirect_uri")}
     #{"<input type=\"hidden\" name=\"code_challenge\" value=\"#{rodauth.code_challenge}\"/>" if rodauth.param_or_nil("code_challenge")}
     #{"<input type=\"hidden\" name=\"code_challenge_method\" value=\"#{rodauth.code_challenge_method}\"/>" if rodauth.param_or_nil("code_challenge_method")}

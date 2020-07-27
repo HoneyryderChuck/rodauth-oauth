@@ -13,19 +13,30 @@ gem "rack_csrf"
 # frameworks
 gem "rails", ">= 4.2"
 gem "roda"
+gem "tilt"
+gem "tzinfo-data"
 
 # extension dependencies
 gem "json-jwt"
 gem "jwe"
+
+# direct dependencies
 gem "jwt", github: "jwt/ruby-jwt", branch: "master"
 gem "rodauth", github: "jeremyevans/rodauth", branch: "master"
 gem "rodauth-rails"
 gem "sequel", github: "jeremyevans/sequel", branch: "master"
 gem "sequel-activerecord_connection", github: "janko/sequel-activerecord_connection", branch: "master"
-gem "tilt"
-gem "tzinfo-data"
 
-gem "capybara"
+# Demo-only
+gem "omniauth_openid_connect"
+
+# Tests/Debug
+if RUBY_VERSION < "2.5"
+  gem "capybara"
+else
+  gem "capybara", github: "teamcapybara/capybara", branch: "master"
+end
+
 gem "minitest", "~> 5.0"
 gem "minitest-hooks"
 gem "rack-test"
