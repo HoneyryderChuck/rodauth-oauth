@@ -2,6 +2,7 @@
 
 module Rodauth
   Feature.define(:oauth_http_mac) do
+    # :nocov:
     unless String.method_defined?(:delete_prefix)
       module PrefixExtensions
         refine(String) do
@@ -27,6 +28,7 @@ module Rodauth
       end
       using(PrefixExtensions)
     end
+    # :nocov:
 
     depends :oauth
 
