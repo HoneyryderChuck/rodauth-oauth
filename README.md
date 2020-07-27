@@ -7,7 +7,7 @@ This is an extension to the `rodauth` gem which implements the [OAuth 2.0 framew
 
 ## Features
 
-This gem implements:
+This gem implements the following RFCs and features of OAuth:
 
 * [The OAuth 2.0 protocol framework](https://tools.ietf.org/html/rfc6749):
   * [Authorization grant flow](https://tools.ietf.org/html/rfc6749#section-1.3);
@@ -23,6 +23,8 @@ This gem implements:
 * [JWT Acess Tokens](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-07);
 * [JWT Secured Authorization Requests](https://tools.ietf.org/html/draft-ietf-oauth-jwsreq-20);
 * OAuth application and token management dashboards;
+
+It also implements the [OpenID Connect layer](https://openid.net/connect/) on top of the OAuth features it provides.
 
 This gem supports also rails (through [rodauth-rails]((https://github.com/janko/rodauth-rails))).
 
@@ -86,7 +88,18 @@ route do |r|
 end
 ```
 
-You'll have to do a bit more boilerplate, so here's the instructions.
+
+For OpenID, it's very similar to the example above:
+
+```ruby
+plugin :rodauth do
+  # enable it in the plugin
+  enable :login, :openid
+  oauth_application_default_scope %w[openid]
+  oauth_application_scopes %w[openid email profile]
+end
+```
+
 
 ### Example (TL;DR)
 
@@ -101,7 +114,7 @@ Generating tokens happens mostly server-to-server, so here's an example using:
 
 ```ruby
 require "httpx"
-response = HTTPX.post("https://auth_server/oauth-token",json: {
+response = HTTPX.post("https://auth_server/token",json: {
                   client_id: ENV["OAUTH_CLIENT_ID"],
                   client_secret: ENV["OAUTH_CLIENT_SECRET"],
                   grant_type: "authorization_code",
@@ -115,7 +128,7 @@ puts payload #=> {"access_token" => "awr23f3h8f9d2h89...", "refresh_token" => "2
 ##### cURL
 
 ```
-> curl --data '{"client_id":"$OAUTH_CLIENT_ID","client_secret":"$OAUTH_CLIENT_SECRET","grant_type":"authorization_code","code":"oiweicnewdh32fhoi3hf3ihfo2ih3f2o3as"}' https://auth_server/oauth-token
+> curl --data '{"client_id":"$OAUTH_CLIENT_ID","client_secret":"$OAUTH_CLIENT_SECRET","grant_type":"authorization_code","code":"oiweicnewdh32fhoi3hf3ihfo2ih3f2o3as"}' https://auth_server/token
 ```
 
 #### Refresh Token
@@ -126,7 +139,7 @@ Refreshing expired tokens also happens mostly server-to-server, here's an exampl
 
 ```ruby
 require "httpx"
-response = HTTPX.post("https://auth_server/oauth-token",json: {
+response = HTTPX.post("https://auth_server/token",json: {
                   client_id: ENV["OAUTH_CLIENT_ID"],
                   client_secret: ENV["OAUTH_CLIENT_SECRET"],
                   grant_type: "refresh_token",
@@ -140,7 +153,7 @@ puts payload #=> {"access_token" => "awr23f3h8f9d2h89...", "token_type" => "Bear
 ##### cURL
 
 ```
-> curl -H "X-your-auth-scheme: $SERVER_KEY" --data '{"client_id":"$OAUTH_CLIENT_ID","client_secret":"$OAUTH_CLIENT_SECRET","grant_type":"token","token":"2r89hfef4j9f90d2j2390jf390g"}' https://auth_server/oauth-token
+> curl -H "X-your-auth-scheme: $SERVER_KEY" --data '{"client_id":"$OAUTH_CLIENT_ID","client_secret":"$OAUTH_CLIENT_SECRET","grant_type":"token","token":"2r89hfef4j9f90d2j2390jf390g"}' https://auth_server/token
 ```
 
 #### Revoking tokens
@@ -151,7 +164,7 @@ Token revocation can be done both by the idenntity owner or the application owne
 require "httpx"
 httpx = HTTPX.plugin(:basic_authorization)
 response = httpx.basic_authentication(ENV["CLIENT_ID"], ENV["CLIENT_SECRET"])
-                .post("https://auth_server/oauth-revoke",json: {
+                .post("https://auth_server/revoke",json: {
                   token_type_hint: "access_token", # can also be "refresh:tokn"
                   token: "2r89hfef4j9f90d2j2390jf390g"
                 })
@@ -163,7 +176,7 @@ puts payload #=> {"access_token" => "awr23f3h8f9d2h89...", "token_type" => "Bear
 ##### cURL
 
 ```
-> curl -H "X-your-auth-scheme: $SERVER_KEY" --data '{"client_id":"$OAUTH_CLIENT_ID","token_type_hint":"access_token","token":"2r89hfef4j9f90d2j2390jf390g"}' https://auth_server/oauth-revoke
+> curl -H "X-your-auth-scheme: $SERVER_KEY" --data '{"client_id":"$OAUTH_CLIENT_ID","token_type_hint":"access_token","token":"2r89hfef4j9f90d2j2390jf390g"}' https://auth_server/revoke
 ```
 
 #### Token introspection
@@ -174,7 +187,7 @@ Token revocation can be used to determine the state of a token (whether active, 
 require "httpx"
 httpx = HTTPX.plugin(:basic_authorization)
 response = httpx.basic_authentication(ENV["CLIENT_ID"], ENV["CLIENT_SECRET"])
-                .post("https://auth_server/oauth-introspect",json: {
+                .post("https://auth_server/introspect",json: {
                   token_type_hint: "access_token", # can also be "refresh:tokn"
                   token: "2r89hfef4j9f90d2j2390jf390g"
                 })
@@ -186,7 +199,7 @@ puts payload #=> {"active" => true, "scope" => "read write" ....
 ##### cURL
 
 ```
-> curl -H "X-your-auth-scheme: $SERVER_KEY" --data '{"client_id":"$OAUTH_CLIENT_ID","token_type_hint":"access_token","token":"2r89hfef4j9f90d2j2390jf390g"}' https://auth_server/oauth-revoke
+> curl -H "X-your-auth-scheme: $SERVER_KEY" --data '{"client_id":"$OAUTH_CLIENT_ID","token_type_hint":"access_token","token":"2r89hfef4j9f90d2j2390jf390g"}' https://auth_server/revoke
 ```
 
 ### Authorization Server Metadata
@@ -243,10 +256,10 @@ The rodauth default setup expects the roda `render` plugin to be activated; by d
 
 Once you set it up, by default, the following endpoints will be available:
 
-* `GET /oauth-authorize`: Loads the OAuth authorization HTML form;
-* `POST /oauth-authorize`: Responds to an OAuth authorization request, as [per the spec](https://tools.ietf.org/html/rfc6749#section-4);
-* `POST /oauth-token`: Generates OAuth tokens as [per the spec](https://tools.ietf.org/html/rfc6749#section-4.4.2);
-* `POST /oauth-revoke`: Revokes OAuth tokens as [per the spec](https://tools.ietf.org/html/rfc7009);
+* `GET /authorize`: Loads the OAuth authorization HTML form;
+* `POST /authorize`: Responds to an OAuth authorization request, as [per the spec](https://tools.ietf.org/html/rfc6749#section-4);
+* `POST /token`: Generates OAuth tokens as [per the spec](https://tools.ietf.org/html/rfc6749#section-4.4.2);
+* `POST /revoke`: Revokes OAuth tokens as [per the spec](https://tools.ietf.org/html/rfc7009);
 
 ### OAuth applications
 
@@ -426,7 +439,7 @@ The "Proof Key for Code Exchange by OAuth Public Clients" (aka PKCE) flow, which
 ```ruby
 # with httpx
 require "httpx"
-response = HTTPX.post("https://auth_server/oauth-token",json: {
+response = HTTPX.post("https://auth_server/token",json: {
                   client_id: ENV["OAUTH_CLIENT_ID"],
                   grant_type: "authorization_code",
                   code: "oiweicnewdh32fhoi3hf3ihfo2ih3f2o3as",
@@ -477,7 +490,7 @@ Generating an access token will deliver the following fields:
 ```ruby
 # with httpx
 require "httpx"
-response = httpx.post("https://auth_server/oauth-token",json: {
+response = httpx.post("https://auth_server/token",json: {
                   client_id: env["oauth_client_id"],
                   client_secret: env["oauth_client_secret"],
                   grant_type: "authorization_code",
@@ -576,7 +589,7 @@ which adds an extra layer of protection.
 
 #### JWKS URI
 
-A route is defined for getting the JWK Set in a JSON format; this is typically used by client applications, who need the JWK set to decode the JWT token. This URL is typically `https://oauth-server/oauth-jwks`.
+A route is defined for getting the JWK Set in a JSON format; this is typically used by client applications, who need the JWK set to decode the JWT token. This URL is typically `https://oauth-server/jwks`.
 
 #### JWT Bearer as authorization grant
 
@@ -585,7 +598,7 @@ One can emit a new access token by using the bearer access token as grant. This 
 ```ruby
 # with httpx
 require "httpx"
-response = httpx.post("https://auth_server/oauth-token",json: {
+response = httpx.post("https://auth_server/token",json: {
                   grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
                   assertion: "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjEsImlzcyI6IkV4YW1wbGUiLCJpYXQiOjE1OTIwMDk1MDEsImNsaWVudF9pZCI6IkNMSUVOVF9JRCIsImV4cCI6MTU5MjAxMzEwMSwiYXVkIjpudWxsLCJzY29wZSI6InVzZXIucmVhZCB1c2VyLndyaXRlIiwianRpIjoiOGM1NTVjMjdiOWRjNDdmOTcyNWRkYzBhMjk0NzA1ZTA4NzFkY2JlN2Q5ZTNlMmVkNGE1ZTBiOGZlNTZlYzcxMSJ9.AlxKRtE3ec0mtyBSDx4VseND4eC6cH5ubtv8gfYxxsc"
                 })
