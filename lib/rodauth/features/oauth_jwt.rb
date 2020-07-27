@@ -264,12 +264,6 @@ module Rodauth
       metadata
     end
 
-    def token_from_application?(oauth_token, oauth_application)
-      return super unless oauth_token["sub"] # naive check on whether it's a jwt token
-
-      oauth_token["client_id"] == oauth_application[oauth_applications_client_id_column]
-    end
-
     def _jwt_key
       @_jwt_key ||= oauth_jwt_key || (oauth_application[oauth_applications_client_secret_column] if oauth_application)
     end
