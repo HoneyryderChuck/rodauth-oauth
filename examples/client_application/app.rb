@@ -113,7 +113,7 @@ class ClientApplication < Roda
         }.map { |k, v| "#{CGI.escape(k)}=#{CGI.escape(v)}" }.join("&")
 
         authorize_url = URI.parse(AUTHORIZATION_SERVER)
-        authorize_url.path = "/oauth-authorize"
+        authorize_url.path = "/authorize"
         authorize_url.query = query_params
 
         r.redirect authorize_url.to_s
@@ -143,7 +143,7 @@ class ClientApplication < Roda
 
         code = r.params["code"]
 
-        response = json_request(:post, "#{AUTHORIZATION_SERVER}/oauth-token", params: {
+        response = json_request(:post, "#{AUTHORIZATION_SERVER}/token", params: {
                                   "grant_type" => "authorization_code",
                                   "code" => code,
                                   "client_id" => CLIENT_ID,
@@ -164,7 +164,7 @@ class ClientApplication < Roda
       #
       r.post do
         begin
-          json_request(:post, "#{AUTHORIZATION_SERVER}/oauth-revoke", params: {
+          json_request(:post, "#{AUTHORIZATION_SERVER}/revoke", params: {
                          "client_id" => CLIENT_ID,
                          "client_secret" => CLIENT_SECRET,
                          "token_type_hint" => "access_token",

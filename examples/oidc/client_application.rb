@@ -188,7 +188,7 @@ class ClientApplication < Roda
       #
       r.post do
         begin
-          json_request(:post, "#{AUTHORIZATION_SERVER}/oauth-revoke", params: {
+          json_request(:post, "#{AUTHORIZATION_SERVER}/revoke", params: {
                          "client_id" => CLIENT_ID,
                          "client_secret" => CLIENT_SECRET,
                          "token_type_hint" => "access_token",
