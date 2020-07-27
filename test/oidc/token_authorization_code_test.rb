@@ -23,7 +23,7 @@ class RodauthOauthOIDCTokenAuthorizationCodeTest < OIDCIntegration
 
     grant = oauth_grant(scopes: "openid email")
 
-    post("/oauth-token",
+    post("/token",
          client_id: oauth_application[:client_id],
          client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",
@@ -51,7 +51,7 @@ class RodauthOauthOIDCTokenAuthorizationCodeTest < OIDCIntegration
     end
     setup_application
 
-    post("/oauth-token",
+    post("/token",
          client_id: oauth_application[:client_id],
          client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",
@@ -75,7 +75,7 @@ class RodauthOauthOIDCTokenAuthorizationCodeTest < OIDCIntegration
     end
     setup_application
 
-    post("/oauth-token",
+    post("/token",
          client_id: oauth_application[:client_id],
          client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",
@@ -103,7 +103,7 @@ class RodauthOauthOIDCTokenAuthorizationCodeTest < OIDCIntegration
       end
       setup_application
 
-      post("/oauth-token",
+      post("/token",
            client_id: oauth_application[:client_id],
            client_secret: "CLIENT_SECRET",
            grant_type: "authorization_code",
@@ -131,7 +131,7 @@ class RodauthOauthOIDCTokenAuthorizationCodeTest < OIDCIntegration
     end
     setup_application
 
-    post("/oauth-token",
+    post("/token",
          client_id: oauth_application[:client_id],
          client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",

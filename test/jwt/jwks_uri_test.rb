@@ -10,7 +10,7 @@ class RodauthOauthJwtJwksUriTest < JWTIntegration
       oauth_jwt_algorithm "HS256"
     end
     setup_application
-    get("/oauth-jwks")
+    get("/jwks")
 
     assert last_response.status == 200
     assert json_body == { "keys" => [] }
@@ -26,7 +26,7 @@ class RodauthOauthJwtJwksUriTest < JWTIntegration
       oauth_jwt_algorithm "RS256"
     end
     setup_application
-    get("/oauth-jwks")
+    get("/jwks")
 
     assert last_response.status == 200
     assert json_body["keys"][0]["use"] == "sig"
@@ -52,7 +52,7 @@ class RodauthOauthJwtJwksUriTest < JWTIntegration
       oauth_jwt_jwe_encryption_method "A256GCM"
     end
     setup_application
-    get("/oauth-jwks")
+    get("/jwks")
 
     assert last_response.status == 200
     assert json_body["keys"][0]["use"] == "sig"

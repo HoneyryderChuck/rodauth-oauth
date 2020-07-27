@@ -1,5 +1,5 @@
 <form method="post" class="form-horizontal" role="form" id="login-form">
-  <%=  csrf_tag(rodauth.oauth_authorize_path) if respond_to?(:csrf_tag) %>
+  <%=  csrf_tag(rodauth.authorize_path) if respond_to?(:csrf_tag) %>
   <p>Grants: <%= rodauth.scopes.join(", ") %></p>
   <input type="hidden" name="client_id" value="<%= rodauth.param("client_id") %>"/>
   <% if rodauth.param_or_nil("scope") %>

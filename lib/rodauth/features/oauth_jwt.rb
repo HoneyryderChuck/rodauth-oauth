@@ -255,7 +255,7 @@ module Rodauth
     def oauth_server_metadata_body(path)
       metadata = super
       metadata.merge! \
-        jwks_uri: oauth_jwks_url,
+        jwks_uri: jwks_url,
         token_endpoint_auth_signing_alg_values_supported: [oauth_jwt_algorithm]
       metadata
     end
@@ -439,7 +439,7 @@ module Rodauth
       super
     end
 
-    route(:oauth_jwks) do |r|
+    route(:jwks) do |r|
       r.get do
         json_response_success({ keys: jwks_set })
       end

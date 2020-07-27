@@ -63,7 +63,7 @@ module Rodauth
 
     notice_flash "The oauth token has been revoked", "revoke_oauth_token"
 
-    view "oauth_authorize", "Authorize", "authorize"
+    view "authorize", "Authorize", "authorize"
     view "oauth_applications", "Oauth Applications", "oauth_applications"
     view "oauth_application", "Oauth Application", "oauth_application"
     view "new_oauth_application", "New Oauth Application", "new_oauth_application"
@@ -195,11 +195,11 @@ module Rodauth
 
     def check_csrf?
       case request.path
-      when oauth_token_path, oauth_introspect_path
+      when token_path, introspect_path
         false
-      when oauth_revoke_path
+      when revoke_path
         !json_request?
-      when oauth_authorize_path, %r{/#{oauth_applications_path}}
+      when authorize_path, %r{/#{oauth_applications_path}}
         only_json? ? false : super
       else
         super
@@ -419,7 +419,7 @@ module Rodauth
       http = Net::HTTP.new(auth_url.host, auth_url.port)
       http.use_ssl = auth_url.scheme == "https"
 
-      request = Net::HTTP::Post.new(oauth_introspect_path)
+      request = Net::HTTP::Post.new(introspect_path)
       request["content-type"] = json_response_content_type
       request["accept"] = json_response_content_type
       request.body = JSON.dump({ "token_type_hint" => token_type_hint, "token" => token })
@@ -1044,7 +1044,7 @@ module Rodauth
         throw_json_response_error(authorization_required_error_status, "invalid_client")
       else
         set_redirect_error_flash(require_authorization_error_flash)
-        redirect(oauth_authorize_path)
+        redirect(authorize_path)
       end
     end
 
@@ -1137,8 +1137,8 @@ module Rodauth
       end
       {
         issuer: issuer,
-        authorization_endpoint: oauth_authorize_url,
-        token_endpoint: oauth_token_url,
+        authorization_endpoint: authorize_url,
+        token_endpoint: token_url,
         registration_endpoint: "#{base_url}/#{oauth_applications_path}",
         scopes_supported: oauth_application_scopes,
         response_types_supported: responses_supported,
@@ -1149,16 +1149,16 @@ module Rodauth
         ui_locales_supported: oauth_metadata_ui_locales_supported,
         op_policy_uri: oauth_metadata_op_policy_uri,
         op_tos_uri: oauth_metadata_op_tos_uri,
-        revocation_endpoint: oauth_revoke_url,
+        revocation_endpoint: revoke_url,
         revocation_endpoint_auth_methods_supported: nil, # because it's client_secret_basic
-        introspection_endpoint: oauth_introspect_url,
+        introspection_endpoint: introspect_url,
         introspection_endpoint_auth_methods_supported: %w[client_secret_basic],
         code_challenge_methods_supported: (use_oauth_pkce? ? oauth_pkce_challenge_method : nil)
       }
     end
 
-    # /oauth-token
-    route(:oauth_token) do |r|
+    # /token
+    route(:token) do |r|
       before_token
 
       r.post do
@@ -1177,8 +1177,8 @@ module Rodauth
       end
     end
 
-    # /oauth-introspect
-    route(:oauth_introspect) do |r|
+    # /introspect
+    route(:introspect) do |r|
       before_introspect
 
       r.post do
@@ -1208,8 +1208,8 @@ module Rodauth
       end
     end
 
-    # /oauth-revoke
-    route(:oauth_revoke) do |r|
+    # /revoke
+    route(:revoke) do |r|
       before_revoke
 
       r.post do
@@ -1237,8 +1237,8 @@ module Rodauth
       end
     end
 
-    # /oauth-authorize
-    route(:oauth_authorize) do |r|
+    # /authorize
+    route(:authorize) do |r|
       require_account
       validate_oauth_grant_params
       try_approval_prompt if use_oauth_access_type? && request.get?

@@ -12,8 +12,8 @@ class RodauthOAuthHTTPMacAuthorizeTest < HTTPMacIntegration
     login
 
     # show the authorization form
-    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&response_type=token"
-    assert page.current_path == "/oauth-authorize",
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=token"
+    assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
 
     # submit authorization request

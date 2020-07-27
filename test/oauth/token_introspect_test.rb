@@ -11,7 +11,7 @@ class RodauthOAuthTokenIntrospectTest < RodaIntegration
 
     header "Accept", "application/json"
 
-    post("/oauth-introspect")
+    post("/introspect")
     assert last_response.status == 400
     assert json_body["error"] == "invalid_request"
   end
@@ -25,7 +25,7 @@ class RodauthOAuthTokenIntrospectTest < RodaIntegration
     token = oauth_token(expires_in: Time.now - 20)
 
     # valid token, and now we're getting somewhere
-    post("/oauth-introspect", {
+    post("/introspect", {
            token: token[:token]
          })
     assert last_response.status == 200
@@ -39,7 +39,7 @@ class RodauthOAuthTokenIntrospectTest < RodaIntegration
     header "Accept", "application/json"
 
     # valid token, and now we're getting somewhere
-    post("/oauth-introspect", {
+    post("/introspect", {
            token: oauth_token[:token]
          })
     assert last_response.status == 200
@@ -56,7 +56,7 @@ class RodauthOAuthTokenIntrospectTest < RodaIntegration
     header "Accept", "application/json"
 
     # valid token, and now we're getting somewhere
-    post("/oauth-introspect", {
+    post("/introspect", {
            token: oauth_token[:refresh_token]
          })
     assert last_response.status == 200
@@ -73,7 +73,7 @@ class RodauthOAuthTokenIntrospectTest < RodaIntegration
     header "Accept", "application/json"
 
     # valid token, and now we're getting somewhere
-    post("/oauth-introspect", {
+    post("/introspect", {
            token: oauth_token[:refresh_token],
            token_type_hint: "access_token"
          })
@@ -88,7 +88,7 @@ class RodauthOAuthTokenIntrospectTest < RodaIntegration
     header "Accept", "application/json"
 
     # valid token, and now we're getting somewhere
-    post("/oauth-introspect", {
+    post("/introspect", {
            token: oauth_token[:refresh_token],
            token_type_hint: "refresh_token"
          })

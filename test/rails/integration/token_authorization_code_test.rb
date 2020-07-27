@@ -9,7 +9,7 @@ class RodauthOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
     setup_application
 
     header "Accept", "application/json"
-    post("/oauth-token")
+    post("/token")
 
     assert last_response.status == 401
     assert json_body["error"] == "invalid_client"
@@ -18,7 +18,7 @@ class RodauthOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
   def test_token_rails_authorization_code_no_grant
     setup_application
     header "Accept", "application/json"
-    post("/oauth-token",
+    post("/token",
          client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
@@ -33,7 +33,7 @@ class RodauthOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
     grant = oauth_grant(expires_in: Time.now - 60)
 
     header "Accept", "application/json"
-    post("/oauth-token",
+    post("/token",
          client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
@@ -49,7 +49,7 @@ class RodauthOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
     grant = oauth_grant(revoked_at: Time.now)
 
     header "Accept", "application/json"
-    post("/oauth-token",
+    post("/token",
          client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
@@ -64,7 +64,7 @@ class RodauthOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
     setup_application
 
     header "Accept", "application/json"
-    post("/oauth-token",
+    post("/token",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",
          code: oauth_grant[:code],
@@ -78,7 +78,7 @@ class RodauthOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
     setup_application
 
     header "Accept", "application/json"
-    post("/oauth-token",
+    post("/token",
          client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "authorization_code",

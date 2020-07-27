@@ -7,7 +7,7 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
 
   def test_token_refresh_token_no_token
     setup_application
-    post("/oauth-token",
+    post("/token",
          client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "refresh_token",
@@ -21,7 +21,7 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
     setup_application
     oauth_token = oauth_token(revoked_at: Time.now)
 
-    post("/oauth-token",
+    post("/token",
          client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "refresh_token",
@@ -34,7 +34,7 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
   def test_token_refresh_token_no_client_secret
     setup_application
 
-    post("/oauth-token",
+    post("/token",
          client_id: oauth_application[:client_id],
          grant_type: "refresh_token",
          refresh_token: oauth_token[:refresh_token])
@@ -49,7 +49,7 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
     prev_token = oauth_token[:token]
     prev_expires_in = oauth_token[:expires_in]
 
-    post("/oauth-token",
+    post("/token",
          client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "refresh_token",
@@ -74,7 +74,7 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
     prev_token = oauth_token[:token]
     prev_expires_in = oauth_token[:expires_in]
 
-    post("/oauth-token",
+    post("/token",
          client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "refresh_token",
