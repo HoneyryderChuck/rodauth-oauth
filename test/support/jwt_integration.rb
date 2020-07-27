@@ -50,7 +50,7 @@ class JWTIntegration < RodaIntegration
     assert headers["alg"] == algorithm
     assert payload["iss"] == "Example"
     assert payload["aud"] == "Audience"
-    assert payload["sub"] == account[:id]
     assert payload["nonce"] == oauth_token[:nonce]
+    payload
   end
 end
