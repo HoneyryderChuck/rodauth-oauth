@@ -2,6 +2,48 @@
 
 ## master
 
+#### Features
+
+##### OpenID
+
+`rodauth-oauth` now ships with support for [OpenID Connect](https://openid.net/connect/). In order to enable, you have to:
+
+```ruby
+plugin :rodauth do
+  enable :oidc
+end
+```
+
+For more info about integrating it, [check the wiki](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/wikis/home#openid-connect-since-v01).
+
+It supports omniauth openID integrations out-of-the-box, [check the OpenID example, which integrates with omniauth_openid_connect](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/tree/master/examples).
+
+#### Improvements
+
+* JWT: `sub` claim now also handles "pairwise" subjects. For that, you have to set the `oauth_jwt_subject_type` option (`"public"` or `"pairwise"`) and `oauth_jwt_subject_secret` (will be used for salting the `sub` when the type is `"pairwise"`).
+* JWT: `auth_time` claim is now supported; if your application uses the `rodauth` feature `:account_expiration`, it'll use the `last_account_login_at` method, otherwise you can set the `last_account_login_at` option:
+
+```ruby
+last_account_login_at do
+  convert_timestamp(db[accounts_table].where(account_id_column => account_id).get(:that_column_where_you_keep_the_data))
+end
+```
+* JWT: `iss` claim now defaults to `authorization_server_url` when not defined;
+* JWT: `aud` claim now defaults to the token application's client ID (`client_id` claim was removed as a result);
+
+
+
+#### Breaking Changes
+
+`rodauth-oauth` URLs no longer have the `oauth-` prefix, so make sure you update your integrations accordingly, i.e. where you used to rely on `/oauth-authorize`, you'll have to use `/authorize`.
+
+
+#### Bugfixes
+
+* Authorization request submission can receive the `scope` as an array of values now, instead of only dealing with receiving a white-space separated list.
+* fixed trailing "/" in the "issuer" value in server metadata (`https://server.com/` -> `https://server.com`).
+
+
 ### 0.0.6
 
 #### Features
