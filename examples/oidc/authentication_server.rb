@@ -121,6 +121,8 @@ class AuthenticationServer < Roda
 
     oauth_application_scopes %w[openid email profile books.read]
     oauth_application_default_scope %w[openid email profile books.read]
+    oauth_valid_uri_schemes %w[http https]
+
     oauth_jwt_key PRIV_KEY
     oauth_jwt_public_key PUB_KEY
     oauth_jwt_algorithm "RS256"
