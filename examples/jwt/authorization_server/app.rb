@@ -114,8 +114,11 @@ class AuthorizationServer < Roda
     account_password_hash_column :ph
     title_instance_variable :@page_title
     login_return_to_requested_location? true
+
     oauth_application_scopes %w[profile.read books.read books.write]
     oauth_application_default_scope %w[profile.read]
+    oauth_valid_uri_schemes %w[http https]
+
     oauth_jwt_key PRIV_KEY
     oauth_jwt_public_key PUB_KEY
     #     oauth_jwt_algorithm "ES256"

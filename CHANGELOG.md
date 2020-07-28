@@ -37,6 +37,8 @@ end
 
 `rodauth-oauth` URLs no longer have the `oauth-` prefix, so make sure you update your integrations accordingly, i.e. where you used to rely on `/oauth-authorize`, you'll have to use `/authorize`.
 
+URI schemes for client applications redirect URIs have to be `https`. In order to override this, set the `oauth_valid_uri_schemes` to an array of your expected URI schemes.
+
 
 #### Bugfixes
 

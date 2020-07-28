@@ -80,7 +80,7 @@ module Rodauth
     auth_value_method :oauth_require_pkce, false
     auth_value_method :oauth_pkce_challenge_method, "S256"
 
-    auth_value_method :oauth_valid_uri_schemes, %w[http https]
+    auth_value_method :oauth_valid_uri_schemes, %w[https]
 
     auth_value_method :oauth_scope_separator, " "
 
