@@ -21,7 +21,7 @@ class RodauthOAuthResourceServerTest < RodaIntegration
 
     header "Accept", "application/json"
     header "Authorization", "Bearer TOKEN"
-    stub_request(:post, "https://auth-server/oauth-introspect")
+    stub_request(:post, "https://auth-server/introspect")
       .with(body: JSON.dump({ "token_type_hint" => "access_token", "token" => "TOKEN" }))
       .to_return(body: JSON.dump({ "active" => false }))
     # valid token, and now we're getting somewhere
@@ -34,7 +34,7 @@ class RodauthOAuthResourceServerTest < RodaIntegration
 
     header "Accept", "application/json"
     header "Authorization", "Bearer TOKEN"
-    stub_request(:post, "https://auth-server/oauth-introspect")
+    stub_request(:post, "https://auth-server/introspect")
       .with(body: JSON.dump({ "token_type_hint" => "access_token", "token" => "TOKEN" }))
       .to_return(body: JSON.dump({
                                    "scope" => "profile.write",
@@ -51,7 +51,7 @@ class RodauthOAuthResourceServerTest < RodaIntegration
 
     header "Accept", "application/json"
     header "Authorization", "Bearer TOKEN"
-    stub_request(:post, "https://auth-server/oauth-introspect")
+    stub_request(:post, "https://auth-server/introspect")
       .with(body: JSON.dump({ "token_type_hint" => "access_token", "token" => "TOKEN" }))
       .to_return(body: JSON.dump({
                                    "scope" => "profile.read",

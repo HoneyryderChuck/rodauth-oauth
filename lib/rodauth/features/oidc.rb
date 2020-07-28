@@ -211,7 +211,7 @@ module Rodauth
                        response_modes_supported: %w[query fragment],
                        grant_types_supported: %w[authorization_code implicit],
 
-                       subject_types_supported: [oauth_subject_type],
+                       subject_types_supported: [oauth_jwt_subject_type],
 
                        id_token_signing_alg_values_supported: metadata[:token_endpoint_auth_signing_alg_values_supported],
                        id_token_encryption_alg_values_supported: [oauth_jwt_jwe_algorithm].compact,

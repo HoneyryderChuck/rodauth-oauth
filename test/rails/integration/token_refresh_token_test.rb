@@ -8,7 +8,7 @@ class RodauthOAuthRailsTokenRefreshTokenTest < RailsIntegrationTest
   def test_token_rails_refresh_token_no_token
     setup_application
     header "Accept", "application/json"
-    post("/oauth-token",
+    post("/token",
          client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "refresh_token",
@@ -23,7 +23,7 @@ class RodauthOAuthRailsTokenRefreshTokenTest < RailsIntegrationTest
     oauth_token = oauth_token(revoked_at: Time.now)
 
     header "Accept", "application/json"
-    post("/oauth-token",
+    post("/token",
          client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "refresh_token",
@@ -37,7 +37,7 @@ class RodauthOAuthRailsTokenRefreshTokenTest < RailsIntegrationTest
     setup_application
 
     header "Accept", "application/json"
-    post("/oauth-token",
+    post("/token",
          client_id: oauth_application[:client_id],
          grant_type: "refresh_token",
          refresh_token: oauth_token[:refresh_token])
@@ -53,7 +53,7 @@ class RodauthOAuthRailsTokenRefreshTokenTest < RailsIntegrationTest
     prev_expires_in = oauth_token[:expires_in]
 
     header "Accept", "application/json"
-    post("/oauth-token",
+    post("/token",
          client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "refresh_token",

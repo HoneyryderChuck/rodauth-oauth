@@ -77,7 +77,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
   def generate_access_token(scopes = "openid")
     grant = oauth_grant(scopes: scopes)
 
-    post("/oauth-token",
+    post("/token",
          client_id: oauth_application[:client_id],
          client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",

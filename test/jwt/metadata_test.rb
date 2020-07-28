@@ -14,7 +14,7 @@ class RodauthOauthJwtServerMetadataTest < JWTIntegration
 
     assert last_response.status == 200
     assert json_body["token_endpoint_auth_signing_alg_values_supported"] == %w[HS256]
-    assert json_body["jwks_uri"] == "http://example.org/oauth-jwks"
+    assert json_body["jwks_uri"] == "http://example.org/jwks"
   end
 
   private

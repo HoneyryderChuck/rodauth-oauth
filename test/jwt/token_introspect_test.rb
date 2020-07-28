@@ -14,7 +14,7 @@ class RodauthOauthJwtTokenIntrospectTest < JWTIntegration
     login
 
     # generate jwt
-    post("/oauth-token",
+    post("/token",
          client_id: oauth_application[:client_id],
          client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",
@@ -24,7 +24,7 @@ class RodauthOauthJwtTokenIntrospectTest < JWTIntegration
     verify_response
 
     # valid token, and now we're getting somewhere
-    post("/oauth-introspect", {
+    post("/introspect", {
            token: json_body["access_token"],
            token_type_hint: "access_token"
          })

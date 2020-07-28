@@ -5,24 +5,20 @@ require "test_helper"
 class RodauthOauthOidcServerMetadataTest < OIDCIntegration
   include Rack::Test::Methods
 
-  def test_oidc_server_metadata
+  def test_oidc_openid_configuration
     rodauth do
       oauth_application_scopes %w[openid email]
       oauth_jwt_algorithm "HS256"
-
-      last_account_login_at do
-        Time.now - 60
-      end
     end
     setup_application
     get("/.well-known/openid-configuration")
 
     assert last_response.status == 200
     assert json_body["issuer"] == "http://example.org"
-    assert json_body["authorization_endpoint"] == "http://example.org/oauth-authorize"
-    assert json_body["token_endpoint"] == "http://example.org/oauth-token"
+    assert json_body["authorization_endpoint"] == "http://example.org/authorize"
+    assert json_body["token_endpoint"] == "http://example.org/token"
     assert json_body["userinfo_endpoint"] == "http://example.org/userinfo"
-    assert json_body["jwks_uri"] == "http://example.org/oauth-jwks"
+    assert json_body["jwks_uri"] == "http://example.org/jwks"
     assert json_body["registration_endpoint"] == "http://example.org/oauth-applications"
     assert json_body["scopes_supported"] == %w[openid email]
     assert json_body["response_types_supported"] == [
@@ -56,9 +52,27 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
     assert json_body["code_challenge_methods_supported"] == "S256"
   end
 
+  def test_oidc_metadata_openid_configuration_sub_scopes
+    rodauth do
+      oauth_application_scopes %w[openid email.email]
+    end
+    setup_application
+
+    get("/.well-known/openid-configuration")
+
+    assert last_response.status == 200
+
+    assert json_body["claims_supported"] == %w[sub iss iat exp aud auth_time email]
+  end
+
   private
 
   def setup_application
+    rodauth do
+      last_account_login_at do
+        Time.now - 60
+      end
+    end
     super(&:openid_configuration)
   end
 end

@@ -12,7 +12,7 @@ class RodauthOauthJWTTokenJwtBearerTest < JWTIntegration
     end
     setup_application
 
-    post("/oauth-token",
+    post("/token",
          client_id: oauth_application[:client_id],
          client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",
@@ -26,7 +26,7 @@ class RodauthOauthJWTTokenJwtBearerTest < JWTIntegration
     sleep 1
 
     # use token as assertion
-    post("/oauth-token",
+    post("/token",
          grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
          assertion: jwt_token)
 

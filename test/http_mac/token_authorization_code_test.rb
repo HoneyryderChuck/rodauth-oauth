@@ -8,7 +8,7 @@ class RodauthOAuthHTTPMacTokenAuthorizationCodeTest < HTTPMacIntegration
   def test_http_mac_token_authorization_code_successful
     setup_application
 
-    post("/oauth-token",
+    post("/token",
          client_id: oauth_application[:client_id],
          client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",

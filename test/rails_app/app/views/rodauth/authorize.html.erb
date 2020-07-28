@@ -1,4 +1,4 @@
-<%= form_tag rodauth.oauth_authorize_path, method: :post do %>
+<%= form_tag rodauth.authorize_path, method: :post do %>
   <h2>The application <%= rodauth.oauth_application[rodauth.oauth_applications_name_column] %> would like to access your data.</h2>
 
   <div class="form-group">

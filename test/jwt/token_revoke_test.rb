@@ -10,7 +10,7 @@ class RodauthOauthJwtTokenRevokeTest < JWTIntegration
     login
 
     # generate jwt
-    post("/oauth-token",
+    post("/token",
          client_id: oauth_application[:client_id],
          client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",
@@ -19,7 +19,7 @@ class RodauthOauthJwtTokenRevokeTest < JWTIntegration
 
     verify_response
 
-    post("/oauth-revoke", token_type_hint: "access_token", token: json_body["access_token"])
+    post("/revoke", token_type_hint: "access_token", token: json_body["access_token"])
 
     assert last_response.status == 400
   end
@@ -28,12 +28,12 @@ class RodauthOauthJwtTokenRevokeTest < JWTIntegration
     setup_application
     login
 
-    post("/oauth-revoke", token_type_hint: "access_token", token: oauth_token[:refresh_token])
+    post("/revoke", token_type_hint: "access_token", token: oauth_token[:refresh_token])
 
     assert last_response.status == 400
     assert json_body["error"] == "invalid_request"
 
-    post("/oauth-revoke", token_type_hint: "refresh_token", token: oauth_token[:refresh_token])
+    post("/revoke", token_type_hint: "refresh_token", token: oauth_token[:refresh_token])
 
     assert last_response.status == 200
     assert db[:oauth_tokens].where(revoked_at: nil).count.zero?

@@ -6,7 +6,9 @@ module Rodauth
   Feature.define(:oauth_jwt) do
     depends :oauth
 
-    auth_value_method :oauth_subject_type, "public" # public, pairwise
+    auth_value_method :oauth_jwt_subject_type, "public" # public, pairwise
+    auth_value_method :oauth_jwt_subject_secret, nil # salt for pairwise generation
+
     auth_value_method :oauth_jwt_token_issuer, nil
 
     auth_value_method :oauth_application_jws_jwk_column, nil
@@ -217,13 +219,15 @@ module Rodauth
     end
 
     def jwt_subject(oauth_token)
-      case oauth_subject_type
+      case oauth_jwt_subject_type
       when "public"
         oauth_token[oauth_tokens_account_id_column]
       when "pairwise"
-        Digest::SHA256.hexdigest("#{oauth_token[oauth_tokens_account_id_column]}#{oauth_token[oauth_tokens_application_id_column]}")
+        id = oauth_token[oauth_tokens_account_id_column]
+        application_id = oauth_token[oauth_tokens_oauth_application_id_column]
+        Digest::SHA256.hexdigest("#{id}#{application_id}#{oauth_jwt_subject_secret}")
       else
-        raise StandardError, "unexpected subject (#{oauth_subject_type})"
+        raise StandardError, "unexpected subject (#{oauth_jwt_subject_type})"
       end
     end
 
@@ -255,15 +259,9 @@ module Rodauth
     def oauth_server_metadata_body(path)
       metadata = super
       metadata.merge! \
-        jwks_uri: oauth_jwks_url,
+        jwks_uri: jwks_url,
         token_endpoint_auth_signing_alg_values_supported: [oauth_jwt_algorithm]
       metadata
-    end
-
-    def token_from_application?(oauth_token, oauth_application)
-      return super unless oauth_token["sub"] # naive check on whether it's a jwt token
-
-      oauth_token["client_id"] == oauth_application[oauth_applications_client_id_column]
     end
 
     def _jwt_key
@@ -439,7 +437,7 @@ module Rodauth
       super
     end
 
-    route(:oauth_jwks) do |r|
+    route(:jwks) do |r|
       r.get do
         json_response_success({ keys: jwks_set })
       end

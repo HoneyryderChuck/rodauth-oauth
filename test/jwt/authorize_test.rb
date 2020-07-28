@@ -7,7 +7,7 @@ class RodauthOauthJwtAuthorizeTest < JWTIntegration
     setup_application
     login
 
-    visit "/oauth-authorize?request_uri=https://request-uri.com/yadayada"
+    visit "/authorize?request_uri=https://request-uri.com/yadayada"
     assert page.current_url.include?("?error=request_uri_not_supported"),
            "was redirected instead to #{page.current_url}"
   end
@@ -16,7 +16,7 @@ class RodauthOauthJwtAuthorizeTest < JWTIntegration
     setup_application
     login
 
-    visit "/oauth-authorize?request=eyIknowthisisbad.yes.yes&client_id=#{oauth_application[:client_id]}"
+    visit "/authorize?request=eyIknowthisisbad.yes.yes&client_id=#{oauth_application[:client_id]}"
     assert page.current_url.include?("?error=invalid_request_object"),
            "was redirected instead to #{page.current_url}"
   end
@@ -35,7 +35,7 @@ class RodauthOauthJwtAuthorizeTest < JWTIntegration
 
     signed_request = generate_signed_request(oauth_application)
 
-    visit "/oauth-authorize?request=#{signed_request}&client_id=#{oauth_application[:client_id]}"
+    visit "/authorize?request=#{signed_request}&client_id=#{oauth_application[:client_id]}"
     assert page.current_url.include?("?error=invalid_request_object"),
            "was redirected instead to #{page.current_url}"
   end
@@ -51,9 +51,9 @@ class RodauthOauthJwtAuthorizeTest < JWTIntegration
 
     signed_request = generate_signed_request(application, signing_key: jws_key)
 
-    visit "/oauth-authorize?request=#{signed_request}&client_id=#{application[:client_id]}"
+    visit "/authorize?request=#{signed_request}&client_id=#{application[:client_id]}"
 
-    assert page.current_path == "/oauth-authorize",
+    assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
   end
 
@@ -75,9 +75,9 @@ class RodauthOauthJwtAuthorizeTest < JWTIntegration
 
     signed_request = generate_signed_request(application, signing_key: jws_key, encryption_key: jwe_public_key)
 
-    visit "/oauth-authorize?request=#{signed_request}&client_id=#{application[:client_id]}"
+    visit "/authorize?request=#{signed_request}&client_id=#{application[:client_id]}"
 
-    assert page.current_path == "/oauth-authorize",
+    assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
   end
 

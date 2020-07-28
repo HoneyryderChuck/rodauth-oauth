@@ -12,7 +12,7 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
     end
     setup_application
 
-    post("/oauth-token",
+    post("/token",
          client_id: oauth_application[:client_id],
          client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",
@@ -23,11 +23,78 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
     oauth_token = verify_oauth_token
 
-    verify_response_body(json_body, oauth_token, "SECRET", "HS256")
+    payload = verify_response_body(json_body, oauth_token, "SECRET", "HS256")
+
+    # by default the subject type is public
+    assert payload["sub"] == account[:id]
 
     # use token
     header "Authorization", "Bearer #{json_body['access_token']}"
 
+    # valid token, and now we're getting somewhere
+    get("/private")
+    assert last_response.status == 200
+  end
+
+  def test_oauth_jwt_authorization_code_hmac_sha256_subject_pairwise
+    rodauth do
+      oauth_jwt_key "SECRET"
+      oauth_jwt_algorithm "HS256"
+      oauth_jwt_subject_type "pairwise"
+    end
+    setup_application
+
+    post("/token",
+         client_id: oauth_application[:client_id],
+         client_secret: "CLIENT_SECRET",
+         grant_type: "authorization_code",
+         code: oauth_grant[:code],
+         redirect_uri: oauth_grant[:redirect_uri])
+
+    verify_response
+
+    oauth_token = verify_oauth_token
+
+    payload = verify_response_body(json_body, oauth_token, "SECRET", "HS256")
+    # by default the subject type is public
+    assert payload["sub"] != account[:id]
+
+    # use token
+    header "Authorization", "Bearer #{json_body['access_token']}"
+
+    # valid token, and now we're getting somewhere
+    get("/private")
+    assert last_response.status == 200
+  end
+
+  def test_token_authorization_code_hmac_sha256_hash_columns
+    rodauth do
+      oauth_jwt_key "SECRET"
+      oauth_jwt_algorithm "HS256"
+      oauth_tokens_token_hash_column :token_hash
+      oauth_tokens_refresh_token_hash_column :refresh_token_hash
+    end
+    setup_application
+
+    post("/token",
+         client_id: oauth_application[:client_id],
+         client_secret: "CLIENT_SECRET",
+         grant_type: "authorization_code",
+         code: oauth_grant[:code],
+         redirect_uri: oauth_grant[:redirect_uri])
+
+    verify_response
+
+    oauth_token = verify_oauth_token
+
+    assert oauth_token[:refresh_token].nil?
+    assert !oauth_token[:refresh_token_hash].nil?
+
+    assert json_body["access_token"] != oauth_token[:token_hash]
+    assert json_body["refresh_token"] != oauth_token[:refresh_token_hash]
+    assert !json_body["expires_in"].nil?
+
+    header "Authorization", "Bearer #{json_body['access_token']}"
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 200
@@ -43,7 +110,7 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
     end
     setup_application
 
-    post("/oauth-token",
+    post("/token",
          client_id: oauth_application[:client_id],
          client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",
@@ -78,7 +145,7 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
       end
       setup_application
 
-      post("/oauth-token",
+      post("/token",
            client_id: oauth_application[:client_id],
            client_secret: "CLIENT_SECRET",
            grant_type: "authorization_code",
@@ -113,7 +180,7 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
     end
     setup_application
 
-    post("/oauth-token",
+    post("/token",
          client_id: oauth_application[:client_id],
          client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",

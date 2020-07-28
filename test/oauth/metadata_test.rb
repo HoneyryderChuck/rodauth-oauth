@@ -14,16 +14,16 @@ class RodauthOauthServerMetadataTest < RodaIntegration
 
     assert last_response.status == 200
     assert json_body["issuer"] == "http://example.org"
-    assert json_body["authorization_endpoint"] == "http://example.org/oauth-authorize"
-    assert json_body["token_endpoint"] == "http://example.org/oauth-token"
+    assert json_body["authorization_endpoint"] == "http://example.org/authorize"
+    assert json_body["token_endpoint"] == "http://example.org/token"
     assert json_body["registration_endpoint"] == "http://example.org/oauth-applications"
     assert json_body["scopes_supported"] == %w[read write]
     assert json_body["response_types_supported"] == %w[code]
     assert json_body["response_modes_supported"] == %w[query]
     assert json_body["grant_types_supported"] == %w[authorization_code]
     assert json_body["token_endpoint_auth_methods_supported"] == %w[client_secret_basic client_secret_post]
-    assert json_body["revocation_endpoint"] == "http://example.org/oauth-revoke"
-    assert json_body["introspection_endpoint"] == "http://example.org/oauth-introspect"
+    assert json_body["revocation_endpoint"] == "http://example.org/revoke"
+    assert json_body["introspection_endpoint"] == "http://example.org/introspect"
     assert json_body["code_challenge_methods_supported"] == "S256"
   end
 

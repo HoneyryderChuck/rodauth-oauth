@@ -11,7 +11,7 @@ class RodauthOAuthRailsAuthorizeTest < RailsIntegrationTest
 
   def test_authorize_rails_get_authorize_not_logged_in_no_client_application
     setup_application
-    visit "/oauth-authorize"
+    visit "/authorize"
     assert page.current_path == "/login",
            "was redirected instead to #{page.current_path}"
   end
@@ -19,7 +19,7 @@ class RodauthOAuthRailsAuthorizeTest < RailsIntegrationTest
   def test_authorize_rails_get_authorize
     setup_application
     login
-    visit "/oauth-authorize"
+    visit "/authorize"
     assert page.current_path == "/",
            "was redirected instead to #{page.current_path}"
   end
@@ -27,7 +27,7 @@ class RodauthOAuthRailsAuthorizeTest < RailsIntegrationTest
   def test_authorize_rails_get_authorize_invalid_client_id
     setup_application
     login
-    visit "/oauth-authorize?client_id=bla"
+    visit "/authorize?client_id=bla"
     assert page.current_url.end_with?("/?error=invalid_request"),
            "was redirected instead to #{page.current_url}"
   end
@@ -35,7 +35,7 @@ class RodauthOAuthRailsAuthorizeTest < RailsIntegrationTest
   def test_authorize_rails_get_authorize_invalid_redirect_uri
     setup_application
     login
-    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&redirect_uri=bla"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&redirect_uri=bla"
     assert page.current_url.end_with?("/?error=invalid_request"),
            "was redirected instead to #{page.current_url}"
   end
@@ -43,7 +43,7 @@ class RodauthOAuthRailsAuthorizeTest < RailsIntegrationTest
   def test_authorize_rails_get_authorize_invalid_scope
     setup_application
     login
-    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}& "\
+    visit "/authorize?client_id=#{oauth_application[:client_id]}& "\
           "redirect_uri=#{oauth_application[:redirect_uri]}&" \
           "scope=marvel"
     assert page.current_url.include?("?error=invalid_scope"),
@@ -55,8 +55,8 @@ class RodauthOAuthRailsAuthorizeTest < RailsIntegrationTest
     login
 
     # show the authorization form
-    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write"
-    assert page.current_path == "/oauth-authorize",
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write"
+    assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
 
     # submit authorization request
@@ -76,8 +76,8 @@ class RodauthOAuthRailsAuthorizeTest < RailsIntegrationTest
     login
 
     # show the authorization form
-    visit "/oauth-authorize?client_id=#{oauth_application[:client_id]}&state=STATE"
-    assert page.current_path == "/oauth-authorize",
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&state=STATE"
+    assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
 
     # submit authorization request
