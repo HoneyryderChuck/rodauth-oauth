@@ -1159,6 +1159,8 @@ module Rodauth
 
     # /token
     route(:token) do |r|
+      next unless is_authorization_server?
+
       before_token
 
       r.post do
@@ -1179,6 +1181,8 @@ module Rodauth
 
     # /introspect
     route(:introspect) do |r|
+      next unless is_authorization_server?
+
       before_introspect
 
       r.post do
@@ -1210,6 +1214,8 @@ module Rodauth
 
     # /revoke
     route(:revoke) do |r|
+      next unless is_authorization_server?
+
       before_revoke
 
       r.post do
@@ -1239,6 +1245,8 @@ module Rodauth
 
     # /authorize
     route(:authorize) do |r|
+      next unless is_authorization_server?
+
       require_account
       validate_oauth_grant_params
       try_approval_prompt if use_oauth_access_type? && request.get?

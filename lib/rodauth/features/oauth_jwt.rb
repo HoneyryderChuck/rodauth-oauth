@@ -438,6 +438,8 @@ module Rodauth
     end
 
     route(:jwks) do |r|
+      next unless is_authorization_server?
+
       r.get do
         json_response_success({ keys: jwks_set })
       end

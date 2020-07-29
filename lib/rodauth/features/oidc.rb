@@ -235,6 +235,8 @@ module Rodauth
 
     # /userinfo
     route(:userinfo) do |r|
+      next unless is_authorization_server?
+
       r.on method: %i[get post] do
         catch_error do
           oauth_token = authorization_token
