@@ -43,7 +43,6 @@ module Rodauth
 
     before "authorize"
     after "authorize"
-    after "authorize_failure"
 
     before "token"
 
@@ -54,8 +53,6 @@ module Rodauth
 
     before "create_oauth_application"
     after "create_oauth_application"
-
-    error_flash "OAuth Authorization invalid parameters", "oauth_grant_valid_parameters"
 
     error_flash "Please authorize to continue", "require_authorization"
     error_flash "There was an error registering your oauth application", "create_oauth_application"
@@ -148,9 +145,7 @@ module Rodauth
     auth_value_method :oauth_application_scopes, SCOPES
     auth_value_method :oauth_token_type, "bearer"
 
-    auth_value_method :invalid_request, "Request is missing a required parameter"
-    auth_value_method :invalid_client, "Invalid client"
-    auth_value_method :unauthorized_client, "Unauthorized client"
+    auth_value_method :invalid_client_message, "Invalid client"
     auth_value_method :invalid_grant_type_message, "Invalid grant type"
     auth_value_method :invalid_grant_message, "Invalid grant"
     auth_value_method :invalid_scope_message, "Invalid scope"
