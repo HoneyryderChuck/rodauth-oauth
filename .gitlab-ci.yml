@@ -5,6 +5,8 @@ cache:
     - vendor/ruby
     - vendor/jruby
 
+variables:
+  JEKYLL_ENV: production
 
 .before_script: &before_script
   - ruby -v
@@ -75,3 +77,29 @@ ruby27:
   artifacts:
     paths:
       - "coverage/"
+
+jekyll:
+  stage: test
+  image: "ruby:2.7-alpine"
+  before_script:
+    - *deps_alpine
+    - *before_script
+  script:
+    - bundle exec rake prepare_website
+    - cd www
+    - bundle config set path '../vendor'
+    - bundle install --jobs 4
+    - bundle exec jekyll build -d public
+
+pages:
+  stage: deploy
+  dependencies:
+    - jekyll
+  script:
+    - mv www/public .
+  artifacts:
+    paths:
+      - public
+    expire_in: 30 days
+  only:
+    - master

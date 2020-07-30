@@ -34,7 +34,7 @@ rescue Gem::LoadError
 end
 
 rdoc_opts.concat(["--main", "README.md"])
-RDOC_FILES = %w[README.md CHANGELOG.md lib/**/*.rb doc/]+ Dir["doc/*.rdoc"]
+RDOC_FILES = %w[README.md CHANGELOG.md lib/**/*.rb]+ Dir["doc/*.rdoc"]
 
 RDoc::Task.new do |rdoc|
   rdoc.rdoc_dir = "rdoc"
@@ -71,7 +71,7 @@ task :check_method_doc do
 end
 
 desc "Builds Homepage"
-task :prepare_website => ["website_rdoc"] do
+task :prepare_website => [:website_rdoc] do
   require "fileutils"
   Dir.chdir "www"
   system("bundle install")
