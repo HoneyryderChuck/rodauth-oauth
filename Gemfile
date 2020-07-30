@@ -5,7 +5,7 @@ source "https://rubygems.org"
 # Specify your gem's dependencies in roda-oauth.gemspec
 gemspec
 
-gem "rake", "~> 12.0"
+gem "rake", "~> 12.3"
 
 gem "bcrypt"
 gem "rack_csrf"
@@ -61,3 +61,6 @@ platform :jruby do
   gem "activerecord-jdbc-adapter"
   gem "jdbc-sqlite3"
 end
+
+# Docs/Website
+gem "hanna-nouveau", require: false

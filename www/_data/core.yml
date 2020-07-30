@@ -1,0 +1,12 @@
+-
+  name: OAuth
+  path: oauth_rdoc.html
+-
+  name: Oauth JWT
+  path: oauth_jwt_rdoc.html
+-
+  name: OIDC
+  path: oidc_rdoc.html
+-
+  name: OAuth HTTP Mac
+  path: oauth_http_mac_rdoc.html

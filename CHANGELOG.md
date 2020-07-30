@@ -48,6 +48,8 @@ URI schemes for client applications redirect URIs have to be `https`. In order t
 
 ### 0.0.6
 
+(6/7/2020)
+
 #### Features
 
 The `oauth_jwt` feature now supports JWT Secured Authorization Request (JAR) (see https://tools.ietf.org/html/draft-ietf-oauth-jwsreq-20). This means that client applications can send the authorization parameters inside a signed JWT. The client applications keeps the private key, while the authorization server **must** store a public key for the client application. For encrypted JWTs, the client application should use one of the public encryption keys exposed in the JWKs URI, to encrypt the JWT. Remember, **tokens must be signed then encrypted** (or just signed).
@@ -69,7 +71,9 @@ The `oauth_jwt` feature now supports JWT Secured Authorization Request (JAR) (se
 Removed React Javascript from example applications.
 
 
-### 0.0.5 (26/6/2020)
+### 0.0.5
+
+(26/6/2020)
 
 #### Features
 
@@ -106,7 +110,9 @@ It **requires** the authorization to implement the server metadata endpoint (`/.
 * option `scopes_param` renamed to `scope_param`;
 *
 
-## 0.0.4 (13/6/2020)
+## 0.0.4
+
+(13/6/2020)
 
 ### Features
 
@@ -143,7 +149,9 @@ The `oauth_jwt` feature now allows the usage of access tokens to authorize the g
 
 * Fixed scope claim of JWT ("scopes" -> "scope");
 
-## 0.0.3 (5/6/2020)
+## 0.0.3
+
+(5/6/2020)
 
 ### Features
 
@@ -175,7 +183,9 @@ end
 * renamed the existing `use_oauth_implicit_grant_type` to `use_oauth_implicit_grant_type?`;
 * It's now usable as JSON API (small caveat: POST authorize will still redirect on success...);
 
-## 0.0.2 (29/5/2020)
+## 0.0.2
+
+(29/5/2020)
 
 ### Features
 
@@ -191,6 +201,8 @@ end
 
 * usage of client secret for authorizing the generation of tokens, as the spec mandates (and refraining from them when doing PKCE).
 
-## 0.0.1 (14/5/2020)
+## 0.0.1
+
+(14/5/2020)
 
 Initial implementation of the Oauth 2.0 framework, with an example app done using roda.
