@@ -3,10 +3,6 @@ cache:
   key: ${CI_COMMIT_REF_SLUG}
   paths:
     - vendor/ruby
-    - vendor/jruby
-
-variables:
-  JEKYLL_ENV: production
 
 .before_script: &before_script
   - ruby -v
@@ -24,6 +20,10 @@ variables:
   DATABASE_URL: "sqlite3::memory:"
 
 jruby:
+  cache:
+    key: ${CI_COMMIT_REF_SLUG}
+    paths:
+      - vendor/jruby
   allow_failure: true
   variables:
     JRUBY_OPTS: --debug
@@ -81,6 +81,8 @@ ruby27:
 jekyll:
   stage: test
   image: "ruby:2.7-alpine"
+  variables:
+    JEKYLL_ENV: production
   before_script:
     - *deps_alpine
     - *before_script
@@ -90,12 +92,18 @@ jekyll:
     - bundle config set path '../vendor'
     - bundle install --jobs 4
     - bundle exec jekyll build -d public
+  artifacts:
+    paths:
+      - www/rdoc/
+      - www/public/
 
 pages:
   stage: deploy
   dependencies:
+    - ruby27
     - jekyll
   script:
+    - mv coverage .
     - mv www/public .
   artifacts:
     paths:
