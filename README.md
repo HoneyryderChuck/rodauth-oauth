@@ -45,6 +45,15 @@ Or install it yourself as:
 
     $ gem install rodauth-oauth
 
+
+## Resources
+|               |                                                             |
+| ------------- | ----------------------------------------------------------- |
+| Website       | https://honeyryderchuck.gitlab.io/rodauth-oauth/            |
+| Documentation | https://honeyryderchuck.gitlab.io/rodauth-oauth/rdoc/       |
+| Wiki          | https://gitlab.com/honeyryderchuck/rodauth-oauth/wikis/home |
+| CI            | https://gitlab.com/honeyryderchuck/rodauth-oauth/pipelines  |
+
 ## Usage
 
 This tutorial assumes you already read the documentation and know how to set up `rodauth`. After that, integrating `roda-auth` will look like:
