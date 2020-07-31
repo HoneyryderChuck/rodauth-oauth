@@ -103,7 +103,6 @@ pages:
     - ruby27
     - jekyll
   script:
-    - mv coverage .
     - mv www/public .
   artifacts:
     paths:
