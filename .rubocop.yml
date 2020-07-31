@@ -28,6 +28,7 @@ Naming/FileName:
   Exclude:
     - Rakefile
     - Gemfile
+    - www/Gemfile
 
 Naming/AccessorMethodName:
   Exclude:

@@ -1,7 +1,7 @@
-/.bundle/
+.bundle
 /.yardoc
 /_yardoc/
-/coverage/
+coverage
 /doc/
 /pkg/
 /spec/reports/
@@ -9,3 +9,9 @@
 Gemfile.lock
 test.db
 /test/tmp
+www/public
+www/rdoc
+www/build
+www/.sass-cache
+www/wiki
+.jekyll-cache

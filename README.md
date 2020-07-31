@@ -1,7 +1,7 @@
 # Rodauth::Oauth
 
-[![pipeline status](https://gitlab.com/honeyryderchuck/rodauth-oauth/badges/master/pipeline.svg)](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/commits/master)
-[![coverage report](https://gitlab.com/honeyryderchuck/rodauth-oauth/badges/master/coverage.svg)](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/commits/master)
+[![pipeline status](https://gitlab.com/honeyryderchuck/rodauth-oauth/badges/master/pipeline.svg)](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/pipelines?page=1&ref=master)
+[![coverage report](https://gitlab.com/honeyryderchuck/rodauth-oauth/badges/master/coverage.svg)](https://honeyryderchuck.gitlab.io/rodauth-oauth/coverage/#_AllFiles)
 
 This is an extension to the `rodauth` gem which implements the [OAuth 2.0 framework](https://tools.ietf.org/html/rfc6749) for an authorization server.
 

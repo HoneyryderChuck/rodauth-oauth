@@ -1,0 +1,18 @@
+title: Rodauth OAuth 
+description: "Rodauth OAuth: OAuth 2.0 and OpenID for rodauth."
+authorurl: https://gitlab.com/honeyryderchuck
+repourl: https://gitlab.com/honeyryderchuck/rodauth-oauth
+#baseurl: "/rodauth-oauth"
+url: honeyryderchuck.gitlab.io
+markdown: kramdown
+destination: build
+github:
+  repo: https://gitlab.com/honeyryderchuck/rodauth-oauth
+include:
+  - wiki
+exclude:
+  - Gemfile
+  - Gemfile.lock
+plugins:
+  - jekyll-gzip
+  - jekyll-brotli
