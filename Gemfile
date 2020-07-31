@@ -14,6 +14,7 @@ gem "rack_csrf"
 if RUBY_VERSION < "2.5"
   gem "capybara"
   gem "rails", ">= 4.2", "< 6.0"
+  gem "sprockets", "< 4"
 else
   gem "capybara", github: "teamcapybara/capybara", branch: "master"
   gem "rails", ">= 4.2"
