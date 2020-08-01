@@ -1,0 +1,21 @@
+= Documentation for Open ID Connect feature
+
+The oidc feature builds on top of the oauth_jwt feature to implement an OpenID Connect identity provider.
+
+== Value Methods
+
+oauth_application_default_scope :: overwrites the default to <tt>"openid"</tt>
+oauth_application_scopes :: overwrites the default to <tt>["openid"]</tt>.
+oauth_grants_nonce_column :: db column where an authorization nonce is stored, <tt>:nonce</tt> by default.
+oauth_tokens_nonce_column :: db column where a token respective nonce is stored, <tt>:nonce</tt> by default.
+
+invalid_scope_message :: overwrites the default to <tt>"The Access Token expired"</tt>
+webfinger_relation :: webfinger openid relation filter, <tt>"http://openid.net/specs/connect/1.0/issuer"</tt> by default.
+
+userinfo_route :: the route for the userinfo action, defaults to +userinfo+.
+
+== Auth methods
+
+get_oidc_param :: returns the value for an OpenID connect claim (such as "email", "name", "phone_number", etc...)
+
+before_userinfo_route :: Run arbitrary code before the userinfo route.
