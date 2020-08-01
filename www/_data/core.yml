@@ -5,7 +5,7 @@
   name: Oauth JWT
   path: oauth_jwt_rdoc.html
 -
-  name: OIDC
+  name: OpenID Connect
   path: oidc_rdoc.html
 -
   name: OAuth HTTP Mac
