@@ -104,6 +104,7 @@ pages:
     - jekyll
   script:
     - mv www/public .
+    - mv www/rdoc .
   artifacts:
     paths:
       - public

@@ -1,0 +1,32 @@
+= Documentation for OAuth JWT feature
+
+The oauth JWT feature builds on top of the oauth feature, in order to generate JWT access tokens.
+
+== Value Methods
+
+oauth_jwt_subject_type :: JWT subject claim type, <tt>"public"</tt> by default.
+oauth_jwt_subject_secret :: hashing secret to use when subject claim type is "pairwise", <tt>nil</tt> by default.
+oauth_jwt_token_issuer :: JWT issuer claim, <tt>nil</tt> by default.
+oauth_jwt_audience :: JWT audience claim, <tt>nil</tt> by default.
+oauth_application_jws_jwk_column :: db column where to store an oauth application's JWS key, used for signing authorization requests, <tt>nil</tt> by default.
+oauth_jwt_key :: the JWT signing key, can be a String or an RSA/EC key.
+oauth_jwt_public_key :: the JWT verification key, can be an RSA/EC public key.
+oauth_jwt_algorithm :: JWT signing algorithm, <tt>"HS256"</tt> by default.
+oauth_jwt_jwe_key :: JWE encryption/decryption key, <tt>nil</tt> by default.
+oauth_jwt_jwe_public_key :: JWT encryption public key, <tt>nil</tt> by default.
+oauth_jwt_jwe_algorithm :: JWT encryption algorithm, <tt>nil</tt> by default.
+oauth_jwt_jwe_encryption_method :: JWT encryption method, <tt>nil</tt> by default.
+oauth_jwt_jwe_copyright :: JWE copyright parameter, <tt>nil</tt> by default.
+
+request_uri_not_supported_message :: error description for the "request_uri" OAuth error code, <tt>"request uri is unsupported"</tt> by default.
+invalid_request_object_message :: error description for the "invalid_request" OAuth error code, <tt>"request object is invalid"</tt> by default.
+
+jwks_route :: the route for the jwks, defaults to +jwks+.
+
+== Auth methods
+
+jwt_encode :: encodes a given JWT token.
+jwt_decode :: decodes a given JWT token.
+jwks_set :: returns the JWK set to expose over JSON.
+last_account_login_at :: retrieves the last login from an account.
+before_jwks_route :: Run arbitrary code before the JWKS route.
