@@ -15,13 +15,11 @@ if RUBY_VERSION < "2.5"
   gem "capybara", "~> 3.15.0"
   gem "json-jwt", "~> 1.12.0"
   gem "rails", ">= 4.2", "< 6.0"
-  gem "rubocop", "~> 0.81.0"
   gem "sprockets", "< 4"
 else
   gem "capybara", github: "teamcapybara/capybara", branch: "master"
   gem "json-jwt"
   gem "rails", ">= 4.2"
-  gem "rubocop"
 
   # Docs/Website
   gem "hanna-nouveau", require: false
@@ -50,6 +48,12 @@ gem "minitest-hooks"
 gem "rack-test"
 gem "simplecov"
 gem "webmock"
+
+if RUBY_VERSION < "2.4"
+  gem "rubocop", "~> 0.81.0"
+else
+  gem "rubocop"
+end
 
 gem "pry"
 platform :mri do
