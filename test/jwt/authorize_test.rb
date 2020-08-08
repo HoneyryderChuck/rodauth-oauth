@@ -93,7 +93,7 @@ class RodauthOauthJwtAuthorizeTest < JWTIntegration
   def generate_signed_request(application, signing_key: OpenSSL::PKey::RSA.generate(2048), encryption_key: nil)
     claims = {
       iss: "https://auth-server",
-      aud: "https://resource-server",
+      aud: "http://www.example.com",
       response_type: "code",
       client_id: application[:client_id],
       redirect_uri: application[:redirect_uri],

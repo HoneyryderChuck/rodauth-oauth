@@ -109,8 +109,8 @@ module Rodauth
       # [RFC7519] specification.  The value of "aud" should be the value of
       # the Authorization Server (AS) "issuer" as defined in RFC8414
       # [RFC8414].
-      claims.delete(:iss)
-      audience = claims.delete(:aud)
+      claims.delete("iss")
+      audience = claims.delete("aud")
 
       redirect_response_error("invalid_request_object") if audience && audience != authorization_server_url
 
