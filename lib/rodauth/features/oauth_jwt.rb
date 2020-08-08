@@ -25,9 +25,6 @@ module Rodauth
     # values used for rotating keys
     auth_value_method :oauth_jwt_legacy_public_key, nil
     auth_value_method :oauth_jwt_legacy_algorithm, nil
-    auth_value_method :oauth_jwt_legacy_jwe_public_key, nil
-    auth_value_method :oauth_jwt_legacy_jwe_algorithm, nil
-    auth_value_method :oauth_jwt_legacy_jwe_encryption_method, nil
 
     auth_value_method :oauth_jwt_jwe_copyright, nil
     auth_value_method :oauth_jwt_audience, nil
@@ -339,18 +336,23 @@ module Rodauth
       def jwt_decode(token, jws_key: oauth_jwt_public_key || _jwt_key, **)
         token = JSON::JWT.decode(token, oauth_jwt_jwe_key).plain_text if oauth_jwt_jwe_key
 
-        @jwt_token = if jws_key
-                       JSON::JWT.decode(token, jws_key)
-                     elsif !is_authorization_server? && auth_server_jwks_set
-                       JSON::JWT.decode(token, JSON::JWK::Set.new(auth_server_jwks_set))
-                     end
+        if is_authorization_server?
+          if oauth_jwt_legacy_public_key
+            JSON::JWT.decode(token, JSON::JWK::Set.new({ keys: jwks_set }))
+          elsif jws_key
+            JSON::JWT.decode(token, jws_key)
+          end
+        elsif (jwks = auth_server_jwks_set)
+          JSON::JWT.decode(token, JSON::JWK::Set.new(jwks))
+        end
       rescue JSON::JWT::Exception
         nil
       end
 
       def jwks_set
-        [
+        @jwks_set ||= [
           (JSON::JWK.new(oauth_jwt_public_key).merge(use: "sig", alg: oauth_jwt_algorithm) if oauth_jwt_public_key),
+          (JSON::JWK.new(oauth_jwt_legacy_public_key).merge(use: "sig", alg: oauth_jwt_legacy_algorithm) if oauth_jwt_legacy_public_key),
           (JSON::JWK.new(oauth_jwt_jwe_public_key).merge(use: "enc", alg: oauth_jwt_jwe_algorithm) if oauth_jwt_jwe_public_key)
         ].compact
       end
@@ -400,21 +402,30 @@ module Rodauth
       def jwt_decode(token, jws_key: oauth_jwt_public_key || _jwt_key, jws_algorithm: oauth_jwt_algorithm)
         # decrypt jwe
         token = JWE.decrypt(token, oauth_jwt_jwe_key) if oauth_jwt_jwe_key
-
         # decode jwt
-        @jwt_token = if jws_key
-                       JWT.decode(token, jws_key, true, algorithms: [jws_algorithm]).first
-                     elsif !is_authorization_server? && auth_server_jwks_set
-                       algorithms = auth_server_jwks_set[:keys].select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
-                       JWT.decode(token, nil, true, jwks: auth_server_jwks_set, algorithms: algorithms).first
-                     end
+        if is_authorization_server?
+          if oauth_jwt_legacy_public_key
+            algorithms = jwks_set.select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
+            JWT.decode(token, nil, true, jwks: { keys: jwks_set }, algorithms: algorithms).first
+          elsif jws_key
+            JWT.decode(token, jws_key, true, algorithms: [jws_algorithm]).first
+          end
+        elsif (jwks = auth_server_jwks_set)
+          algorithms = jwks[:keys].select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
+          JWT.decode(token, nil, true, jwks: jwks, algorithms: algorithms).first
+        end
       rescue JWT::DecodeError, JWT::JWKError
         nil
       end
 
       def jwks_set
-        [
+        @jwks_set ||= [
           (JWT::JWK.new(oauth_jwt_public_key).export.merge(use: "sig", alg: oauth_jwt_algorithm) if oauth_jwt_public_key),
+          (
+             if oauth_jwt_legacy_public_key
+               JWT::JWK.new(oauth_jwt_legacy_public_key).export.merge(use: "sig", alg: oauth_jwt_legacy_algorithm)
+             end
+           ),
           (JWT::JWK.new(oauth_jwt_jwe_public_key).export.merge(use: "enc", alg: oauth_jwt_jwe_algorithm) if oauth_jwt_jwe_public_key)
         ].compact
       end
