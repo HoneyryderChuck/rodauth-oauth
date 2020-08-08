@@ -67,6 +67,15 @@ ruby26:
     - master
   script:
     - *test
+ruby27_jsonjwt:
+  variables:
+    JWT_LIB: "json/jwt"
+  before_script:
+    - *deps_alpine
+    - *before_script
+  image: "ruby:2.7-alpine"
+  script:
+    - *test
 ruby27:
   before_script:
     - *deps_alpine
