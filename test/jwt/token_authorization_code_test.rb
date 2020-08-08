@@ -205,6 +205,57 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
     assert last_response.status == 200
   end
 
+  def test_oauth_jwt_authorization_code_legacy_jws
+    legacy_rsa_private = OpenSSL::PKey::RSA.generate 2048
+    legacy_rsa_public = legacy_rsa_private.public_key
+    rsa_private = OpenSSL::PKey::RSA.generate 2048
+    rsa_public = rsa_private.public_key
+
+    # Get Legacy Token
+    rodauth do
+      oauth_jwt_key legacy_rsa_private
+      oauth_jwt_public_key legacy_rsa_public
+      oauth_jwt_algorithm "RS256"
+    end
+    setup_application
+
+    with_session(:legacy) do
+      post("/token",
+           client_id: oauth_application[:client_id],
+           client_secret: "CLIENT_SECRET",
+           grant_type: "authorization_code",
+           code: oauth_grant[:code],
+           redirect_uri: oauth_grant[:redirect_uri])
+
+      verify_response
+
+      oauth_token = verify_oauth_token
+      verify_response_body(json_body, oauth_token, legacy_rsa_public, "RS256")
+    end
+
+    # Set up new app and tokens
+    # Get Legacy Token
+    @rodauth_blocks.clear
+    rodauth do
+      oauth_jwt_key rsa_private
+      oauth_jwt_public_key rsa_public
+      oauth_jwt_algorithm "RS256"
+      oauth_jwt_legacy_public_key legacy_rsa_public
+      oauth_jwt_legacy_algorithm "RS256"
+    end
+    setup_application
+
+    with_session(:rotated) do
+      # use legacy access token
+      header "Authorization", "Bearer #{json_body['access_token']}"
+      header "Accept", "application/json"
+
+      # valid access
+      current_session.get("/private")
+      assert last_response.status == 200
+    end
+  end
+
   private
 
   def setup_application

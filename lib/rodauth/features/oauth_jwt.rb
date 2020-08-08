@@ -22,6 +22,13 @@ module Rodauth
     auth_value_method :oauth_jwt_jwe_algorithm, nil
     auth_value_method :oauth_jwt_jwe_encryption_method, nil
 
+    # values used for rotating keys
+    auth_value_method :oauth_jwt_legacy_public_key, nil
+    auth_value_method :oauth_jwt_legacy_algorithm, nil
+    auth_value_method :oauth_jwt_legacy_jwe_public_key, nil
+    auth_value_method :oauth_jwt_legacy_jwe_algorithm, nil
+    auth_value_method :oauth_jwt_legacy_jwe_encryption_method, nil
+
     auth_value_method :oauth_jwt_jwe_copyright, nil
     auth_value_method :oauth_jwt_audience, nil
 
