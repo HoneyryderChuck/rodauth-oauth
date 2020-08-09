@@ -1156,7 +1156,7 @@ module Rodauth
     route(:token) do |r|
       next unless is_authorization_server?
 
-      before_token
+      before_token_route
 
       r.post do
         catch_error do
@@ -1164,6 +1164,7 @@ module Rodauth
 
           oauth_token = nil
           transaction do
+            before_token
             oauth_token = create_oauth_token
           end
 
@@ -1178,12 +1179,13 @@ module Rodauth
     route(:introspect) do |r|
       next unless is_authorization_server?
 
-      before_introspect
+      before_introspect_route
 
       r.post do
         catch_error do
           validate_oauth_introspect_params
 
+          before_introspect
           oauth_token = case param("token_type_hint")
                         when "access_token"
                           oauth_token_by_token(param("token"))
@@ -1211,7 +1213,7 @@ module Rodauth
     route(:revoke) do |r|
       next unless is_authorization_server?
 
-      before_revoke
+      before_revoke_route
 
       r.post do
         catch_error do
@@ -1219,6 +1221,7 @@ module Rodauth
 
           oauth_token = nil
           transaction do
+            before_revoke
             oauth_token = revoke_oauth_token
             after_revoke
           end
@@ -1243,10 +1246,9 @@ module Rodauth
       next unless is_authorization_server?
 
       require_account
+      before_authorize_route
       validate_oauth_grant_params
       try_approval_prompt if use_oauth_access_type? && request.get?
-
-      before_authorize
 
       r.get do
         authorize_view
@@ -1256,6 +1258,7 @@ module Rodauth
         redirect_url = URI.parse(redirect_uri)
 
         transaction do
+          before_authorize
           do_authorize(redirect_url)
         end
         redirect(redirect_url.to_s)
