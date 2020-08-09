@@ -179,7 +179,8 @@ module Rodauth
       :secret_hash,
       :generate_token_hash,
       :authorization_server_url,
-      :before_introspection_request
+      :before_introspection_request,
+      :require_authorizable_account
     )
 
     auth_value_methods(:only_json?)
@@ -665,7 +666,7 @@ module Rodauth
     end
 
     # Authorize
-    def before_authorize
+    def require_authorizable_account
       require_account
     end
 
@@ -1245,8 +1246,9 @@ module Rodauth
     route(:authorize) do |r|
       next unless is_authorization_server?
 
-      require_account
       before_authorize_route
+      require_authorizable_account
+
       validate_oauth_grant_params
       try_approval_prompt if use_oauth_access_type? && request.get?
 
