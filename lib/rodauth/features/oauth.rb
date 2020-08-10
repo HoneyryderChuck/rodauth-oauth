@@ -782,10 +782,6 @@ module Rodauth
 
     # Access Tokens
 
-    def before_token
-      require_oauth_application
-    end
-
     def validate_oauth_token_params
       unless (grant_type = param_or_nil("grant_type"))
         redirect_response_error("invalid_request")
@@ -915,13 +911,7 @@ module Rodauth
       }
     end
 
-    def before_introspect; end
-
     # Token revocation
-
-    def before_revoke
-      require_oauth_application
-    end
 
     def validate_oauth_revoke_params
       # check if valid token hint type
@@ -1158,6 +1148,7 @@ module Rodauth
       next unless is_authorization_server?
 
       before_token_route
+      require_oauth_application
 
       r.post do
         catch_error do
@@ -1215,6 +1206,7 @@ module Rodauth
       next unless is_authorization_server?
 
       before_revoke_route
+      require_oauth_application
 
       r.post do
         catch_error do
