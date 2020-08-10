@@ -46,13 +46,14 @@ gem "omniauth_openid_connect"
 gem "minitest", "~> 5.0"
 gem "minitest-hooks"
 gem "rack-test"
-gem "simplecov"
 gem "webmock"
 
 if RUBY_VERSION < "2.4"
   gem "rubocop", "~> 0.81.0"
+  gem "simplecov", "< 0.18.0"
 else
   gem "rubocop"
+  gem "simplecov"
 end
 
 gem "pry"
