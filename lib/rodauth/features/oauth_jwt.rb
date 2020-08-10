@@ -119,11 +119,17 @@ module Rodauth
 
     # /token
 
-    def before_token
+    def require_oauth_application
       # requset authentication optional for assertions
-      return if param("grant_type") == "urn:ietf:params:oauth:grant-type:jwt-bearer"
+      return super unless param("grant_type") == "urn:ietf:params:oauth:grant-type:jwt-bearer"
 
-      super
+      claims = jwt_decode(param("assertion"))
+
+      redirect_response_error("invalid_grant") unless claims
+
+      @oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => claims["client_id"]).first
+
+      authorization_required unless @oauth_application
     end
 
     def validate_oauth_token_params
@@ -144,10 +150,6 @@ module Rodauth
 
     def create_oauth_token_from_assertion
       claims = jwt_decode(param("assertion"))
-
-      redirect_response_error("invalid_grant") unless claims
-
-      @oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => claims["client_id"]).first
 
       account = account_ds(claims["sub"]).first
 
