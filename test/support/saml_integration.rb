@@ -41,7 +41,33 @@ class SAMLIntegration < RodaIntegration
   def roda(type = nil, &block)
     jwt_only = type == :jwt
 
-    app = Class.new(Base)
+    app = Class.new(Base) do
+      private
+
+      def encode_authn_response(principal, request_id:, audience_uri:, acs_url:)
+        response_id = SecureRandom.uuid
+        reference_id = SecureRandom.uuid
+        opt_issuer_uri = "http://example.com"
+        my_authn_context_classref = Saml::XML::Namespaces::AuthnContext::ClassRef::PASSWORD
+        expiry = 60 * 60
+
+        response = SamlIdp::SamlResponse.new(
+          reference_id,
+          response_id,
+          opt_issuer_uri,
+          principal,
+          audience_uri,
+          request_id,
+          acs_url,
+          OpenSSL::Digest::SHA256,
+          my_authn_context_classref,
+          expiry,
+          nil,
+          nil
+        )
+        response.build
+      end
+    end
     app.opts[:unsupported_block_result] = :raise
     app.opts[:unsupported_matcher] = :raise
     app.opts[:verbatim_string_matcher] = true
@@ -50,17 +76,13 @@ class SAMLIntegration < RodaIntegration
 
     opts[:json] = jwt_only ? :only : true
 
-    app.plugin(:rodauth, name: :saml) do
-      db RODADB
-      account_password_hash_column :ph
-      enable :saml
-    end
     app.plugin(:rodauth, opts) do
       account_password_hash_column :ph
       rodauth_blocks.reverse_each do |rodauth_block|
         instance_exec(&rodauth_block)
       end
     end
+
     app.route(&block)
     app.precompile_rodauth_templates unless @no_precompile
     self.app = app
@@ -72,18 +94,50 @@ class SAMLIntegration < RodaIntegration
 
     rodauth do
       db RODADB
-      enable feature
+      enable :login, feature
+      login_return_to_requested_location? true
       oauth_application_default_scope scopes.first
       oauth_application_scopes scopes
-
-      require_authorizable_account do
-        scope.rodauth(:saml).require_login
-      end
     end
 
     roda do |r|
       r.rodauth
-      r.rodauth(:saml)
+
+      # SAML Redirect Binding
+      r.on "saml-login" do
+        rodauth.require_authentication
+
+        r.get do
+          @saml_request = SamlIdp::Request.from_deflated_request(request.params["SAMLRequest"])
+
+          if @saml_request.valid?
+            @saml_response = encode_authn_response(
+              rodauth.account_from_session,
+              request_id: @saml_request.request_id,
+              audience_uri: @saml_request.issuer,
+              acs_url: @saml_request.acs_url
+            )
+            <<~HTML
+              <!DOCTYPE html>
+              <html>
+                <head>
+                  <meta charset="utf-8">
+                  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+                </head>
+                <body onload="document.forms[0].submit();" style="visibility:hidden;">
+                  <form method="post" action="#{@saml_request.acs_url}" class="rodauth" role="form">
+                    <input type="hidden" name="SAMLResponse" value="#{@saml_response}"/>
+                    <input type="hidden" name="RelayState" value="#{request.params['RelayState']}"/>
+                    <input type="submit" value="Submit" %>
+                  </form>
+                </body>
+              </html>
+            HTML
+          else
+            @saml_request.errors
+          end
+        end
+      end
 
       r.on "callback" do
         r.params["SAMLResponse"]
@@ -94,7 +148,6 @@ class SAMLIntegration < RodaIntegration
       end
 
       yield(rodauth) if block_given?
-      rodauth.authenticated_by.include?("saml")
       rodauth.require_oauth_authorization
 
       r.on "private" do

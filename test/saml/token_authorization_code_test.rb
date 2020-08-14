@@ -43,6 +43,30 @@ class RodauthOAuthTokenSAMLAuthorizationCodeTest < SAMLIntegration
     login
 
     post("/token",
+         client_id: oauth_application[:client_id],
+         grant_type: "http://oauth.net/grant_type/assertion/saml/2.0/bearer",
+         assertion: saml_assertion)
+
+    assert last_response.status == 200
+    assert last_response.headers["Content-Type"] == "application/json"
+
+    assert db[:oauth_tokens].count == 1
+
+    access_token = db[:oauth_tokens].first
+
+    assert access_token[:scopes] == oauth_application[:scopes]
+    assert json_body["token_type"] == "bearer"
+    assert json_body["access_token"] == access_token[:token]
+
+    assert json_body["refresh_token"] == access_token[:refresh_token]
+    assert !json_body["expires_in"].nil?
+  end
+
+  def test_token_authorization_assertion_no_client_id
+    setup_application
+    login
+
+    post("/token",
          grant_type: "http://oauth.net/grant_type/assertion/saml/2.0/bearer",
          assertion: saml_assertion)
 
