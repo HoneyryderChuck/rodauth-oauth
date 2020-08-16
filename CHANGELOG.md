@@ -2,6 +2,15 @@
 
 ## master
 
+#### Features
+
+##### SAML Assertion Grant Type
+
+`rodauth-auth` now supports using a SAML Assertion to request for an Access token.
+
+For more info about integrating it, [check the wiki](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/wikis/SAML-Assertion-Access-Tokens).
+
+
 ### 0.1.0
 
 (31/7/2020)
