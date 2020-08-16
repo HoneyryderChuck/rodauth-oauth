@@ -48,6 +48,10 @@ gem "minitest-hooks"
 gem "rack-test"
 gem "webmock"
 
+gem "ruby-saml"
+gem "saml_idp"
+gem "xmlenc"
+
 if RUBY_VERSION < "2.4"
   gem "rubocop", "~> 0.81.0"
   gem "simplecov", "< 0.18.0"

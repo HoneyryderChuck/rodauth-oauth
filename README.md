@@ -21,6 +21,7 @@ This gem implements the following RFCs and features of OAuth:
 * Access Type (Token refresh online and offline);
 * [MAC Authentication Scheme](https://tools.ietf.org/html/draft-hammer-oauth-v2-mac-token-02);
 * [JWT Acess Tokens](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-07);
+* [SAML 2.0 Assertion Access Tokens](https://tools.ietf.org/html/draft-ietf-oauth-saml2-bearer-03);
 * [JWT Secured Authorization Requests](https://tools.ietf.org/html/draft-ietf-oauth-jwsreq-20);
 * OAuth application and token management dashboards;
 
