@@ -6,10 +6,19 @@
 
 ##### SAML Assertion Grant Type
 
-`rodauth-auth` now supports using a SAML Assertion to request for an Access token.
+`rodauth-auth` now supports using a SAML Assertion to request for an Access token.In order to enable, you have to:
+
+```ruby
+plugin :rodauth do
+  enable :oauth_saml
+end
+```
 
 For more info about integrating it, [check the wiki](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/wikis/SAML-Assertion-Access-Tokens).
 
+##### Supporting rotating keys
+
+At some point, you'll want to replace the pkeys and algorithm used to generate and verify the JWT access tokens, but you want to keep validating previously-distributed JWT tokens, at least until they expire. Now you can, via two new options, `oauth_jwt_legacy_public_key` and `oauth_jwt_legacy_algorithm`, which will be declared in the JWKs URI and used to verify access tokens.
 
 ### 0.1.0
 
