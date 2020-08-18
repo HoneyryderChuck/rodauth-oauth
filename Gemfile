@@ -33,7 +33,7 @@ gem "tzinfo-data"
 gem "jwe"
 
 # direct dependencies
-gem "jwt", github: "jwt/ruby-jwt", branch: "master"
+gem "jwt", "~> 2.2.2"
 gem "rodauth"
 gem "rodauth-rails"
 gem "sequel"
