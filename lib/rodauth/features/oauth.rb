@@ -344,7 +344,7 @@ module Rodauth
         end
 
         request.get do
-          scope.instance_variable_set(:@oauth_applications, db[:oauth_applications])
+          scope.instance_variable_set(:@oauth_applications, db[oauth_applications_table])
           oauth_applications_view
         end
 
