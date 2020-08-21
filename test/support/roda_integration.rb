@@ -131,4 +131,17 @@ class RodaIntegration < Minitest::Test
   def db
     RODADB
   end
+
+  def verify_response_body(data, oauth_token)
+    assert data["token_type"] == "bearer"
+    assert data["access_token"] == oauth_token[:token]
+
+    assert data["refresh_token"] == oauth_token[:refresh_token]
+    assert !data["expires_in"].nil?
+  end
+
+  def verify_oauth_grant_revoked(oauth_token)
+    oauth_grant = db[:oauth_grants].where(id: oauth_token[:oauth_grant_id]).first
+    assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
+  end
 end
