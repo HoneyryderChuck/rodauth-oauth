@@ -16,6 +16,7 @@ Sequel.migration do
       DateTime :revoked_at
       String :scopes, null: false
       String :nonce
+      index %i[oauth_application_id account_id scopes], unique: true if ENV.key?("ONLY_ONE_TOKEN")
     end
   end
 
