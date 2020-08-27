@@ -135,12 +135,14 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
 
     # second go at it
     @oauth_grant = nil
+    another_grant = oauth_grant(code: "CODE2")
+
     post("/token",
          client_id: oauth_application[:client_id],
          client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",
-         code: oauth_grant[:code],
-         redirect_uri: oauth_grant[:redirect_uri])
+         code: another_grant[:code],
+         redirect_uri: another_grant[:redirect_uri])
 
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"

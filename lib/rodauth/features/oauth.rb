@@ -534,7 +534,6 @@ module Rodauth
       }.merge(params)
 
       token = oauth_unique_id_generator
-      refresh_token = nil
 
       if oauth_tokens_token_hash_column
         create_params[oauth_tokens_token_hash_column] = generate_token_hash(token)
@@ -542,6 +541,7 @@ module Rodauth
         create_params[oauth_tokens_token_column] = token
       end
 
+      refresh_token = nil
       if should_generate_refresh_token
         refresh_token = oauth_unique_id_generator
 
@@ -562,12 +562,14 @@ module Rodauth
       ds = db[oauth_tokens_table]
 
       if __one_oauth_token_per_account
+
         token = __insert_or_update_and_return__(
           ds,
           oauth_tokens_id_column,
           oauth_tokens_unique_columns,
           params,
-          Sequel.expr(Sequel[oauth_tokens_table][oauth_tokens_expires_in_column]) > Sequel::CURRENT_TIMESTAMP
+          Sequel.expr(Sequel[oauth_tokens_table][oauth_tokens_expires_in_column]) > Sequel::CURRENT_TIMESTAMP,
+          ([oauth_tokens_token_column, oauth_tokens_refresh_token_column] if oauth_reuse_access_token)
         )
 
         # if the previous operation didn't return a row, it means that the conditions
@@ -577,6 +579,12 @@ module Rodauth
           oauth_tokens_oauth_application_id_column => params[oauth_tokens_oauth_application_id_column]
         ).first
       else
+        if oauth_reuse_access_token
+          unique_conds = Hash[oauth_tokens_unique_columns.map { |column| [column, params[column]] }]
+          valid_token = ds.where(Sequel.expr(Sequel[oauth_tokens_table][oauth_tokens_expires_in_column]) > Sequel::CURRENT_TIMESTAMP)
+                          .where(unique_conds).first
+          return valid_token if valid_token
+        end
         __insert_and_return__(ds, oauth_tokens_id_column, params)
       end
     rescue Sequel::UniqueConstraintViolation

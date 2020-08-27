@@ -2,7 +2,7 @@
 
 module Rodauth
   module OAuth
-    # rubocop:disable Naming/MethodName
+    # rubocop:disable Naming/MethodName, Metrics/ParameterLists
     def self.ExtendDatabase(db)
       Module.new do
         dataset = db.dataset
@@ -30,8 +30,9 @@ module Rodauth
         end
 
         if dataset.respond_to?(:supports_insert_conflict?) && db.dataset.supports_insert_conflict?
-          def __insert_or_update_and_return__(dataset, pkey, unique_columns, params, conds = nil)
+          def __insert_or_update_and_return__(dataset, pkey, unique_columns, params, conds = nil, exclude_on_update = nil)
             to_update = params.keys - unique_columns
+            to_update -= exclude_on_update if exclude_on_update
 
             dataset = dataset.insert_conflict(
               target: unique_columns,
@@ -67,6 +68,6 @@ module Rodauth
         end
       end
     end
-    # rubocop:enable Naming/MethodName
+    # rubocop:enable Naming/MethodName, Metrics/ParameterLists
   end
 end
