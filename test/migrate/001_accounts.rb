@@ -12,7 +12,7 @@ Sequel.migration do
     from(:account_statuses).import(%i[id name], [[1, "Unverified"], [2, "Verified"], [3, "Closed"]])
 
     create_table(:accounts) do
-      primary_key :id, type: :Bignum
+      primary_key :id, type: Integer
       foreign_key :status_id, :account_statuses, null: false, default: 1
       String :email, null: false
       index :email, unique: true

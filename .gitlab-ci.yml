@@ -1,23 +1,60 @@
 # Cache gems in between builds
+stages:
+  - build
+  - test
+  - prepare
+  - deploy
+
 cache:
   key: ${CI_COMMIT_REF_SLUG}
   paths:
     - vendor/ruby
 
 .before_script: &before_script
-  - ruby -v
   - bundle config set path 'vendor'
   - bundle install -j 4
 
 .deps_alpine: &deps_alpine
-  - apk --update add g++ make sqlite sqlite-dev git
+  - apk --update add g++ make sqlite sqlite-dev postgresql-client postgresql-dev mysql-client mysql-dev git
 
 .test: &test
-- bundle exec rake test:ci
+- "DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
+- "DATABASE_URL=postgresql://oauth:password@postgres/oauth bundle exec rake test:ci"
+- "DATABASE_URL=mysql2://root:password@mysql/oauth bundle exec rake test:ci"
+# DB optimization modes
+- "DATABASE_URL=sqlite3::memory: ONLY_ONE_TOKEN=1 bundle exec rake test:ci"
+# JWT supported libs
+- "JWT_LIB=json/jwt DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
+
+.jtest: &jtest
+- "DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
+- "DATABASE_URL=postgresql://oauth:password@postgres/oauth bundle exec rake test:ci"
+- "DATABASE_URL=mysql://root:password@mysql/oauth bundle exec rake test:ci"
+# JWT supported libs
+- "JWT_LIB=json/jwt DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
+
+services:
+  -
+    name: postgres:13-alpine
+    alias: postgres
+    # entrypoint: ["/usr/local/bin/db-postgres"]
+  -
+    name: mysql:8
+    alias: mysql
+    command:
+      - --default-authentication-plugin
+      - mysql_native_password
 
 variables:
   CI: 1
-  DATABASE_URL: "sqlite3::memory:"
+  # Postgres
+  POSTGRES_DB: oauth
+  POSTGRES_USER: oauth
+  POSTGRES_PASSWORD: password
+  POSTGRES_HOST_AUTH_METHOD: trust
+  # Mysql
+  MYSQL_DATABASE: oauth
+  MYSQL_ROOT_PASSWORD: password
 
 jruby:
   cache:
@@ -32,7 +69,7 @@ jruby:
     - *before_script
   image: "jruby:9.2.11"
   script:
-    - *test
+    - *jtest
 ruby23:
   before_script:
     - *deps_alpine
@@ -40,6 +77,9 @@ ruby23:
   image: "ruby:2.3-alpine"
   script:
     - *test
+  artifacts:
+    paths:
+      - "coverage/"
 ruby24:
   before_script:
     - *deps_alpine
@@ -67,15 +107,6 @@ ruby26:
     - master
   script:
     - *test
-ruby27_jsonjwt:
-  variables:
-    JWT_LIB: "json/jwt"
-  before_script:
-    - *deps_alpine
-    - *before_script
-  image: "ruby:2.7-alpine"
-  script:
-    - *test
 ruby27:
   before_script:
     - *deps_alpine
@@ -87,6 +118,21 @@ ruby27:
     paths:
       - "coverage/"
 
+coverage:
+  stage: prepare
+  before_script:
+    - *deps_alpine
+    - *before_script
+  dependencies:
+    - jruby
+    - ruby23
+    - ruby27
+  image: "ruby:2.7-alpine"
+  script:
+    - bundle exec rake coverage:report
+  artifacts:
+    paths:
+      - "coverage/"
 jekyll:
   stage: test
   image: "ruby:2.7-alpine"
@@ -105,11 +151,10 @@ jekyll:
     paths:
       - www/rdoc/
       - www/public/
-
 pages:
   stage: deploy
   dependencies:
-    - ruby27
+    - coverage
     - jekyll
   script:
     - mv www/public .

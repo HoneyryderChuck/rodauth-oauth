@@ -1,13 +1,30 @@
 # frozen_string_literal: true
 
 RODADB = begin
-  db = if ENV.key?("DATABASE_URL") && ENV["DATABASE_URL"] !~ /sqlite/
-         Sequel.connect(ENV["DATABASE_URL"])
-       elsif RUBY_ENGINE == "jruby"
-         Sequel.connect("jdbc:sqlite::memory:")
+  db = if ENV.key?("DATABASE_URL")
+         if RUBY_ENGINE == "jruby"
+           if ENV["DATABASE_URL"].match(/sqlite3(.*)/)
+             Sequel.connect("jdbc:sqlite#{Regexp.last_match(1)}")
+           elsif ENV["DATABASE_URL"].match(/mysql(.*)/)
+             Sequel.connect("jdbc:mysql#{Regexp.last_match(1)}")
+           elsif !ENV["DATABASE_URL"].start_with?("jdbc")
+             uri = URI.parse(ENV["DATABASE_URL"])
+             uri.query = "user=#{uri.user}&password=#{uri.password}"
+             uri.user = nil
+             uri.password = nil
+             Sequel.connect("jdbc:#{uri}")
+           else
+             Sequel.connect(ENV["DATABASE_URL"])
+           end
+         elsif ENV["DATABASE_URL"].match(/sqlite3(.*)/)
+           Sequel.connect("sqlite:/")
+         else
+           Sequel.connect(ENV["DATABASE_URL"])
+         end
        else
          Sequel.sqlite
        end
+
   db.loggers << Logger.new($stderr) if ENV.key?("RODAUTH_DEBUG")
   Sequel.extension :migration
   require "rodauth/migrations"

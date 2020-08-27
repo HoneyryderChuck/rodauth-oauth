@@ -75,9 +75,14 @@ platform :mri do
   # For demo
   gem "erubi"
   gem "sassc"
+
+  gem "mysql2"
+  gem "pg"
 end
 
 platform :jruby do
   gem "activerecord-jdbc-adapter"
+  gem "jdbc-mysql"
+  gem "jdbc-postgres"
   gem "jdbc-sqlite3"
 end

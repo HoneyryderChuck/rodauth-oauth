@@ -66,7 +66,7 @@ class RodauthOauthJwtAuthorizeTest < JWTIntegration
     rodauth do
       oauth_jwt_jwe_key jwe_key
       oauth_jwt_jwe_algorithm "RSA-OAEP"
-      oauth_jwt_jwe_encryption_method "A256GCM"
+      oauth_jwt_jwe_encryption_method "A128CBC-HS256"
     end
     setup_application
     login
@@ -112,7 +112,7 @@ class RodauthOauthJwtAuthorizeTest < JWTIntegration
 
     if encryption_key
       params = {
-        enc: "A256GCM",
+        enc: "A128CBC-HS256",
         alg: "RSA-OAEP"
       }
       token = JWE.encrypt(token, encryption_key, **params)
