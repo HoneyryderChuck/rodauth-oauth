@@ -3,11 +3,21 @@
 RODADB = begin
   db = if ENV.key?("DATABASE_URL")
          if RUBY_ENGINE == "jruby"
+           # All of this magic is because the DATABASE_URL are the kind of random URIS parsed
+           # by Rails, but it's incompatible with sequel, which follows the standards of JDBC.
+           #
+           # for this reason, sequel is initiated by parsing out the correct URI from the env var.
            if ENV["DATABASE_URL"].match(/sqlite3(.*)/)
+             # AR: sqlite3::memory:
+             # Sequel: jdbc:sqlite::memory:
              Sequel.connect("jdbc:sqlite#{Regexp.last_match(1)}")
            elsif ENV["DATABASE_URL"].match(/mysql(.*)/)
+             # AR: mysql://user:pass@host/db
+             # Sequel: jdbc:mysql://user:pass@host/db
              Sequel.connect("jdbc:mysql#{Regexp.last_match(1)}")
            elsif !ENV["DATABASE_URL"].start_with?("jdbc")
+             # AR: postgresql://user:pass@host/db
+             # Sequel: jdbc:postgresql://host/db?user=user&password=pass
              uri = URI.parse(ENV["DATABASE_URL"])
              uri.query = "user=#{uri.user}&password=#{uri.password}"
              uri.user = nil
