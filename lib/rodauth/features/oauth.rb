@@ -5,11 +5,11 @@ require "securerandom"
 require "net/http"
 
 require "rodauth/oauth/ttl_store"
+require "rodauth/oauth/database_extensions"
 
 module Rodauth
   Feature.define(:oauth) do
     # RUBY EXTENSIONS
-    # :nocov:
     unless Regexp.method_defined?(:match?)
       module RegexpExtensions
         refine(Regexp) do
@@ -37,7 +37,6 @@ module Rodauth
       end
       using(SuffixExtensions)
     end
-    # :nocov:
 
     SCOPES = %w[profile.read].freeze
 
@@ -110,6 +109,8 @@ module Rodauth
     auth_value_method :oauth_tokens_token_hash_column, nil
     auth_value_method :oauth_tokens_refresh_token_hash_column, nil
 
+    # Access Token reuse
+    auth_value_method :oauth_reuse_access_token, false
     # OAuth Grants
     auth_value_method :oauth_grants_table, :oauth_grants
     auth_value_method :oauth_grants_id_column, :id
@@ -180,7 +181,8 @@ module Rodauth
       :generate_token_hash,
       :authorization_server_url,
       :before_introspection_request,
-      :require_authorizable_account
+      :require_authorizable_account,
+      :oauth_tokens_unique_columns
     )
 
     auth_value_methods(:only_json?)
@@ -214,14 +216,12 @@ module Rodauth
     end
 
     unless method_defined?(:json_request?)
-      # :nocov:
       # copied from the jwt feature
       def json_request?
         return @json_request if defined?(@json_request)
 
         @json_request = request.content_type =~ json_request_regexp
       end
-      # :nocov:
     end
 
     def initialize(scope)
@@ -376,7 +376,30 @@ module Rodauth
       end
     end
 
+    def post_configure
+      super
+      self.class.__send__(:include, Rodauth::OAuth::ExtendDatabase(db))
+
+      # Check whether we can reutilize db entries for the same account / application pair
+      one_oauth_token_per_account = begin
+        db.indexes(oauth_tokens_table).values.any? do |definition|
+          definition[:unique] &&
+            definition[:columns] == oauth_tokens_unique_columns
+        end
+      end
+      self.class.send(:define_method, :__one_oauth_token_per_account) { one_oauth_token_per_account }
+    end
+
     private
+
+    # OAuth Token Unique/Reuse
+    def oauth_tokens_unique_columns
+      [
+        oauth_tokens_oauth_application_id_column,
+        oauth_tokens_account_id_column,
+        oauth_tokens_scopes_column
+      ]
+    end
 
     def authorization_server_url
       base_url
@@ -483,7 +506,6 @@ module Rodauth
     end
 
     unless method_defined?(:password_hash)
-      # :nocov:
       # From login_requirements_base feature
       if ENV["RACK_ENV"] == "test"
         def password_hash_cost
@@ -498,7 +520,6 @@ module Rodauth
       def password_hash(password)
         BCrypt::Password.create(password, cost: password_hash_cost)
       end
-      # :nocov:
     end
 
     def generate_oauth_token(params = {}, should_generate_refresh_token = true)
@@ -507,7 +528,6 @@ module Rodauth
       }.merge(params)
 
       token = oauth_unique_id_generator
-      refresh_token = nil
 
       if oauth_tokens_token_hash_column
         create_params[oauth_tokens_token_hash_column] = generate_token_hash(token)
@@ -515,6 +535,7 @@ module Rodauth
         create_params[oauth_tokens_token_column] = token
       end
 
+      refresh_token = nil
       if should_generate_refresh_token
         refresh_token = oauth_unique_id_generator
 
@@ -534,16 +555,34 @@ module Rodauth
     def _generate_oauth_token(params = {})
       ds = db[oauth_tokens_table]
 
-      begin
-        if ds.supports_returning?(:insert)
-          ds.returning.insert(params).first
-        else
-          id = ds.insert(params)
-          ds.where(oauth_tokens_id_column => id).first
+      if __one_oauth_token_per_account
+
+        token = __insert_or_update_and_return__(
+          ds,
+          oauth_tokens_id_column,
+          oauth_tokens_unique_columns,
+          params,
+          Sequel.expr(Sequel[oauth_tokens_table][oauth_tokens_expires_in_column]) > Sequel::CURRENT_TIMESTAMP,
+          ([oauth_tokens_token_column, oauth_tokens_refresh_token_column] if oauth_reuse_access_token)
+        )
+
+        # if the previous operation didn't return a row, it means that the conditions
+        # invalidated the update, and the existing token is still valid.
+        token || ds.where(
+          oauth_tokens_account_id_column => params[oauth_tokens_account_id_column],
+          oauth_tokens_oauth_application_id_column => params[oauth_tokens_oauth_application_id_column]
+        ).first
+      else
+        if oauth_reuse_access_token
+          unique_conds = Hash[oauth_tokens_unique_columns.map { |column| [column, params[column]] }]
+          valid_token = ds.where(Sequel.expr(Sequel[oauth_tokens_table][oauth_tokens_expires_in_column]) > Sequel::CURRENT_TIMESTAMP)
+                          .where(unique_conds).first
+          return valid_token if valid_token
         end
-      rescue Sequel::UniqueConstraintViolation
-        retry
+        __insert_and_return__(ds, oauth_tokens_id_column, params)
       end
+    rescue Sequel::UniqueConstraintViolation
+      retry
     end
 
     def oauth_token_by_token(token, dataset = db[oauth_tokens_table])
@@ -706,7 +745,8 @@ module Rodauth
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
         oauth_grants_redirect_uri_column => redirect_uri,
         oauth_grants_expires_in_column => Time.now + oauth_grant_expires_in,
-        oauth_grants_scopes_column => scopes.join(oauth_scope_separator)
+        oauth_grants_scopes_column => scopes.join(oauth_scope_separator),
+        oauth_grants_code_column => oauth_unique_id_generator
       )
 
       # Access Type flow
@@ -732,13 +772,12 @@ module Rodauth
       ds = db[oauth_grants_table]
 
       begin
-        authorization_code = oauth_unique_id_generator
-        create_params[oauth_grants_code_column] = authorization_code
-        ds.insert(create_params)
-        authorization_code
+        __insert_and_return__(ds, oauth_grants_id_column, create_params)
       rescue Sequel::UniqueConstraintViolation
+        create_params[oauth_grants_code_column] = oauth_unique_id_generator
         retry
       end
+      create_params[oauth_grants_code_column]
     end
 
     def do_authorize(redirect_url, query_params = [], fragment_params = [])
@@ -871,19 +910,12 @@ module Rodauth
 
       ds = db[oauth_tokens_table].where(oauth_tokens_id_column => oauth_token[oauth_tokens_id_column])
 
-      oauth_token = begin
-        if ds.supports_returning?(:update)
-          ds.returning.update(update_params).first
-        else
-          ds.update(update_params)
-          ds.first
-        end
-                    rescue Sequel::UniqueConstraintViolation
-                      retry
-      end
+      oauth_token = __update_and_return__(ds, update_params)
 
       oauth_token[oauth_tokens_token_column] = token
       oauth_token
+    rescue Sequel::UniqueConstraintViolation
+      retry
     end
 
     TOKEN_HINT_TYPES = %w[access_token refresh_token].freeze
@@ -944,12 +976,7 @@ module Rodauth
 
       ds = db[oauth_tokens_table].where(oauth_tokens_id_column => oauth_token[oauth_tokens_id_column])
 
-      oauth_token = if ds.supports_returning?(:update)
-                      ds.returning.update(update_params).first
-                    else
-                      ds.update(update_params)
-                      ds.first
-                    end
+      oauth_token = __update_and_return__(ds, update_params)
 
       oauth_token[oauth_tokens_token_column] = token
       oauth_token
@@ -1014,7 +1041,6 @@ module Rodauth
     end
 
     unless method_defined?(:_json_response_body)
-      # :nocov:
       def _json_response_body(hash)
         if request.respond_to?(:convert_to_json)
           request.send(:convert_to_json, hash)
@@ -1022,7 +1048,6 @@ module Rodauth
           JSON.dump(hash)
         end
       end
-      # :nocov:
     end
 
     def authorization_required

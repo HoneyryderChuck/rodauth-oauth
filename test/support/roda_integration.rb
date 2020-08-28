@@ -1,13 +1,40 @@
 # frozen_string_literal: true
 
 RODADB = begin
-  db = if ENV.key?("DATABASE_URL") && ENV["DATABASE_URL"] !~ /sqlite/
-         Sequel.connect(ENV["DATABASE_URL"])
-       elsif RUBY_ENGINE == "jruby"
-         Sequel.connect("jdbc:sqlite::memory:")
+  db = if ENV.key?("DATABASE_URL")
+         if RUBY_ENGINE == "jruby"
+           # All of this magic is because the DATABASE_URL are the kind of random URIS parsed
+           # by Rails, but it's incompatible with sequel, which follows the standards of JDBC.
+           #
+           # for this reason, sequel is initiated by parsing out the correct URI from the env var.
+           if ENV["DATABASE_URL"].match(/sqlite3(.*)/)
+             # AR: sqlite3::memory:
+             # Sequel: jdbc:sqlite::memory:
+             Sequel.connect("jdbc:sqlite#{Regexp.last_match(1)}")
+           elsif ENV["DATABASE_URL"].match(/mysql(.*)/)
+             # AR: mysql://user:pass@host/db
+             # Sequel: jdbc:mysql://user:pass@host/db
+             Sequel.connect("jdbc:mysql#{Regexp.last_match(1)}")
+           elsif !ENV["DATABASE_URL"].start_with?("jdbc")
+             # AR: postgresql://user:pass@host/db
+             # Sequel: jdbc:postgresql://host/db?user=user&password=pass
+             uri = URI.parse(ENV["DATABASE_URL"])
+             uri.query = "user=#{uri.user}&password=#{uri.password}"
+             uri.user = nil
+             uri.password = nil
+             Sequel.connect("jdbc:#{uri}")
+           else
+             Sequel.connect(ENV["DATABASE_URL"])
+           end
+         elsif ENV["DATABASE_URL"].match(/sqlite3(.*)/)
+           Sequel.connect("sqlite:/")
+         else
+           Sequel.connect(ENV["DATABASE_URL"])
+         end
        else
          Sequel.sqlite
        end
+
   db.loggers << Logger.new($stderr) if ENV.key?("RODAUTH_DEBUG")
   Sequel.extension :migration
   require "rodauth/migrations"
@@ -130,5 +157,18 @@ class RodaIntegration < Minitest::Test
 
   def db
     RODADB
+  end
+
+  def verify_response_body(data, oauth_token)
+    assert data["token_type"] == "bearer"
+    assert data["access_token"] == oauth_token[:token]
+
+    assert data["refresh_token"] == oauth_token[:refresh_token]
+    assert !data["expires_in"].nil?
+  end
+
+  def verify_oauth_grant_revoked(oauth_token)
+    oauth_grant = db[:oauth_grants].where(id: oauth_token[:oauth_grant_id]).first
+    assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
   end
 end

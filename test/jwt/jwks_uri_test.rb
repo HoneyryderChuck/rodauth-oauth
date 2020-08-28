@@ -49,7 +49,7 @@ class RodauthOauthJwtJwksUriTest < JWTIntegration
       oauth_jwt_jwe_key jwe_key
       oauth_jwt_jwe_public_key jwe_pub_key
       oauth_jwt_jwe_algorithm "RSA-OAEP"
-      oauth_jwt_jwe_encryption_method "A256GCM"
+      oauth_jwt_jwe_encryption_method "A128CBC-HS256"
     end
     setup_application
     get("/jwks")

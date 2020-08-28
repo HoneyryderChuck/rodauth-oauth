@@ -2,10 +2,14 @@
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
-require "simplecov" if ENV.key?("CI")
-
 ENV["RAILS_ENV"] = "test"
 ENV["DATABASE_URL"] ||= "sqlite3::memory:"
+
+if ENV.key?("CI")
+  require "simplecov"
+  SimpleCov.command_name "#{RUBY_ENGINE}-#{RUBY_VERSION}-#{ENV['DATABASE_URL'][%r{(\w+):(//|:)}, 1]}-#{ENV.fetch('JWT_LIB', 'jwt')}"
+  SimpleCov.coverage_dir "coverage/#{RUBY_ENGINE}-#{RUBY_VERSION}"
+end
 
 # for rails integration tests
 require_relative "rails_app/config/environment"

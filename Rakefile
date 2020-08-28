@@ -15,6 +15,16 @@ end
 desc "Run rubocop"
 RuboCop::RakeTask.new(:rubocop)
 
+namespace :coverage do
+  desc "Aggregates coverage reports"
+  task :report do
+    return unless ENV.key?("CI")
+    require 'simplecov'
+
+    SimpleCov.collate Dir["coverage/**/.resultset.json"]
+  end
+end
+
 CI_TASKS = RUBY_VERSION < "2.4" ? %i[test] : %i[test rubocop]
 
 task "test:ci": CI_TASKS

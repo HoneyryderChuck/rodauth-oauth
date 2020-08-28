@@ -13,7 +13,7 @@ Sequel.migration do
       String :client_id, null: false, unique: true
       String :client_secret, null: false, unique: true
       String :scopes, null: false
-      String :jws_jwk
+      String :jws_jwk, type: :text
     end
   end
 

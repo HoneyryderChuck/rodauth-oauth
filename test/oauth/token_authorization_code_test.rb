@@ -106,16 +106,54 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
 
     assert db[:oauth_tokens].count == 1
 
-    access_token = db[:oauth_tokens].first
+    oauth_token = db[:oauth_tokens].first
 
-    oauth_grant = db[:oauth_grants].where(id: access_token[:oauth_grant_id]).first
-    assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
+    verify_oauth_grant_revoked(oauth_token)
+    verify_response_body(json_body, oauth_token)
+  end
 
-    assert json_body["token_type"] == "bearer"
-    assert json_body["access_token"] == access_token[:token]
+  def test_token_authorization_code_reuse_token_successful
+    rodauth do
+      oauth_reuse_access_token true
+    end
+    setup_application
 
-    assert json_body["refresh_token"] == access_token[:refresh_token]
-    assert !json_body["expires_in"].nil?
+    post("/token",
+         client_id: oauth_application[:client_id],
+         client_secret: "CLIENT_SECRET",
+         grant_type: "authorization_code",
+         code: oauth_grant[:code],
+         redirect_uri: oauth_grant[:redirect_uri])
+
+    assert last_response.status == 200
+    assert last_response.headers["Content-Type"] == "application/json"
+
+    assert db[:oauth_tokens].count == 1
+    oauth_token = db[:oauth_tokens].first
+    verify_oauth_grant_revoked(oauth_token)
+    verify_response_body(json_body, oauth_token)
+
+    # second go at it
+    @oauth_grant = nil
+    another_grant = oauth_grant(code: "CODE2")
+
+    post("/token",
+         client_id: oauth_application[:client_id],
+         client_secret: "CLIENT_SECRET",
+         grant_type: "authorization_code",
+         code: another_grant[:code],
+         redirect_uri: another_grant[:redirect_uri])
+
+    assert last_response.status == 200
+    assert last_response.headers["Content-Type"] == "application/json"
+
+    assert db[:oauth_tokens].count == 1
+    oauth_token2 = db[:oauth_tokens].first
+    verify_oauth_grant_revoked(oauth_token2)
+    verify_response_body(json_body, oauth_token2)
+
+    assert oauth_token[:id] == oauth_token2[:id]
+    assert oauth_token[:token] == oauth_token2[:token]
   end
 
   def test_token_authorization_code_hash_columns_successful
@@ -139,8 +177,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
 
     access_token = db[:oauth_tokens].first
 
-    oauth_grant = db[:oauth_grants].where(id: access_token[:oauth_grant_id]).first
-    assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
+    verify_oauth_grant_revoked(access_token)
 
     assert access_token[:token].nil?
     assert !access_token[:token_hash].nil?
@@ -177,9 +214,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
 
     access_token = db[:oauth_tokens].first
 
-    oauth_grant = db[:oauth_grants].where(id: access_token[:oauth_grant_id]).first
-    assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
-
+    verify_oauth_grant_revoked(access_token)
     assert json_body["access_token"] == access_token[:token]
     assert json_body["refresh_token"].nil?
     assert !json_body["expires_in"].nil?
@@ -236,8 +271,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
 
     access_token = db[:oauth_tokens].first
 
-    oauth_grant = db[:oauth_grants].where(id: access_token[:oauth_grant_id]).first
-    assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
+    verify_oauth_grant_revoked(access_token)
 
     assert json_body["access_token"] == access_token[:token]
     assert json_body["refresh_token"].nil?
@@ -263,9 +297,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
 
     access_token = db[:oauth_tokens].first
 
-    oauth_grant = db[:oauth_grants].where(id: access_token[:oauth_grant_id]).first
-    assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
-
+    verify_oauth_grant_revoked(access_token)
     assert json_body["access_token"] == access_token[:token]
     assert json_body["refresh_token"].nil?
     assert !json_body["expires_in"].nil?

@@ -310,7 +310,6 @@ module Rodauth
     end
 
     if defined?(JSON::JWT)
-      # :nocov:
 
       def jwk_import(data)
         JSON::JWK.new(data)
@@ -357,7 +356,6 @@ module Rodauth
         ].compact
       end
 
-      # :nocov:
     elsif defined?(JWT)
 
       # ruby-jwt

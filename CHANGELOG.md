@@ -20,6 +20,19 @@ For more info about integrating it, [check the wiki](https://gitlab.com/honeyryd
 
 At some point, you'll want to replace the pkeys and algorithm used to generate and verify the JWT access tokens, but you want to keep validating previously-distributed JWT tokens, at least until they expire. Now you can, via two new options, `oauth_jwt_legacy_public_key` and `oauth_jwt_legacy_algorithm`, which will be declared in the JWKs URI and used to verify access tokens.
 
+
+##### Reuse access tokens
+
+If the `oauth_reuse_access_token` is set, if there's already an existing valid access token, any new grant for the same application / account / scope will keep the same access token. This can be helpful in scenarios where one wants the same access token distributed across devices.
+
+#### Improvements
+
+Expired and revoked access tokens end up generating a lot of garbage, which will have to be periodically cleaned up. You can mitigate this now by setting a uniqueness index for a group of columns, i.e. if you set a uniqueness index for the `oauth_application_id/account_id/scopes` column, `rodauth-oauth` will transparently reuse the same db entry to store the new access token. If setting some other type of uniqueness index, make sure to update the option `oauth_tokens_unique_columns` (the array of columns from the uniqueness index).
+
+#### Chore
+
+* `rodauth-oauth` CI tests run against sqlite, postgresql and mysql.
+
 ### 0.1.0
 
 (31/7/2020)
