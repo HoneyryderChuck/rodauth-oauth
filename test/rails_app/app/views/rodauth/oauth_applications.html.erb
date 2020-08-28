@@ -15,7 +15,7 @@
       </tr>
     </thead>
     <tbody>
-      <% rodauth.db[oauth_applications_table].each do |application| %>
+      <% rodauth.db[rodauth.oauth_applications_table].each do |application| %>
         <tr>
           <td><%= application[rodauth.oauth_applications_client_id_column] %></td>
           <td><%= application[rodauth.oauth_applications_name_column] %></td>
