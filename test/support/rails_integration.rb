@@ -2,14 +2,20 @@
 
 ENV["RAILS_ENV"] = "test"
 
+require_relative File.join(__dir__, "roda_integration")
 # for rails integration tests
 require_relative "../rails_app/config/environment"
 require "rails/test_help"
 
 ActiveRecord::Migrator.migrations_paths = [Rails.root.join("db/migrate")]
 Rails.backtrace_cleaner.remove_silencers! # show full stack traces
+if ActiveRecord.version >= Gem::Version.new("5.2.0")
+  ActiveRecord::Base.connection.migration_context.up
+else
+  ActiveRecord::Migrator.up(Rails.application.paths["db/migrate"].to_a)
+end
 
-class RailsIntegrationTest < Minitest::Test
+class RailsIntegrationTest < RodaIntegration
   include OAuthHelpers
   include Minitest::Hooks
   include Capybara::DSL
@@ -27,47 +33,21 @@ class RailsIntegrationTest < Minitest::Test
     click_on "Create Account"
   end
 
-  def login(login: "foo@example.com", password: "0123456789")
-    visit "/login"
-    fill_in "Login", with: login
-    fill_in "Password", with: password
-    click_on "Login"
-  end
-
   def logout
     visit "/logout"
     click_on "Logout"
   end
 
-  def setup
-    super
-    if ActiveRecord.version >= Gem::Version.new("5.2.0")
-      ActiveRecord::Base.connection.migration_context.up
-    else
-      ActiveRecord::Migrator.up(Rails.application.paths["db/migrate"].to_a)
-    end
+  def around
+    ActiveRecord::Base.connection.begin_transaction(joinable: false) do
+      hash = BCrypt::Password.create("0123456789", cost: BCrypt::Engine::MIN_COST)
+      db[:accounts].insert(email: "foo@example.com", ph: hash)
+      self.app = Rails.application
 
-    ActiveRecord::Base.connection.transaction {}
-    ActiveRecord::Base.connection.begin_transaction joinable: false
-    hash = BCrypt::Password.create("0123456789", cost: BCrypt::Engine::MIN_COST)
-    db[:accounts].insert(email: "foo@example.com", ph: hash)
-    self.app = Rails.application
-  end
+      Rmethod(__method__).super_method.call
 
-  def teardown
-    super
-    ActiveRecord::Base.connection_pool.connections.each do |connection|
-      next unless connection.open_transactions.positive?
-
-      connection.rollback_transaction
+      ActiveRecord::Base.connection.rollback_db_transaction
     end
-    if ActiveRecord.version >= Gem::Version.new("5.2.0")
-      ActiveRecord::Base.connection.migration_context.down
-    else
-      ActiveRecord::Migrator.down(Rails.application.paths["db/migrate"].to_a)
-    end
-    Capybara.reset_sessions!
-    Capybara.use_default_driver
   end
 
   def db

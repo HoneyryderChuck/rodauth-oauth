@@ -10,6 +10,9 @@ RODADB = begin
            if ENV["DATABASE_URL"].match(/sqlite3(.*)/)
              # AR: sqlite3::memory:
              # Sequel: jdbc:sqlite::memory:
+             # can't test jruby sqlite in parallel mode
+             # https://stackoverflow.com/questions/10707434/sqlite-in-a-multithreaded-java-application
+             ENV.delete("PARALLEL")
              Sequel.connect("jdbc:sqlite#{Regexp.last_match(1)}")
            elsif ENV["DATABASE_URL"].match(/mysql(.*)/)
              # AR: mysql://user:pass@host/db
@@ -27,7 +30,7 @@ RODADB = begin
              Sequel.connect(ENV["DATABASE_URL"])
            end
          elsif ENV["DATABASE_URL"].match(/sqlite3(.*)/)
-           Sequel.connect("sqlite:/")
+           Sequel.connect("sqlite#{Regexp.last_match(1)}")
          else
            Sequel.connect(ENV["DATABASE_URL"])
          end
@@ -139,11 +142,7 @@ class RodaIntegration < Minitest::Test
   end
 
   def around
-    db.transaction(rollback: :always, savepoint: true, auto_savepoint: true) { super }
-  end
-
-  def around_all
-    db.transaction(rollback: :always) do
+    db.transaction(rollback: :always, savepoint: true, auto_savepoint: true) do
       hash = BCrypt::Password.create("0123456789", cost: BCrypt::Engine::MIN_COST)
       db[:accounts].insert(email: "foo@example.com", status_id: 2, ph: hash)
       super
@@ -171,4 +170,6 @@ class RodaIntegration < Minitest::Test
     oauth_grant = db[:oauth_grants].where(id: oauth_token[:oauth_grant_id]).first
     assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
   end
+
+  parallelize_me! if ENV.key?("PARALLEL")
 end

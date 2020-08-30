@@ -6,12 +6,12 @@ stages:
   - deploy
 
 cache:
-  key: ${CI_COMMIT_REF_SLUG}
+  key: "$CI_JOB_NAME-$CI_COMMIT_REF_SLUG"
   paths:
     - vendor/ruby
 
 .before_script: &before_script
-  - bundle install -j 4
+  - bundle install
 
 .deps_alpine: &deps_alpine
   - apk --update add g++ make sqlite sqlite-dev postgresql-client postgresql-dev mysql-client mysql-dev git
@@ -19,6 +19,7 @@ cache:
 .test: &test
 - "DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
 - "DATABASE_URL=postgresql://oauth:password@postgres/oauth bundle exec rake test:ci"
+# concurrency limited with mysql, to avoid deadlock messages
 - "DATABASE_URL=mysql2://root:password@mysql/oauth bundle exec rake test:ci"
 # DB optimization modes
 - "DATABASE_URL=sqlite3::memory: ONLY_ONE_TOKEN=1 bundle exec rake test:ci"
@@ -30,7 +31,7 @@ cache:
 - "DATABASE_URL=postgresql://oauth:password@postgres/oauth bundle exec rake test:ci"
 - "DATABASE_URL=mysql://root:password@mysql/oauth bundle exec rake test:ci"
 # JWT supported libs
-- "JWT_LIB=json/jwt DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
+- "JWT_LIB=json/jwt DATABASE_URL=postgresql://oauth:password@postgres/oauth bundle exec rake test:ci"
 
 services:
   -
@@ -45,8 +46,10 @@ services:
       - mysql_native_password
 
 variables:
+  BUNDLE_JOBS: 4
   BUNDLE_PATH: vendor
   CI: 1
+  PARALLEL: 1
   # Postgres
   POSTGRES_DB: oauth
   POSTGRES_USER: oauth
@@ -58,7 +61,6 @@ variables:
 
 jruby:
   cache:
-    key: ${CI_COMMIT_REF_SLUG}
     paths:
       - vendor/jruby
   allow_failure: true
@@ -67,7 +69,7 @@ jruby:
   before_script:
     - apt-get update && apt-get install -y git
     - *before_script
-  image: "jruby:9.2.11"
+  image: "jruby:9.2.13"
   script:
     - *jtest
 ruby23:
@@ -145,7 +147,7 @@ jekyll:
     - bundle exec rake prepare_website
     - cd www
     - bundle config set path '../vendor'
-    - bundle install --jobs 4
+    - bundle install
     - bundle exec jekyll build -d public
   artifacts:
     paths:
