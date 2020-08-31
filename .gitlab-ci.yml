@@ -151,7 +151,6 @@ jekyll:
     - bundle exec jekyll build -d public
   artifacts:
     paths:
-      - www/rdoc/
       - www/public/
 pages:
   stage: deploy
@@ -160,7 +159,7 @@ pages:
     - jekyll
   script:
     - mv www/public .
-    - mv www/rdoc .
+    - mv coverage public
   artifacts:
     paths:
       - public
