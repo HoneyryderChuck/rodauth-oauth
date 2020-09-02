@@ -92,9 +92,7 @@ module Rodauth
       jws_jwk = if oauth_application[oauth_application_jws_jwk_column]
                   jwk = oauth_application[oauth_application_jws_jwk_column]
 
-                  if jwk
-                    jwk = JSON.parse(jwk, symbolize_names: true) if jwk.is_a?(String)
-                  end
+                  jwk = JSON.parse(jwk, symbolize_names: true) if jwk && jwk.is_a?(String)
                 else
                   redirect_response_error("invalid_request_object")
                 end

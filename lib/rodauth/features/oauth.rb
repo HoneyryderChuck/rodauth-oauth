@@ -742,10 +742,8 @@ module Rodauth
       )
 
       # Access Type flow
-      if use_oauth_access_type?
-        if (access_type = param_or_nil("access_type"))
-          create_params[oauth_grants_access_type_column] = access_type
-        end
+      if use_oauth_access_type? && (access_type = param_or_nil("access_type"))
+        create_params[oauth_grants_access_type_column] = access_type
       end
 
       # PKCE flow
@@ -916,8 +914,8 @@ module Rodauth
 
     def validate_oauth_introspect_params
       # check if valid token hint type
-      if param_or_nil("token_type_hint")
-        redirect_response_error("unsupported_token_type") unless TOKEN_HINT_TYPES.include?(param("token_type_hint"))
+      if param_or_nil("token_type_hint") && !TOKEN_HINT_TYPES.include?(param("token_type_hint"))
+        redirect_response_error("unsupported_token_type")
       end
 
       redirect_response_error("invalid_request") unless param_or_nil("token")
@@ -939,8 +937,8 @@ module Rodauth
 
     def validate_oauth_revoke_params
       # check if valid token hint type
-      if param_or_nil("token_type_hint")
-        redirect_response_error("unsupported_token_type") unless TOKEN_HINT_TYPES.include?(param("token_type_hint"))
+      if param_or_nil("token_type_hint") && !TOKEN_HINT_TYPES.include?(param("token_type_hint"))
+        redirect_response_error("unsupported_token_type")
       end
 
       redirect_response_error("invalid_request") unless param_or_nil("token")
