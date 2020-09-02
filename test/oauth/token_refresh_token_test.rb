@@ -68,17 +68,20 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
   def test_token_refresh_token_hash_columns_successful
     rodauth do
       oauth_tokens_token_hash_column :token_hash
+      oauth_tokens_refresh_token_hash_column :refresh_token_hash
     end
     setup_application
 
-    prev_token = oauth_token[:token]
-    prev_expires_in = oauth_token[:expires_in]
+    token = oauth_token(refresh_token_hash: generate_hashed_token("REFRESH_TOKEN"))
+
+    prev_token = token[:token]
+    prev_expires_in = token[:expires_in]
 
     post("/token",
          client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "refresh_token",
-         refresh_token: oauth_token[:refresh_token])
+         refresh_token: "REFRESH_TOKEN")
 
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
