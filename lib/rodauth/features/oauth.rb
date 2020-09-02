@@ -508,18 +508,9 @@ module Rodauth
 
     unless method_defined?(:password_hash)
       # From login_requirements_base feature
-      if ENV["RACK_ENV"] == "test"
-        def password_hash_cost
-          BCrypt::Engine::MIN_COST
-        end
-      else
-        def password_hash_cost
-          BCrypt::Engine::DEFAULT_COST
-        end
-      end
 
       def password_hash(password)
-        BCrypt::Password.create(password, cost: password_hash_cost)
+        BCrypt::Password.create(password, cost: BCrypt::Engine::DEFAULT_COST)
       end
     end
 
