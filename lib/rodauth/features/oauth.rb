@@ -1,5 +1,6 @@
 # frozen-string-literal: true
 
+require "time"
 require "base64"
 require "securerandom"
 require "net/http"
@@ -423,10 +424,10 @@ module Rodauth
 
         # time-to-live
         ttl = if response.key?("cache-control")
-                cache_control = response["cache_control"]
+                cache_control = response["cache-control"]
                 cache_control[/max-age=(\d+)/, 1]
               elsif response.key?("expires")
-                Time.httpdate(response["expires"]).utc.to_i - Time.now.utc.to_i
+                DateTime.httpdate(response["expires"]).utc.to_i - Time.now.utc.to_i
               end
 
         [JSON.parse(response.body, symbolize_names: true), ttl]
