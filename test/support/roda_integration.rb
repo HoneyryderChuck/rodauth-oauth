@@ -158,6 +158,10 @@ class RodaIntegration < Minitest::Test
     RODADB
   end
 
+  def generate_hashed_token(token)
+    Base64.urlsafe_encode64(Digest::SHA256.digest(token))
+  end
+
   def verify_response_body(data, oauth_token)
     assert data["token_type"] == "bearer"
     assert data["access_token"] == oauth_token[:token]

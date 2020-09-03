@@ -29,7 +29,7 @@ module Rodauth
           end
         end
 
-        if dataset.respond_to?(:supports_insert_conflict?) && db.dataset.supports_insert_conflict?
+        if dataset.respond_to?(:supports_insert_conflict?) && dataset.supports_insert_conflict?
           def __insert_or_update_and_return__(dataset, pkey, unique_columns, params, conds = nil, exclude_on_update = nil)
             to_update = params.keys - unique_columns
             to_update -= exclude_on_update if exclude_on_update

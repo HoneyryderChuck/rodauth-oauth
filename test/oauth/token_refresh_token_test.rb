@@ -68,17 +68,20 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
   def test_token_refresh_token_hash_columns_successful
     rodauth do
       oauth_tokens_token_hash_column :token_hash
+      oauth_tokens_refresh_token_hash_column :refresh_token_hash
     end
     setup_application
 
-    prev_token = oauth_token[:token]
-    prev_expires_in = oauth_token[:expires_in]
+    token = oauth_token(refresh_token_hash: generate_hashed_token("REFRESH_TOKEN"))
+
+    prev_token = token[:token]
+    prev_expires_in = token[:expires_in]
 
     post("/token",
          client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "refresh_token",
-         refresh_token: oauth_token[:refresh_token])
+         refresh_token: "REFRESH_TOKEN")
 
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
@@ -91,6 +94,29 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
     assert json_body["access_token"] != prev_token
     assert json_body["access_token"] != oauth_token[:token]
     assert((Time.now.utc + json_body["expires_in"]).to_i > prev_expires_in.to_i)
+  end
+
+  def test_token_refresh_token_same_code
+    rodauth do
+      oauth_unique_id_generator { "TOKEN" }
+    end
+    setup_application
+    login
+
+    _prev_token = oauth_token(token: "TOKEN")
+    @oauth_token = nil
+    token = oauth_token(token: "OLD_TOKEN", refresh_token: "OTHER_REFRESH_TOKEN", scopes: "user.read")
+
+    post("/token",
+         client_secret: "CLIENT_SECRET",
+         client_id: oauth_application[:client_id],
+         grant_type: "refresh_token",
+         refresh_token: token[:refresh_token])
+
+    assert last_response.status == 409
+    assert last_response.headers["Content-Type"] == "application/json"
+    assert json_body["error"] == "invalid_request"
+    assert json_body["error_description"] == "error generating unique token"
   end
 
   private

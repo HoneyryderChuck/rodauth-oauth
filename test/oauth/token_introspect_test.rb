@@ -32,6 +32,21 @@ class RodauthOAuthTokenIntrospectTest < RodaIntegration
     assert json_body == { "active" => false }
   end
 
+  def test_oauth_introspect_unknown_token_hint
+    setup_application
+    login
+
+    header "Accept", "application/json"
+
+    # valid token, and now we're getting somewhere
+    post("/introspect", {
+           token: oauth_token[:refresh_token],
+           token_type_hint: "wups"
+         })
+    assert last_response.status == 400
+    assert json_body["error"] == "unsupported_token_type"
+  end
+
   def test_oauth_introspect_access_token
     setup_application
     login

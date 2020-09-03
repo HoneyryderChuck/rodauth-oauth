@@ -8,10 +8,10 @@ Sequel.migration do
       foreign_key :oauth_grant_id, :oauth_grants
       foreign_key :oauth_token_id, :oauth_tokens
       foreign_key :oauth_application_id, :oauth_applications, null: false
-      String :token, token: true
-      String :token_hash, token: true
-      String :refresh_token, token: true
-      String :refresh_token_hash, token: true
+      String :token, token: true, unique: true
+      String :token_hash, token: true, unique: true
+      String :refresh_token, token: true, unique: true
+      String :refresh_token_hash, token: true, unique: true
       DateTime :expires_in, null: false
       DateTime :revoked_at
       String :scopes, null: false

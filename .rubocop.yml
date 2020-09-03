@@ -170,6 +170,9 @@ Style/StringConcatenation:
 Style/StringLiterals:
   EnforcedStyle: double_quotes
 
+Style/SafeNavigation:
+  Enabled: false
+
 Metrics/ClassLength:
   Max: 1500
 
@@ -190,4 +193,28 @@ Style/MultipleComparison:
   Enabled: false
 
 Layout/EmptyLinesAroundAttributeAccessor:
+  Enabled: true
+
+Lint/DuplicateRequire:
+  Enabled: true
+
+Lint/EmptyFile:
+  Enabled: true
+
+Lint/TrailingCommaInAttributeDeclaration:
+  Enabled: true
+
+Lint/UselessMethodDefinition:
+  Enabled: true
+
+Style/CombinableLoops:
+  Enabled: true
+
+Style/KeywordParametersOrder:
+  Enabled: true
+
+Style/RedundantSelfAssignment:
+  Enabled: true
+
+Style/SoleNestedConditional:
   Enabled: true

@@ -21,10 +21,15 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
     rsa_private = OpenSSL::PKey::RSA.generate 2048
     rsa_public = rsa_private.public_key
     stub_request(:get, "https://auth-server-inactive-token/.well-known/oauth-authorization-server")
-      .to_return(body: JSON.dump(jwks_uri: "https://auth-server/jwks-uri-inactive.json"))
-
+      .to_return(
+        headers: { "Expires" => (Time.now + 3600).httpdate },
+        body: JSON.dump(jwks_uri: "https://auth-server/jwks-uri-inactive.json")
+      )
     stub_request(:get, "https://auth-server/jwks-uri-inactive.json")
-      .to_return(body: JSON.dump(keys: [JWT::JWK.new(rsa_public).export.merge(use: "sig", alg: "RS256")]))
+      .to_return(
+        headers: { "Expires" => (Time.now + 3600).httpdate },
+        body: JSON.dump(keys: [JWT::JWK.new(rsa_public).export.merge(use: "sig", alg: "RS256")])
+      )
 
     token = generate_access_token(rsa_private, "RS256", iss: "https://auth-server-inactive-token", expires_in: Time.now.utc.to_i - 3600)
 
@@ -41,10 +46,17 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
     rsa_public = rsa_private.public_key
 
     stub_request(:get, "https://auth-server-invalid-scope/.well-known/oauth-authorization-server")
-      .to_return(body: JSON.dump(jwks_uri: "https://auth-server/jwks-uri-invalid-scope.json"))
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(jwks_uri: "https://auth-server/jwks-uri-invalid-scope.json")
+      )
+      .times(1)
 
     stub_request(:get, "https://auth-server/jwks-uri-invalid-scope.json")
-      .to_return(body: JSON.dump(keys: [JWT::JWK.new(rsa_public).export.merge(use: "sig", alg: "RS256")]))
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(keys: [JWT::JWK.new(rsa_public).export.merge(use: "sig", alg: "RS256")])
+      )
 
     token = generate_access_token(rsa_private, "RS256", iss: "https://auth-server-invalid-scope", scope: "profile.write")
 
@@ -62,10 +74,17 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
     rsa_public = rsa_private.public_key
 
     stub_request(:get, "https://auth-server-valid-token/.well-known/oauth-authorization-server")
-      .to_return(body: JSON.dump(jwks_uri: "https://auth-server/jwks-uri-valid-token.json"))
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(jwks_uri: "https://auth-server/jwks-uri-valid-token.json")
+      )
+      .times(1)
 
     stub_request(:get, "https://auth-server/jwks-uri-valid-token.json")
-      .to_return(body: JSON.dump(keys: [JWT::JWK.new(rsa_public).export.merge(use: "sig", alg: "RS256")]))
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(keys: [JWT::JWK.new(rsa_public).export.merge(use: "sig", alg: "RS256")])
+      )
 
     token = generate_access_token(rsa_private, "RS256", iss: "https://auth-server-valid-token", scope: "profile.read")
 

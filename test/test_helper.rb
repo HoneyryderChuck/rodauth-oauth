@@ -11,10 +11,6 @@ if ENV.key?("CI")
   SimpleCov.coverage_dir "coverage/#{RUBY_ENGINE}-#{RUBY_VERSION}"
 end
 
-# for rails integration tests
-require_relative "rails_app/config/environment"
-require "rails/test_help"
-
 require "fileutils"
 require "logger"
 require "securerandom"
@@ -54,7 +50,7 @@ module OAuthHelpers
         homepage_url: "https://example.com",
         redirect_uri: "https://example.com/callback",
         client_id: "CLIENT_ID",
-        client_secret: BCrypt::Password.create("CLIENT_SECRET", cost: BCrypt::Engine::MIN_COST),
+        client_secret: generate_client_secret("CLIENT_SECRET"),
         scopes: test_scopes.join(" ")
       }.merge(params))
       db[:oauth_applications].filter(id: id).first
@@ -100,6 +96,10 @@ module OAuthHelpers
 
   def json_body
     @json_body ||= JSON.parse(last_response.body)
+  end
+
+  def generate_client_secret(secret)
+    BCrypt::Password.create(secret, cost: BCrypt::Engine::MIN_COST)
   end
 end
 

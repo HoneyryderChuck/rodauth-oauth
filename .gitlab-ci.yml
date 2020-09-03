@@ -17,12 +17,13 @@ cache:
   - apk --update add g++ make sqlite sqlite-dev postgresql-client postgresql-dev mysql-client mysql-dev git
 
 .test: &test
+- PGPASSWORD=password createdb -h postgres -U oauth oauth-unique 'oauth database to keep single row for access tokens'
 - "DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
 - "DATABASE_URL=postgresql://oauth:password@postgres/oauth bundle exec rake test:ci"
 # concurrency limited with mysql, to avoid deadlock messages
 - "DATABASE_URL=mysql2://root:password@mysql/oauth bundle exec rake test:ci"
 # DB optimization modes
-- "DATABASE_URL=sqlite3::memory: ONLY_ONE_TOKEN=1 bundle exec rake test:ci"
+- "DATABASE_URL=postgresql://oauth:password@postgres/oauth-unique ONLY_ONE_TOKEN=1 bundle exec rake test:ci"
 # JWT supported libs
 - "JWT_LIB=json/jwt DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
 

@@ -15,7 +15,7 @@ class RodauthOauthApplicationsTest < RodaIntegration
     fill_in "name", with: "Foo App"
     fill_in "description", with: "An app starting with Foo"
     fill_in "homepage-url", with: "https://foobar.com"
-    fill_in "redirect-uri1", with: "https://foobar.com/callback"
+    fill_in "redirect-uri", with: "https://foobar.com/callback"
     fill_in "client-secret", with: "SECRET"
     check "user.read"
     check "user.write"
@@ -29,6 +29,12 @@ class RodauthOauthApplicationsTest < RodaIntegration
   end
 
   def test_oauth_applications_multiple_redirect_uris
+    rodauth do
+      new_oauth_application_view do
+        opts = _view_opts(:new_oauth_application)
+        _view(:view, opts.merge(path: File.join(opts[:views], "new_oauth_application2.erb")))
+      end
+    end
     setup_application
     login
     # List
@@ -69,7 +75,7 @@ class RodauthOauthApplicationsTest < RodaIntegration
     fill_in "name", with: "Foo App"
     fill_in "description", with: "An app starting with Foo"
     fill_in "homepage-url", with: "bla"
-    fill_in "redirect-uri1", with: "bla"
+    fill_in "redirect-uri", with: "bla"
     click_button "Register"
     assert_equal page.find("#error_flash").text, "There was an error registering your oauth application"
     assert_includes page.html, "Invalid URL"

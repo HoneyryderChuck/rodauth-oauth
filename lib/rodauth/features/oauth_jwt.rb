@@ -92,9 +92,7 @@ module Rodauth
       jws_jwk = if oauth_application[oauth_application_jws_jwk_column]
                   jwk = oauth_application[oauth_application_jws_jwk_column]
 
-                  if jwk
-                    jwk = JSON.parse(jwk, symbolize_names: true) if jwk.is_a?(String)
-                  end
+                  jwk = JSON.parse(jwk, symbolize_names: true) if jwk && jwk.is_a?(String)
                 else
                   redirect_response_error("invalid_request_object")
                 end
@@ -173,17 +171,19 @@ module Rodauth
         oauth_grants_expires_in_column => Time.now + oauth_token_expires_in
       }.merge(params)
 
-      if should_generate_refresh_token
-        refresh_token = oauth_unique_id_generator
+      oauth_token = rescue_from_uniqueness_error do
+        if should_generate_refresh_token
+          refresh_token = oauth_unique_id_generator
 
-        if oauth_tokens_refresh_token_hash_column
-          create_params[oauth_tokens_refresh_token_hash_column] = generate_token_hash(refresh_token)
-        else
-          create_params[oauth_tokens_refresh_token_column] = refresh_token
+          if oauth_tokens_refresh_token_hash_column
+            create_params[oauth_tokens_refresh_token_hash_column] = generate_token_hash(refresh_token)
+          else
+            create_params[oauth_tokens_refresh_token_column] = refresh_token
+          end
         end
-      end
 
-      oauth_token = _generate_oauth_token(create_params)
+        _generate_oauth_token(create_params)
+      end
 
       claims = jwt_claims(oauth_token)
 
@@ -299,10 +299,10 @@ module Rodauth
 
         # time-to-live
         ttl = if response.key?("cache-control")
-                cache_control = response["cache_control"]
+                cache_control = response["cache-control"]
                 cache_control[/max-age=(\d+)/, 1]
               elsif response.key?("expires")
-                Time.httpdate(response["expires"]).utc.to_i - Time.now.utc.to_i
+                DateTime.httpdate(response["expires"]).utc.to_i - Time.now.utc.to_i
               end
 
         [JSON.parse(response.body, symbolize_names: true), ttl]
