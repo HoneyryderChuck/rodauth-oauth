@@ -18,7 +18,7 @@ cache:
 
 .test: &test
 - PGPASSWORD=password createdb -h postgres -U oauth oauth-unique 'oauth database to keep single row for access tokens'
-- MYSQL_PWD=password mysql -u root -e "CREATE DATABASE oauth-unique"
+- MYSQL_PWD=password mysql -u -h mysql root -e "CREATE DATABASE oauth-unique"
 - "DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
 - "DATABASE_URL=postgresql://oauth:password@postgres/oauth bundle exec rake test"
 # concurrency limited with mysql, to avoid deadlock messages
