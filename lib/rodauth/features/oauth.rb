@@ -12,6 +12,10 @@ module Rodauth
   Feature.define(:oauth) do
     # RUBY EXTENSIONS
     unless Regexp.method_defined?(:match?)
+      # If you wonder why this is there: the oauth feature uses a refinement to enhance the
+      # Regexp class locally with #match? , but this is never tested, because ActiveSupport
+      # monkey-patches the same method... Please ActiveSupport, stop being so intrusive!
+      # :nocov:
       module RegexpExtensions
         refine(Regexp) do
           def match?(*args)
@@ -20,6 +24,7 @@ module Rodauth
         end
       end
       using(RegexpExtensions)
+      # :nocov:
     end
 
     unless String.method_defined?(:delete_suffix!)

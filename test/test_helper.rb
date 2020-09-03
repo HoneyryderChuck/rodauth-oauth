@@ -11,10 +11,6 @@ if ENV.key?("CI")
   SimpleCov.coverage_dir "coverage/#{RUBY_ENGINE}-#{RUBY_VERSION}"
 end
 
-# for rails integration tests
-require_relative "rails_app/config/environment"
-require "rails/test_help"
-
 require "fileutils"
 require "logger"
 require "securerandom"
