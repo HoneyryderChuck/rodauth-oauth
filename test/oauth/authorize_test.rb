@@ -236,6 +236,17 @@ class RodauthOauthAuthorizeTest < RodaIntegration
            "was redirected instead to #{page.current_url}"
   end
 
+  def test_authorize_post_authorize_unsupported_response_type
+    setup_application
+    login
+
+    # show the authorization form
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&response_type=unknown"
+
+    assert page.current_url.include?("?error=invalid_request"),
+           "was redirected instead to #{page.current_url}"
+  end
+
   def test_authorize_post_authorize_no_implicit_grant
     setup_application
     login
