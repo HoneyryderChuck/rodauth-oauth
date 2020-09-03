@@ -27,6 +27,21 @@ class RodauthOauthServerMetadataTest < RodaIntegration
     assert json_body["code_challenge_methods_supported"] == "S256"
   end
 
+  def test_oauth_server_metadata_with_implicit_grant
+    rodauth do
+      use_oauth_implicit_grant_type? true
+      oauth_application_scopes %w[read write]
+    end
+    setup_application
+    get("/.well-known/oauth-authorization-server")
+
+    assert last_response.status == 200
+    assert json_body["scopes_supported"] == %w[read write]
+    assert json_body["response_types_supported"] == %w[code token]
+    assert json_body["response_modes_supported"] == %w[query fragment]
+    assert json_body["grant_types_supported"] == %w[authorization_code implicit]
+  end
+
   private
 
   def setup_application
