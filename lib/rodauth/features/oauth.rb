@@ -943,12 +943,7 @@ module Rodauth
 
       redirect_response_error("invalid_request") unless oauth_token
 
-      if oauth_application
-        redirect_response_error("invalid_request") unless token_from_application?(oauth_token, oauth_application)
-      else
-        @oauth_application = db[oauth_applications_table].where(oauth_applications_id_column =>
-          oauth_token[oauth_tokens_oauth_application_id_column]).first
-      end
+      redirect_response_error("invalid_request") unless token_from_application?(oauth_token, oauth_application)
 
       update_params = { oauth_tokens_revoked_at_column => Sequel::CURRENT_TIMESTAMP }
 
