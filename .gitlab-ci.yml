@@ -18,14 +18,14 @@ cache:
 
 .test: &test
 - PGPASSWORD=password createdb -h postgres -U oauth oauth-unique 'oauth database to keep single row for access tokens'
-- MYSQL_PWD=password mysql -u -h mysql root -e "CREATE DATABASE oauth-unique"
+- MYSQL_PWD=password mysql -h mysql -u root -e 'CREATE DATABASE oauthunique'
 - "DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
 - "DATABASE_URL=postgresql://oauth:password@postgres/oauth bundle exec rake test"
 # concurrency limited with mysql, to avoid deadlock messages
 - "DATABASE_URL=mysql2://root:password@mysql/oauth bundle exec rake test"
 # DB optimization modes
 - "DATABASE_URL=postgresql://oauth:password@postgres/oauth-unique ONLY_ONE_TOKEN=1 bundle exec rake test"
-- "DATABASE_URL=mysql2://root:password@mysql/oauth-unique ONLY_ONE_TOKEN=1 bundle exec rake test"
+- "DATABASE_URL=mysql2://root:password@mysql/oauthunique ONLY_ONE_TOKEN=1 bundle exec rake test"
 # JWT supported libs
 - "JWT_LIB=json/jwt DATABASE_URL=sqlite3::memory: bundle exec rake test"
 
