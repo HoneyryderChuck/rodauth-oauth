@@ -171,17 +171,19 @@ module Rodauth
         oauth_grants_expires_in_column => Time.now + oauth_token_expires_in
       }.merge(params)
 
-      if should_generate_refresh_token
-        refresh_token = oauth_unique_id_generator
+      oauth_token = rescue_from_uniqueness_error do
+        if should_generate_refresh_token
+          refresh_token = oauth_unique_id_generator
 
-        if oauth_tokens_refresh_token_hash_column
-          create_params[oauth_tokens_refresh_token_hash_column] = generate_token_hash(refresh_token)
-        else
-          create_params[oauth_tokens_refresh_token_column] = refresh_token
+          if oauth_tokens_refresh_token_hash_column
+            create_params[oauth_tokens_refresh_token_hash_column] = generate_token_hash(refresh_token)
+          else
+            create_params[oauth_tokens_refresh_token_column] = refresh_token
+          end
         end
-      end
 
-      oauth_token = _generate_oauth_token(create_params)
+        _generate_oauth_token(create_params)
+      end
 
       claims = jwt_claims(oauth_token)
 

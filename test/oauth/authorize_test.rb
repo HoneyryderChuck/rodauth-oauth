@@ -68,6 +68,30 @@ class RodauthOauthAuthorizeTest < RodaIntegration
            "was redirected instead to #{page.current_url}"
   end
 
+  def test_authorize_post_authorize_same_code
+    rodauth do
+      oauth_unique_id_generator { "CODE" }
+    end
+    setup_application
+    login
+
+    _grant = oauth_grant(code: "CODE")
+
+    # show the authorization form
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+
+    # submit authorization request
+    click_button "Authorize"
+
+    assert db[:oauth_grants].count == 1,
+           "grant has been created when it shouldn't"
+
+    assert page.current_url.include?("?error=invalid_request&error_description=error+generating+unique+token"),
+           "was redirected instead to #{page.current_url}"
+  end
+
   def test_authorize_post_authorize
     setup_application
     login

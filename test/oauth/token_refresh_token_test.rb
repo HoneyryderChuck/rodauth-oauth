@@ -96,6 +96,29 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
     assert((Time.now.utc + json_body["expires_in"]).to_i > prev_expires_in.to_i)
   end
 
+  def test_token_refresh_token_same_code
+    rodauth do
+      oauth_unique_id_generator { "TOKEN" }
+    end
+    setup_application
+    login
+
+    _prev_token = oauth_token(token: "TOKEN")
+    @oauth_token = nil
+    token = oauth_token(token: "OLD_TOKEN", refresh_token: "OTHER_REFRESH_TOKEN", scopes: "user.read")
+
+    post("/token",
+         client_secret: "CLIENT_SECRET",
+         client_id: oauth_application[:client_id],
+         grant_type: "refresh_token",
+         refresh_token: token[:refresh_token])
+
+    assert last_response.status == 409
+    assert last_response.headers["Content-Type"] == "application/json"
+    assert json_body["error"] == "invalid_request"
+    assert json_body["error_description"] == "error generating unique token"
+  end
+
   private
 
   def setup_application

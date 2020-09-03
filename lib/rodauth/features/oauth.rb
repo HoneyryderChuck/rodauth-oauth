@@ -126,6 +126,7 @@ module Rodauth
 
     auth_value_method :authorization_required_error_status, 401
     auth_value_method :invalid_oauth_response_status, 400
+    auth_value_method :already_in_use_response_status, 409
 
     # OAuth Applications
     auth_value_method :oauth_applications_path, "oauth-applications"
@@ -157,6 +158,8 @@ module Rodauth
 
     auth_value_method :unique_error_message, "is already in use"
     auth_value_method :null_error_message, "is not filled"
+    auth_value_method :already_in_use_message, "error generating unique token"
+    auth_value_method :already_in_use_error_code, "invalid_request"
 
     # PKCE
     auth_value_method :code_challenge_required_error_code, "invalid_request"
@@ -173,6 +176,8 @@ module Rodauth
     # Resource Server params
     # Only required to use if the plugin is to be used in a resource server
     auth_value_method :is_authorization_server?, true
+
+    auth_value_method :oauth_unique_id_generation_retries, 3
 
     auth_value_methods(
       :fetch_access_token,
@@ -393,6 +398,17 @@ module Rodauth
 
     private
 
+    def rescue_from_uniqueness_error(&block)
+      retries = oauth_unique_id_generation_retries
+      begin
+        transaction(savepoint: :only, &block)
+      rescue Sequel::UniqueConstraintViolation
+        redirect_response_error("already_in_use") if retries.zero?
+        retries -= 1
+        retry
+      end
+    end
+
     # OAuth Token Unique/Reuse
     def oauth_tokens_unique_columns
       [
@@ -519,29 +535,30 @@ module Rodauth
         oauth_grants_expires_in_column => Time.now + oauth_token_expires_in
       }.merge(params)
 
-      token = oauth_unique_id_generator
+      rescue_from_uniqueness_error do
+        token = oauth_unique_id_generator
 
-      if oauth_tokens_token_hash_column
-        create_params[oauth_tokens_token_hash_column] = generate_token_hash(token)
-      else
-        create_params[oauth_tokens_token_column] = token
-      end
-
-      refresh_token = nil
-      if should_generate_refresh_token
-        refresh_token = oauth_unique_id_generator
-
-        if oauth_tokens_refresh_token_hash_column
-          create_params[oauth_tokens_refresh_token_hash_column] = generate_token_hash(refresh_token)
+        if oauth_tokens_token_hash_column
+          create_params[oauth_tokens_token_hash_column] = generate_token_hash(token)
         else
-          create_params[oauth_tokens_refresh_token_column] = refresh_token
+          create_params[oauth_tokens_token_column] = token
         end
-      end
-      oauth_token = _generate_oauth_token(create_params)
 
-      oauth_token[oauth_tokens_token_column] = token
-      oauth_token[oauth_tokens_refresh_token_column] = refresh_token if refresh_token
-      oauth_token
+        refresh_token = nil
+        if should_generate_refresh_token
+          refresh_token = oauth_unique_id_generator
+
+          if oauth_tokens_refresh_token_hash_column
+            create_params[oauth_tokens_refresh_token_hash_column] = generate_token_hash(refresh_token)
+          else
+            create_params[oauth_tokens_refresh_token_column] = refresh_token
+          end
+        end
+        oauth_token = _generate_oauth_token(create_params)
+        oauth_token[oauth_tokens_token_column] = token
+        oauth_token[oauth_tokens_refresh_token_column] = refresh_token if refresh_token
+        oauth_token
+      end
     end
 
     def _generate_oauth_token(params = {})
@@ -573,8 +590,6 @@ module Rodauth
         end
         __insert_and_return__(ds, oauth_tokens_id_column, params)
       end
-    rescue Sequel::UniqueConstraintViolation
-      retry
     end
 
     def oauth_token_by_token(token, dataset = db[oauth_tokens_table])
@@ -665,7 +680,6 @@ module Rodauth
       # set client ID/secret pairs
 
       create_params.merge! \
-        oauth_applications_client_id_column => oauth_unique_id_generator,
         oauth_applications_client_secret_column => \
           secret_hash(oauth_application_params[oauth_application_client_secret_param])
 
@@ -675,25 +689,10 @@ module Rodauth
                                                           oauth_application_default_scope
                                                         end
 
-      id = nil
-      raised = begin
-                 id = db[oauth_applications_table].insert(create_params)
-                 false
-               rescue Sequel::ConstraintViolation => e
-                 e
-               end
-
-      if raised
-        field = raised.message[/\.(.*)$/, 1]
-        case raised
-        when Sequel::UniqueConstraintViolation
-          throw_error(field, unique_error_message)
-        when Sequel::NotNullConstraintViolation
-          throw_error(field, null_error_message)
-        end
+      rescue_from_uniqueness_error do
+        create_params[oauth_applications_client_id_column] = oauth_unique_id_generator
+        db[oauth_applications_table].insert(create_params)
       end
-
-      !raised && id
     end
 
     # Authorize
@@ -737,8 +736,7 @@ module Rodauth
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
         oauth_grants_redirect_uri_column => redirect_uri,
         oauth_grants_expires_in_column => Time.now + oauth_grant_expires_in,
-        oauth_grants_scopes_column => scopes.join(oauth_scope_separator),
-        oauth_grants_code_column => oauth_unique_id_generator
+        oauth_grants_scopes_column => scopes.join(oauth_scope_separator)
       )
 
       # Access Type flow
@@ -747,25 +745,18 @@ module Rodauth
       end
 
       # PKCE flow
-      if use_oauth_pkce?
+      if use_oauth_pkce? && (code_challenge = param_or_nil("code_challenge"))
+        code_challenge_method = param_or_nil("code_challenge_method")
 
-        if (code_challenge = param_or_nil("code_challenge"))
-          code_challenge_method = param_or_nil("code_challenge_method")
-
-          create_params[oauth_grants_code_challenge_column] = code_challenge
-          create_params[oauth_grants_code_challenge_method_column] = code_challenge_method
-        elsif oauth_require_pkce
-          redirect_response_error("code_challenge_required")
-        end
+        create_params[oauth_grants_code_challenge_column] = code_challenge
+        create_params[oauth_grants_code_challenge_method_column] = code_challenge_method
       end
 
       ds = db[oauth_grants_table]
 
-      begin
-        __insert_and_return__(ds, oauth_grants_id_column, create_params)
-      rescue Sequel::UniqueConstraintViolation
+      rescue_from_uniqueness_error do
         create_params[oauth_grants_code_column] = oauth_unique_id_generator
-        retry
+        __insert_and_return__(ds, oauth_grants_id_column, create_params)
       end
       create_params[oauth_grants_code_column]
     end
@@ -860,8 +851,6 @@ module Rodauth
           oauth_tokens_expires_in_column => Time.now + oauth_token_expires_in
         }
         create_oauth_token_from_token(oauth_token, update_params)
-      else
-        redirect_response_error("invalid_grant")
       end
     end
 
@@ -890,22 +879,21 @@ module Rodauth
     def create_oauth_token_from_token(oauth_token, update_params)
       redirect_response_error("invalid_grant") unless token_from_application?(oauth_token, oauth_application)
 
-      token = oauth_unique_id_generator
+      rescue_from_uniqueness_error do
+        token = oauth_unique_id_generator
 
-      if oauth_tokens_token_hash_column
-        update_params[oauth_tokens_token_hash_column] = generate_token_hash(token)
-      else
-        update_params[oauth_tokens_token_column] = token
+        if oauth_tokens_token_hash_column
+          update_params[oauth_tokens_token_hash_column] = generate_token_hash(token)
+        else
+          update_params[oauth_tokens_token_column] = token
+        end
+
+        ds = db[oauth_tokens_table].where(oauth_tokens_id_column => oauth_token[oauth_tokens_id_column])
+
+        oauth_token = __update_and_return__(ds, update_params)
+        oauth_token[oauth_tokens_token_column] = token
+        oauth_token
       end
-
-      ds = db[oauth_tokens_table].where(oauth_tokens_id_column => oauth_token[oauth_tokens_id_column])
-
-      oauth_token = __update_and_return__(ds, update_params)
-
-      oauth_token[oauth_tokens_token_column] = token
-      oauth_token
-    rescue Sequel::UniqueConstraintViolation
-      retry
     end
 
     TOKEN_HINT_TYPES = %w[access_token refresh_token].freeze
@@ -984,7 +972,13 @@ module Rodauth
 
     def redirect_response_error(error_code, redirect_url = redirect_uri || request.referer || default_redirect)
       if accepts_json?
-        throw_json_response_error(invalid_oauth_response_status, error_code)
+        status_code = if respond_to?(:"#{error_code}_response_status")
+                        send(:"#{error_code}_response_status")
+                      else
+                        invalid_oauth_response_status
+                      end
+
+        throw_json_response_error(status_code, error_code)
       else
         redirect_url = URI.parse(redirect_url)
         query_params = []
