@@ -77,6 +77,7 @@ platform :mri do
   gem "sassc"
 
   gem "mysql2"
+  gem "nokogiri", "~> 1.11.0.rc3" if RUBY_VERSION > "2.4"
   gem "pg"
 end
 
