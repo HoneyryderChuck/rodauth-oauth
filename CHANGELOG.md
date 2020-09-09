@@ -2,6 +2,8 @@
 
 ## master
 
+### 0.2.0
+
 #### Features
 
 ##### SAML Assertion Grant Type
@@ -25,12 +27,23 @@ At some point, you'll want to replace the pkeys and algorithm used to generate a
 
 If the `oauth_reuse_access_token` is set, if there's already an existing valid access token, any new grant for the same application / account / scope will keep the same access token. This can be helpful in scenarios where one wants the same access token distributed across devices.
 
+##### require_authorizable_account
+
+The method used to verify access to the authorize flow is called `require_authorizable_account`. By default, it checks if a user is logged in by using rodauth's own `require_account`. This is the method you'd want to redefine in order to augment these requirements, i.e. request 2fa authentication.
+
 #### Improvements
 
 Expired and revoked access tokens end up generating a lot of garbage, which will have to be periodically cleaned up. You can mitigate this now by setting a uniqueness index for a group of columns, i.e. if you set a uniqueness index for the `oauth_application_id/account_id/scopes` column, `rodauth-oauth` will transparently reuse the same db entry to store the new access token. If setting some other type of uniqueness index, make sure to update the option `oauth_tokens_unique_columns` (the array of columns from the uniqueness index).
 
+#### Bugfixes
+
+Calling `before_*_route` callbacks appropriately.
+
+Fixed some mishandling of HTTP headers when in in resource-server mode.
+
 #### Chore
 
+* 97.7% test coverage;
 * `rodauth-oauth` CI tests run against sqlite, postgresql and mysql.
 
 ### 0.1.0
