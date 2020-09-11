@@ -27,7 +27,7 @@ module Rodauth
     def openid_configuration(issuer = nil)
       request.on(".well-known/openid-configuration") do
         request.get do
-          json_response_success(openid_configuration_body(issuer))
+          json_response_success(openid_configuration_body(issuer), cache: true)
         end
       end
     end
