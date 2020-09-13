@@ -22,6 +22,10 @@ module Rodauth
 
     auth_value_method :webfinger_relation, "http://openid.net/specs/connect/1.0/issuer"
 
+    auth_value_method :oauth_prompt_login_cookie_key, "_rodauth_oauth_prompt_login"
+    auth_value_method :oauth_prompt_login_cookie_options, {}.freeze
+    auth_value_method :oauth_prompt_login_interval, 5 * 60 * 60 # 5 minutes
+
     auth_value_methods(:get_oidc_param)
 
     def openid_configuration(issuer = nil)
@@ -56,6 +60,67 @@ module Rodauth
     end
 
     private
+
+    def require_authorizable_account
+      try_prompt if param_or_nil("prompt")
+      super
+    end
+
+    # this executes before checking for a logged in account
+    def try_prompt
+      prompt = param_or_nil("prompt")
+
+      case prompt
+      when "none"
+        redirect_response_error("login_required") unless logged_in?
+
+        require_account
+
+        if db[oauth_grants_table].where(
+          oauth_grants_account_id_column => account_id,
+          oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+          oauth_grants_redirect_uri_column => redirect_uri,
+          oauth_grants_scopes_column => scopes.join(oauth_scope_separator),
+          oauth_grants_access_type_column => "online"
+        ).count.zero?
+          redirect_response_error("consent_required")
+        end
+
+        request.env["REQUEST_METHOD"] = "POST"
+      when "login"
+        if logged_in? && request.cookies[oauth_prompt_login_cookie_key] == "login"
+          ::Rack::Utils.delete_cookie_header!(response.headers, oauth_prompt_login_cookie_key, oauth_prompt_login_cookie_options)
+          return
+        end
+
+        # logging out
+        clear_session
+        set_session_value(login_redirect_session_key, request.fullpath)
+
+        login_cookie_opts = Hash[oauth_prompt_login_cookie_options]
+        login_cookie_opts[:value] = "login"
+        login_cookie_opts[:expires] = convert_timestamp(Time.now + oauth_prompt_login_interval) # 15 minutes
+        ::Rack::Utils.set_cookie_header!(response.headers, oauth_prompt_login_cookie_key, login_cookie_opts)
+
+        redirect require_login_redirect
+      when "consent"
+        require_account
+
+        if db[oauth_grants_table].where(
+          oauth_grants_account_id_column => account_id,
+          oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+          oauth_grants_redirect_uri_column => redirect_uri,
+          oauth_grants_scopes_column => scopes.join(oauth_scope_separator),
+          oauth_grants_access_type_column => "online"
+        ).count.zero?
+          redirect_response_error("consent_required")
+        end
+      when "select_account"
+        nil
+      else
+        redirect_response_error("invalid_request")
+      end
+    end
 
     def create_oauth_grant(create_params = {})
       return super unless (nonce = param_or_nil("nonce"))

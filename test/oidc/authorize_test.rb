@@ -270,6 +270,95 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
            "was redirected instead to #{page.current_url}"
   end
 
+  def test_oidc_authorize_post_authorize_prompt_none
+    setup_application
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+          "prompt=none"
+    assert page.current_url.include?("?error=login_required"),
+           "was redirected instead to #{page.current_url}"
+
+    login
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+          "prompt=none"
+    assert page.current_url.include?("?error=consent_required"),
+           "was redirected instead to #{page.current_url}"
+
+    # OLD grant
+    oauth_grant(access_type: "online", expires_in: Time.now - 60)
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+          "prompt=none"
+
+    assert db[:oauth_grants].count == 2,
+           "no new grant has been created"
+
+    new_grant = db[:oauth_grants].order(:id).last
+
+    assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{new_grant[:code]}",
+           "was redirected instead to #{page.current_url}"
+  end
+
+  def test_oidc_authorize_post_authorize_prompt_login
+    setup_application
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+          "prompt=login"
+    assert page.current_path.include?("/login"),
+           "was redirected instead to #{page.current_url}"
+
+    login(visit: false)
+
+    assert page.current_url.end_with?("/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&prompt=login"),
+           "was redirected instead to #{page.current_url}"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    # submit authorization request
+    click_button "Authorize"
+
+    new_grant = db[:oauth_grants].order(:id).last
+    assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{new_grant[:code]}",
+           "was redirected instead to #{page.current_url}"
+  end
+
+  def test_oidc_authorize_post_authorize_prompt_login_with_reauthentication
+    setup_application
+    login
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+          "prompt=login"
+    assert page.current_path.start_with?("/login"),
+           "was redirected instead to #{page.current_url}"
+
+    login(visit: false)
+
+    assert page.current_url.end_with?("/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&prompt=login"),
+           "was redirected instead to #{page.current_url}"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    # submit authorization request
+    click_button "Authorize"
+
+    new_grant = db[:oauth_grants].order(:id).last
+    assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{new_grant[:code]}",
+           "was redirected instead to #{page.current_url}"
+  end
+
+  def test_oidc_authorize_post_authorize_prompt_consent
+    setup_application
+    login
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+          "prompt=consent"
+    assert page.current_url.include?("?error=consent_required"),
+           "was redirected instead to #{page.current_url}"
+  end
+
+  # TODO: if rodauth ever supports definition of multiple accounts
+  # def test_oidc_authorize_post_authorize_prompt_select_account
+  # end
+
   private
 
   def setup_application
