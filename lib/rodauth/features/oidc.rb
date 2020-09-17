@@ -304,7 +304,7 @@ module Rodauth
       metadata.merge({
                        userinfo_endpoint: userinfo_url,
                        response_types_supported: metadata[:response_types_supported] +
-                         ["none", "id_token", %w[code token], %w[code id_token], %w[id_token token], %w[code id_token token]],
+                         ["none", "id_token", "code token", "code id_token", "id_token token", "code id_token token"],
                        response_modes_supported: %w[query fragment],
                        grant_types_supported: %w[authorization_code implicit],
 

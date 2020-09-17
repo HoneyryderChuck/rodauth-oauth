@@ -22,10 +22,10 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
     assert json_body["registration_endpoint"] == "http://example.org/oauth-applications"
     assert json_body["scopes_supported"] == %w[openid email]
     assert json_body["response_types_supported"] == [
-      "code", "none", "id_token", %w[code token],
-      %w[code id_token],
-      %w[id_token token],
-      %w[code id_token token]
+      "code", "none", "id_token", "code token",
+      "code id_token",
+      "id_token token",
+      "code id_token token"
     ]
     assert json_body["response_modes_supported"] == %w[query fragment]
     assert json_body["grant_types_supported"] == %w[authorization_code implicit]
