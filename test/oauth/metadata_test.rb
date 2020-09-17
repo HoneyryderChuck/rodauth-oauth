@@ -42,6 +42,23 @@ class RodauthOauthServerMetadataTest < RodaIntegration
     assert json_body["grant_types_supported"] == %w[authorization_code implicit]
   end
 
+  def test_oauth_server_metadata_with_route_prefix
+    rodauth do
+      prefix '/auth'
+      oauth_application_scopes %w[read write]
+    end
+    setup_application
+    get("/.well-known/oauth-authorization-server")
+
+    assert last_response.status == 200
+    assert json_body["issuer"] == "http://example.org"
+    assert json_body["authorization_endpoint"] == "http://example.org/auth/authorize"
+    assert json_body["token_endpoint"] == "http://example.org/auth/token"
+    assert json_body["registration_endpoint"] == "http://example.org/auth/oauth-applications"
+    assert json_body["revocation_endpoint"] == "http://example.org/auth/revoke"
+    assert json_body["introspection_endpoint"] == "http://example.org/auth/introspect"
+  end
+
   private
 
   def setup_application

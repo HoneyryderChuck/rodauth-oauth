@@ -1130,11 +1130,12 @@ module Rodauth
         response_modes_supported << "fragment"
         grant_types_supported << "implicit"
       end
+
       {
         issuer: issuer,
         authorization_endpoint: authorize_url,
         token_endpoint: token_url,
-        registration_endpoint: "#{base_url}/#{oauth_applications_path}",
+        registration_endpoint: route_url(oauth_applications_path),
         scopes_supported: oauth_application_scopes,
         response_types_supported: responses_supported,
         response_modes_supported: response_modes_supported,
