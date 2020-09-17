@@ -44,7 +44,7 @@ class RodauthOauthServerMetadataTest < RodaIntegration
 
   def test_oauth_server_metadata_with_route_prefix
     rodauth do
-      prefix '/auth'
+      prefix "/auth"
       oauth_application_scopes %w[read write]
     end
     setup_application
