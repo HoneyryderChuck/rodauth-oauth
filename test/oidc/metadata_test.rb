@@ -14,7 +14,7 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
     get("/.well-known/openid-configuration")
 
     assert last_response.status == 200
-    assert last_response.headers['Content-Type'] == 'application/json'
+    assert last_response.headers["Content-Type"] == "application/json"
     assert json_body["issuer"] == "http://example.org"
     assert json_body["authorization_endpoint"] == "http://example.org/authorize"
     assert json_body["token_endpoint"] == "http://example.org/token"
@@ -49,8 +49,19 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
     # assert json_body["display_values_supported"] == %w[HS256]
     assert json_body["claim_types_supported"] == %w[normal]
     assert json_body["claims_supported"] == %w[sub iss iat exp aud auth_time email email_verified]
+  end
 
-    assert json_body["code_challenge_methods_supported"] == "S256"
+  def test_filters_out_invalid_fields
+    rodauth do
+      oauth_application_scopes %w[openid email]
+      oauth_jwt_algorithm "HS256"
+    end
+    setup_application
+    get("/.well-known/openid-configuration")
+
+    assert_schema :oidc_configuration_response, json_body
+    assert !json_body.key?("code_challenge_methods_supported")
+    assert !json_body.key?("revocation_endpoint_auth_methods_supported")
   end
 
   def test_oidc_metadata_openid_configuration_sub_scopes

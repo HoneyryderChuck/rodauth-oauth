@@ -10,6 +10,44 @@ module Rodauth
       "phone" => %i[phone_number phone_number_verified].freeze
     }.freeze
 
+    VALID_METADATA_KEYS = %i[
+      issuer
+      authorization_endpoint
+      token_endpoint
+      userinfo_endpoint
+      jwks_uri
+      registration_endpoint
+      scopes_supported
+      response_types_supported
+      response_modes_supported
+      grant_types_supported
+      acr_values_supported
+      subject_types_supported
+      id_token_signing_alg_values_supported
+      id_token_encryption_alg_values_supported
+      id_token_encryption_enc_values_supported
+      userinfo_signing_alg_values_supported
+      userinfo_encryption_alg_values_supported
+      userinfo_encryption_enc_values_supported
+      request_object_signing_alg_values_supported
+      request_object_encryption_alg_values_supported
+      request_object_encryption_enc_values_supported
+      token_endpoint_auth_methods_supported
+      token_endpoint_auth_signing_alg_values_supported
+      display_values_supported
+      claim_types_supported
+      claims_supported
+      service_documentation
+      claims_locales_supported
+      ui_locales_supported
+      claims_parameter_supported
+      request_parameter_supported
+      request_uri_parameter_supported
+      require_request_uri_registration
+      op_policy_uri
+      op_tos_uri
+    ].freeze
+
     depends :oauth_jwt
 
     auth_value_method :oauth_application_default_scope, "openid"
@@ -301,33 +339,35 @@ module Rodauth
 
       scope_claims.unshift("auth_time") if last_account_login_at
 
-      metadata.merge({
-                       userinfo_endpoint: userinfo_url,
-                       response_types_supported: metadata[:response_types_supported] +
-                         ["none", "id_token", "code token", "code id_token", "id_token token", "code id_token token"],
-                       response_modes_supported: %w[query fragment],
-                       grant_types_supported: %w[authorization_code implicit],
+      unfiltered_metadata = metadata.merge(
+        userinfo_endpoint: userinfo_url,
+        response_types_supported: metadata[:response_types_supported] +
+          ["none", "id_token", "code token", "code id_token", "id_token token", "code id_token token"],
+        response_modes_supported: %w[query fragment],
+        grant_types_supported: %w[authorization_code implicit],
 
-                       subject_types_supported: [oauth_jwt_subject_type],
+        subject_types_supported: [oauth_jwt_subject_type],
 
-                       id_token_signing_alg_values_supported: metadata[:token_endpoint_auth_signing_alg_values_supported],
-                       id_token_encryption_alg_values_supported: [oauth_jwt_jwe_algorithm].compact,
-                       id_token_encryption_enc_values_supported: [oauth_jwt_jwe_encryption_method].compact,
+        id_token_signing_alg_values_supported: metadata[:token_endpoint_auth_signing_alg_values_supported],
+        id_token_encryption_alg_values_supported: [oauth_jwt_jwe_algorithm].compact,
+        id_token_encryption_enc_values_supported: [oauth_jwt_jwe_encryption_method].compact,
 
-                       userinfo_signing_alg_values_supported: [],
-                       userinfo_encryption_alg_values_supported: [],
-                       userinfo_encryption_enc_values_supported: [],
+        userinfo_signing_alg_values_supported: [],
+        userinfo_encryption_alg_values_supported: [],
+        userinfo_encryption_enc_values_supported: [],
 
-                       request_object_signing_alg_values_supported: [],
-                       request_object_encryption_alg_values_supported: [],
-                       request_object_encryption_enc_values_supported: [],
+        request_object_signing_alg_values_supported: [],
+        request_object_encryption_alg_values_supported: [],
+        request_object_encryption_enc_values_supported: [],
 
-                       # These Claim Types are described in Section 5.6 of OpenID Connect Core 1.0 [OpenID.Core].
-                       # Values defined by this specification are normal, aggregated, and distributed.
-                       # If omitted, the implementation supports only normal Claims.
-                       claim_types_supported: %w[normal],
-                       claims_supported: %w[sub iss iat exp aud] | scope_claims
-                     })
+        # These Claim Types are described in Section 5.6 of OpenID Connect Core 1.0 [OpenID.Core].
+        # Values defined by this specification are normal, aggregated, and distributed.
+        # If omitted, the implementation supports only normal Claims.
+        claim_types_supported: %w[normal],
+        claims_supported: %w[sub iss iat exp aud] | scope_claims
+      )
+
+      unfiltered_metadata.select { |key, _| VALID_METADATA_KEYS.include?(key.to_sym) }
     end
   end
 end
