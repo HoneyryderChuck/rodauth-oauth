@@ -14,6 +14,7 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
     get("/.well-known/openid-configuration")
 
     assert last_response.status == 200
+    assert last_response.headers['Content-Type'] == 'application/json'
     assert json_body["issuer"] == "http://example.org"
     assert json_body["authorization_endpoint"] == "http://example.org/authorize"
     assert json_body["token_endpoint"] == "http://example.org/token"
