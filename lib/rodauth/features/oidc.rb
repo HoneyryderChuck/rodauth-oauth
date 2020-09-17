@@ -48,6 +48,16 @@ module Rodauth
       op_tos_uri
     ].freeze
 
+    REQUIRED_METADATA_KEYS = %i[
+      issuer
+      authorization_endpoint
+      token_endpoint
+      jwks_uri
+      response_types_supported
+      subject_types_supported
+      id_token_signing_alg_values_supported
+    ].freeze
+
     depends :oauth_jwt
 
     auth_value_method :oauth_application_default_scope, "openid"
@@ -325,7 +335,9 @@ module Rodauth
     # Metadata
 
     def openid_configuration_body(path)
-      metadata = oauth_server_metadata_body(path)
+      metadata = oauth_server_metadata_body(path).select do |k, _|
+        VALID_METADATA_KEYS.include?(k)
+      end
 
       scope_claims = oauth_application_scopes.each_with_object([]) do |scope, claims|
         oidc, param = scope.split(".", 2)
@@ -339,7 +351,7 @@ module Rodauth
 
       scope_claims.unshift("auth_time") if last_account_login_at
 
-      unfiltered_metadata = metadata.merge(
+      metadata.merge(
         userinfo_endpoint: userinfo_url,
         response_types_supported: metadata[:response_types_supported] +
           ["none", "id_token", "code token", "code id_token", "id_token token", "code id_token token"],
@@ -365,9 +377,12 @@ module Rodauth
         # If omitted, the implementation supports only normal Claims.
         claim_types_supported: %w[normal],
         claims_supported: %w[sub iss iat exp aud] | scope_claims
-      )
-
-      unfiltered_metadata.select { |key, _| VALID_METADATA_KEYS.include?(key.to_sym) }
+      ).reject do |key, val|
+        # Filter null values in optional items
+        (!REQUIRED_METADATA_KEYS.include?(key.to_sym) && val.nil?) ||
+          # Claims with zero elements MUST be omitted from the response
+          (val.respond_to?(:empty?) && val.empty?)
+      end
     end
   end
 end

@@ -40,6 +40,7 @@ gem "sequel-activerecord_connection"
 gem "omniauth_openid_connect"
 
 # Tests/Debug
+gem "json-schema"
 gem "minitest", "~> 5.0"
 gem "minitest-hooks"
 gem "rack-test"
