@@ -4,6 +4,22 @@
 <title>#{@title}</title>
 </head>
 <body>
+<nav class="my-2 my-md-0 mr-md-3">
+#{
+if rodauth.logged_in?
+  if request.path != rodauth.logout_path
+	"<a href=\"#{rodauth.logout_path}\">Logout</a>"
+  end
+else
+  if request.path != rodauth.login_path
+	"<a href=\"#{rodauth.login_path}\">Login</a>"
+  end
+end
+}
+  <a class="p-2 text-dark" href="oauth-applications">Client Applications</a>
+
+<% end %>
+</nav>
 #{"<div id='error_flash'>#{opts[:sessions_convert_symbols] ? flash['error'] : flash[:error]}</div>" if opts[:sessions_convert_symbols] ? flash['error'] : flash[:error]}
 #{"<div id='notice_flash'>#{opts[:sessions_convert_symbols] ? flash['notice'] : flash[:notice]}</div>" if opts[:sessions_convert_symbols] ? flash['notice'] : flash[:notice]}
 #{yield}

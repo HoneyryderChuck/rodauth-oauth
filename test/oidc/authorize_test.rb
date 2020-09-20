@@ -361,7 +361,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
   private
 
-  def setup_application
+  def setup_application(*)
     rodauth do
       oauth_application_jws_jwk_column :jws_jwk
     end
