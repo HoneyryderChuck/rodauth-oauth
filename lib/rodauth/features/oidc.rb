@@ -115,8 +115,9 @@ module Rodauth
         ).count.zero?
           redirect_response_error("consent_required")
         end
-      when "select_account"
-        nil
+      when "select-account"
+        # obly works if select_account plugin is available
+        require_select_account if respond_to?(:require_select_account)
       else
         redirect_response_error("invalid_request")
       end

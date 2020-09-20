@@ -322,6 +322,45 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
            "was redirected instead to #{page.current_url}"
   end
 
+  if RUBY_VERSION > "2.4"
+    def test_oidc_authorize_post_authorize_prompt_select_account_with_login
+      hash = BCrypt::Password.create("0123456789", cost: BCrypt::Engine::MIN_COST)
+      db[:accounts].insert(email: "foo2@example.com", status_id: 2, ph: hash)
+
+      setup_application(:select_account)
+
+      login
+      logout
+      login(login: "foo2@example.com")
+      logout
+
+      visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+            "prompt=select-account"
+
+      # I should now select an account
+      assert page.current_path.include?("/select-account"),
+             "was redirected instead to #{page.current_url}"
+      click_button("foo@example.com")
+      assert page.current_path.include?("/login"),
+             "was redirected instead to #{page.current_url}"
+
+      # I should login now
+      fill_in "Password", with: "0123456789"
+      click_button "Login"
+
+      assert page.current_url.end_with?("/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&prompt=select-account"),
+             "was redirected instead to #{page.current_url}"
+      assert page.current_path == "/authorize",
+             "was redirected instead to #{page.current_path}"
+      # submit authorization request
+      click_button "Authorize"
+
+      new_grant = db[:oauth_grants].order(:id).last
+      assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{new_grant[:code]}",
+             "was redirected instead to #{page.current_url}"
+    end
+  end
+
   def test_oidc_authorize_post_authorize_prompt_login_with_reauthentication
     setup_application
     login
