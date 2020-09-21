@@ -2,6 +2,16 @@
 
 ## master
 
+#### Improvements
+
+Support for the OIDC authorize [parameter `prompt`](https://openid.net/specs/openid-connect-core-1_0.html) (sectionn 3.1.2.1). It supports the `none`, `login` and `consent` out-of-the-box, while providing support for `select-account` when paired with [rodauth-select-account, a rodauth feature to handle multiple accounts in the same session](https://gitlab.com/honeyryderchuck/rodauth-select-account).
+
+#### Bugfixes
+
+Templates now being packaged, as a way to provide a default experience to the OAuth journeys.
+
+fixing metadata urls when plugin loaded with a prefix path (@ianks)
+
 ### 0.2.0
 
 #### Features
