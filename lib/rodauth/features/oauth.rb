@@ -381,7 +381,7 @@ module Rodauth
       request.on(".well-known") do
         request.on("oauth-authorization-server") do
           request.get do
-            json_response_success(oauth_server_metadata_body(issuer))
+            json_response_success(oauth_server_metadata_body(issuer), cache: true)
           end
         end
       end
@@ -999,9 +999,17 @@ module Rodauth
       end
     end
 
-    def json_response_success(body)
+    def json_response_success(body, cache: false)
       response.status = 200
       response["Content-Type"] ||= json_response_content_type
+      if cache
+        # defaulting to 1-day for everyone, for now at least
+        max_age = 60 * 60 * 24
+        response["Cache-Control"] = "private, max-age=#{max_age}"
+      else
+        response["Cache-Control"] = "no-store"
+        response["Pragma"] = "no-cache"
+      end
       json_payload = _json_response_body(body)
       response.write(json_payload)
       request.halt

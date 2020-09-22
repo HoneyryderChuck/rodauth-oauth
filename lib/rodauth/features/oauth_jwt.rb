@@ -459,7 +459,7 @@ module Rodauth
       next unless is_authorization_server?
 
       r.get do
-        json_response_success({ keys: jwks_set })
+        json_response_success({ keys: jwks_set }, cache: true)
       end
     end
   end
