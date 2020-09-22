@@ -98,12 +98,12 @@ class RodaIntegration < Minitest::Test
     :oauth
   end
 
-  def setup_application
-    feature = oauth_feature
+  def setup_application(*features)
+    features << oauth_feature
     scopes = test_scopes
     rodauth do
       db RODADB
-      enable :login, :http_basic_auth, feature
+      enable :login, :logout, :http_basic_auth, *features
       login_return_to_requested_location? true
       oauth_application_default_scope scopes.first
       oauth_application_scopes scopes
@@ -116,7 +116,7 @@ class RodaIntegration < Minitest::Test
       end
 
       r.root do
-        flash["error"] || flash["notice"] || "Unauthorized"
+        view inline: (flash["error"] || flash["notice"] || "Unauthorized")
       end
 
       yield(rodauth) if block_given?
@@ -124,17 +124,28 @@ class RodaIntegration < Minitest::Test
 
       r.on "private" do
         r.get do
-          flash["error"] || flash["notice"] || "Authorized"
+          view inline: (flash["error"] || flash["notice"] || "Authorized")
         end
       end
     end
   end
 
   def login(opts = {})
-    visit(opts[:path] || "/login") unless opts[:visit] == false
+    unless opts[:visit] == false
+      if !page.html.empty? && page.has_content?("nav")
+        click_link("Login")
+      else
+        visit("/login")
+      end
+    end
     fill_in "Login", with: opts.fetch(:login, "foo@example.com")
     fill_in "Password", with: opts.fetch(:pass, "0123456789")
     click_button "Login"
+  end
+
+  def logout
+    click_link("Logout")
+    click_on "Logout"
   end
 
   def set_authorization_header(token = oauth_token)

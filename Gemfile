@@ -56,6 +56,7 @@ if RUBY_VERSION < "2.4"
   gem "rubocop", "~> 0.81.0"
   gem "simplecov", "< 0.18.0"
 else
+  gem "rodauth-select-account", "~> 0.0.2"
   gem "rubocop"
   gem "simplecov"
 end

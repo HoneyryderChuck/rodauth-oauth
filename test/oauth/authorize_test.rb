@@ -6,7 +6,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
   def test_authorize_get_public_area
     setup_application
     visit "/"
-    assert page.html == "Unauthorized"
+    assert page.html.include?("Unauthorized")
   end
 
   def test_authorize_get_authorize_not_logged_in_no_client_application

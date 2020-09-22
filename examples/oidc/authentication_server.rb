@@ -161,7 +161,7 @@ class AuthenticationServer < Roda
         </p>
         <% else %>
           <p class="lead">
-            This is the demo authentication server for <a href="https://gitlab.com/honeyryderchuck/roda-oauth">Roda Oauth - Open ID Connect</a>.
+            This is the demo authentication server for <a href="https://gitlab.com/honeyryderchuck/rodauth-oauth">Roda Oauth - Open ID Connect</a>.
             Roda Oauth extends Rodauth to support the OAuth 2.0 authorization protocol, while adhering to the same principles of the parent library.
           </p>
           <p class="lead">In the authentication server, you can setup your account, and also register client applications.</p>
@@ -171,7 +171,7 @@ class AuthenticationServer < Roda
             <a class="btn btn-outline-secondary btn-padded" href="/create-account">Sign Up</a>
           </p>
         
-          <footer class="lead">This demo site is part of the Rodauth repository, so if you want to know how it works, you can <a href="https://gitlab.com/honeyryderchuck/roda-oauth/tree/master/examples/roda">review the source</a>.</footer>
+          <footer class="lead">This demo site is part of the Rodauth repository, so if you want to know how it works, you can <a href="https://gitlab.com/honeyryderchuck/rodauth-oauth/tree/master/examples">review the source</a>.</footer>
         <% end %>
       HTML
     end

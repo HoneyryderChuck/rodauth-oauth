@@ -731,7 +731,6 @@ module Rodauth
       ).count.zero?
 
       # if there's a previous oauth grant for the params combo, it means that this user has approved before.
-
       request.env["REQUEST_METHOD"] = "POST"
     end
 
