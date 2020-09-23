@@ -176,6 +176,13 @@ class RodaIntegration < Minitest::Test
   def verify_token_common_response(data)
     assert data["token_type"] == "bearer"
     assert !data["expires_in"].nil?
+    assert !data["access_token"].nil?
+  end
+
+  def verify_refresh_token_response(data, prev_token)
+    verify_token_common_response(data)
+    assert data["access_token"] != prev_token[:token]
+    assert((Time.now.utc + data["expires_in"]).to_i > prev_token[:expires_in].to_i)
   end
 
   def verify_access_token_response(data, oauth_token)

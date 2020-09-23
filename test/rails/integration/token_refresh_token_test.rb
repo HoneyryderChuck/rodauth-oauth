@@ -49,9 +49,6 @@ class RodauthOAuthRailsTokenRefreshTokenTest < RailsIntegrationTest
   def test_token_rails_refresh_token_successful
     setup_application
 
-    prev_token = oauth_token[:token]
-    prev_expires_in = oauth_token[:expires_in]
-
     header "Accept", "application/json"
     post("/token",
          client_secret: "CLIENT_SECRET",
@@ -64,8 +61,6 @@ class RodauthOAuthRailsTokenRefreshTokenTest < RailsIntegrationTest
 
     assert db[:oauth_tokens].count == 1
 
-    assert !json_body["access_token"].nil?
-    assert json_body["access_token"] != prev_token
-    assert Time.now.utc + json_body["expires_in"] > prev_expires_in
+    verify_refresh_token_response(json_body, oauth_token)
   end
 end

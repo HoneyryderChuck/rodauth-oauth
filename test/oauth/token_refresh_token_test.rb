@@ -60,9 +60,7 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
 
     assert db[:oauth_tokens].count == 1
 
-    assert !json_body["access_token"].nil?
-    assert json_body["access_token"] != prev_token
-    assert((Time.now.utc + json_body["expires_in"]).to_i > prev_expires_in.to_i)
+    verify_refresh_token_response(json_body, oauth_token)
   end
 
   def test_token_refresh_token_hash_columns_successful
@@ -72,10 +70,7 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
     end
     setup_application
 
-    token = oauth_token(refresh_token_hash: generate_hashed_token("REFRESH_TOKEN"))
-
-    prev_token = token[:token]
-    prev_expires_in = token[:expires_in]
+    prev_token = oauth_token(refresh_token_hash: generate_hashed_token("REFRESH_TOKEN"))
 
     post("/token",
          client_secret: "CLIENT_SECRET",
@@ -90,33 +85,25 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
 
     oauth_token = db[:oauth_tokens].first
 
-    assert !json_body["access_token"].nil?
-    assert json_body["access_token"] != prev_token
-    assert json_body["access_token"] != oauth_token[:token]
-    assert((Time.now.utc + json_body["expires_in"]).to_i > prev_expires_in.to_i)
+    verify_refresh_token_response(json_body, prev_token)
+    assert prev_token[:token_hash] != oauth_token[:token_hash]
   end
 
-  def test_token_refresh_token_same_code
-    rodauth do
-      oauth_unique_id_generator { "TOKEN" }
-    end
+  def test_token_refresh_token_protection_policy_none_successful
     setup_application
-    login
-
-    _prev_token = oauth_token(token: "TOKEN")
-    @oauth_token = nil
-    token = oauth_token(token: "OLD_TOKEN", refresh_token: "OTHER_REFRESH_TOKEN", scopes: "user.read")
 
     post("/token",
          client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
          grant_type: "refresh_token",
-         refresh_token: token[:refresh_token])
+         refresh_token: oauth_token[:refresh_token])
 
-    assert last_response.status == 409
+    assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
-    assert json_body["error"] == "invalid_request"
-    assert json_body["error_description"] == "error generating unique token"
+
+    assert db[:oauth_tokens].count == 1
+
+    verify_refresh_token_response(json_body, oauth_token)
   end
 
   private
