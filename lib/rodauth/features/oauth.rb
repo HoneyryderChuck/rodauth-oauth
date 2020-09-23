@@ -381,7 +381,7 @@ module Rodauth
       request.on(".well-known") do
         request.on("oauth-authorization-server") do
           request.get do
-            json_response_success(oauth_server_metadata_body(issuer), cache: true)
+            json_response_success(oauth_server_metadata_body(issuer), true)
           end
         end
       end
@@ -999,7 +999,7 @@ module Rodauth
       end
     end
 
-    def json_response_success(body, cache: false)
+    def json_response_success(body, cache = false)
       response.status = 200
       response["Content-Type"] ||= json_response_content_type
       if cache
