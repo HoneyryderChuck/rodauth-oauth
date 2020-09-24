@@ -149,9 +149,11 @@ module Rodauth
       auth_value_method :"oauth_applications_#{column}_column", column
     end
 
+    # Feature options
     auth_value_method :oauth_application_default_scope, SCOPES.first
     auth_value_method :oauth_application_scopes, SCOPES
     auth_value_method :oauth_token_type, "bearer"
+    auth_value_method :oauth_refresh_token_protection_policy, "none" # can be: none, sender_constrained, rotation
 
     auth_value_method :invalid_client_message, "Invalid client"
     auth_value_method :invalid_grant_type_message, "Invalid grant type"
@@ -597,26 +599,31 @@ module Rodauth
       end
     end
 
-    def oauth_token_by_token(token, dataset = db[oauth_tokens_table])
+    def oauth_token_by_token(token)
+      ds = db[oauth_tokens_table]
+
       ds = if oauth_tokens_token_hash_column
-             dataset.where(oauth_tokens_token_hash_column => generate_token_hash(token))
+             ds.where(oauth_tokens_token_hash_column => generate_token_hash(token))
            else
-             dataset.where(oauth_tokens_token_column => token)
+             ds.where(oauth_tokens_token_column => token)
            end
 
       ds.where(Sequel[oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
         .where(oauth_tokens_revoked_at_column => nil).first
     end
 
-    def oauth_token_by_refresh_token(token, dataset = db[oauth_tokens_table])
+    def oauth_token_by_refresh_token(token, revoked: false)
+      ds = db[oauth_tokens_table]
+
       ds = if oauth_tokens_refresh_token_hash_column
-             dataset.where(oauth_tokens_refresh_token_hash_column => generate_token_hash(token))
+             ds.where(oauth_tokens_refresh_token_hash_column => generate_token_hash(token))
            else
-             dataset.where(oauth_tokens_refresh_token_column => token)
+             ds.where(oauth_tokens_refresh_token_column => token)
            end
 
-      ds.where(Sequel[oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
-        .where(oauth_tokens_revoked_at_column => nil).first
+      ds = ds.where(oauth_tokens_revoked_at_column => nil) unless revoked
+
+      ds.first
     end
 
     def json_access_token_payload(oauth_token)
@@ -845,10 +852,26 @@ module Rodauth
         }
         create_oauth_token_from_authorization_code(oauth_grant, create_params)
       when "refresh_token"
-        # fetch oauth token
-        oauth_token = oauth_token_by_refresh_token(param("refresh_token"))
+        # fetch potentially revoked oauth token
+        oauth_token = oauth_token_by_refresh_token(param("refresh_token"), revoked: true)
 
-        redirect_response_error("invalid_grant") unless oauth_token
+        if !oauth_token
+          redirect_response_error("invalid_grant")
+        elsif oauth_token[oauth_tokens_revoked_at_column]
+          if oauth_refresh_token_protection_policy == "rotation"
+            # https://tools.ietf.org/html/draft-ietf-oauth-v2-1-00#section-6.1
+            #
+            # If a refresh token is compromised and subsequently used by both the attacker and the legitimate
+            # client, one of them will present an invalidated refresh token, which will inform the authorization
+            # server of the breach.  The authorization server cannot determine which party submitted the invalid
+            # refresh token, but it will revoke the active refresh token.  This stops the attack at the cost of
+            # forcing the legitimate client to obtain a fresh authorization grant.
+
+            db[oauth_tokens_table].where(oauth_tokens_oauth_token_id_column => oauth_token[oauth_tokens_id_column])
+                                  .update(oauth_tokens_revoked_at_column => Sequel::CURRENT_TIMESTAMP)
+          end
+          redirect_response_error("invalid_grant")
+        end
 
         update_params = {
           oauth_tokens_oauth_application_id_column => oauth_token[oauth_grants_oauth_application_id_column],
@@ -884,6 +907,7 @@ module Rodauth
       redirect_response_error("invalid_grant") unless token_from_application?(oauth_token, oauth_application)
 
       rescue_from_uniqueness_error do
+        oauth_tokens_ds = db[oauth_tokens_table]
         token = oauth_unique_id_generator
 
         if oauth_tokens_token_hash_column
@@ -892,9 +916,25 @@ module Rodauth
           update_params[oauth_tokens_token_column] = token
         end
 
-        ds = db[oauth_tokens_table].where(oauth_tokens_id_column => oauth_token[oauth_tokens_id_column])
+        oauth_token = if oauth_refresh_token_protection_policy == "rotation"
+                        insert_params = {
+                          **update_params,
+                          oauth_tokens_oauth_token_id_column => oauth_token[oauth_tokens_id_column],
+                          oauth_tokens_scopes_column => oauth_token[oauth_tokens_scopes_column]
+                        }
 
-        oauth_token = __update_and_return__(ds, update_params)
+                        # revoke the refresh token
+                        oauth_tokens_ds.where(oauth_tokens_id_column => oauth_token[oauth_tokens_id_column])
+                                       .update(oauth_tokens_revoked_at_column => Sequel::CURRENT_TIMESTAMP)
+
+                        insert_params[oauth_tokens_oauth_token_id_column] = oauth_token[oauth_tokens_id_column]
+                        __insert_and_return__(oauth_tokens_ds, oauth_tokens_id_column, insert_params)
+                      else
+                        # includes none
+                        ds = oauth_tokens_ds.where(oauth_tokens_id_column => oauth_token[oauth_tokens_id_column])
+                        __update_and_return__(ds, update_params)
+                      end
+
         oauth_token[oauth_tokens_token_column] = token
         oauth_token
       end

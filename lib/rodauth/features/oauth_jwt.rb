@@ -237,7 +237,7 @@ module Rodauth
       end
     end
 
-    def oauth_token_by_token(token, *)
+    def oauth_token_by_token(token)
       jwt_decode(token)
     end
 
