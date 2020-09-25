@@ -75,6 +75,7 @@ module Rodauth
 
     auth_value_method :oauth_grant_expires_in, 60 * 5 # 5 minutes
     auth_value_method :oauth_token_expires_in, 60 * 60 # 60 minutes
+    auth_value_method :oauth_refresh_token_expires_in, 60 * 60 * 24 * 360 # 1 year
     auth_value_method :use_oauth_implicit_grant_type?, false
     auth_value_method :use_oauth_pkce?, true
     auth_value_method :use_oauth_access_type?, true
@@ -614,6 +615,12 @@ module Rodauth
 
     def oauth_token_by_refresh_token(token, revoked: false)
       ds = db[oauth_tokens_table]
+      #
+      # filter expired refresh tokens out.
+      # an expired refresh token is a token whose access token expired for a period longer than the
+      # refresh token expiration period.
+      #
+      ds = ds.where(Sequel.date_add(oauth_tokens_expires_in_column, seconds: oauth_refresh_token_expires_in) >= Sequel::CURRENT_TIMESTAMP)
 
       ds = if oauth_tokens_refresh_token_hash_column
              ds.where(oauth_tokens_refresh_token_hash_column => generate_token_hash(token))
