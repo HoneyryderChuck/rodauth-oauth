@@ -50,7 +50,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
 
   def test_token_authorization_code_expired_grant
     setup_application
-    grant = oauth_grant(expires_in: Time.now - 60)
+    grant = oauth_grant(expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 60))
 
     post("/token",
          client_secret: "CLIENT_SECRET",
@@ -65,7 +65,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
 
   def test_token_authorization_code_revoked_grant
     setup_application
-    grant = oauth_grant(revoked_at: Time.now)
+    grant = oauth_grant(revoked_at: Sequel::CURRENT_TIMESTAMP)
 
     post("/token",
          client_secret: "CLIENT_SECRET",

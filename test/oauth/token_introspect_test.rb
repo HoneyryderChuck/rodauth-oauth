@@ -22,7 +22,7 @@ class RodauthOAuthTokenIntrospectTest < RodaIntegration
 
     header "Accept", "application/json"
 
-    token = oauth_token(expires_in: Time.now - 20)
+    token = oauth_token(expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 20))
 
     # valid token, and now we're getting somewhere
     post("/introspect", {

@@ -9,7 +9,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     setup_application
 
     header "Accept", "application/json"
-    set_authorization_header(oauth_token(revoked_at: Time.now))
+    set_authorization_header(oauth_token(revoked_at: Sequel::CURRENT_TIMESTAMP))
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 401
@@ -19,7 +19,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     setup_application
 
     header "Accept", "application/json"
-    set_authorization_header(oauth_token(expires_in: Time.now - 20))
+    set_authorization_header(oauth_token(expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 20)))
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 401

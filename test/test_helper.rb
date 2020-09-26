@@ -63,7 +63,7 @@ module OAuthHelpers
         oauth_application_id: oauth_application[:id],
         account_id: account[:id],
         code: "CODE",
-        expires_in: Time.now + 60 * 5,
+        expires_in: Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: 60 * 5),
         redirect_uri: oauth_application[:redirect_uri],
         scopes: oauth_application[:scopes]
       }.merge(params))
@@ -79,7 +79,7 @@ module OAuthHelpers
         oauth_grant_id: oauth_grant[:id],
         token: "TOKEN",
         refresh_token: "REFRESH_TOKEN",
-        expires_in: Time.now + 60 * 5,
+        expires_in: Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: 60 * 5),
         scopes: oauth_grant[:scopes]
       }.merge(params))
       db[:oauth_tokens].filter(id: id).first

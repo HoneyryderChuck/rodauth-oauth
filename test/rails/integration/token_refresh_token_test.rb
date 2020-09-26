@@ -20,7 +20,7 @@ class RodauthOAuthRailsTokenRefreshTokenTest < RailsIntegrationTest
 
   def test_token_rails_refresh_token_revoked_token
     setup_application
-    oauth_token = oauth_token(revoked_at: Time.now)
+    oauth_token = oauth_token(revoked_at: Sequel::CURRENT_TIMESTAMP)
 
     header "Accept", "application/json"
     post("/token",

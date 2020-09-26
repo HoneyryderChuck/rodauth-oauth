@@ -168,7 +168,7 @@ module Rodauth
 
     def generate_oauth_token(params = {}, should_generate_refresh_token = true)
       create_params = {
-        oauth_grants_expires_in_column => Time.now + oauth_token_expires_in
+        oauth_grants_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_token_expires_in)
       }.merge(params)
 
       oauth_token = rescue_from_uniqueness_error do

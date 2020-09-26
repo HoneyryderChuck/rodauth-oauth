@@ -26,7 +26,7 @@ class RodauthOAuthTokenRevokeTest < RodaIntegration
   def test_oauth_token_revoke_revoked_token
     setup_application
     login
-    oauth_token = oauth_token(revoked_at: Time.now)
+    oauth_token = oauth_token(revoked_at: Sequel::CURRENT_TIMESTAMP)
 
     post("/revoke", token_type_hint: "access_token", token: oauth_token[:token])
 

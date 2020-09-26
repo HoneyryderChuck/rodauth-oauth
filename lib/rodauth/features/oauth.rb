@@ -404,6 +404,10 @@ module Rodauth
       self.class.send(:define_method, :__one_oauth_token_per_account) { one_oauth_token_per_account }
     end
 
+    def use_date_arithmetic?
+      true
+    end
+
     private
 
     def rescue_from_uniqueness_error(&block)
@@ -540,7 +544,7 @@ module Rodauth
 
     def generate_oauth_token(params = {}, should_generate_refresh_token = true)
       create_params = {
-        oauth_grants_expires_in_column => Time.now + oauth_token_expires_in
+        oauth_grants_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_token_expires_in)
       }.merge(params)
 
       rescue_from_uniqueness_error do
@@ -753,7 +757,7 @@ module Rodauth
         oauth_grants_account_id_column => account_id,
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
         oauth_grants_redirect_uri_column => redirect_uri,
-        oauth_grants_expires_in_column => Time.now + oauth_grant_expires_in,
+        oauth_grants_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_grant_expires_in),
         oauth_grants_scopes_column => scopes.join(oauth_scope_separator)
       )
 
@@ -882,7 +886,7 @@ module Rodauth
 
         update_params = {
           oauth_tokens_oauth_application_id_column => oauth_token[oauth_grants_oauth_application_id_column],
-          oauth_tokens_expires_in_column => Time.now + oauth_token_expires_in
+          oauth_tokens_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_token_expires_in)
         }
         create_oauth_token_from_token(oauth_token, update_params)
       end
@@ -1287,7 +1291,7 @@ module Rodauth
             json_response_success \
               "token" => oauth_token[oauth_tokens_token_column],
               "refresh_token" => oauth_token[oauth_tokens_refresh_token_column],
-              "revoked_at" => oauth_token[oauth_tokens_revoked_at_column]
+              "revoked_at" => convert_timestamp(oauth_token[oauth_tokens_revoked_at_column])
           else
             set_notice_flash revoke_oauth_token_notice_flash
             redirect request.referer || "/"
