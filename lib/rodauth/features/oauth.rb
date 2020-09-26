@@ -453,9 +453,9 @@ module Rodauth
         # time-to-live
         ttl = if response.key?("cache-control")
                 cache_control = response["cache-control"]
-                cache_control[/max-age=(\d+)/, 1]
+                cache_control[/max-age=(\d+)/, 1].to_i
               elsif response.key?("expires")
-                DateTime.httpdate(response["expires"]).utc.to_i - Time.now.utc.to_i
+                DateTime.httpdate(response["expires"]).to_i - Time.now.to_i
               end
 
         [JSON.parse(response.body, symbolize_names: true), ttl]

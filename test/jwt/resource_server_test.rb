@@ -31,7 +31,7 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
         body: JSON.dump(keys: [JWT::JWK.new(rsa_public).export.merge(use: "sig", alg: "RS256")])
       )
 
-    token = generate_access_token(rsa_private, "RS256", iss: "https://auth-server-inactive-token", expires_in: Time.now.utc.to_i - 3600)
+    token = generate_access_token(rsa_private, "RS256", iss: "https://auth-server-inactive-token", expires_in: Time.now.to_i - 3600)
 
     header "Accept", "application/json"
     header "Authorization", "Bearer #{token}"
@@ -104,9 +104,9 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
     params = {
       sub: oauth_token[:account_id],
       iss: "https://auth-server", # issuer
-      iat: Time.now.utc.to_i, # issued at
+      iat: Time.now.to_i, # issued at
       client_id: oauth_application[:client_id],
-      exp: exp.utc.to_i,
+      exp: exp.to_i,
       aud: "resource-server",
       scope: oauth_token[:scopes]
     }.merge(params)
