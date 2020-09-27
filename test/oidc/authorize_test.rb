@@ -286,7 +286,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
            "was redirected instead to #{page.current_url}"
 
     # OLD grant
-    oauth_grant(access_type: "online", expires_in: Time.now - 60)
+    oauth_grant(access_type: "online", expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 60))
 
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
           "prompt=none"

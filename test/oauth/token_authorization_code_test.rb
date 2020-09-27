@@ -50,7 +50,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
 
   def test_token_authorization_code_expired_grant
     setup_application
-    grant = oauth_grant(expires_in: Time.now - 60)
+    grant = oauth_grant(expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 60))
 
     post("/token",
          client_secret: "CLIENT_SECRET",
@@ -65,7 +65,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
 
   def test_token_authorization_code_revoked_grant
     setup_application
-    grant = oauth_grant(revoked_at: Time.now)
+    grant = oauth_grant(revoked_at: Sequel::CURRENT_TIMESTAMP)
 
     post("/token",
          client_secret: "CLIENT_SECRET",
@@ -109,7 +109,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     oauth_token = db[:oauth_tokens].first
 
     verify_oauth_grant_revoked(oauth_token)
-    verify_response_body(json_body, oauth_token)
+    verify_access_token_response(json_body, oauth_token)
   end
 
   def test_token_authorization_code_reuse_token_successful
@@ -131,7 +131,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     assert db[:oauth_tokens].count == 1
     oauth_token = db[:oauth_tokens].first
     verify_oauth_grant_revoked(oauth_token)
-    verify_response_body(json_body, oauth_token)
+    verify_access_token_response(json_body, oauth_token)
 
     # second go at it
     @oauth_grant = nil
@@ -150,7 +150,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     assert db[:oauth_tokens].count == 1
     oauth_token2 = db[:oauth_tokens].first
     verify_oauth_grant_revoked(oauth_token2)
-    verify_response_body(json_body, oauth_token2)
+    verify_access_token_response(json_body, oauth_token2)
 
     assert oauth_token[:id] == oauth_token2[:id]
     assert oauth_token[:token] == oauth_token2[:token]

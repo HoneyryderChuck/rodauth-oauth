@@ -168,7 +168,7 @@ module Rodauth
 
     def generate_oauth_token(params = {}, should_generate_refresh_token = true)
       create_params = {
-        oauth_grants_expires_in_column => Time.now + oauth_token_expires_in
+        oauth_grants_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_token_expires_in)
       }.merge(params)
 
       oauth_token = rescue_from_uniqueness_error do
@@ -198,7 +198,7 @@ module Rodauth
     end
 
     def jwt_claims(oauth_token)
-      issued_at = Time.now.utc.to_i
+      issued_at = Time.now.to_i
 
       claims = {
         iss: (oauth_jwt_token_issuer || authorization_server_url), # issuer
@@ -219,7 +219,7 @@ module Rodauth
         aud: (oauth_jwt_audience || oauth_application[oauth_applications_client_id_column])
       }
 
-      claims[:auth_time] = last_account_login_at.utc.to_i if last_account_login_at
+      claims[:auth_time] = last_account_login_at.to_i if last_account_login_at
 
       claims
     end
@@ -237,7 +237,7 @@ module Rodauth
       end
     end
 
-    def oauth_token_by_token(token, *)
+    def oauth_token_by_token(token)
       jwt_decode(token)
     end
 
@@ -300,9 +300,9 @@ module Rodauth
         # time-to-live
         ttl = if response.key?("cache-control")
                 cache_control = response["cache-control"]
-                cache_control[/max-age=(\d+)/, 1]
+                cache_control[/max-age=(\d+)/, 1].to_i
               elsif response.key?("expires")
-                DateTime.httpdate(response["expires"]).utc.to_i - Time.now.utc.to_i
+                DateTime.httpdate(response["expires"]).to_i - Time.now.to_i
               end
 
         [JSON.parse(response.body, symbolize_names: true), ttl]
@@ -459,7 +459,7 @@ module Rodauth
       next unless is_authorization_server?
 
       r.get do
-        json_response_success({ keys: jwks_set }, cache: true)
+        json_response_success({ keys: jwks_set }, true)
       end
     end
   end

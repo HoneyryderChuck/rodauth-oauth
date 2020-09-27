@@ -23,7 +23,7 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
     oauth_token = verify_oauth_token
 
-    payload = verify_response_body(json_body, oauth_token, "SECRET", "HS256")
+    payload = verify_access_token_response(json_body, oauth_token, "SECRET", "HS256")
 
     # by default the subject type is public
     assert payload["sub"] == account[:id]
@@ -55,7 +55,7 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
     oauth_token = verify_oauth_token
 
-    payload = verify_response_body(json_body, oauth_token, "SECRET", "HS256")
+    payload = verify_access_token_response(json_body, oauth_token, "SECRET", "HS256")
     # by default the subject type is public
     assert payload["sub"] != account[:id]
 
@@ -121,7 +121,7 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
     oauth_token = verify_oauth_token
 
-    verify_response_body(json_body, oauth_token, rsa_public, "RS256")
+    verify_access_token_response(json_body, oauth_token, rsa_public, "RS256")
 
     # use token
     header "Authorization", "Bearer #{json_body['access_token']}"
@@ -156,7 +156,7 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
       oauth_token = verify_oauth_token
 
-      verify_response_body(json_body, oauth_token, ecdsa_public, "ES256")
+      verify_access_token_response(json_body, oauth_token, ecdsa_public, "ES256")
 
       # use token
       header "Authorization", "Bearer #{json_body['access_token']}"
@@ -195,7 +195,7 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
     token = JWE.decrypt(encrypted_token, jwe_key)
 
-    verify_response_body(json_body.merge("access_token" => token), oauth_token, "SECRET", "HS256")
+    verify_access_token_response(json_body.merge("access_token" => token), oauth_token, "SECRET", "HS256")
 
     # use token
     header "Authorization", "Bearer #{json_body['access_token']}"
@@ -230,7 +230,7 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
       verify_response
 
       oauth_token = verify_oauth_token
-      verify_response_body(json_body, oauth_token, legacy_rsa_public, "RS256")
+      verify_access_token_response(json_body, oauth_token, legacy_rsa_public, "RS256")
     end
 
     # Set up new app and tokens

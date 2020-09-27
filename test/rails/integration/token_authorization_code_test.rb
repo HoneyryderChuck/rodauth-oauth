@@ -30,7 +30,7 @@ class RodauthOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
 
   def test_token_rails_authorization_code_expired_grant
     setup_application
-    grant = oauth_grant(expires_in: Time.now - 60)
+    grant = oauth_grant(expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 60))
 
     header "Accept", "application/json"
     post("/token",
@@ -46,7 +46,7 @@ class RodauthOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
 
   def test_token_rails_authorization_code_revoked_grant
     setup_application
-    grant = oauth_grant(revoked_at: Time.now)
+    grant = oauth_grant(revoked_at: Sequel::CURRENT_TIMESTAMP)
 
     header "Accept", "application/json"
     post("/token",
@@ -115,7 +115,7 @@ class RodauthOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
     login
 
     header "Accept", "application/json"
-    header "Authorization", "Bearer #{oauth_token(revoked_at: Time.now)[:token]}"
+    header "Authorization", "Bearer #{oauth_token(revoked_at: Sequel::CURRENT_TIMESTAMP)[:token]}"
     # valid token, and now we're getting somewhere
     get("/private")
   end
@@ -125,7 +125,7 @@ class RodauthOAuthRailsTokenAuthorizationCodeTest < RailsIntegrationTest
     login
 
     header "Accept", "application/json"
-    header "Authorization", "Bearer #{oauth_token(expires_in: Time.now - 20)[:token]}"
+    header "Authorization", "Bearer #{oauth_token(expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 20))[:token]}"
     # valid token, and now we're getting somewhere
     get("/private")
   end

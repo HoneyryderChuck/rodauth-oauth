@@ -2,15 +2,30 @@
 
 ## master
 
+#### Features
+
+`oauth_refresh_token_protection_policy` is a new option, which can be used to set a protection policy around usage of refresh tokens. By default it's `none`, for backwards-compatibility. However, when set to `rotation`, refresh tokens will be "use-once", i.e. a token refresh request will generate a new refresh token. Also,  refresh token requests doen with already-used refresh tokens will be interpreted as a security breach, i.e. all tokens linked to the compromised refresh token will be revoked.
+
 #### Improvements
 
-Support for the OIDC authorize [parameter `prompt`](https://openid.net/specs/openid-connect-core-1_0.html) (sectionn 3.1.2.1). It supports the `none`, `login` and `consent` out-of-the-box, while providing support for `select-account` when paired with [rodauth-select-account, a rodauth feature to handle multiple accounts in the same session](https://gitlab.com/honeyryderchuck/rodauth-select-account).
+
+Support for the OIDC authorize [`prompt` parameter](https://openid.net/specs/openid-connect-core-1_0.html) (sectionn 3.1.2.1). It supports the `none`, `login` and `consent` out-of-the-box, while providing support for `select-account` when paired with [rodauth-select-account, a rodauth feature to handle multiple accounts in the same session](https://gitlab.com/honeyryderchuck/rodauth-select-account).
+
+Refresh Tokens are now expired. The refresh token expiration period is governed by the `oauth_refresh_token_expires_in` option (default: 1 year), and is the period for which a refresh token can be used after its respective token expired.
 
 #### Bugfixes
 
 Templates now being packaged, as a way to provide a default experience to the OAuth journeys.
 
 fixing metadata urls when plugin loaded with a prefix path (@ianks)
+
+All date/time-based calculations, such as determining an expiration date, or checking if a token has expired, are now performed using database arithmetic operations, using sequel's `date_arithmetic` plugin. This will eliminate subtle bugs, such as when the database timezone is different than the application OS timezone.
+
+#### Chore
+
+Use `rodauth.convert_timestamp` in the templates, whenever dates are displayed.
+
+Set HTTP Cache headers for metadata responses, such as `/.well-known/oauth-authorization-server` and `/.well-known/openid-configuration`, so they can be stored at the edge. The cache will be valid for 1 day (this value isn't set by an option yet).
 
 ### 0.2.0
 

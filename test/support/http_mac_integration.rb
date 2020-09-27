@@ -18,7 +18,7 @@ class HTTPMacIntegration < RodaIntegration
         refresh_token: "REFRESH_TOKEN",
         token: "MAC_KEY_ID",
         mac_key: "MAC_KEY",
-        expires_in: Time.now + 60 * 5,
+        expires_in: Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: 60 * 5),
         scopes: oauth_grant[:scopes]
       }.merge(params))
       db[:http_mac_oauth_tokens].filter(id: id).first

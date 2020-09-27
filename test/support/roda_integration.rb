@@ -173,12 +173,22 @@ class RodaIntegration < Minitest::Test
     Base64.urlsafe_encode64(Digest::SHA256.digest(token))
   end
 
-  def verify_response_body(data, oauth_token)
+  def verify_token_common_response(data)
     assert data["token_type"] == "bearer"
-    assert data["access_token"] == oauth_token[:token]
-
-    assert data["refresh_token"] == oauth_token[:refresh_token]
     assert !data["expires_in"].nil?
+    assert !data["access_token"].nil?
+  end
+
+  def verify_refresh_token_response(data, prev_token)
+    verify_token_common_response(data)
+    assert data["access_token"] != prev_token[:token]
+    assert (Time.now.to_i + data["expires_in"]) > prev_token[:expires_in].to_i
+  end
+
+  def verify_access_token_response(data, oauth_token)
+    verify_token_common_response(data)
+    assert data["access_token"] == oauth_token[:token]
+    assert data["refresh_token"] == oauth_token[:refresh_token]
   end
 
   def verify_oauth_grant_revoked(oauth_token)

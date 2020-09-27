@@ -25,7 +25,7 @@ class OIDCIntegration < JWTIntegration
     :oidc
   end
 
-  def verify_response_body(data, oauth_token, secret, algorithm)
+  def verify_access_token_response(data, oauth_token, secret, algorithm)
     super
     assert data.key?("id_token")
     payload, headers = JWT.decode(data["id_token"], secret, true, algorithms: [algorithm])

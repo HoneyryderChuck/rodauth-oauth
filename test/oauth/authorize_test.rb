@@ -172,7 +172,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
            "was redirected instead to #{page.current_path}"
 
     # previous offline grant
-    oauth_grant(access_type: "offline", expires_in: Time.now - 60)
+    oauth_grant(access_type: "offline", expires_in: Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: 60))
 
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&" \
           "access_type=online&approval_prompt=auto"
@@ -185,7 +185,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     login
 
     # OLD grant
-    oauth_grant(access_type: "online", expires_in: Time.now - 60)
+    oauth_grant(access_type: "online", expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 60))
 
     # extra scope
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read&" \
@@ -199,7 +199,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     login
 
     # OLD grant
-    oauth_grant(access_type: "online", expires_in: Time.now - 60)
+    oauth_grant(access_type: "online", expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 60))
 
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&" \
           "access_type=online&approval_prompt=auto"
