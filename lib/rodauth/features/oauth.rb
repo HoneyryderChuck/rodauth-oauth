@@ -46,6 +46,8 @@ module Rodauth
 
     SCOPES = %w[profile.read].freeze
 
+    SERVER_METADATA = OAuth::TtlStore.new
+
     before "authorize"
     after "authorize"
 
@@ -203,7 +205,184 @@ module Rodauth
 
     auth_value_method :json_request_regexp, %r{\bapplication/(?:vnd\.api\+)?json\b}i
 
-    SERVER_METADATA = OAuth::TtlStore.new
+    # /token
+    route(:token) do |r|
+      next unless is_authorization_server?
+
+      before_token_route
+      require_oauth_application
+
+      r.post do
+        catch_error do
+          validate_oauth_token_params
+
+          oauth_token = nil
+          transaction do
+            before_token
+            oauth_token = create_oauth_token
+          end
+
+          json_response_success(json_access_token_payload(oauth_token))
+        end
+
+        throw_json_response_error(invalid_oauth_response_status, "invalid_request")
+      end
+    end
+
+    # /introspect
+    route(:introspect) do |r|
+      next unless is_authorization_server?
+
+      before_introspect_route
+
+      r.post do
+        catch_error do
+          validate_oauth_introspect_params
+
+          before_introspect
+          oauth_token = case param("token_type_hint")
+                        when "access_token"
+                          oauth_token_by_token(param("token"))
+                        when "refresh_token"
+                          oauth_token_by_refresh_token(param("token"))
+                        else
+                          oauth_token_by_token(param("token")) || oauth_token_by_refresh_token(param("token"))
+                        end
+
+          if oauth_application
+            redirect_response_error("invalid_request") if oauth_token && !token_from_application?(oauth_token, oauth_application)
+          elsif oauth_token
+            @oauth_application = db[oauth_applications_table].where(oauth_applications_id_column =>
+              oauth_token[oauth_tokens_oauth_application_id_column]).first
+          end
+
+          json_response_success(json_token_introspect_payload(oauth_token))
+        end
+
+        throw_json_response_error(invalid_oauth_response_status, "invalid_request")
+      end
+    end
+
+    # /revoke
+    route(:revoke) do |r|
+      next unless is_authorization_server?
+
+      before_revoke_route
+      require_oauth_application
+
+      r.post do
+        catch_error do
+          validate_oauth_revoke_params
+
+          oauth_token = nil
+          transaction do
+            before_revoke
+            oauth_token = revoke_oauth_token
+            after_revoke
+          end
+
+          if accepts_json?
+            json_response_success \
+              "token" => oauth_token[oauth_tokens_token_column],
+              "refresh_token" => oauth_token[oauth_tokens_refresh_token_column],
+              "revoked_at" => convert_timestamp(oauth_token[oauth_tokens_revoked_at_column])
+          else
+            set_notice_flash revoke_oauth_token_notice_flash
+            redirect request.referer || "/"
+          end
+        end
+
+        redirect_response_error("invalid_request", request.referer || "/")
+      end
+    end
+
+    # /authorize
+    route(:authorize) do |r|
+      next unless is_authorization_server?
+
+      before_authorize_route
+      require_authorizable_account
+
+      validate_oauth_grant_params
+      try_approval_prompt if use_oauth_access_type? && request.get?
+
+      r.get do
+        authorize_view
+      end
+
+      r.post do
+        redirect_url = URI.parse(redirect_uri)
+
+        transaction do
+          before_authorize
+          do_authorize(redirect_url)
+        end
+        redirect(redirect_url.to_s)
+      end
+    end
+
+    def oauth_server_metadata(issuer = nil)
+      request.on(".well-known") do
+        request.on("oauth-authorization-server") do
+          request.get do
+            json_response_success(oauth_server_metadata_body(issuer), true)
+          end
+        end
+      end
+    end
+
+    # /oauth-applications routes
+    def oauth_applications
+      request.on(oauth_applications_path) do
+        require_account
+
+        request.get "new" do
+          new_oauth_application_view
+        end
+
+        request.on(oauth_applications_id_pattern) do |id|
+          oauth_application = db[oauth_applications_table].where(oauth_applications_id_column => id).first
+          next unless oauth_application
+
+          scope.instance_variable_set(:@oauth_application, oauth_application)
+
+          request.is do
+            request.get do
+              oauth_application_view
+            end
+          end
+
+          request.on(oauth_tokens_path) do
+            oauth_tokens = db[oauth_tokens_table].where(oauth_tokens_oauth_application_id_column => id)
+            scope.instance_variable_set(:@oauth_tokens, oauth_tokens)
+            request.get do
+              oauth_tokens_view
+            end
+          end
+        end
+
+        request.get do
+          scope.instance_variable_set(:@oauth_applications, db[oauth_applications_table])
+          oauth_applications_view
+        end
+
+        request.post do
+          catch_error do
+            validate_oauth_application_params
+
+            transaction do
+              before_create_oauth_application
+              id = create_oauth_application
+              after_create_oauth_application
+              set_notice_flash create_oauth_application_notice_flash
+              redirect "#{request.path}/#{id}"
+            end
+          end
+          set_error_flash create_oauth_application_error_flash
+          new_oauth_application_view
+        end
+      end
+    end
 
     def check_csrf?
       case request.path
@@ -325,69 +504,6 @@ module Rodauth
                      end
 
       authorization_required unless scopes.any? { |scope| token_scopes.include?(scope) }
-    end
-
-    # /oauth-applications routes
-    def oauth_applications
-      request.on(oauth_applications_path) do
-        require_account
-
-        request.get "new" do
-          new_oauth_application_view
-        end
-
-        request.on(oauth_applications_id_pattern) do |id|
-          oauth_application = db[oauth_applications_table].where(oauth_applications_id_column => id).first
-          next unless oauth_application
-
-          scope.instance_variable_set(:@oauth_application, oauth_application)
-
-          request.is do
-            request.get do
-              oauth_application_view
-            end
-          end
-
-          request.on(oauth_tokens_path) do
-            oauth_tokens = db[oauth_tokens_table].where(oauth_tokens_oauth_application_id_column => id)
-            scope.instance_variable_set(:@oauth_tokens, oauth_tokens)
-            request.get do
-              oauth_tokens_view
-            end
-          end
-        end
-
-        request.get do
-          scope.instance_variable_set(:@oauth_applications, db[oauth_applications_table])
-          oauth_applications_view
-        end
-
-        request.post do
-          catch_error do
-            validate_oauth_application_params
-
-            transaction do
-              before_create_oauth_application
-              id = create_oauth_application
-              after_create_oauth_application
-              set_notice_flash create_oauth_application_notice_flash
-              redirect "#{request.path}/#{id}"
-            end
-          end
-          set_error_flash create_oauth_application_error_flash
-          new_oauth_application_view
-        end
-      end
-    end
-
-    def oauth_server_metadata(issuer = nil)
-      request.on(".well-known") do
-        request.on("oauth-authorization-server") do
-          request.get do
-            json_response_success(oauth_server_metadata_body(issuer), true)
-          end
-        end
-      end
     end
 
     def post_configure
@@ -1209,122 +1325,6 @@ module Rodauth
         introspection_endpoint_auth_methods_supported: %w[client_secret_basic],
         code_challenge_methods_supported: (use_oauth_pkce? ? oauth_pkce_challenge_method : nil)
       }
-    end
-
-    # /token
-    route(:token) do |r|
-      next unless is_authorization_server?
-
-      before_token_route
-      require_oauth_application
-
-      r.post do
-        catch_error do
-          validate_oauth_token_params
-
-          oauth_token = nil
-          transaction do
-            before_token
-            oauth_token = create_oauth_token
-          end
-
-          json_response_success(json_access_token_payload(oauth_token))
-        end
-
-        throw_json_response_error(invalid_oauth_response_status, "invalid_request")
-      end
-    end
-
-    # /introspect
-    route(:introspect) do |r|
-      next unless is_authorization_server?
-
-      before_introspect_route
-
-      r.post do
-        catch_error do
-          validate_oauth_introspect_params
-
-          before_introspect
-          oauth_token = case param("token_type_hint")
-                        when "access_token"
-                          oauth_token_by_token(param("token"))
-                        when "refresh_token"
-                          oauth_token_by_refresh_token(param("token"))
-                        else
-                          oauth_token_by_token(param("token")) || oauth_token_by_refresh_token(param("token"))
-                        end
-
-          if oauth_application
-            redirect_response_error("invalid_request") if oauth_token && !token_from_application?(oauth_token, oauth_application)
-          elsif oauth_token
-            @oauth_application = db[oauth_applications_table].where(oauth_applications_id_column =>
-              oauth_token[oauth_tokens_oauth_application_id_column]).first
-          end
-
-          json_response_success(json_token_introspect_payload(oauth_token))
-        end
-
-        throw_json_response_error(invalid_oauth_response_status, "invalid_request")
-      end
-    end
-
-    # /revoke
-    route(:revoke) do |r|
-      next unless is_authorization_server?
-
-      before_revoke_route
-      require_oauth_application
-
-      r.post do
-        catch_error do
-          validate_oauth_revoke_params
-
-          oauth_token = nil
-          transaction do
-            before_revoke
-            oauth_token = revoke_oauth_token
-            after_revoke
-          end
-
-          if accepts_json?
-            json_response_success \
-              "token" => oauth_token[oauth_tokens_token_column],
-              "refresh_token" => oauth_token[oauth_tokens_refresh_token_column],
-              "revoked_at" => convert_timestamp(oauth_token[oauth_tokens_revoked_at_column])
-          else
-            set_notice_flash revoke_oauth_token_notice_flash
-            redirect request.referer || "/"
-          end
-        end
-
-        redirect_response_error("invalid_request", request.referer || "/")
-      end
-    end
-
-    # /authorize
-    route(:authorize) do |r|
-      next unless is_authorization_server?
-
-      before_authorize_route
-      require_authorizable_account
-
-      validate_oauth_grant_params
-      try_approval_prompt if use_oauth_access_type? && request.get?
-
-      r.get do
-        authorize_view
-      end
-
-      r.post do
-        redirect_url = URI.parse(redirect_uri)
-
-        transaction do
-          before_authorize
-          do_authorize(redirect_url)
-        end
-        redirect(redirect_url.to_s)
-      end
     end
   end
 end

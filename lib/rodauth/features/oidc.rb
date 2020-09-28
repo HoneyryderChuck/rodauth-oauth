@@ -28,6 +28,37 @@ module Rodauth
 
     auth_value_methods(:get_oidc_param)
 
+    # /userinfo
+    route(:userinfo) do |r|
+      next unless is_authorization_server?
+
+      r.on method: %i[get post] do
+        catch_error do
+          oauth_token = authorization_token
+
+          throw_json_response_error(authorization_required_error_status, "invalid_token") unless oauth_token
+
+          oauth_scopes = oauth_token["scope"].split(" ")
+
+          throw_json_response_error(authorization_required_error_status, "invalid_token") unless oauth_scopes.include?("openid")
+
+          account = db[accounts_table].where(account_id_column => oauth_token["sub"]).first
+
+          throw_json_response_error(authorization_required_error_status, "invalid_token") unless account
+
+          oauth_scopes.delete("openid")
+
+          oidc_claims = { "sub" => oauth_token["sub"] }
+
+          fill_with_account_claims(oidc_claims, account, oauth_scopes)
+
+          json_response_success(oidc_claims)
+        end
+
+        throw_json_response_error(authorization_required_error_status, "invalid_token")
+      end
+    end
+
     def openid_configuration(issuer = nil)
       request.on(".well-known/openid-configuration") do
         request.get do
@@ -297,37 +328,6 @@ module Rodauth
                        claim_types_supported: %w[normal],
                        claims_supported: %w[sub iss iat exp aud] | scope_claims
                      })
-    end
-
-    # /userinfo
-    route(:userinfo) do |r|
-      next unless is_authorization_server?
-
-      r.on method: %i[get post] do
-        catch_error do
-          oauth_token = authorization_token
-
-          throw_json_response_error(authorization_required_error_status, "invalid_token") unless oauth_token
-
-          oauth_scopes = oauth_token["scope"].split(" ")
-
-          throw_json_response_error(authorization_required_error_status, "invalid_token") unless oauth_scopes.include?("openid")
-
-          account = db[accounts_table].where(account_id_column => oauth_token["sub"]).first
-
-          throw_json_response_error(authorization_required_error_status, "invalid_token") unless account
-
-          oauth_scopes.delete("openid")
-
-          oidc_claims = { "sub" => oauth_token["sub"] }
-
-          fill_with_account_claims(oidc_claims, account, oauth_scopes)
-
-          json_response_success(oidc_claims)
-        end
-
-        throw_json_response_error(authorization_required_error_status, "invalid_token")
-      end
     end
   end
 end
