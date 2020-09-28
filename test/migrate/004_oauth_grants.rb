@@ -7,9 +7,9 @@ Sequel.migration do
       foreign_key :account_id, :accounts, null: false
       foreign_key :oauth_application_id, :oauth_applications, null: false
       String :code, null: false
-      DateTime :expires_in, null: false
+      Time :expires_in, null: false
       String :redirect_uri
-      DateTime :revoked_at
+      Time :revoked_at
       String :scopes, null: false
       index %i[oauth_application_id code], unique: true
       # if using access_types

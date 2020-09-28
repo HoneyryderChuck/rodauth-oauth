@@ -12,8 +12,8 @@ Sequel.migration do
       String :token_hash, token: true, unique: true
       String :refresh_token, token: true, unique: true
       String :refresh_token_hash, token: true, unique: true
-      DateTime :expires_in, null: false
-      DateTime :revoked_at
+      Time :expires_in, null: false
+      Time :revoked_at
       String :scopes, null: false
       String :nonce
       index %i[oauth_application_id account_id scopes], unique: true if ENV.key?("ONLY_ONE_TOKEN")

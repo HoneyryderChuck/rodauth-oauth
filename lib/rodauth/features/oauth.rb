@@ -455,7 +455,7 @@ module Rodauth
                 cache_control = response["cache-control"]
                 cache_control[/max-age=(\d+)/, 1].to_i
               elsif response.key?("expires")
-                DateTime.httpdate(response["expires"]).to_i - Time.now.to_i
+                Time.parse(response["expires"]).to_i - Time.now.to_i
               end
 
         [JSON.parse(response.body, symbolize_names: true), ttl]
