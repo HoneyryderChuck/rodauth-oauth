@@ -639,7 +639,7 @@ module Rodauth
     end
 
     def oauth_unique_id_generator
-      SecureRandom.hex(32)
+      SecureRandom.urlsafe_base64(32)
     end
 
     def generate_token_hash(token)
