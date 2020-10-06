@@ -20,9 +20,6 @@ else
   gem "capybara", github: "teamcapybara/capybara", branch: "master"
   gem "json-jwt"
   gem "rails", ">= 4.2"
-
-  # Docs/Website
-  gem "hanna-nouveau", require: false
 end
 
 gem "roda"
