@@ -2,8 +2,13 @@
 
 source "https://rubygems.org"
 
+gem "rake", "~> 12.3"
+
 gem "jekyll", "~> 4.0.0"
 gem "jekyll-gzip", "~> 2.4.1"
 platform :mri do
   gem "jekyll-brotli", "~> 2.2.0"
 end
+
+# Docs/Website
+gem "hanna-nouveau", require: false

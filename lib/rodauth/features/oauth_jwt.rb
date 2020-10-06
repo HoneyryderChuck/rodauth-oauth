@@ -6,6 +6,8 @@ module Rodauth
   Feature.define(:oauth_jwt) do
     depends :oauth
 
+    JWKS = OAuth::TtlStore.new
+
     auth_value_method :oauth_jwt_subject_type, "public" # public, pairwise
     auth_value_method :oauth_jwt_subject_secret, nil # salt for pairwise generation
 
@@ -39,7 +41,13 @@ module Rodauth
       :last_account_login_at
     )
 
-    JWKS = OAuth::TtlStore.new
+    route(:jwks) do |r|
+      next unless is_authorization_server?
+
+      r.get do
+        json_response_success({ keys: jwks_set }, true)
+      end
+    end
 
     def require_oauth_authorization(*scopes)
       authorization_required unless authorization_token
@@ -302,7 +310,7 @@ module Rodauth
                 cache_control = response["cache-control"]
                 cache_control[/max-age=(\d+)/, 1].to_i
               elsif response.key?("expires")
-                DateTime.httpdate(response["expires"]).to_i - Time.now.to_i
+                Time.parse(response["expires"]).to_i - Time.now.to_i
               end
 
         [JSON.parse(response.body, symbolize_names: true), ttl]
@@ -453,14 +461,6 @@ module Rodauth
       throw(:rodauth_error) if !token_hint || token_hint == "access_token"
 
       super
-    end
-
-    route(:jwks) do |r|
-      next unless is_authorization_server?
-
-      r.get do
-        json_response_success({ keys: jwks_set }, true)
-      end
     end
   end
 end

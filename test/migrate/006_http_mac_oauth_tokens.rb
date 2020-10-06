@@ -12,8 +12,8 @@ Sequel.migration do
       String :refresh_token, token: true
       String :refresh_token_hash, token: true
       String :mac_key, token: true
-      DateTime :expires_in, null: false
-      DateTime :revoked_at
+      Time :expires_in, null: false
+      Time :revoked_at
       String :scopes, null: false
     end
   end

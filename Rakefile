@@ -3,7 +3,6 @@
 require "bundler/gem_tasks"
 require "rdoc/task"
 require "rake/testtask"
-require "rubocop/rake_task"
 
 Rake::TestTask.new(:test) do |t|
   t.libs << "test"
@@ -12,8 +11,12 @@ Rake::TestTask.new(:test) do |t|
   t.warning = false
 end
 
-desc "Run rubocop"
-RuboCop::RakeTask.new(:rubocop)
+begin
+  require "rubocop/rake_task"
+  desc "Run rubocop"
+  RuboCop::RakeTask.new(:rubocop)
+rescue LoadError
+end
 
 namespace :coverage do
   desc "Aggregates coverage reports"
@@ -40,7 +43,6 @@ begin
   gem "hanna-nouveau"
   rdoc_opts.concat(["-f", "hanna"])
 rescue Gem::LoadError
-  puts "fodeu"
 end
 
 rdoc_opts.concat(["--main", "README.md"])
