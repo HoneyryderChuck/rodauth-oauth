@@ -6,14 +6,14 @@
 
 #### Features
 
-* `oauth_refresh_token_protection_policy` is a new option, which can be used to set a protection policy around usage of refresh tokens. By default it's `none`, for backwards-compatibility. However, when set to `rotation`, refresh tokens will be "use-once", i.e. a token refresh request will generate a new refresh token. Also,  refresh token requests doen with already-used refresh tokens will be interpreted as a security breach, i.e. all tokens linked to the compromised refresh token will be revoked.
+* `oauth_refresh_token_protection_policy` is a new option, which can be used to set a protection policy around usage of refresh tokens. By default it's `none`, for backwards-compatibility. However, when set to `rotation`, refresh tokens will be "use-once", i.e. a token refresh request will generate a new refresh token. Also,  refresh token requests performed with already-used refresh tokens will be interpreted as a security breach, i.e. all tokens linked to the compromised refresh token will be revoked.
 
 #### Improvements
 
 
 * Support for the OIDC authorize [`prompt` parameter](https://openid.net/specs/openid-connect-core-1_0.html) (sectionn 3.1.2.1). It supports the `none`, `login` and `consent` out-of-the-box, while providing support for `select-account` when paired with [rodauth-select-account, a rodauth feature to handle multiple accounts in the same session](https://gitlab.com/honeyryderchuck/rodauth-select-account).
 
-* Refresh Tokens are now expired. The refresh token expiration period is governed by the `oauth_refresh_token_expires_in` option (default: 1 year), and is the period for which a refresh token can be used after its respective token expired.
+* Refresh Tokens are now expirable. The refresh token expiration period is governed by the `oauth_refresh_token_expires_in` option (default: 1 year), and is the period for which a refresh token can be used after its respective access token expired.
 
 #### Bugfixes
 
