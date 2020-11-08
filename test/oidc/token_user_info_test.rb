@@ -68,14 +68,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
   end
 
   def test_oidc_userinfo_additional_claims
-    setup_application do
-      get_additional_claim do |_account, _param|
-        case claim
-        when "fruit"
-          "tutti-frutti"
-        end
-      end
-    end
+    setup_application
 
     access_token = generate_access_token("openid fruit")
     login(access_token)
@@ -108,7 +101,12 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
           account[claim]
         end
       end
-      yield if block_given?
+      get_additional_param do |_account, claim|
+        case claim
+        when :fruit
+          "tutti-frutti"
+        end
+      end
     end
 
     super

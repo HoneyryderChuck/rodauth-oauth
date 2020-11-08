@@ -75,7 +75,7 @@ module Rodauth
     auth_value_method :oauth_prompt_login_cookie_options, {}.freeze
     auth_value_method :oauth_prompt_login_interval, 5 * 60 * 60 # 5 minutes
 
-    auth_value_methods(:get_oidc_param)
+    auth_value_methods(:get_oidc_param, :get_additional_param)
 
     # /userinfo
     route(:userinfo) do |r|
@@ -248,7 +248,9 @@ module Rodauth
 
     # aka fill_with_standard_claims
     def fill_with_account_claims(claims, account, scopes)
-      scopes_by_oidc = scopes.each_with_object({}) do |scope, by_oidc|
+      scopes_by_claim = scopes.each_with_object({}) do |scope, by_oidc|
+        next if scope == "openid"
+
         oidc, param = scope.split(".", 2)
 
         by_oidc[oidc] ||= []
@@ -256,23 +258,33 @@ module Rodauth
         by_oidc[oidc] << param.to_sym if param
       end
 
-      oidc_scopes = (OIDC_SCOPES_MAP.keys & scopes_by_oidc.keys)
+      oidc_scopes, additional_scopes = scopes_by_claim.keys.partition { |key| OIDC_SCOPES_MAP.key?(key) }
 
-      return if oidc_scopes.empty?
+      unless oidc_scopes.empty?
+        if respond_to?(:get_oidc_param)
+          oidc_scopes.each do |scope|
+            scope_claims = claims
+            params = scopes_by_claim[scope]
+            params = params.empty? ? OIDC_SCOPES_MAP[scope] : (OIDC_SCOPES_MAP[scope] & params)
 
-      if respond_to?(:get_oidc_param)
-        oidc_scopes.each do |scope|
-          scope_claims = claims
-          params = scopes_by_oidc[scope]
-          params = params.empty? ? OIDC_SCOPES_MAP[scope] : (OIDC_SCOPES_MAP[scope] & params)
-
-          scope_claims = (claims["address"] = {}) if scope == "address"
-          params.each do |param|
-            scope_claims[param] = __send__(:get_oidc_param, account, param)
+            scope_claims = (claims["address"] = {}) if scope == "address"
+            params.each do |param|
+              scope_claims[param] = __send__(:get_oidc_param, account, param)
+            end
           end
+        else
+          warn "`get_oidc_param(account, claim)` must be implemented to use oidc scopes."
+        end
+      end
+
+      return if additional_scopes.empty?
+
+      if respond_to?(:get_additional_param)
+        additional_scopes.each do |scope|
+          claims[scope] = __send__(:get_additional_param, account, scope.to_sym)
         end
       else
-        warn "`get_oidc_param(token, param)` must be implemented to use oidc scopes."
+        warn "`get_additional_param(account, claim)` must be implemented to use oidc scopes."
       end
     end
 
