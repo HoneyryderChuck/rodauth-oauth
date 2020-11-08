@@ -2,11 +2,12 @@
 
 module Rodauth
   Feature.define(:oidc) do
+    # https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
     OIDC_SCOPES_MAP = {
       "profile" => %i[name family_name given_name middle_name nickname preferred_username
                       profile picture website gender birthdate zoneinfo locale updated_at].freeze,
       "email" => %i[email email_verified].freeze,
-      "address" => %i[address].freeze,
+      "address" => %i[formatted street_address locality region postal_code country].freeze,
       "phone" => %i[phone_number phone_number_verified].freeze
     }.freeze
 
@@ -245,6 +246,7 @@ module Rodauth
       oauth_token[:id_token] = jwt_encode(id_token_claims)
     end
 
+    # aka fill_with_standard_claims
     def fill_with_account_claims(claims, account, scopes)
       scopes_by_oidc = scopes.each_with_object({}) do |scope, by_oidc|
         oidc, param = scope.split(".", 2)
@@ -260,11 +262,13 @@ module Rodauth
 
       if respond_to?(:get_oidc_param)
         oidc_scopes.each do |scope|
+          scope_claims = claims
           params = scopes_by_oidc[scope]
           params = params.empty? ? OIDC_SCOPES_MAP[scope] : (OIDC_SCOPES_MAP[scope] & params)
 
+          scope_claims = (claims["address"] = {}) if scope == "address"
           params.each do |param|
-            claims[param] = __send__(:get_oidc_param, account, param)
+            scope_claims[param] = __send__(:get_oidc_param, account, param)
           end
         end
       else
