@@ -910,10 +910,10 @@ module Rodauth
       end
 
       if param_or_nil("state")
-        if !fragment_params.empty?
-          fragment_params << "state=#{param('state')}"
-        else
+        if fragment_params.empty?
           query_params << "state=#{param('state')}"
+        else
+          fragment_params << "state=#{param('state')}"
         end
       end
 
