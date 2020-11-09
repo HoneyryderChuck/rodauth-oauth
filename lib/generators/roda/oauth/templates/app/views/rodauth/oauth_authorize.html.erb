@@ -12,17 +12,17 @@
       </div>
     <%% end %>
     <%%= hidden_field_tag rodauth.client_id_param, rodauth.client_id %>
-    <%% if params[rodauth.state_param] %>
-      <%%= hidden_field_tag rodauth.state_param, rodauth.state %>
+    <%% if params[:state] %>
+      <%%= hidden_field_tag :state, rodauth.state %>
     <%% end %>
-    <%% if params[rodauth.redirect_uri_param] %>
-      <%%= hidden_field_tag rodauth.redirect_uri_param, rodauth.redirect_uri %>
+    <%% if params[:redirect_uri] %>
+      <%%= hidden_field_tag :redirect_uri, rodauth.redirect_uri %>
     <%% end %>
-    <%% if params[rodauth.code_challenge_param] %>
-      <%%= hidden_field_tag rodauth.code_challenge_param, params[rodauth.code_challenge_param] %>
+    <%% if params[:code_challenge] %>
+      <%%= hidden_field_tag :code_challenge, params[:code_challenge] %>
     <%% end %>
-    <%% if params[rodauth.code_challenge_method_param] %>
-      <%%= hidden_field_tag rodauth.code_challenge_method_param, params[rodauth.code_challenge_method_param] %>
+    <%% if params[:code_challenge_method] %>
+      <%%= hidden_field_tag :code_challenge_method, params[:code_challenge_method] %>
     <%% end %>
   </div>
   <div class="form-group">
