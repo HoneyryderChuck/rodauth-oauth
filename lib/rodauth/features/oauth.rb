@@ -68,6 +68,7 @@ module Rodauth
     notice_flash "The oauth token has been revoked", "revoke_oauth_token"
 
     view "authorize", "Authorize", "authorize"
+    view "authorize_post", "Authorize", "authorize_post"
     view "oauth_applications", "Oauth Applications", "oauth_applications"
     view "oauth_application", "Oauth Application", "oauth_application"
     view "new_oauth_application", "New Oauth Application", "new_oauth_application"
@@ -100,6 +101,7 @@ module Rodauth
     button "Register", "oauth_application"
     button "Authorize", "oauth_authorize"
     button "Revoke", "oauth_token_revoke"
+    button "Back to Client Application", "oauth_authorize_post"
 
     # OAuth Token
     auth_value_method :oauth_tokens_path, "oauth-tokens"
@@ -313,11 +315,28 @@ module Rodauth
       r.post do
         redirect_url = URI.parse(redirect_uri)
 
-        transaction do
+        params, mode = transaction do
           before_authorize
-          do_authorize(redirect_url)
+          do_authorize
         end
-        redirect(redirect_url.to_s)
+
+        case mode
+        when "query"
+          params = params.map { |k, v| "#{k}=#{v}" }
+          params << redirect_url.query if redirect_url.query
+          redirect_url.query = params.join("&")
+          redirect(redirect_url.to_s)
+        when "fragment"
+          params = params.map { |k, v| "#{k}=#{v}" }
+          params << redirect_url.query if redirect_url.query
+          redirect_url.fragment = params.join("&")
+          redirect(redirect_url.to_s)
+        when "form_post"
+          scope.instance_variable_set(:@params, params)
+          authorize_post_view
+        when "none"
+          redirect(redirect_url.to_s)
+        end
       end
     end
 
@@ -848,6 +867,9 @@ module Rodauth
       end
       redirect_response_error("invalid_scope") unless check_valid_scopes?
 
+      if (response_mode = param_or_nil("response_mode")) && response_mode != "form_post"
+        redirect_response_error("invalid_request")
+      end
       validate_pkce_challenge_params if use_oauth_pkce?
     end
 
@@ -899,28 +921,23 @@ module Rodauth
       create_params[oauth_grants_code_column]
     end
 
-    def do_authorize(redirect_url, query_params = [], fragment_params = [])
+    def do_authorize(response_params = {}, response_mode = param_or_nil("response_mode"))
       case param("response_type")
       when "token"
         redirect_response_error("invalid_request") unless use_oauth_implicit_grant_type?
 
-        fragment_params.replace(_do_authorize_token.map { |k, v| "#{k}=#{v}" })
+        response_mode ||= "fragment"
+        response_params.replace(_do_authorize_token)
       when "code", "", nil
-        query_params.replace(_do_authorize_code.map { |k, v| "#{k}=#{v}" })
+        response_mode ||= "query"
+        response_params.replace(_do_authorize_code)
+      when "none"
+        response_mode ||= "none"
       end
 
-      if param_or_nil("state")
-        if fragment_params.empty?
-          query_params << "state=#{param('state')}"
-        else
-          fragment_params << "state=#{param('state')}"
-        end
-      end
+      response_params["state"] = param("state") if param_or_nil("state")
 
-      query_params << redirect_url.query if redirect_url.query
-
-      redirect_url.query = query_params.join("&") unless query_params.empty?
-      redirect_url.fragment = fragment_params.join("&") unless fragment_params.empty?
+      [response_params, response_mode]
     end
 
     def _do_authorize_code

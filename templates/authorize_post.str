@@ -1,0 +1,11 @@
+<body onload="javascript:document.forms[0].submit()">
+<form method="post" action="#{rodauth.redirect_uri}">
+  #{
+    @params.map do |name, value|
+      "<input type=\"hidden\" name=\"#{name}\" value=\"#{value}\" />"
+ end.join
+  }
+
+  <input type="submit" class="btn btn-outline-primary" value="#{h(rodauth.oauth_authorize_post_button)}"/>
+</form>
+</body>

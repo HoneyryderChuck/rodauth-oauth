@@ -306,33 +306,27 @@ module Rodauth
       end
     end
 
-    def do_authorize(redirect_url, query_params = [], fragment_params = [])
+    def do_authorize(response_params = {}, response_mode = param_or_nil("response_mode"))
       return super unless use_oauth_implicit_grant_type?
 
       case param("response_type")
       when "id_token"
-        fragment_params.replace(_do_authorize_id_token.map { |k, v| "#{k}=#{v}" })
+        response_params.replace(_do_authorize_id_token)
       when "code token"
         redirect_response_error("invalid_request") unless use_oauth_implicit_grant_type?
 
-        params = _do_authorize_code.merge(_do_authorize_token)
-
-        fragment_params.replace(params.map { |k, v| "#{k}=#{v}" })
+        response_params.replace(_do_authorize_code.merge(_do_authorize_token))
       when "code id_token"
-        params = _do_authorize_code.merge(_do_authorize_id_token)
-
-        fragment_params.replace(params.map { |k, v| "#{k}=#{v}" })
+        response_params.replace(_do_authorize_code.merge(_do_authorize_id_token))
       when "id_token token"
-        params = _do_authorize_id_token.merge(_do_authorize_token)
-
-        fragment_params.replace(params.map { |k, v| "#{k}=#{v}" })
+        response_params.replace(_do_authorize_id_token.merge(_do_authorize_token))
       when "code id_token token"
-        params = _do_authorize_code.merge(_do_authorize_id_token).merge(_do_authorize_token)
 
-        fragment_params.replace(params.map { |k, v| "#{k}=#{v}" })
+        response_params.replace(_do_authorize_code.merge(_do_authorize_id_token).merge(_do_authorize_token))
       end
+      response_mode ||= "fragment" unless response_params.empty?
 
-      super(redirect_url, query_params, fragment_params)
+      super(response_params, response_mode)
     end
 
     def _do_authorize_id_token
