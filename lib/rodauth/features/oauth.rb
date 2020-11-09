@@ -68,7 +68,6 @@ module Rodauth
     notice_flash "The oauth token has been revoked", "revoke_oauth_token"
 
     view "authorize", "Authorize", "authorize"
-    view "authorize_post", "Authorize", "authorize_post"
     view "oauth_applications", "Oauth Applications", "oauth_applications"
     view "oauth_application", "Oauth Application", "oauth_application"
     view "new_oauth_application", "New Oauth Application", "new_oauth_application"
@@ -332,8 +331,22 @@ module Rodauth
           redirect_url.fragment = params.join("&")
           redirect(redirect_url.to_s)
         when "form_post"
-          scope.instance_variable_set(:@params, params)
-          authorize_post_view
+          scope.view layout: false, inline: <<-FORM
+<html>
+  <head><title>Authorized</title></head>
+  <body onload="javascript:document.forms[0].submit()">
+    <form method="post" action="#{redirect_uri.to_s}">
+      #{
+        params.map do |name, value|
+          "<input type=\"hidden\" name=\"#{name}\" value=\"#{scope.h(value)}\" />"
+     end.join
+      }
+
+      <input type="submit" class="btn btn-outline-primary" value="#{scope.h(oauth_authorize_post_button)}"/>
+    </form>
+  </body>
+</html>
+          FORM
         when "none"
           redirect(redirect_url.to_s)
         end
