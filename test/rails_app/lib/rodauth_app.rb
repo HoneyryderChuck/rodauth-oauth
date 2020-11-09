@@ -8,7 +8,7 @@ class RodauthApp < Rodauth::Rails::App
 
     account_password_hash_column :ph
 
-    db DB
+    db DBRails
     rails_controller { RodauthController }
 
     skip_status_checks? true

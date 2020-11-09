@@ -7,22 +7,17 @@ require_relative File.join(__dir__, "roda_integration")
 require_relative "../rails_app/config/environment"
 require "rails/test_help"
 
-ActiveRecord::Migrator.migrations_paths = [Rails.root.join("db/migrate")]
-Rails.backtrace_cleaner.remove_silencers! # show full stack traces
-if ActiveRecord.version >= Gem::Version.new("5.2.0")
-  ActiveRecord::Base.connection.migration_context.up
-else
-  ActiveRecord::Migrator.up(Rails.application.paths["db/migrate"].to_a)
-end
+DBRails.loggers << Logger.new($stderr) if ENV.key?("RODAUTH_DEBUG")
+Sequel.extension :migration
+require "rodauth/migrations"
+Sequel::Migrator.run(DBRails, "test/migrate")
+DBRails
 
 class RailsIntegrationTest < RodaIntegration
-  include OAuthHelpers
-  include Minitest::Hooks
-  include Capybara::DSL
-
   def setup_application
     # eager load the application
     oauth_application
+    self.app = Rails.application
   end
 
   def register(login: "foo@example.com", password: "secret")
@@ -38,19 +33,7 @@ class RailsIntegrationTest < RodaIntegration
     click_on "Logout"
   end
 
-  def around
-    ActiveRecord::Base.connection.begin_transaction(joinable: false) do
-      hash = BCrypt::Password.create("0123456789", cost: BCrypt::Engine::MIN_COST)
-      db[:accounts].insert(email: "foo@example.com", ph: hash)
-      self.app = Rails.application
-
-      Rmethod(__method__).super_method.call
-
-      ActiveRecord::Base.connection.rollback_db_transaction
-    end
-  end
-
   def db
-    DB
+    DBRails
   end
 end
