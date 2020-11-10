@@ -13,12 +13,14 @@ cache:
 .before_script: &before_script
   - bundle install
 
+.prepare_dbs: &prepare_dbs
+  - PGPASSWORD=password createdb -h postgres -U oauth oauth-unique 'oauth database to keep single row for access tokens'
+  - MYSQL_PWD=password mysql -h mysql -u root -e 'CREATE DATABASE oauthunique'
+
 .deps_alpine: &deps_alpine
   - apk --update add g++ make sqlite sqlite-dev postgresql-client postgresql-dev mysql-client mysql-dev git
 
 .test: &test
-- PGPASSWORD=password createdb -h postgres -U oauth oauth-unique 'oauth database to keep single row for access tokens'
-- MYSQL_PWD=password mysql -h mysql -u root -e 'CREATE DATABASE oauthunique'
 - "DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
 - "DATABASE_URL=postgresql://oauth:password@postgres/oauth bundle exec rake test"
 # concurrency limited with mysql, to avoid deadlock messages
@@ -85,50 +87,70 @@ ruby23:
   before_script:
     - *deps_alpine
     - *before_script
+    - *prepare_dbs
   image: "ruby:2.3-alpine"
   script:
     - *test
   artifacts:
     paths:
       - "coverage/"
+  parallel:
+    matrix:
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails52, Gemfile-rails51, Gemfile-rails50]
 ruby24:
   <<: *test_services
   before_script:
     - *deps_alpine
     - *before_script
+    - *prepare_dbs
   image: "ruby:2.4-alpine"
   only:
     - master
   script:
     - *test
+  parallel:
+    matrix:
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails52, Gemfile-rails51, Gemfile-rails50]
 ruby25:
   <<: *test_services
   before_script:
     - *deps_alpine
     - *before_script
+    - *prepare_dbs
   image: "ruby:2.5-alpine"
   only:
     - master
   script:
     - *test
+  parallel:
+    matrix:
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails52, Gemfile-rails51, Gemfile-rails50]
 ruby26:
   <<: *test_services
   before_script:
     - *deps_alpine
     - *before_script
+    - *prepare_dbs
   image: "ruby:2.6-alpine"
   only:
     - master
   script:
     - *test
+  parallel:
+    matrix:
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails60, Gemfile-rails52, Gemfile-rails51, Gemfile-rails50]
 ruby27:
   <<: *test_services
   before_script:
     - *deps_alpine
     - *before_script
+    - *prepare_dbs
   image: "ruby:2.7-alpine"
   script:
     - *test
+  parallel:
+    matrix:
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails60, Gemfile-rails52, Gemfile-rails51, Gemfile-rails50]
   artifacts:
     paths:
       - "coverage/"

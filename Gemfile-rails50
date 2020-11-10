@@ -1,0 +1,13 @@
+# frozen_string_literal: true
+
+eval File.read(File.join(__dir__, "Gemfile"))
+
+# frameworks
+if RUBY_VERSION < "2.5"
+  gem "sprockets", "< 4"
+end
+
+gem "rails", "5.0"
+
+gem "rodauth-rails"
+gem "sequel-activerecord_connection"
