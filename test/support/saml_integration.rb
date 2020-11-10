@@ -38,67 +38,21 @@ class SAMLIntegration < RodaIntegration
     ))
   end
 
-  def roda(type = nil, &block)
-    jwt_only = type == :jwt
-
-    app = Class.new(Base) do
-      private
-
-      def encode_authn_response(principal, request_id:, audience_uri:, acs_url:)
-        response_id = SecureRandom.uuid
-        reference_id = SecureRandom.uuid
-        opt_issuer_uri = "http://example.com"
-        my_authn_context_classref = Saml::XML::Namespaces::AuthnContext::ClassRef::PASSWORD
-        expiry = 60 * 60
-
-        response = SamlIdp::SamlResponse.new(
-          reference_id,
-          response_id,
-          opt_issuer_uri,
-          principal,
-          audience_uri,
-          request_id,
-          acs_url,
-          OpenSSL::Digest::SHA256,
-          my_authn_context_classref,
-          expiry,
-          nil,
-          nil
-        )
-        response.build
-      end
-    end
-    app.opts[:unsupported_block_result] = :raise
-    app.opts[:unsupported_matcher] = :raise
-    app.opts[:verbatim_string_matcher] = true
-    rodauth_blocks = @rodauth_blocks
-    opts = rodauth_opts(type)
-
-    opts[:json] = jwt_only ? :only : true
-
-    app.plugin(:rodauth, opts) do
-      account_password_hash_column :ph
-      rodauth_blocks.reverse_each do |rodauth_block|
-        instance_exec(&rodauth_block)
-      end
-    end
-
-    app.route(&block)
-    app.precompile_rodauth_templates unless @no_precompile
-    self.app = app
-  end
-
   def setup_application
     feature = oauth_feature
     scopes = test_scopes
 
+    testdb = db
+
     rodauth do
-      db RODADB
+      db testdb
       enable :login, feature
       login_return_to_requested_location? true
       oauth_application_default_scope scopes.first
       oauth_application_scopes scopes
     end
+
+    encode_authn_response = method(:encode_authn_response)
 
     roda do |r|
       r.rodauth
@@ -111,7 +65,7 @@ class SAMLIntegration < RodaIntegration
           @saml_request = SamlIdp::Request.from_deflated_request(request.params["SAMLRequest"])
 
           if @saml_request.valid?
-            @saml_response = encode_authn_response(
+            @saml_response = encode_authn_response.call(
               rodauth.account_from_session,
               request_id: @saml_request.request_id,
               audience_uri: @saml_request.issuer,
@@ -185,5 +139,29 @@ class SAMLIntegration < RodaIntegration
     settings.idp_cert_fingerprint = SamlIdp::Default::FINGERPRINT
     settings.name_identifier_format = SamlIdp::Default::NAME_ID_FORMAT
     settings
+  end
+
+  def encode_authn_response(principal, request_id:, audience_uri:, acs_url:)
+    response_id = SecureRandom.uuid
+    reference_id = SecureRandom.uuid
+    opt_issuer_uri = "http://example.com"
+    my_authn_context_classref = Saml::XML::Namespaces::AuthnContext::ClassRef::PASSWORD
+    expiry = 60 * 60
+
+    response = SamlIdp::SamlResponse.new(
+      reference_id,
+      response_id,
+      opt_issuer_uri,
+      principal,
+      audience_uri,
+      request_id,
+      acs_url,
+      OpenSSL::Digest::SHA256,
+      my_authn_context_classref,
+      expiry,
+      nil,
+      nil
+    )
+    response.build
   end
 end

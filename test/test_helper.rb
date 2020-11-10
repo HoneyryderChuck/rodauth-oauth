@@ -2,7 +2,6 @@
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
-ENV["RAILS_ENV"] = "test"
 ENV["DATABASE_URL"] ||= "sqlite3::memory:"
 
 if ENV.key?("CI")

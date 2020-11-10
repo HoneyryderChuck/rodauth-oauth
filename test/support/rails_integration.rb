@@ -1,39 +1,67 @@
 # frozen_string_literal: true
 
-ENV["RAILS_ENV"] = "test"
+begin
+  require "rails"
+rescue LoadError
+else
+  ENV["RAILS_ENV"] = "test"
 
-require_relative File.join(__dir__, "roda_integration")
-# for rails integration tests
-require_relative "../rails_app/config/environment"
-require "rails/test_help"
+  require_relative File.join(__dir__, "roda_integration")
+  # for rails integration tests
+  require_relative "../rails_app/config/environment"
+  require "rails/test_help"
 
-DBRails.loggers << Logger.new($stderr) if ENV.key?("RODAUTH_DEBUG")
-Sequel.extension :migration
-require "rodauth/migrations"
-Sequel::Migrator.run(DBRails, "test/migrate")
-DBRails
+  Sequel::Migrator.run(RAILSDB, "test/migrate")
 
-class RailsIntegrationTest < RodaIntegration
-  def setup_application
-    # eager load the application
-    oauth_application
-    self.app = Rails.application
-  end
+  class RodaIntegration
+    def roda(type = nil, &block)
+      jwt_only = type == :jwt
 
-  def register(login: "foo@example.com", password: "secret")
-    visit "/create-account"
-    fill_in "Login", with: login
-    fill_in "Password", with: password
-    fill_in "Confirm Password", with: password
-    click_on "Create Account"
-  end
+      app = Class.new(Rodauth::Rails::App) do
+        def self.constantize
+          self
+        end
+      end
+      rodauth_blocks = @rodauth_blocks
 
-  def logout
-    visit "/logout"
-    click_on "Logout"
-  end
+      opts = rodauth_opts(type)
 
-  def db
-    DBRails
+      opts[:json] = jwt_only ? :only : true
+
+      app.plugin :render, views: "test/views"
+      app.configure(nil, opts) do
+        # OAuth
+        rodauth_blocks.reverse_each do |rodauth_block|
+          instance_exec(&rodauth_block)
+        end
+
+        account_password_hash_column :ph
+        db RAILSDB
+        rails_controller { RodauthController }
+        skip_status_checks? true
+      end
+      app.route(&block)
+
+      Rodauth::Rails.app = app
+
+      self.app = Rails.application
+    end
+
+    def register(login: "foo@example.com", password: "secret")
+      visit "/create-account"
+      fill_in "Login", with: login
+      fill_in "Password", with: password
+      fill_in "Confirm Password", with: password
+      click_on "Create Account"
+    end
+
+    def logout
+      visit "/logout"
+      click_on "Logout"
+    end
+
+    def db
+      RAILSDB
+    end
   end
 end

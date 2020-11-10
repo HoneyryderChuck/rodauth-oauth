@@ -218,3 +218,12 @@ Style/RedundantSelfAssignment:
 
 Style/SoleNestedConditional:
   Enabled: true
+
+Lint/SuppressedException:
+  Exclude:
+    - lib/generators/**/*
+    - test/support/rails_integration.rb
+    - test/rails/**/*
+
+Lint/ConstantDefinitionInBlock:
+  Enabled: false

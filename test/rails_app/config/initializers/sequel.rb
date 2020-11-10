@@ -23,5 +23,5 @@ db = if ENV.key?("DATABASE_URL") && ENV["DATABASE_URL"] !~ /sqlite/
        "sqlite::memory:"
      end
 
-DBRails = Sequel.connect(db, test: false)
-DBRails.extension :activerecord_connection
+RAILSDB = Sequel.connect(db, test: false)
+RAILSDB.extension :activerecord_connection

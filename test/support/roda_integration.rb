@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-RODADB = begin
+DB = begin
   db = if ENV.key?("DATABASE_URL")
          if RUBY_ENGINE == "jruby"
            # All of this magic is because the DATABASE_URL are the kind of random URIS parsed
@@ -102,7 +102,7 @@ class RodaIntegration < Minitest::Test
     features << oauth_feature
     scopes = test_scopes
     rodauth do
-      db RODADB
+      db DB
       enable :login, :logout, :http_basic_auth, *features
       login_return_to_requested_location? true
       oauth_application_default_scope scopes.first
@@ -166,7 +166,7 @@ class RodaIntegration < Minitest::Test
   end
 
   def db
-    RODADB
+    DB
   end
 
   def generate_hashed_token(token)
