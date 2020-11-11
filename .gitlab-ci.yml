@@ -114,7 +114,7 @@ ruby24:
       - "coverage/"
   parallel:
     matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails52, Gemfile-rails51, Gemfile-rails50]
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails52, Gemfile-rails51]
 ruby25:
   <<: *test_services
   before_script:
@@ -131,7 +131,7 @@ ruby25:
       - "coverage/"
   parallel:
     matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails52, Gemfile-rails51, Gemfile-rails50]
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails52, Gemfile-rails51]
 ruby26:
   <<: *test_services
   before_script:
