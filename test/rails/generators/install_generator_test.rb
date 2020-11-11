@@ -1,7 +1,8 @@
 # frozen_string_literal: true
 
-require "test_helper"
 begin
+  require "rails"
+  require_relative "../../test_helper"
   require "generators/roda/oauth/install_generator"
 rescue LoadError
 else

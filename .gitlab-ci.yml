@@ -109,6 +109,9 @@ ruby24:
     - master
   script:
     - *test
+  artifacts:
+    paths:
+      - "coverage/"
   parallel:
     matrix:
       - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails52, Gemfile-rails51, Gemfile-rails50]
@@ -123,6 +126,9 @@ ruby25:
     - master
   script:
     - *test
+  artifacts:
+    paths:
+      - "coverage/"
   parallel:
     matrix:
       - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails52, Gemfile-rails51, Gemfile-rails50]
@@ -137,6 +143,9 @@ ruby26:
     - master
   script:
     - *test
+  artifacts:
+    paths:
+      - "coverage/"
   parallel:
     matrix:
       - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails60, Gemfile-rails52]
@@ -167,6 +176,18 @@ coverage:
     - ruby27
   image: "ruby:2.7-alpine"
   script:
+    - apk --update add g++ make git
+    - bundle install --quiet
+    # this is a workaround, because simplecov doesn't support relative paths.
+    #
+    # https://github.com/simplecov-ruby/simplecov/issues/887
+    #
+    # this is necessary in our case, because coverage files are generated inside
+    # the custom docker container, which runs in /home, and the absolute paths aren't
+    # gonna match the paths where the files are, once we merge them. Therefore,
+    # all of those have to be rewritten before the merge happens.
+    #
+    - find coverage -name "*resultset.json" -exec sed -i 's?/home?'`pwd`'?' {} \;
     - bundle exec rake coverage:report
   artifacts:
     paths:
