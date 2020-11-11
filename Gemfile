@@ -14,12 +14,9 @@ gem "rack_csrf"
 if RUBY_VERSION < "2.5"
   gem "capybara", "~> 3.15.0"
   gem "json-jwt", "~> 1.12.0"
-  gem "rails", ">= 4.2", "< 6.0"
-  gem "sprockets", "< 4"
 else
   gem "capybara", github: "teamcapybara/capybara", branch: "master"
   gem "json-jwt"
-  gem "rails", ">= 4.2"
 end
 
 gem "roda"
@@ -32,9 +29,7 @@ gem "jwe"
 # direct dependencies
 gem "jwt", "~> 2.2.2"
 gem "rodauth"
-gem "rodauth-rails"
 gem "sequel"
-gem "sequel-activerecord_connection"
 
 # Demo-only
 gem "omniauth_openid_connect"
@@ -68,8 +63,6 @@ platform :mri do
     gem "pry-byebug"
   end
   gem "sqlite3"
-  # unblock if testing against a postgresql database
-  # gem "pg"
 
   # For demo
   gem "erubi"

@@ -1,0 +1,9 @@
+# frozen_string_literal: true
+
+eval File.read(File.join(__dir__, "Gemfile"))
+
+# frameworks
+gem "rails", "6"
+
+gem "rodauth-rails"
+gem "sequel-activerecord_connection"

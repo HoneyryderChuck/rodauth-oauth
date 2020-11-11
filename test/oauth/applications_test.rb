@@ -22,7 +22,7 @@ class RodauthOauthApplicationsTest < RodaIntegration
     click_button "Register"
 
     # Application page
-    assert_equal page.find("#notice_flash").text, "Your oauth application has been registered"
+    assert_equal page.find("#notice").text, "Your oauth application has been registered"
     assert_includes page.html, "Client ID: "
     assert_includes page.html, "Scopes: "
     assert db[:oauth_applications].count == 1
@@ -54,7 +54,7 @@ class RodauthOauthApplicationsTest < RodaIntegration
     click_button "Register"
 
     # Application page
-    assert_equal page.find("#notice_flash").text, "Your oauth application has been registered"
+    assert_equal page.find("#notice").text, "Your oauth application has been registered"
     assert_includes page.html, "Client ID: "
     assert_includes page.html, "Scopes: "
     assert db[:oauth_applications].count == 1
@@ -68,7 +68,7 @@ class RodauthOauthApplicationsTest < RodaIntegration
     visit "/oauth-applications/new"
     click_button "Register"
     # must fill fields
-    assert_equal page.find("#error_flash").text, "There was an error registering your oauth application"
+    assert_equal page.find("#alert").text, "There was an error registering your oauth application"
     assert_includes page.html, "is not filled"
 
     # validate url
@@ -77,7 +77,7 @@ class RodauthOauthApplicationsTest < RodaIntegration
     fill_in "homepage-url", with: "bla"
     fill_in "redirect-uri", with: "bla"
     click_button "Register"
-    assert_equal page.find("#error_flash").text, "There was an error registering your oauth application"
+    assert_equal page.find("#alert").text, "There was an error registering your oauth application"
     assert_includes page.html, "Invalid URL"
   end
 

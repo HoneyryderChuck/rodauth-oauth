@@ -11,14 +11,17 @@ cache:
     - vendor
 
 .before_script: &before_script
+  # rails 5.1 and lower need older version of bundler
   - bundle install
+
+.prepare_dbs: &prepare_dbs
+  - PGPASSWORD=password createdb -h postgres -U oauth oauth-unique 'oauth database to keep single row for access tokens'
+  - MYSQL_PWD=password mysql -h mysql -u root -e 'CREATE DATABASE oauthunique'
 
 .deps_alpine: &deps_alpine
   - apk --update add g++ make sqlite sqlite-dev postgresql-client postgresql-dev mysql-client mysql-dev git
 
 .test: &test
-- PGPASSWORD=password createdb -h postgres -U oauth oauth-unique 'oauth database to keep single row for access tokens'
-- MYSQL_PWD=password mysql -h mysql -u root -e 'CREATE DATABASE oauthunique'
 - "DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
 - "DATABASE_URL=postgresql://oauth:password@postgres/oauth bundle exec rake test"
 # concurrency limited with mysql, to avoid deadlock messages
@@ -50,7 +53,7 @@ cache:
         - mysql_native_password
 
 variables:
-  BUNDLE_JOBS: 4
+  BUNDLE_JOBS: 10
   BUNDLE_PATH: vendor
   CI: 1
   PARALLEL: 1
@@ -85,50 +88,79 @@ ruby23:
   before_script:
     - *deps_alpine
     - *before_script
+    - *prepare_dbs
   image: "ruby:2.3-alpine"
   script:
     - *test
   artifacts:
     paths:
       - "coverage/"
+  parallel:
+    matrix:
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails52, Gemfile-rails51, Gemfile-rails50]
 ruby24:
   <<: *test_services
   before_script:
     - *deps_alpine
     - *before_script
+    - *prepare_dbs
   image: "ruby:2.4-alpine"
   only:
     - master
   script:
     - *test
+  artifacts:
+    paths:
+      - "coverage/"
+  parallel:
+    matrix:
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails52, Gemfile-rails51, Gemfile-rails50]
 ruby25:
   <<: *test_services
   before_script:
     - *deps_alpine
     - *before_script
+    - *prepare_dbs
   image: "ruby:2.5-alpine"
   only:
     - master
   script:
     - *test
+  artifacts:
+    paths:
+      - "coverage/"
+  parallel:
+    matrix:
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails52, Gemfile-rails51, Gemfile-rails50]
 ruby26:
   <<: *test_services
   before_script:
     - *deps_alpine
     - *before_script
+    - *prepare_dbs
   image: "ruby:2.6-alpine"
   only:
     - master
   script:
     - *test
+  artifacts:
+    paths:
+      - "coverage/"
+  parallel:
+    matrix:
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails60, Gemfile-rails52]
 ruby27:
   <<: *test_services
   before_script:
     - *deps_alpine
     - *before_script
+    - *prepare_dbs
   image: "ruby:2.7-alpine"
   script:
     - *test
+  parallel:
+    matrix:
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails60, Gemfile-rails52]
   artifacts:
     paths:
       - "coverage/"
@@ -144,6 +176,18 @@ coverage:
     - ruby27
   image: "ruby:2.7-alpine"
   script:
+    - apk --update add g++ make git
+    - bundle install --quiet
+    # this is a workaround, because simplecov doesn't support relative paths.
+    #
+    # https://github.com/simplecov-ruby/simplecov/issues/887
+    #
+    # this is necessary in our case, because coverage files are generated inside
+    # the custom docker container, which runs in /home, and the absolute paths aren't
+    # gonna match the paths where the files are, once we merge them. Therefore,
+    # all of those have to be rewritten before the merge happens.
+    #
+    - find coverage -name "*resultset.json" -exec sed -i 's?/home?'`pwd`'?' {} \;
     - bundle exec rake coverage:report
   artifacts:
     paths:

@@ -141,12 +141,10 @@ class AuthorizationServer < Roda
             Roda Oauth extends Rodauth to support the OAuth 2.0 authorization protocol, while adhering to the same principles of the parent library.
           </p>
           <p class="lead">In the authorization server, you can setup your account, and also register client applications.</p>
-        
           <p class="text-center">
             <a class="btn btn-outline-primary btn-padded" href="/login">Login</a>
             <a class="btn btn-outline-secondary btn-padded" href="/create-account">Sign Up</a>
           </p>
-        
           <footer class="lead">This demo site is part of the Rodauth repository, so if you want to know how it works, you can <a href="https://gitlab.com/honeyryderchuck/rodauth-oauth/tree/master/examples">review the source</a>.</footer>
         <% end %>
       HTML

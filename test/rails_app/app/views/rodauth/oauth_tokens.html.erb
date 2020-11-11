@@ -20,13 +20,13 @@
           <td><%= oauth_token[rodauth.oauth_tokens_expires_in_column] %></td>
           <td><%= oauth_token[rodauth.oauth_tokens_revoked_at_column] %></td>
           <td>
-          	<% if !oauth_token[rodauth.oauth_tokens_revoked_at_column] %>
-          		<%= form_tag rodauth.revoke_path, method: :post do %>
-          			<%= input_hidden_tag rodauth.token_type_hint_param, "access_token" %>
-                <%= input_hidden_tag rodauth.token_param, oauth_token[rodauth.oauth_tokens_token_column] %>
+            <% if !oauth_token[rodauth.oauth_tokens_revoked_at_column] %>
+              <%= form_tag rodauth.revoke_path, method: :post do %>
+               <%= hidden_field_tag :token_type_hint, "access_token" %>
+                <%= hidden_field_tag :token, oauth_token[rodauth.oauth_tokens_token_column] %>
                 <%= submit_tag "Revoke", class: "btn btn-danger" %>
-          		<% end %>
-          	<% end %>
+              <% end %>
+            <% end %>
         </tr>
       <% end %>
     </tbody>

@@ -12,17 +12,10 @@
       </div>
     <%% end %>
     <%%= hidden_field_tag rodauth.client_id_param, rodauth.client_id %>
-    <%% if params[rodauth.state_param] %>
-      <%%= hidden_field_tag rodauth.state_param, rodauth.state %>
-    <%% end %>
-    <%% if params[rodauth.redirect_uri_param] %>
-      <%%= hidden_field_tag rodauth.redirect_uri_param, rodauth.redirect_uri %>
-    <%% end %>
-    <%% if params[rodauth.code_challenge_param] %>
-      <%%= hidden_field_tag rodauth.code_challenge_param, params[rodauth.code_challenge_param] %>
-    <%% end %>
-    <%% if params[rodauth.code_challenge_method_param] %>
-      <%%= hidden_field_tag rodauth.code_challenge_method_param, params[rodauth.code_challenge_method_param] %>
+    <%% %i[access_type response_type state nonce redirect_uri code_challenge code_challenge_method].each do |oauth_param| %>
+      <%% if params[oauth_param] %>
+        <%%= hidden_field_tag oauth_param,  params[oauth_param] %>
+      <%% end %>
     <%% end %>
   </div>
   <div class="form-group">

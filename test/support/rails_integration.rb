@@ -1,56 +1,68 @@
 # frozen_string_literal: true
 
-ENV["RAILS_ENV"] = "test"
-
-require_relative File.join(__dir__, "roda_integration")
-# for rails integration tests
-require_relative "../rails_app/config/environment"
-require "rails/test_help"
-
-ActiveRecord::Migrator.migrations_paths = [Rails.root.join("db/migrate")]
-Rails.backtrace_cleaner.remove_silencers! # show full stack traces
-if ActiveRecord.version >= Gem::Version.new("5.2.0")
-  ActiveRecord::Base.connection.migration_context.up
+begin
+  require "rails"
+rescue LoadError
 else
-  ActiveRecord::Migrator.up(Rails.application.paths["db/migrate"].to_a)
-end
+  ENV["RAILS_ENV"] = "test"
+  ENV["DATABASE_URL"] ||= "sqlite3::memory:"
 
-class RailsIntegrationTest < RodaIntegration
-  include OAuthHelpers
-  include Minitest::Hooks
-  include Capybara::DSL
+  require_relative File.join(__dir__, "roda_integration")
+  # for rails integration tests
+  require_relative "../rails_app/config/environment"
+  require "rails/test_help"
 
-  def setup_application
-    # eager load the application
-    oauth_application
-  end
+  Sequel::Migrator.run(RAILSDB, "test/migrate")
 
-  def register(login: "foo@example.com", password: "secret")
-    visit "/create-account"
-    fill_in "Login", with: login
-    fill_in "Password", with: password
-    fill_in "Confirm Password", with: password
-    click_on "Create Account"
-  end
+  class RodaIntegration
+    def roda(type = nil, &block)
+      jwt_only = type == :jwt
 
-  def logout
-    visit "/logout"
-    click_on "Logout"
-  end
+      app = Class.new(Rodauth::Rails::App) do
+        def self.constantize
+          self
+        end
+      end
+      rodauth_blocks = @rodauth_blocks
 
-  def around
-    ActiveRecord::Base.connection.begin_transaction(joinable: false) do
-      hash = BCrypt::Password.create("0123456789", cost: BCrypt::Engine::MIN_COST)
-      db[:accounts].insert(email: "foo@example.com", ph: hash)
+      opts = rodauth_opts(type)
+
+      opts[:json] = jwt_only ? :only : true
+
+      app.plugin :render, views: "test/views"
+      app.configure(nil, opts) do
+        # OAuth
+        rodauth_blocks.reverse_each do |rodauth_block|
+          instance_exec(&rodauth_block)
+        end
+
+        account_password_hash_column :ph
+        db RAILSDB
+        rails_controller { RodauthController }
+        skip_status_checks? true
+      end
+      app.route(&block)
+
+      Rodauth::Rails.app = app
+
       self.app = Rails.application
-
-      Rmethod(__method__).super_method.call
-
-      ActiveRecord::Base.connection.rollback_db_transaction
     end
-  end
 
-  def db
-    DB
+    def register(login: "foo@example.com", password: "secret")
+      visit "/create-account"
+      fill_in "Login", with: login
+      fill_in "Password", with: password
+      fill_in "Confirm Password", with: password
+      click_on "Create Account"
+    end
+
+    def logout
+      visit "/logout"
+      click_on "Logout"
+    end
+
+    def db
+      RAILSDB
+    end
   end
 end
