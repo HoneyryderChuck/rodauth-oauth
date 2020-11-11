@@ -41,7 +41,7 @@ DB = begin
   # I've checked what rails parallel tests do, and they seem to load a different database per test
   # anyway (no transactional tests), and that can't be made with sqlite memory anyway.
   #
-  ENV.delete("PARALLEL") if defined?(Rails) && db.adapter_scheme == :sqlite
+  ENV.delete("PARALLEL") if defined?(Rails)
 
   db.loggers << Logger.new($stderr) if ENV.key?("RODAUTH_DEBUG")
   Sequel.extension :migration
