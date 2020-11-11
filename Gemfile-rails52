@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
-eval File.read(File.join(__dir__, "Gemfile"))
+og_gemfile = File.read(File.join(__dir__, "Gemfile"))
+og_gemfile.gsub!("\"sqlite3\"", %("sqlite3", "~> 1.3.6"))
+eval og_gemfile
 
 # frameworks
 if RUBY_VERSION < "2.5"

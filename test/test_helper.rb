@@ -2,8 +2,6 @@
 
 $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
-ENV["DATABASE_URL"] ||= "sqlite3::memory:"
-
 if ENV.key?("CI")
   require "simplecov"
   commands = [RUBY_ENGINE, RUBY_VERSION, ENV["DATABASE_URL"][%r{(\w+):(//|:)}, 1], ENV["JWT_LIB"], ENV["BUNDLE_GEMFILE"]].compact
@@ -102,6 +100,12 @@ module OAuthHelpers
     BCrypt::Password.create(secret, cost: BCrypt::Engine::MIN_COST)
   end
 end
+
+# requiring the rails integration first, because certain variables need to be loaded upfront
+# before the minitest has to a chance to parallelize, specifically: we don't want to parallelize
+# tests when running sqlite (the db adapter isn't playing well with multi-threading).
+#
+require_relative "support/rails_integration"
 
 Dir[File.join(".", "test", "support", "*.rb")].sort.each { |f| require f }
 Dir[File.join(".", "test", "support", "**", "*.rb")].sort.each { |f| require f }

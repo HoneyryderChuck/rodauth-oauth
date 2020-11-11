@@ -11,6 +11,7 @@ cache:
     - vendor
 
 .before_script: &before_script
+  # rails 5.1 and lower need older version of bundler
   - bundle install
 
 .prepare_dbs: &prepare_dbs
@@ -52,7 +53,7 @@ cache:
         - mysql_native_password
 
 variables:
-  BUNDLE_JOBS: 4
+  BUNDLE_JOBS: 10
   BUNDLE_PATH: vendor
   CI: 1
   PARALLEL: 1
@@ -138,7 +139,7 @@ ruby26:
     - *test
   parallel:
     matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails60, Gemfile-rails52, Gemfile-rails51, Gemfile-rails50]
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails60, Gemfile-rails52]
 ruby27:
   <<: *test_services
   before_script:
@@ -150,7 +151,7 @@ ruby27:
     - *test
   parallel:
     matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails60, Gemfile-rails52, Gemfile-rails51, Gemfile-rails50]
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails60, Gemfile-rails52]
   artifacts:
     paths:
       - "coverage/"

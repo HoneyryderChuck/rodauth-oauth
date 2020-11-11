@@ -5,6 +5,7 @@ begin
 rescue LoadError
 else
   ENV["RAILS_ENV"] = "test"
+  ENV["DATABASE_URL"] ||= "sqlite3::memory:"
 
   require_relative File.join(__dir__, "roda_integration")
   # for rails integration tests
