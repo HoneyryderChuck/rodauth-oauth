@@ -169,7 +169,7 @@ coverage:
   stage: prepare
   before_script:
     - apk --update add g++ make git
-    - bundle install --quiet
+    - gem install simplecov --no-doc
   dependencies:
     - jruby
     - ruby23
@@ -186,7 +186,7 @@ coverage:
     # all of those have to be rewritten before the merge happens.
     #
     - find coverage -name "*resultset.json" -exec sed -i 's?/home?'`pwd`'?' {} \;
-    - bundle exec rake coverage:report
+    - rake coverage:report
   artifacts:
     paths:
       - "coverage/"

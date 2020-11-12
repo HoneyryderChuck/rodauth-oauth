@@ -8,20 +8,16 @@ module Rodauth
           def delete_suffix(suffix)
             suffix = suffix.to_s
             len = suffix.length
-            if len.positive? && index(suffix, -len)
-              self[0...-len]
-            else
-              dup
-            end
+            return dup unless len.positive? && index(suffix, -len)
+
+            self[0...-len]
           end
 
           def delete_prefix(prefix)
             prefix = prefix.to_s
-            if rindex(prefix, 0)
-              self[prefix.length..-1]
-            else
-              dup
-            end
+            return dup unless rindex(prefix, 0)
+
+            self[prefix.length..-1]
           end
         end
       end
