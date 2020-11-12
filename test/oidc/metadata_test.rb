@@ -8,6 +8,7 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
 
   def test_oidc_openid_configuration
     rodauth do
+      use_oauth_implicit_grant_type? true
       oauth_application_scopes %w[openid email]
       oauth_jwt_algorithm "HS256"
     end
@@ -24,12 +25,12 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
     assert json_body["registration_endpoint"] == "http://example.org/oauth-applications"
     assert json_body["scopes_supported"] == %w[openid email]
     assert json_body["response_types_supported"] == [
-      "code", "none", "id_token", "code token",
+      "code", "token", "none", "id_token", "code token",
       "code id_token",
       "id_token token",
       "code id_token token"
     ]
-    assert json_body["response_modes_supported"] == %w[query fragment]
+    assert json_body["response_modes_supported"] == %w[query form_post fragment]
     assert json_body["grant_types_supported"] == %w[authorization_code implicit]
     assert json_body["subject_types_supported"] == %w[public]
 

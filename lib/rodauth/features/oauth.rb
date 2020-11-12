@@ -1325,7 +1325,7 @@ module Rodauth
       issuer += "/#{path}" if path
 
       responses_supported = %w[code]
-      response_modes_supported = %w[query]
+      response_modes_supported = %w[query form_post]
       grant_types_supported = %w[authorization_code]
 
       if use_oauth_implicit_grant_type?

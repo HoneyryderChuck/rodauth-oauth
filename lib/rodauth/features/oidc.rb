@@ -361,13 +361,14 @@ module Rodauth
 
       scope_claims.unshift("auth_time") if last_account_login_at
 
+      response_types_supported = metadata[:response_types_supported]
+      if use_oauth_implicit_grant_type?
+        response_types_supported += ["none", "id_token", "code token", "code id_token", "id_token token", "code id_token token"]
+      end
+
       metadata.merge(
         userinfo_endpoint: userinfo_url,
-        response_types_supported: metadata[:response_types_supported] +
-          ["none", "id_token", "code token", "code id_token", "id_token token", "code id_token token"],
-        response_modes_supported: %w[query fragment],
-        grant_types_supported: %w[authorization_code implicit],
-
+        response_types_supported: response_types_supported,
         subject_types_supported: [oauth_jwt_subject_type],
 
         id_token_signing_alg_values_supported: metadata[:token_endpoint_auth_signing_alg_values_supported],
