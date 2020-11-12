@@ -375,4 +375,29 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     assert page.current_url == oauth_application[:redirect_uri].to_s,
            "was redirected instead to #{page.current_url}"
   end
+
+  def test_authorize_post_authorize_code_default_form_post
+    rodauth do
+      oauth_response_mode "form_post"
+    end
+    setup_application
+    login
+
+    # show the authorization form
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+
+    # submit authorization request
+    click_button "Authorize"
+
+    assert db[:oauth_grants].count == 1,
+           "no grant has been created"
+
+    assert page.has_button?("Back to Client Application")
+    click_button("Back to Client Application")
+
+    assert page.current_url == oauth_application[:redirect_uri].to_s,
+           "was redirected instead to #{page.current_url}"
+  end
 end

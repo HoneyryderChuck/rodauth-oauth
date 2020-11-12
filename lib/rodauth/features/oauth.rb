@@ -84,6 +84,7 @@ module Rodauth
 
     auth_value_method :oauth_require_pkce, false
     auth_value_method :oauth_pkce_challenge_method, "S256"
+    auth_value_method :oauth_response_mode, "query"
 
     auth_value_method :oauth_valid_uri_schemes, %w[https]
 
@@ -940,11 +941,14 @@ module Rodauth
 
         response_mode ||= "fragment"
         response_params.replace(_do_authorize_token)
-      when "code", "", nil
+      when "code"
         response_mode ||= "query"
         response_params.replace(_do_authorize_code)
       when "none"
         response_mode ||= "none"
+      when "", nil
+        response_mode ||= oauth_response_mode
+        response_params.replace(_do_authorize_code)
       end
 
       response_params["state"] = param("state") if param_or_nil("state")
