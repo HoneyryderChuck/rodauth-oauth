@@ -38,15 +38,21 @@ DB = begin
          Sequel.sqlite
        end
 
-  # I've checked what rails parallel tests do, and they seem to load a different database per test
-  # anyway (no transactional tests), and that can't be made with sqlite memory anyway.
-  #
-  ENV.delete("PARALLEL") if defined?(Rails)
-
   db.loggers << Logger.new($stderr) if ENV.key?("RODAUTH_DEBUG")
   Sequel.extension :migration
   require "rodauth/migrations"
-  Sequel::Migrator.run(db, "test/migrate")
+  # Due to rails test having to mutate the Rodauth::Rails::App singleton, and being the rails
+  # application a singleton itself, it's impossible to guarantee thread safety when running the
+  # tests in parallel. Hence, there are no parallel tests when rails is around.
+  #
+  # also, migrations are run with the roda ar connection object.
+  #
+  #
+  if defined?(Rails)
+    ENV.delete("PARALLEL")
+  else
+    Sequel::Migrator.run(db, "test/migrate")
+  end
   db
 end
 
