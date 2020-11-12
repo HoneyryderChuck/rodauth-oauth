@@ -332,20 +332,19 @@ module Rodauth
           redirect(redirect_url.to_s)
         when "form_post"
           scope.view layout: false, inline: <<-FORM
-<html>
-  <head><title>Authorized</title></head>
-  <body onload="javascript:document.forms[0].submit()">
-    <form method="post" action="#{redirect_uri.to_s}">
-      #{
-        params.map do |name, value|
-          "<input type=\"hidden\" name=\"#{name}\" value=\"#{scope.h(value)}\" />"
-     end.join
-      }
-
-      <input type="submit" class="btn btn-outline-primary" value="#{scope.h(oauth_authorize_post_button)}"/>
-    </form>
-  </body>
-</html>
+            <html>
+              <head><title>Authorized</title></head>
+              <body onload="javascript:document.forms[0].submit()">
+                <form method="post" action="#{redirect_uri}">
+                  #{
+                    params.map do |name, value|
+                      "<input type=\"hidden\" name=\"#{name}\" value=\"#{scope.h(value)}\" />"
+                    end.join
+                  }
+                  <input type="submit" class="btn btn-outline-primary" value="#{scope.h(oauth_authorize_post_button)}"/>
+                </form>
+              </body>
+            </html>
           FORM
         when "none"
           redirect(redirect_url.to_s)
