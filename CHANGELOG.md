@@ -2,9 +2,11 @@
 
 ## master
 
+### 0.4.0
+
 ### Features
 
-* A new method, `get_additional_param(accounnt, claim)`, is now exposed; this method will be called whenever non-OIDC scopes are requested in the emission of the ID token.
+* A new method, `get_additional_param(account, claim)`, is now exposed; this method will be called whenever non-OIDC scopes are requested in the emission of the ID token.
 
 * The `form_post` response is now supported, either by passing the `response_mode=form_post` request param in the authorization URL, or by setting `oauth_response_mode "form_post"` option. This improves the overall security of an Authorization server even more, as authorization codes are sent to client applications via a POST request to the redirect URI.
 
