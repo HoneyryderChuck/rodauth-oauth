@@ -168,16 +168,14 @@ ruby27:
 coverage:
   stage: prepare
   before_script:
-    - *deps_alpine
-    - *before_script
+    - apk --update add g++ make git
+    - gem install simplecov --no-doc
   dependencies:
     - jruby
     - ruby23
     - ruby27
   image: "ruby:2.7-alpine"
   script:
-    - apk --update add g++ make git
-    - bundle install --quiet
     # this is a workaround, because simplecov doesn't support relative paths.
     #
     # https://github.com/simplecov-ruby/simplecov/issues/887
@@ -188,7 +186,7 @@ coverage:
     # all of those have to be rewritten before the merge happens.
     #
     - find coverage -name "*resultset.json" -exec sed -i 's?/home?'`pwd`'?' {} \;
-    - bundle exec rake coverage:report
+    - rake coverage:report
   artifacts:
     paths:
       - "coverage/"

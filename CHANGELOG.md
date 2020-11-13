@@ -2,18 +2,35 @@
 
 ## master
 
+### Features
+
+* A new method, `get_additional_param(accounnt, claim)`, is now exposed; this method will be called whenever non-OIDC scopes are requested in the emission of the ID token.
+
+* The `form_post` response is now supported, either by passing the `response_mode=form_post` request param in the authorization URL, or by setting `oauth_response_mode "form_post"` option. This improves the overall security of an Authorization server even more, as authorization codes are sent to client applications via a POST request to the redirect URI.
+
+
+### Improvements
+
+* For the OIDC `address` scope, proper claims are now emitted as per the standard, i.e. the "formatted", "street_address", "locality", "region", "postal_code", "country". These will be the ones referenced in the `get_oidc_param` method.
+
+### Bugfixes
+
+* The rails templates were missing declarations from a few params, which made some of the flows (the PKCE for example) not work out-of-the box;
+* rails tests were silently not running in CI;
+* The CI suite was revamped, so that all Oauth tests would be run under rails as well. All versions from rails equal or above 5.0 are now targeted;
+
 ### 0.3.0
 
 #### Features
 
-* `oauth_refresh_token_protection_policy` is a new option, which can be used to set a protection policy around usage of refresh tokens. By default it's `none`, for backwards-compatibility. However, when set to `rotation`, refresh tokens will be "use-once", i.e. a token refresh request will generate a new refresh token. Also,  refresh token requests doen with already-used refresh tokens will be interpreted as a security breach, i.e. all tokens linked to the compromised refresh token will be revoked.
+* `oauth_refresh_token_protection_policy` is a new option, which can be used to set a protection policy around usage of refresh tokens. By default it's `none`, for backwards-compatibility. However, when set to `rotation`, refresh tokens will be "use-once", i.e. a token refresh request will generate a new refresh token. Also,  refresh token requests performed with already-used refresh tokens will be interpreted as a security breach, i.e. all tokens linked to the compromised refresh token will be revoked.
 
 #### Improvements
 
 
 * Support for the OIDC authorize [`prompt` parameter](https://openid.net/specs/openid-connect-core-1_0.html) (sectionn 3.1.2.1). It supports the `none`, `login` and `consent` out-of-the-box, while providing support for `select-account` when paired with [rodauth-select-account, a rodauth feature to handle multiple accounts in the same session](https://gitlab.com/honeyryderchuck/rodauth-select-account).
 
-* Refresh Tokens are now expired. The refresh token expiration period is governed by the `oauth_refresh_token_expires_in` option (default: 1 year), and is the period for which a refresh token can be used after its respective token expired.
+* Refresh Tokens are now expirable. The refresh token expiration period is governed by the `oauth_refresh_token_expires_in` option (default: 1 year), and is the period for which a refresh token can be used after its respective access token expired.
 
 #### Bugfixes
 

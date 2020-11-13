@@ -17,6 +17,9 @@
         <%%= hidden_field_tag oauth_param,  params[oauth_param] %>
       <%% end %>
     <%% end %>
+    <%% if params[:response_mode] %>
+      <%%= hidden_field_tag :response_mode, params[:response_mode] %>
+    <%% end %>
   </div>
   <div class="form-group">
     <%%= submit_tag "Authorize", class: "btn btn-primary" %>

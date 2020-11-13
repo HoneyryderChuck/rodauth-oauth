@@ -19,7 +19,7 @@ class RodauthOauthServerMetadataTest < RodaIntegration
     assert json_body["registration_endpoint"] == "http://example.org/oauth-applications"
     assert json_body["scopes_supported"] == %w[read write]
     assert json_body["response_types_supported"] == %w[code]
-    assert json_body["response_modes_supported"] == %w[query]
+    assert json_body["response_modes_supported"] == %w[query form_post]
     assert json_body["grant_types_supported"] == %w[authorization_code]
     assert json_body["token_endpoint_auth_methods_supported"] == %w[client_secret_basic client_secret_post]
     assert json_body["revocation_endpoint"] == "http://example.org/revoke"
@@ -38,7 +38,7 @@ class RodauthOauthServerMetadataTest < RodaIntegration
     assert last_response.status == 200
     assert json_body["scopes_supported"] == %w[read write]
     assert json_body["response_types_supported"] == %w[code token]
-    assert json_body["response_modes_supported"] == %w[query fragment]
+    assert json_body["response_modes_supported"] == %w[query form_post fragment]
     assert json_body["grant_types_supported"] == %w[authorization_code implicit]
   end
 

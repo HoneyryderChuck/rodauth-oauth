@@ -84,6 +84,7 @@ module Rodauth
 
     auth_value_method :oauth_require_pkce, false
     auth_value_method :oauth_pkce_challenge_method, "S256"
+    auth_value_method :oauth_response_mode, "query"
 
     auth_value_method :oauth_valid_uri_schemes, %w[https]
 
@@ -100,6 +101,7 @@ module Rodauth
     button "Register", "oauth_application"
     button "Authorize", "oauth_authorize"
     button "Revoke", "oauth_token_revoke"
+    button "Back to Client Application", "oauth_authorize_post"
 
     # OAuth Token
     auth_value_method :oauth_tokens_path, "oauth-tokens"
@@ -313,11 +315,41 @@ module Rodauth
       r.post do
         redirect_url = URI.parse(redirect_uri)
 
-        transaction do
+        params, mode = transaction do
           before_authorize
-          do_authorize(redirect_url)
+          do_authorize
         end
-        redirect(redirect_url.to_s)
+
+        case mode
+        when "query"
+          params = params.map { |k, v| "#{k}=#{v}" }
+          params << redirect_url.query if redirect_url.query
+          redirect_url.query = params.join("&")
+          redirect(redirect_url.to_s)
+        when "fragment"
+          params = params.map { |k, v| "#{k}=#{v}" }
+          params << redirect_url.query if redirect_url.query
+          redirect_url.fragment = params.join("&")
+          redirect(redirect_url.to_s)
+        when "form_post"
+          scope.view layout: false, inline: <<-FORM
+            <html>
+              <head><title>Authorized</title></head>
+              <body onload="javascript:document.forms[0].submit()">
+                <form method="post" action="#{redirect_uri}">
+                  #{
+                    params.map do |name, value|
+                      "<input type=\"hidden\" name=\"#{name}\" value=\"#{scope.h(value)}\" />"
+                    end.join
+                  }
+                  <input type="submit" class="btn btn-outline-primary" value="#{scope.h(oauth_authorize_post_button)}"/>
+                </form>
+              </body>
+            </html>
+          FORM
+        when "none"
+          redirect(redirect_url.to_s)
+        end
       end
     end
 
@@ -848,6 +880,9 @@ module Rodauth
       end
       redirect_response_error("invalid_scope") unless check_valid_scopes?
 
+      if (response_mode = param_or_nil("response_mode")) && response_mode != "form_post"
+        redirect_response_error("invalid_request")
+      end
       validate_pkce_challenge_params if use_oauth_pkce?
     end
 
@@ -899,28 +934,26 @@ module Rodauth
       create_params[oauth_grants_code_column]
     end
 
-    def do_authorize(redirect_url, query_params = [], fragment_params = [])
+    def do_authorize(response_params = {}, response_mode = param_or_nil("response_mode"))
       case param("response_type")
       when "token"
         redirect_response_error("invalid_request") unless use_oauth_implicit_grant_type?
 
-        fragment_params.replace(_do_authorize_token.map { |k, v| "#{k}=#{v}" })
-      when "code", "", nil
-        query_params.replace(_do_authorize_code.map { |k, v| "#{k}=#{v}" })
+        response_mode ||= "fragment"
+        response_params.replace(_do_authorize_token)
+      when "code"
+        response_mode ||= "query"
+        response_params.replace(_do_authorize_code)
+      when "none"
+        response_mode ||= "none"
+      when "", nil
+        response_mode ||= oauth_response_mode
+        response_params.replace(_do_authorize_code)
       end
 
-      if param_or_nil("state")
-        if !fragment_params.empty?
-          fragment_params << "state=#{param('state')}"
-        else
-          query_params << "state=#{param('state')}"
-        end
-      end
+      response_params["state"] = param("state") if param_or_nil("state")
 
-      query_params << redirect_url.query if redirect_url.query
-
-      redirect_url.query = query_params.join("&") unless query_params.empty?
-      redirect_url.fragment = fragment_params.join("&") unless fragment_params.empty?
+      [response_params, response_mode]
     end
 
     def _do_authorize_code
@@ -1296,7 +1329,7 @@ module Rodauth
       issuer += "/#{path}" if path
 
       responses_supported = %w[code]
-      response_modes_supported = %w[query]
+      response_modes_supported = %w[query form_post]
       grant_types_supported = %w[authorization_code]
 
       if use_oauth_implicit_grant_type?

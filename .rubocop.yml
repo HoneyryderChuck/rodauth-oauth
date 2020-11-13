@@ -9,6 +9,7 @@
 #
 # See https://github.com/rubocop-hq/rubocop/blob/master/manual/configuration.md
 AllCops:
+  NewCops: enable
   TargetRubyVersion: 2.4
   Include:
     - lib/**/*.rb

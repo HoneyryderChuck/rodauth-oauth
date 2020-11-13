@@ -13,7 +13,7 @@ class Rodauth::OAuth::TtlStore
 
   def initialize
     @store_mutex = Mutex.new
-    @store = Hash.new {}
+    @store = {}
   end
 
   def [](key)

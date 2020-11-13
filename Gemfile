@@ -53,6 +53,7 @@ else
   gem "rubocop"
   gem "simplecov"
 end
+gem "rubocop-performance"
 
 gem "pry"
 platform :mri do

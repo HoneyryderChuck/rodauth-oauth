@@ -2,11 +2,12 @@
 
 module Rodauth
   Feature.define(:oidc) do
+    # https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
     OIDC_SCOPES_MAP = {
       "profile" => %i[name family_name given_name middle_name nickname preferred_username
                       profile picture website gender birthdate zoneinfo locale updated_at].freeze,
       "email" => %i[email email_verified].freeze,
-      "address" => %i[address].freeze,
+      "address" => %i[formatted street_address locality region postal_code country].freeze,
       "phone" => %i[phone_number phone_number_verified].freeze
     }.freeze
 
@@ -74,7 +75,7 @@ module Rodauth
     auth_value_method :oauth_prompt_login_cookie_options, {}.freeze
     auth_value_method :oauth_prompt_login_interval, 5 * 60 * 60 # 5 minutes
 
-    auth_value_methods(:get_oidc_param)
+    auth_value_methods(:get_oidc_param, :get_additional_param)
 
     # /userinfo
     route(:userinfo) do |r|
@@ -245,8 +246,11 @@ module Rodauth
       oauth_token[:id_token] = jwt_encode(id_token_claims)
     end
 
+    # aka fill_with_standard_claims
     def fill_with_account_claims(claims, account, scopes)
-      scopes_by_oidc = scopes.each_with_object({}) do |scope, by_oidc|
+      scopes_by_claim = scopes.each_with_object({}) do |scope, by_oidc|
+        next if scope == "openid"
+
         oidc, param = scope.split(".", 2)
 
         by_oidc[oidc] ||= []
@@ -254,21 +258,33 @@ module Rodauth
         by_oidc[oidc] << param.to_sym if param
       end
 
-      oidc_scopes = (OIDC_SCOPES_MAP.keys & scopes_by_oidc.keys)
+      oidc_scopes, additional_scopes = scopes_by_claim.keys.partition { |key| OIDC_SCOPES_MAP.key?(key) }
 
-      return if oidc_scopes.empty?
+      unless oidc_scopes.empty?
+        if respond_to?(:get_oidc_param)
+          oidc_scopes.each do |scope|
+            scope_claims = claims
+            params = scopes_by_claim[scope]
+            params = params.empty? ? OIDC_SCOPES_MAP[scope] : (OIDC_SCOPES_MAP[scope] & params)
 
-      if respond_to?(:get_oidc_param)
-        oidc_scopes.each do |scope|
-          params = scopes_by_oidc[scope]
-          params = params.empty? ? OIDC_SCOPES_MAP[scope] : (OIDC_SCOPES_MAP[scope] & params)
-
-          params.each do |param|
-            claims[param] = __send__(:get_oidc_param, account, param)
+            scope_claims = (claims["address"] = {}) if scope == "address"
+            params.each do |param|
+              scope_claims[param] = __send__(:get_oidc_param, account, param)
+            end
           end
+        else
+          warn "`get_oidc_param(account, claim)` must be implemented to use oidc scopes."
+        end
+      end
+
+      return if additional_scopes.empty?
+
+      if respond_to?(:get_additional_param)
+        additional_scopes.each do |scope|
+          claims[scope] = __send__(:get_additional_param, account, scope.to_sym)
         end
       else
-        warn "`get_oidc_param(token, param)` must be implemented to use oidc scopes."
+        warn "`get_additional_param(account, claim)` must be implemented to use oidc scopes."
       end
     end
 
@@ -290,33 +306,27 @@ module Rodauth
       end
     end
 
-    def do_authorize(redirect_url, query_params = [], fragment_params = [])
+    def do_authorize(response_params = {}, response_mode = param_or_nil("response_mode"))
       return super unless use_oauth_implicit_grant_type?
 
       case param("response_type")
       when "id_token"
-        fragment_params.replace(_do_authorize_id_token.map { |k, v| "#{k}=#{v}" })
+        response_params.replace(_do_authorize_id_token)
       when "code token"
         redirect_response_error("invalid_request") unless use_oauth_implicit_grant_type?
 
-        params = _do_authorize_code.merge(_do_authorize_token)
-
-        fragment_params.replace(params.map { |k, v| "#{k}=#{v}" })
+        response_params.replace(_do_authorize_code.merge(_do_authorize_token))
       when "code id_token"
-        params = _do_authorize_code.merge(_do_authorize_id_token)
-
-        fragment_params.replace(params.map { |k, v| "#{k}=#{v}" })
+        response_params.replace(_do_authorize_code.merge(_do_authorize_id_token))
       when "id_token token"
-        params = _do_authorize_id_token.merge(_do_authorize_token)
-
-        fragment_params.replace(params.map { |k, v| "#{k}=#{v}" })
+        response_params.replace(_do_authorize_id_token.merge(_do_authorize_token))
       when "code id_token token"
-        params = _do_authorize_code.merge(_do_authorize_id_token).merge(_do_authorize_token)
 
-        fragment_params.replace(params.map { |k, v| "#{k}=#{v}" })
+        response_params.replace(_do_authorize_code.merge(_do_authorize_id_token).merge(_do_authorize_token))
       end
+      response_mode ||= "fragment" unless response_params.empty?
 
-      super(redirect_url, query_params, fragment_params)
+      super(response_params, response_mode)
     end
 
     def _do_authorize_id_token
@@ -351,13 +361,14 @@ module Rodauth
 
       scope_claims.unshift("auth_time") if last_account_login_at
 
+      response_types_supported = metadata[:response_types_supported]
+      if use_oauth_implicit_grant_type?
+        response_types_supported += ["none", "id_token", "code token", "code id_token", "id_token token", "code id_token token"]
+      end
+
       metadata.merge(
         userinfo_endpoint: userinfo_url,
-        response_types_supported: metadata[:response_types_supported] +
-          ["none", "id_token", "code token", "code id_token", "id_token token", "code id_token token"],
-        response_modes_supported: %w[query fragment],
-        grant_types_supported: %w[authorization_code implicit],
-
+        response_types_supported: response_types_supported,
         subject_types_supported: [oauth_jwt_subject_type],
 
         id_token_signing_alg_values_supported: metadata[:token_endpoint_auth_signing_alg_values_supported],
