@@ -2,6 +2,23 @@
 
 ## master
 
+### Features
+
+* A new method, `get_additional_param(accounnt, claim)`, is now exposed; this method will be called whenever non-OIDC scopes are requested in the emission of the ID token.
+
+* The `form_post` response is now supported, either by passing the `response_mode=form_post` request param in the authorization URL, or by setting `oauth_response_mode "form_post"` option. This improves the overall security of an Authorization server even more, as authorization codes are sent to client applications via a POST request to the redirect URI.
+
+
+### Improvements
+
+* For the OIDC `address` scope, proper claims are now emitted as per the standard, i.e. the "formatted", "street_address", "locality", "region", "postal_code", "country". These will be the ones referenced in the `get_oidc_param` method.
+
+### Bugfixes
+
+* The rails templates were missing declarations from a few params, which made some of the flows (the PKCE for example) not work out-of-the box;
+* rails tests were silently not running in CI;
+* The CI suite was revamped, so that all Oauth tests would be run under rails as well. All versions from rails equal or above 5.0 are now targeted;
+
 ### 0.3.0
 
 #### Features
