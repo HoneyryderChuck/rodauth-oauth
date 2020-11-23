@@ -14,7 +14,6 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     assert last_response.status == 401
   end
 
-
   def test_token_access_private_empty_token
     setup_application
 
