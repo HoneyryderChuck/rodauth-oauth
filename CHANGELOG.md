@@ -2,6 +2,14 @@
 
 ## master
 
+### Improvements
+
+When in "Resource Server" mode, calling `rodauth.authorization_token` will now return an hash of the JSON payload that the Authorization Server responds, and which was already previously used to authorize access to protected resources.
+
+### Bugfixes
+
+* An error ocurred if the client passed an empty authorization header (`Authorization: ` or `Authorization: Bearer `), causing an unexpected error; It now responds with the proper `401 Unauthorized` status code.
+
 ### 0.4.0
 
 ### Features
