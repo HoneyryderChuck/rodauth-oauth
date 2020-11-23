@@ -489,7 +489,7 @@ module Rodauth
     def fetch_access_token
       value = request.env["HTTP_AUTHORIZATION"]
 
-      return unless value
+      return unless value && !value.empty?
 
       scheme, token = value.split(" ", 2)
 

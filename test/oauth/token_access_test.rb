@@ -5,6 +5,36 @@ require "test_helper"
 class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
   include Rack::Test::Methods
 
+  def test_token_access_private_no_token
+    setup_application
+
+    header "Accept", "application/json"
+    # valid token, and now we're getting somewhere
+    get("/private")
+    assert last_response.status == 401
+  end
+
+
+  def test_token_access_private_empty_token
+    setup_application
+
+    header "Accept", "application/json"
+    header "Authorization", ""
+    # valid token, and now we're getting somewhere
+    get("/private")
+    assert last_response.status == 401
+  end
+
+  def test_token_access_private_empty_bearer_token
+    setup_application
+
+    header "Accept", "application/json"
+    header "Authorization", "Bearer "
+    # valid token, and now we're getting somewhere
+    get("/private")
+    assert last_response.status == 401
+  end
+
   def test_token_access_private_revoked_token
     setup_application
 
