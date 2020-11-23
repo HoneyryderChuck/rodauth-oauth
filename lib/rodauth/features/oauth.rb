@@ -508,31 +508,34 @@ module Rodauth
 
       return unless bearer_token
 
-      # check if token has not expired
-      # check if token has been revoked
-      @authorization_token = oauth_token_by_token(bearer_token)
+      @authorization_token = if is_authorization_server?
+                               # check if token has not expired
+                               # check if token has been revoked
+                               oauth_token_by_token(bearer_token)
+                             else
+                               # where in resource server, NOT the authorization server.
+                               payload = introspection_request("access_token", bearer_token)
+
+                               return unless payload["active"]
+
+                               payload
+                             end
     end
 
     def require_oauth_authorization(*scopes)
+      authorization_required unless authorization_token
+
+      scopes << oauth_application_default_scope if scopes.empty?
+
       token_scopes = if is_authorization_server?
-                       authorization_required unless authorization_token
-
-                       scopes << oauth_application_default_scope if scopes.empty?
-
                        authorization_token[oauth_tokens_scopes_column].split(oauth_scope_separator)
                      else
-                       bearer_token = fetch_access_token
-
-                       authorization_required unless bearer_token
-
-                       scopes << oauth_application_default_scope if scopes.empty?
-
-                       # where in resource server, NOT the authorization server.
-                       payload = introspection_request("access_token", bearer_token)
-
-                       authorization_required unless payload["active"]
-
-                       payload["scope"].split(oauth_scope_separator)
+                       aux_scopes = authorization_token["scope"]
+                       if aux_scopes
+                         aux_scopes.split(oauth_scope_separator)
+                       else
+                         []
+                       end
                      end
 
       authorization_required unless scopes.any? { |scope| token_scopes.include?(scope) }
