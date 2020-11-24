@@ -2,6 +2,12 @@
 
 ## master
 
+### 0.4.2
+
+### Bugfixes
+
+* database entensions were being run in resource server mode, when it's not expected that the oauth db tables are around.
+
 ### 0.4.1
 
 ### Improvements
