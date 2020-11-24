@@ -2,6 +2,8 @@
 
 ## master
 
+### 0.4.1
+
 ### Improvements
 
 When in "Resource Server" mode, calling `rodauth.authorization_token` will now return an hash of the JSON payload that the Authorization Server responds, and which was already previously used to authorize access to protected resources.
