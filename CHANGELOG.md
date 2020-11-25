@@ -2,13 +2,13 @@
 
 ## master
 
-### 0.4.2
+### 0.4.2 (24/11/2020)
 
 ### Bugfixes
 
-* database entensions were being run in resource server mode, when it's not expected that the oauth db tables are around.
+* database extensions were being run in resource server mode, when it's not expected that the oauth db tables are around.
 
-### 0.4.1
+### 0.4.1 (24/11/2020)
 
 ### Improvements
 
@@ -16,9 +16,9 @@ When in "Resource Server" mode, calling `rodauth.authorization_token` will now r
 
 ### Bugfixes
 
-* An error ocurred if the client passed an empty authorization header (`Authorization: ` or `Authorization: Bearer `), causing an unexpected error; It now responds with the proper `401 Unauthorized` status code.
+* An error occurred if the client passed an empty authorization header (`Authorization: ` or `Authorization: Bearer `), causing an unexpected error; It now responds with the proper `401 Unauthorized` status code.
 
-### 0.4.0
+### 0.4.0 (13/11/2020)
 
 ### Features
 
@@ -37,7 +37,7 @@ When in "Resource Server" mode, calling `rodauth.authorization_token` will now r
 * rails tests were silently not running in CI;
 * The CI suite was revamped, so that all Oauth tests would be run under rails as well. All versions from rails equal or above 5.0 are now targeted;
 
-### 0.3.0
+### 0.3.0 (8/10/2020)
 
 #### Features
 
@@ -66,7 +66,7 @@ Use `rodauth.convert_timestamp` in the templates, whenever dates are displayed.
 
 Set HTTP Cache headers for metadata responses, such as `/.well-known/oauth-authorization-server` and `/.well-known/openid-configuration`, so they can be stored at the edge. The cache will be valid for 1 day (this value isn't set by an option yet).
 
-### 0.2.0
+### 0.2.0 (9/9/2020)
 
 #### Features
 
@@ -110,9 +110,7 @@ Fixed some mishandling of HTTP headers when in in resource-server mode.
 * 97.7% test coverage;
 * `rodauth-oauth` CI tests run against sqlite, postgresql and mysql.
 
-### 0.1.0
-
-(31/7/2020)
+### 0.1.0 (31/7/2020)
 
 #### Features
 
@@ -158,9 +156,7 @@ URI schemes for client applications redirect URIs have to be `https`. In order t
 * fixed trailing "/" in the "issuer" value in server metadata (`https://server.com/` -> `https://server.com`).
 
 
-### 0.0.6
-
-(6/7/2020)
+### 0.0.6 (6/7/2020)
 
 #### Features
 
@@ -183,9 +179,7 @@ The `oauth_jwt` feature now supports JWT Secured Authorization Request (JAR) (se
 Removed React Javascript from example applications.
 
 
-### 0.0.5
-
-(26/6/2020)
+### 0.0.5 (26/6/2020)
 
 #### Features
 
@@ -222,9 +216,7 @@ It **requires** the authorization to implement the server metadata endpoint (`/.
 * option `scopes_param` renamed to `scope_param`;
 *
 
-## 0.0.4
-
-(13/6/2020)
+## 0.0.4 (13/6/2020)
 
 ### Features
 
@@ -261,9 +253,7 @@ The `oauth_jwt` feature now allows the usage of access tokens to authorize the g
 
 * Fixed scope claim of JWT ("scopes" -> "scope");
 
-## 0.0.3
-
-(5/6/2020)
+## 0.0.3 (5/6/2020)
 
 ### Features
 
@@ -295,9 +285,7 @@ end
 * renamed the existing `use_oauth_implicit_grant_type` to `use_oauth_implicit_grant_type?`;
 * It's now usable as JSON API (small caveat: POST authorize will still redirect on success...);
 
-## 0.0.2
-
-(29/5/2020)
+## 0.0.2 (29/5/2020)
 
 ### Features
 
@@ -313,8 +301,6 @@ end
 
 * usage of client secret for authorizing the generation of tokens, as the spec mandates (and refraining from them when doing PKCE).
 
-## 0.0.1
-
-(14/5/2020)
+## 0.0.1 (14/5/2020)
 
 Initial implementation of the Oauth 2.0 framework, with an example app done using roda.
