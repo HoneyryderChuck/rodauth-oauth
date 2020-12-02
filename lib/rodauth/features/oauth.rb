@@ -624,9 +624,9 @@ module Rodauth
       http.use_ssl = auth_url.scheme == "https"
 
       request = Net::HTTP::Post.new(introspect_path)
-      request["content-type"] = json_response_content_type
+      request["content-type"] = "application/x-www-form-urlencoded"
       request["accept"] = json_response_content_type
-      request.body = JSON.dump({ "token_type_hint" => token_type_hint, "token" => token })
+      request.set_form_data({ "token_type_hint" => token_type_hint, "token" => token })
 
       before_introspection_request(request)
       response = http.request(request)
