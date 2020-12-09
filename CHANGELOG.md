@@ -2,6 +2,10 @@
 
 ## master
 
+### 0.4.3 (09/12/2020)
+
+* Introspection requests made to an Authorization Server in "resource server" mode are not correctly encoding the body using the "application/x-www-form-urlencoded" format.
+
 ### 0.4.2 (24/11/2020)
 
 ### Bugfixes
