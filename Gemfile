@@ -65,12 +65,14 @@ platform :mri do
   end
   gem "sqlite3"
 
+  gem "mysql2"
+  gem "pg"
+end
+
+group :demo do
   # For demo
   gem "erubi"
   gem "sassc"
-
-  gem "mysql2"
-  gem "pg"
 end
 
 platform :jruby do

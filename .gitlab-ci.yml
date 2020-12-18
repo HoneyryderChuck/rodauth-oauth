@@ -53,6 +53,7 @@ cache:
         - mysql_native_password
 
 variables:
+  BUNDLE_WITHOUT: demo
   BUNDLE_JOBS: 10
   BUNDLE_PATH: vendor
   CI: 1
@@ -131,7 +132,7 @@ ruby25:
       - "coverage/"
   parallel:
     matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails52, Gemfile-rails51]
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails61, Gemfile-rails52, Gemfile-rails51]
 ruby26:
   <<: *test_services
   before_script:
@@ -148,7 +149,7 @@ ruby26:
       - "coverage/"
   parallel:
     matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails60, Gemfile-rails52]
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails61, Gemfile-rails60, Gemfile-rails52]
 ruby27:
   <<: *test_services
   before_script:
@@ -160,10 +161,27 @@ ruby27:
     - *test
   parallel:
     matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails60, Gemfile-rails52]
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails61, Gemfile-rails60, Gemfile-rails52]
   artifacts:
     paths:
       - "coverage/"
+ruby30:
+  <<: *test_services
+  before_script:
+    - *deps_alpine
+    - *before_script
+    - *prepare_dbs
+  allow_failure: true
+  image: "ruby:3.0-rc-alpine"
+  script:
+    - *test
+  parallel:
+    matrix:
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails61, Gemfile-rails60]
+  artifacts:
+    paths:
+      - "coverage/"
+
 
 coverage:
   stage: prepare
