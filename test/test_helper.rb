@@ -109,3 +109,4 @@ require_relative "support/rails_integration"
 
 Dir[File.join(".", "test", "support", "*.rb")].sort.each { |f| require f }
 Dir[File.join(".", "test", "support", "**", "*.rb")].sort.each { |f| require f }
+Dir[File.join(".", "lib", "rodauth", "features", "**", "*.rb")].sort.each { |f| require f } if defined?(RBS)

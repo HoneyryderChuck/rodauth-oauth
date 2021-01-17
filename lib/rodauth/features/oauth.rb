@@ -9,7 +9,7 @@ require "rodauth/oauth/ttl_store"
 require "rodauth/oauth/database_extensions"
 
 module Rodauth
-  Feature.define(:oauth) do
+  Feature.define(:oauth, :Oauth) do
     # RUBY EXTENSIONS
     unless Regexp.method_defined?(:match?)
       # If you wonder why this is there: the oauth feature uses a refinement to enhance the

@@ -1,7 +1,7 @@
 # frozen-string-literal: true
 
 module Rodauth
-  Feature.define(:oauth_http_mac) do
+  Feature.define(:oauth_http_mac, :OauthHttpMac) do
     unless String.method_defined?(:delete_prefix)
       module PrefixExtensions
         refine(String) do

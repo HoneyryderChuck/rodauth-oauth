@@ -1,0 +1,5 @@
+module Rodauth
+  class Configuration
+    
+  end
+end

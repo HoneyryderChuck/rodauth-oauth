@@ -3,7 +3,7 @@
 require "onelogin/ruby-saml"
 
 module Rodauth
-  Feature.define(:oauth_saml) do
+  Feature.define(:oauth_saml, :OauthSaml) do
     depends :oauth
 
     auth_value_method :oauth_saml_cert_fingerprint, "9E:65:2E:03:06:8D:80:F2:86:C7:6C:77:A1:D9:14:97:0A:4D:F4:4D"
