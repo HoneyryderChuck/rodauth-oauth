@@ -10,8 +10,11 @@ require "jwt"
 
 if (url = ENV.delete("DATABASE_URL"))
   DB = Sequel.connect(url)
+  DB.extension :date_arithmetic
 else
   DB = Sequel.sqlite
+  DB.extension :date_arithmetic
+
   DB.create_table(:accounts) do
     primary_key :id, type: :Bignum
     String :email, null: false
@@ -19,6 +22,13 @@ else
     String :name
     String :ph, null: false
   end
+  # Used by the remember me feature
+  DB.create_table(:account_remember_keys) do
+    foreign_key :id, :accounts, :primary_key=>true, :type=>:Bignum
+    String :key, :null=>false
+    DateTime :deadline, :null=>false, :default=>Sequel.date_add(Sequel::CURRENT_TIMESTAMP, :days=>14)
+  end
+
   DB.create_table(:oauth_applications) do
     primary_key :id, type: Integer
     foreign_key :account_id, :accounts, null: false
@@ -66,7 +76,6 @@ if ENV.delete("RODAUTH_DEBUG")
   DB.loggers << Logger.new($stdout)
 end
 
-DB.extension :date_arithmetic
 DB.freeze
 
 # OAuth with myself
@@ -113,7 +122,7 @@ class AuthenticationServer < Roda
 
   plugin :rodauth, json: true do
     db DB
-    enable :login, :logout, :create_account, :oidc
+    enable :login, :logout, :create_account, :remember, :oidc
     login_return_to_requested_location? true
     account_password_hash_column :ph
     title_instance_variable :@page_title
@@ -148,6 +157,7 @@ class AuthenticationServer < Roda
   route do |r|
     r.assets
     r.rodauth
+    rodauth.load_memory
     rodauth.oauth_applications
     rodauth.openid_configuration
     rodauth.webfinger
