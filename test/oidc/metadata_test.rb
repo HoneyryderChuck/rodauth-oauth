@@ -19,6 +19,7 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
     assert last_response.headers["Content-Type"] == "application/json"
     assert json_body["issuer"] == "http://example.org"
     assert json_body["authorization_endpoint"] == "http://example.org/authorize"
+    assert !json_body["end_session_endpoint"]
     assert json_body["token_endpoint"] == "http://example.org/token"
     assert json_body["userinfo_endpoint"] == "http://example.org/userinfo"
     assert json_body["jwks_uri"] == "http://example.org/jwks"
@@ -68,6 +69,19 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
     assert last_response.status == 200
 
     assert json_body["claims_supported"] == %w[sub iss iat exp aud auth_time email]
+  end
+
+  def test_oidc_metadata_openid_configuration_rp_initiated_logout
+    rodauth do
+      use_rp_initiated_logout? true
+    end
+    setup_application
+
+    get("/.well-known/openid-configuration")
+
+    assert last_response.status == 200
+
+    assert json_body["end_session_endpoint"] == "http://example.org/oidc-logout"
   end
 
   private
