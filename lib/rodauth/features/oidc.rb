@@ -77,6 +77,7 @@ module Rodauth
     auth_value_method :oauth_prompt_login_interval, 5 * 60 * 60 # 5 minutes
 
     # logout
+    auth_value_method :oauth_applications_post_logout_redirect_uri_column, :post_logout_redirect_uri
     auth_value_method :use_rp_initiated_logout?, false
 
     auth_value_methods(:get_oidc_param, :get_additional_param)
@@ -419,6 +420,18 @@ module Rodauth
       params = json_access_token_payload(oauth_token)
       params.delete("access_token")
       params
+    end
+
+    # Logout
+
+    def validate_oidc_logout_params
+      redirect_response_error("invalid_request") unless param_or_nil("id_token_hint")
+      # check if valid token hint type
+      return unless (redirect_uri = param_or_nil("post_logout_redirect_uri"))
+
+      return if check_valid_uri?(redirect_uri)
+
+      redirect_response_error("invalid_request")
     end
 
     # Metadata
