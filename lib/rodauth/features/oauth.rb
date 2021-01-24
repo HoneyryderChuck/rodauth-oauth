@@ -466,10 +466,6 @@ module Rodauth
       end
     end
 
-    def initialize(scope)
-      @scope = scope
-    end
-
     def scopes
       scope = request.params["scope"]
       case scope
