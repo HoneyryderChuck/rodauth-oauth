@@ -343,6 +343,7 @@ module Rodauth
 
       # json-jwt
       def jwt_encode(payload)
+        payload[:jti] = generate_jti(payload[:iat])
         jwt = JSON::JWT.new(payload)
         jwk = JSON::JWK.new(_jwt_key)
 
