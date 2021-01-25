@@ -108,10 +108,10 @@ module Rodauth
       end
     end
 
-    def openid_configuration(issuer = nil)
+    def openid_configuration(alt_issuer = nil)
       request.on(".well-known/openid-configuration") do
         request.get do
-          json_response_success(openid_configuration_body(issuer), cache: true)
+          json_response_success(openid_configuration_body(alt_issuer), cache: true)
         end
       end
     end

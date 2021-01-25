@@ -67,6 +67,10 @@ module Rodauth
       end
     end
 
+    def issuer
+      @issuer ||= oauth_jwt_token_issuer || authorization_server_url
+    end
+
     def authorization_token
       return @authorization_token if defined?(@authorization_token)
 
@@ -79,7 +83,7 @@ module Rodauth
 
         return unless jwt_token
 
-        return if jwt_token["iss"] != (oauth_jwt_token_issuer || authorization_server_url) ||
+        return if jwt_token["iss"] != issuer ||
                   (oauth_jwt_audience && jwt_token["aud"] != oauth_jwt_audience) ||
                   !jwt_token["sub"]
 
@@ -118,7 +122,7 @@ module Rodauth
       claims.delete("iss")
       audience = claims.delete("aud")
 
-      redirect_response_error("invalid_request_object") if audience && audience != authorization_server_url
+      redirect_response_error("invalid_request_object") if audience && audience != issuer
 
       claims.each do |k, v|
         request.params[k.to_s] = v
@@ -209,7 +213,7 @@ module Rodauth
       issued_at = Time.now.to_i
 
       claims = {
-        iss: (oauth_jwt_token_issuer || authorization_server_url), # issuer
+        iss: issuer, # issuer
         iat: issued_at, # issued at
         #
         # sub  REQUIRED - as defined in section 4.1.2 of [RFC7519].  In case of
