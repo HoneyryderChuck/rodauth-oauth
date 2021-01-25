@@ -223,6 +223,9 @@ Style/RedundantSelfAssignment:
 Style/SoleNestedConditional:
   Enabled: true
 
+Style/BlockNesting:
+  Max: 4
+
 Lint/SuppressedException:
   Exclude:
     - lib/generators/**/*

@@ -8,6 +8,8 @@ module Rodauth
 
     JWKS = OAuth::TtlStore.new
 
+    # Recommended to have hmac_secret as well
+
     auth_value_method :oauth_jwt_subject_type, "public" # public, pairwise
     auth_value_method :oauth_jwt_subject_secret, nil # salt for pairwise generation
 
@@ -38,7 +40,9 @@ module Rodauth
       :jwt_encode,
       :jwt_decode,
       :jwks_set,
-      :last_account_login_at
+      :last_account_login_at,
+      :generate_jti,
+      :verify_jti
     )
 
     route(:jwks) do |r|
@@ -109,7 +113,7 @@ module Rodauth
                   redirect_response_error("invalid_request_object")
                 end
 
-      claims = jwt_decode(request_object, jws_key: jwk_import(jws_jwk), jws_algorithm: jwk[:alg])
+      claims = jwt_decode(request_object, jws_key: jwk_import(jws_jwk), jws_algorithm: jwk[:alg], verify_jti: false)
 
       redirect_response_error("invalid_request_object") unless claims
 
@@ -321,6 +325,16 @@ module Rodauth
       end
     end
 
+    def generate_jti(iat)
+      # Use the key and iat to create a unique key per request to prevent replay attacks
+      jti_raw = [hmac_secret, iat].join(":").to_s
+      Digest::SHA256.hexdigest(jti_raw)
+    end
+
+    def verify_jti(jti, payload)
+      generate_jti(payload["iat"]) == jti
+    end
+
     if defined?(JSON::JWT)
 
       def jwk_import(data)
@@ -344,17 +358,36 @@ module Rodauth
         jwt.to_s
       end
 
-      def jwt_decode(token, jws_key: oauth_jwt_public_key || _jwt_key, **)
+      def jwt_decode(
+        token,
+        jws_key: oauth_jwt_public_key || _jwt_key,
+        verify: true,
+        verify_jti: true,
+        **
+      )
         token = JSON::JWT.decode(token, oauth_jwt_jwe_key).plain_text if oauth_jwt_jwe_key
 
-        if is_authorization_server?
-          if oauth_jwt_legacy_public_key
-            JSON::JWT.decode(token, JSON::JWK::Set.new({ keys: jwks_set }))
-          elsif jws_key
-            JSON::JWT.decode(token, jws_key)
-          end
-        elsif (jwks = auth_server_jwks_set)
-          JSON::JWT.decode(token, JSON::JWK::Set.new(jwks))
+        if verify
+          claims = if is_authorization_server?
+                     if oauth_jwt_legacy_public_key
+                       JSON::JWT.decode(token, JSON::JWK::Set.new({ keys: jwks_set }))
+                     elsif jws_key
+                       JSON::JWT.decode(token, jws_key)
+                     end
+                   elsif (jwks = auth_server_jwks_set)
+                     JSON::JWT.decode(token, JSON::JWK::Set.new(jwks))
+                   end
+
+          return unless
+            claims[:iss] == issuer &&
+            claims[:aud] == (oauth_jwt_audience || oauth_application[oauth_applications_client_id_column]) &&
+            (!claims[:iat] || Time.at(claims[:iat]) > (Time.now - oauth_token_expires_in)) &&
+            (!claims[:exp] || Time.at(claims[:exp]) > Time.now) &&
+            (!verify_jti || verify_jti(claims[:jti], claims))
+
+          claims
+        else
+          JSON::JWT.decode(token, :skip_verification)
         end
       rescue JSON::JWT::Exception
         nil
@@ -388,12 +421,8 @@ module Rodauth
           key = jwk.keypair
         end
 
-        # Use the key and iat to create a unique key per request to prevent replay attacks
-        jti_raw = [key, payload[:iat]].join(":").to_s
-        jti = Digest::SHA256.hexdigest(jti_raw)
-
         # @see JWT reserved claims - https://tools.ietf.org/html/draft-jones-json-web-token-07#page-7
-        payload[:jti] = jti
+        payload[:jti] = generate_jti(payload[:iat])
         token = JWT.encode(payload, key, oauth_jwt_algorithm, headers)
 
         if oauth_jwt_jwe_key
@@ -409,20 +438,45 @@ module Rodauth
         token
       end
 
-      def jwt_decode(token, jws_key: oauth_jwt_public_key || _jwt_key, jws_algorithm: oauth_jwt_algorithm)
+      def jwt_decode(
+        token,
+        jws_key: oauth_jwt_public_key || _jwt_key,
+        jws_algorithm: oauth_jwt_algorithm,
+        verify: true,
+        verify_jti: true
+      )
         # decrypt jwe
         token = JWE.decrypt(token, oauth_jwt_jwe_key) if oauth_jwt_jwe_key
+
+        # verifying the JWT implies verifying:
+        #
+        # issuer: check that server generated the token
+        # aud: check the audience field (client is who he says he is)
+        # iat: check that the token didn't expire
+        #
+        # subject can't be verified automatically without having access to the account id,
+        # which we don't because that's the whole point.
+        #
+        jwt_params = {
+          verify_iss: true,
+          iss: issuer,
+          verify_aud: true,
+          aud: (oauth_jwt_audience || oauth_application[oauth_applications_client_id_column]),
+          verify_jti: (verify_jti ? method(:verify_jti) : false),
+          verify_iat: true
+        }
+
         # decode jwt
         if is_authorization_server?
           if oauth_jwt_legacy_public_key
             algorithms = jwks_set.select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
-            JWT.decode(token, nil, true, jwks: { keys: jwks_set }, algorithms: algorithms).first
+            JWT.decode(token, nil, verify, jwks: { keys: jwks_set }, algorithms: algorithms, **jwt_params).first
           elsif jws_key
-            JWT.decode(token, jws_key, true, algorithms: [jws_algorithm]).first
+            JWT.decode(token, jws_key, verify, algorithms: [jws_algorithm], **jwt_params).first
           end
         elsif (jwks = auth_server_jwks_set)
           algorithms = jwks[:keys].select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
-          JWT.decode(token, nil, true, jwks: jwks, algorithms: algorithms).first
+          JWT.decode(token, nil, verify, jwks: jwks, algorithms: algorithms, **jwt_params).first
         end
       rescue JWT::DecodeError, JWT::JWKError
         nil
