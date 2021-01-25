@@ -60,7 +60,7 @@ Base = Class.new(Roda)
 Base.opts[:check_dynamic_arity] = Base.opts[:check_arity] = :warn
 Base.plugin :flash
 Base.plugin :render, views: "test/views", layout_opts: { path: "test/views/layout.str" }
-Base.plugin(:not_found) { raise "path #{request.path_info} not found" }
+Base.plugin(:not_found) { view inline: "#{request.path_info}: Route not found" }
 Base.plugin :common_logger if ENV.key?("RODAUTH_DEBUG")
 
 require "roda/session_middleware"
