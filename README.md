@@ -25,7 +25,12 @@ This gem implements the following RFCs and features of OAuth:
 * [JWT Secured Authorization Requests](https://tools.ietf.org/html/draft-ietf-oauth-jwsreq-20);
 * OAuth application and token management dashboards;
 
-It also implements the [OpenID Connect layer](https://openid.net/connect/) on top of the OAuth features it provides.
+It also implements the [OpenID Connect layer](https://openid.net/connect/) on top of the OAuth features it provides, including:
+
+* [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html);
+* [OpenID Connect Discovery](https://openid.net/specs/openid-connect-discovery-1_0-29.html);
+* [OpenID Multiple Response Types](https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html);
+* [RP Initiated Logout](https://openid.net/specs/openid-connect-rpinitiated-1_0.html);
 
 This gem supports also rails (through [rodauth-rails]((https://github.com/janko/rodauth-rails))).
 
