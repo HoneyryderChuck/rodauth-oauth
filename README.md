@@ -104,7 +104,7 @@ For OpenID, it's very similar to the example above:
 ```ruby
 plugin :rodauth do
   # enable it in the plugin
-  enable :login, :openid
+  enable :login, :oidc
   oauth_application_default_scope %w[openid]
   oauth_application_scopes %w[openid email profile]
 end

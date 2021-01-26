@@ -148,7 +148,7 @@ ruby26:
       - "coverage/"
   parallel:
     matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails60, Gemfile-rails52]
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails61, Gemfile-rails60, Gemfile-rails52]
 ruby27:
   <<: *test_services
   before_script:
@@ -160,7 +160,7 @@ ruby27:
     - *test
   parallel:
     matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails60, Gemfile-rails52]
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails61, Gemfile-rails60, Gemfile-rails52]
   artifacts:
     paths:
       - "coverage/"

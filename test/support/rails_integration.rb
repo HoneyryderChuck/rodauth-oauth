@@ -30,7 +30,7 @@ else
       opts[:json] = jwt_only ? :only : true
 
       app.plugin :render, views: "test/views"
-      app.configure(nil, opts) do
+      app.configure(nil, **opts) do
         # OAuth
         rodauth_blocks.reverse_each do |rodauth_block|
           instance_exec(&rodauth_block)
