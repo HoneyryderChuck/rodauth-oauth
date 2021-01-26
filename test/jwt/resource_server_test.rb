@@ -116,7 +116,7 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
     headers[:kid] = jwk.kid
     key = jwk.keypair
 
-    params[:jti] = Digest::SHA256.hexdigest(":#{params[:iat]}")
+    params[:jti] = Digest::SHA256.hexdigest("#{params[:aud]}:#{params[:iat]}")
 
     JWT.encode(params, key, alg, headers)
   end

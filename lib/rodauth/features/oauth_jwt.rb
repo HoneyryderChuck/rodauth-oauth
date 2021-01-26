@@ -325,14 +325,17 @@ module Rodauth
       end
     end
 
-    def generate_jti(iat)
+    def generate_jti(payload)
       # Use the key and iat to create a unique key per request to prevent replay attacks
-      jti_raw = [hmac_secret, iat].join(":").to_s
+      jti_raw = [
+        payload[:aud] || payload["aud"],
+        payload[:iat] || payload["iat"]
+      ].join(":").to_s
       Digest::SHA256.hexdigest(jti_raw)
     end
 
     def verify_jti(jti, payload)
-      generate_jti(payload["iat"]) == jti
+      generate_jti(payload) == jti
     end
 
     if defined?(JSON::JWT)
@@ -343,7 +346,7 @@ module Rodauth
 
       # json-jwt
       def jwt_encode(payload)
-        payload[:jti] = generate_jti(payload[:iat])
+        payload[:jti] = generate_jti(payload)
         jwt = JSON::JWT.new(payload)
         jwk = JSON::JWK.new(_jwt_key)
 
@@ -423,7 +426,7 @@ module Rodauth
         end
 
         # @see JWT reserved claims - https://tools.ietf.org/html/draft-jones-json-web-token-07#page-7
-        payload[:jti] = generate_jti(payload[:iat])
+        payload[:jti] = generate_jti(payload)
         token = JWT.encode(payload, key, oauth_jwt_algorithm, headers)
 
         if oauth_jwt_jwe_key
