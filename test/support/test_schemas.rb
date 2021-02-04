@@ -15,8 +15,8 @@ module TestSchemas
   # rubocop:disable Metrics/MethodLength
   def self.oidc_configuration_response
     {
-      "type": "object",
-      "required": %w[
+      type: "object",
+      required: %w[
         issuer
         authorization_endpoint
         token_endpoint
@@ -25,60 +25,60 @@ module TestSchemas
         subject_types_supported
         id_token_signing_alg_values_supported
       ],
-      "properties": {
-        "issuer": {
+      properties: {
+        issuer: {
           "$id": "#/properties/issuer",
-          "type": "string",
-          "title": "The issuer schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": "",
-          "examples": [
+          type: "string",
+          title: "The issuer schema",
+          description: "An explanation about the purpose of this instance.",
+          default: "",
+          examples: [
             "https://server.example.com"
           ]
         },
-        "authorization_endpoint": {
+        authorization_endpoint: {
           "$id": "#/properties/authorization_endpoint",
-          "type": "string",
-          "title": "The authorization_endpoint schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": "",
-          "examples": [
+          type: "string",
+          title: "The authorization_endpoint schema",
+          description: "An explanation about the purpose of this instance.",
+          default: "",
+          examples: [
             "https://server.example.com/connect/authorize"
           ]
         },
-        "token_endpoint": {
+        token_endpoint: {
           "$id": "#/properties/token_endpoint",
-          "type": "string",
-          "title": "The token_endpoint schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": "",
-          "examples": [
+          type: "string",
+          title: "The token_endpoint schema",
+          description: "An explanation about the purpose of this instance.",
+          default: "",
+          examples: [
             "https://server.example.com/connect/token"
           ]
         },
-        "token_endpoint_auth_methods_supported": {
+        token_endpoint_auth_methods_supported: {
           "$id": "#/properties/token_endpoint_auth_methods_supported",
-          "type": "array", "minItems": 1,
-          "title": "The token_endpoint_auth_methods_supported schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": [],
-          "examples": [
+          type: "array", minItems: 1,
+          title: "The token_endpoint_auth_methods_supported schema",
+          description: "An explanation about the purpose of this instance.",
+          default: [],
+          examples: [
             %w[
               client_secret_basic
               private_key_jwt
             ]
           ],
-          "additionalItems": true,
-          "items": {
+          additionalItems: true,
+          items: {
             "$id": "#/properties/token_endpoint_auth_methods_supported/items",
-            "anyOf": [
+            anyOf: [
               {
                 "$id": "#/properties/token_endpoint_auth_methods_supported/items/anyOf/0",
-                "type": "string",
-                "title": "The first anyOf schema",
-                "description": "An explanation about the purpose of this instance.",
-                "default": "",
-                "examples": %w[
+                type: "string",
+                title: "The first anyOf schema",
+                description: "An explanation about the purpose of this instance.",
+                default: "",
+                examples: %w[
                   client_secret_basic
                   private_key_jwt
                 ]
@@ -86,29 +86,29 @@ module TestSchemas
             ]
           }
         },
-        "token_endpoint_auth_signing_alg_values_supported": {
+        token_endpoint_auth_signing_alg_values_supported: {
           "$id": "#/properties/token_endpoint_auth_signing_alg_values_supported",
-          "type": "array", "minItems": 1,
-          "title": "The token_endpoint_auth_signing_alg_values_supported schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": [],
-          "examples": [
+          type: "array", minItems: 1,
+          title: "The token_endpoint_auth_signing_alg_values_supported schema",
+          description: "An explanation about the purpose of this instance.",
+          default: [],
+          examples: [
             %w[
               RS256
               ES256
             ]
           ],
-          "additionalItems": true,
-          "items": {
+          additionalItems: true,
+          items: {
             "$id": "#/properties/token_endpoint_auth_signing_alg_values_supported/items",
-            "anyOf": [
+            anyOf: [
               {
                 "$id": "#/properties/token_endpoint_auth_signing_alg_values_supported/items/anyOf/0",
-                "type": "string",
-                "title": "The first anyOf schema",
-                "description": "An explanation about the purpose of this instance.",
-                "default": "",
-                "examples": %w[
+                type: "string",
+                title: "The first anyOf schema",
+                description: "An explanation about the purpose of this instance.",
+                default: "",
+                examples: %w[
                   RS256
                   ES256
                 ]
@@ -116,79 +116,79 @@ module TestSchemas
             ]
           }
         },
-        "userinfo_endpoint": {
+        userinfo_endpoint: {
           "$id": "#/properties/userinfo_endpoint",
-          "type": "string",
-          "title": "The userinfo_endpoint schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": "",
-          "examples": [
+          type: "string",
+          title: "The userinfo_endpoint schema",
+          description: "An explanation about the purpose of this instance.",
+          default: "",
+          examples: [
             "https://server.example.com/connect/userinfo"
           ]
         },
-        "check_session_iframe": {
+        check_session_iframe: {
           "$id": "#/properties/check_session_iframe",
-          "type": "string",
-          "title": "The check_session_iframe schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": "",
-          "examples": [
+          type: "string",
+          title: "The check_session_iframe schema",
+          description: "An explanation about the purpose of this instance.",
+          default: "",
+          examples: [
             "https://server.example.com/connect/check_session"
           ]
         },
-        "end_session_endpoint": {
+        end_session_endpoint: {
           "$id": "#/properties/end_session_endpoint",
-          "type": "string",
-          "title": "The end_session_endpoint schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": "",
-          "examples": [
+          type: "string",
+          title: "The end_session_endpoint schema",
+          description: "An explanation about the purpose of this instance.",
+          default: "",
+          examples: [
             "https://server.example.com/connect/end_session"
           ]
         },
-        "jwks_uri": {
+        jwks_uri: {
           "$id": "#/properties/jwks_uri",
-          "type": "string",
-          "title": "The jwks_uri schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": "",
-          "examples": [
+          type: "string",
+          title: "The jwks_uri schema",
+          description: "An explanation about the purpose of this instance.",
+          default: "",
+          examples: [
             "https://server.example.com/jwks.json"
           ]
         },
-        "registration_endpoint": {
+        registration_endpoint: {
           "$id": "#/properties/registration_endpoint",
-          "type": "string",
-          "title": "The registration_endpoint schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": "",
-          "examples": [
+          type: "string",
+          title: "The registration_endpoint schema",
+          description: "An explanation about the purpose of this instance.",
+          default: "",
+          examples: [
             "https://server.example.com/connect/register"
           ]
         },
-        "scopes_supported": {
+        scopes_supported: {
           "$id": "#/properties/scopes_supported",
-          "type": "array", "minItems": 1,
-          "title": "The scopes_supported schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": [],
-          "examples": [
+          type: "array", minItems: 1,
+          title: "The scopes_supported schema",
+          description: "An explanation about the purpose of this instance.",
+          default: [],
+          examples: [
             %w[
               openid
               profile
             ]
           ],
-          "additionalItems": true,
-          "items": {
+          additionalItems: true,
+          items: {
             "$id": "#/properties/scopes_supported/items",
-            "anyOf": [
+            anyOf: [
               {
                 "$id": "#/properties/scopes_supported/items/anyOf/0",
-                "type": "string",
-                "title": "The first anyOf schema",
-                "description": "An explanation about the purpose of this instance.",
-                "default": "",
-                "examples": %w[
+                type: "string",
+                title: "The first anyOf schema",
+                description: "An explanation about the purpose of this instance.",
+                default: "",
+                examples: %w[
                   openid
                   profile
                 ]
@@ -196,29 +196,29 @@ module TestSchemas
             ]
           }
         },
-        "response_types_supported": {
+        response_types_supported: {
           "$id": "#/properties/response_types_supported",
-          "type": "array", "minItems": 1,
-          "title": "The response_types_supported schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": [],
-          "examples": [
+          type: "array", minItems: 1,
+          title: "The response_types_supported schema",
+          description: "An explanation about the purpose of this instance.",
+          default: [],
+          examples: [
             [
               "code",
               "code id_token"
             ]
           ],
-          "additionalItems": true,
-          "items": {
+          additionalItems: true,
+          items: {
             "$id": "#/properties/response_types_supported/items",
-            "anyOf": [
+            anyOf: [
               {
                 "$id": "#/properties/response_types_supported/items/anyOf/0",
-                "type": "string",
-                "title": "The first anyOf schema",
-                "description": "An explanation about the purpose of this instance.",
-                "default": "",
-                "examples": [
+                type: "string",
+                title: "The first anyOf schema",
+                description: "An explanation about the purpose of this instance.",
+                default: "",
+                examples: [
                   "code",
                   "code id_token"
                 ]
@@ -226,29 +226,29 @@ module TestSchemas
             ]
           }
         },
-        "acr_values_supported": {
+        acr_values_supported: {
           "$id": "#/properties/acr_values_supported",
-          "type": "array", "minItems": 1,
-          "title": "The acr_values_supported schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": [],
-          "examples": [
+          type: "array", minItems: 1,
+          title: "The acr_values_supported schema",
+          description: "An explanation about the purpose of this instance.",
+          default: [],
+          examples: [
             [
               "urn:mace:incommon:iap:silver",
               "urn:mace:incommon:iap:bronze"
             ]
           ],
-          "additionalItems": true,
-          "items": {
+          additionalItems: true,
+          items: {
             "$id": "#/properties/acr_values_supported/items",
-            "anyOf": [
+            anyOf: [
               {
                 "$id": "#/properties/acr_values_supported/items/anyOf/0",
-                "type": "string",
-                "title": "The first anyOf schema",
-                "description": "An explanation about the purpose of this instance.",
-                "default": "",
-                "examples": [
+                type: "string",
+                title: "The first anyOf schema",
+                description: "An explanation about the purpose of this instance.",
+                default: "",
+                examples: [
                   "urn:mace:incommon:iap:silver",
                   "urn:mace:incommon:iap:bronze"
                 ]
@@ -256,29 +256,29 @@ module TestSchemas
             ]
           }
         },
-        "subject_types_supported": {
+        subject_types_supported: {
           "$id": "#/properties/subject_types_supported",
-          "type": "array", "minItems": 1,
-          "title": "The subject_types_supported schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": [],
-          "examples": [
+          type: "array", minItems: 1,
+          title: "The subject_types_supported schema",
+          description: "An explanation about the purpose of this instance.",
+          default: [],
+          examples: [
             %w[
               public
               pairwise
             ]
           ],
-          "additionalItems": true,
-          "items": {
+          additionalItems: true,
+          items: {
             "$id": "#/properties/subject_types_supported/items",
-            "anyOf": [
+            anyOf: [
               {
                 "$id": "#/properties/subject_types_supported/items/anyOf/0",
-                "type": "string",
-                "title": "The first anyOf schema",
-                "description": "An explanation about the purpose of this instance.",
-                "default": "",
-                "examples": %w[
+                type: "string",
+                title: "The first anyOf schema",
+                description: "An explanation about the purpose of this instance.",
+                default: "",
+                examples: %w[
                   public
                   pairwise
                 ]
@@ -286,29 +286,29 @@ module TestSchemas
             ]
           }
         },
-        "userinfo_signing_alg_values_supported": {
+        userinfo_signing_alg_values_supported: {
           "$id": "#/properties/userinfo_signing_alg_values_supported",
-          "type": "array", "minItems": 1,
-          "title": "The userinfo_signing_alg_values_supported schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": [],
-          "examples": [
+          type: "array", minItems: 1,
+          title: "The userinfo_signing_alg_values_supported schema",
+          description: "An explanation about the purpose of this instance.",
+          default: [],
+          examples: [
             %w[
               RS256
               ES256
             ]
           ],
-          "additionalItems": true,
-          "items": {
+          additionalItems: true,
+          items: {
             "$id": "#/properties/userinfo_signing_alg_values_supported/items",
-            "anyOf": [
+            anyOf: [
               {
                 "$id": "#/properties/userinfo_signing_alg_values_supported/items/anyOf/0",
-                "type": "string",
-                "title": "The first anyOf schema",
-                "description": "An explanation about the purpose of this instance.",
-                "default": "",
-                "examples": %w[
+                type: "string",
+                title: "The first anyOf schema",
+                description: "An explanation about the purpose of this instance.",
+                default: "",
+                examples: %w[
                   RS256
                   ES256
                 ]
@@ -316,29 +316,29 @@ module TestSchemas
             ]
           }
         },
-        "userinfo_encryption_alg_values_supported": {
+        userinfo_encryption_alg_values_supported: {
           "$id": "#/properties/userinfo_encryption_alg_values_supported",
-          "type": "array", "minItems": 1,
-          "title": "The userinfo_encryption_alg_values_supported schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": [],
-          "examples": [
+          type: "array", minItems: 1,
+          title: "The userinfo_encryption_alg_values_supported schema",
+          description: "An explanation about the purpose of this instance.",
+          default: [],
+          examples: [
             %w[
               RSA1_5
               A128KW
             ]
           ],
-          "additionalItems": true,
-          "items": {
+          additionalItems: true,
+          items: {
             "$id": "#/properties/userinfo_encryption_alg_values_supported/items",
-            "anyOf": [
+            anyOf: [
               {
                 "$id": "#/properties/userinfo_encryption_alg_values_supported/items/anyOf/0",
-                "type": "string",
-                "title": "The first anyOf schema",
-                "description": "An explanation about the purpose of this instance.",
-                "default": "",
-                "examples": %w[
+                type: "string",
+                title: "The first anyOf schema",
+                description: "An explanation about the purpose of this instance.",
+                default: "",
+                examples: %w[
                   RSA1_5
                   A128KW
                 ]
@@ -346,29 +346,29 @@ module TestSchemas
             ]
           }
         },
-        "userinfo_encryption_enc_values_supported": {
+        userinfo_encryption_enc_values_supported: {
           "$id": "#/properties/userinfo_encryption_enc_values_supported",
-          "type": "array", "minItems": 1,
-          "title": "The userinfo_encryption_enc_values_supported schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": [],
-          "examples": [
+          type: "array", minItems: 1,
+          title: "The userinfo_encryption_enc_values_supported schema",
+          description: "An explanation about the purpose of this instance.",
+          default: [],
+          examples: [
             %w[
               A128CBC-HS256
               A128GCM
             ]
           ],
-          "additionalItems": true,
-          "items": {
+          additionalItems: true,
+          items: {
             "$id": "#/properties/userinfo_encryption_enc_values_supported/items",
-            "anyOf": [
+            anyOf: [
               {
                 "$id": "#/properties/userinfo_encryption_enc_values_supported/items/anyOf/0",
-                "type": "string",
-                "title": "The first anyOf schema",
-                "description": "An explanation about the purpose of this instance.",
-                "default": "",
-                "examples": %w[
+                type: "string",
+                title: "The first anyOf schema",
+                description: "An explanation about the purpose of this instance.",
+                default: "",
+                examples: %w[
                   A128CBC-HS256
                   A128GCM
                 ]
@@ -376,29 +376,29 @@ module TestSchemas
             ]
           }
         },
-        "id_token_signing_alg_values_supported": {
+        id_token_signing_alg_values_supported: {
           "$id": "#/properties/id_token_signing_alg_values_supported",
-          "type": "array", "minItems": 1,
-          "title": "The id_token_signing_alg_values_supported schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": [],
-          "examples": [
+          type: "array", minItems: 1,
+          title: "The id_token_signing_alg_values_supported schema",
+          description: "An explanation about the purpose of this instance.",
+          default: [],
+          examples: [
             %w[
               RS256
               ES256
             ]
           ],
-          "additionalItems": true,
-          "items": {
+          additionalItems: true,
+          items: {
             "$id": "#/properties/id_token_signing_alg_values_supported/items",
-            "anyOf": [
+            anyOf: [
               {
                 "$id": "#/properties/id_token_signing_alg_values_supported/items/anyOf/0",
-                "type": "string",
-                "title": "The first anyOf schema",
-                "description": "An explanation about the purpose of this instance.",
-                "default": "",
-                "examples": %w[
+                type: "string",
+                title: "The first anyOf schema",
+                description: "An explanation about the purpose of this instance.",
+                default: "",
+                examples: %w[
                   RS256
                   ES256
                 ]
@@ -406,29 +406,29 @@ module TestSchemas
             ]
           }
         },
-        "id_token_encryption_alg_values_supported": {
+        id_token_encryption_alg_values_supported: {
           "$id": "#/properties/id_token_encryption_alg_values_supported",
-          "type": "array", "minItems": 1,
-          "title": "The id_token_encryption_alg_values_supported schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": [],
-          "examples": [
+          type: "array", minItems: 1,
+          title: "The id_token_encryption_alg_values_supported schema",
+          description: "An explanation about the purpose of this instance.",
+          default: [],
+          examples: [
             %w[
               RSA1_5
               A128KW
             ]
           ],
-          "additionalItems": true,
-          "items": {
+          additionalItems: true,
+          items: {
             "$id": "#/properties/id_token_encryption_alg_values_supported/items",
-            "anyOf": [
+            anyOf: [
               {
                 "$id": "#/properties/id_token_encryption_alg_values_supported/items/anyOf/0",
-                "type": "string",
-                "title": "The first anyOf schema",
-                "description": "An explanation about the purpose of this instance.",
-                "default": "",
-                "examples": %w[
+                type: "string",
+                title: "The first anyOf schema",
+                description: "An explanation about the purpose of this instance.",
+                default: "",
+                examples: %w[
                   RSA1_5
                   A128KW
                 ]
@@ -436,29 +436,29 @@ module TestSchemas
             ]
           }
         },
-        "id_token_encryption_enc_values_supported": {
+        id_token_encryption_enc_values_supported: {
           "$id": "#/properties/id_token_encryption_enc_values_supported",
-          "type": "array", "minItems": 1,
-          "title": "The id_token_encryption_enc_values_supported schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": [],
-          "examples": [
+          type: "array", minItems: 1,
+          title: "The id_token_encryption_enc_values_supported schema",
+          description: "An explanation about the purpose of this instance.",
+          default: [],
+          examples: [
             %w[
               A128CBC-HS256
               A128GCM
             ]
           ],
-          "additionalItems": true,
-          "items": {
+          additionalItems: true,
+          items: {
             "$id": "#/properties/id_token_encryption_enc_values_supported/items",
-            "anyOf": [
+            anyOf: [
               {
                 "$id": "#/properties/id_token_encryption_enc_values_supported/items/anyOf/0",
-                "type": "string",
-                "title": "The first anyOf schema",
-                "description": "An explanation about the purpose of this instance.",
-                "default": "",
-                "examples": %w[
+                type: "string",
+                title: "The first anyOf schema",
+                description: "An explanation about the purpose of this instance.",
+                default: "",
+                examples: %w[
                   A128CBC-HS256
                   A128GCM
                 ]
@@ -466,29 +466,29 @@ module TestSchemas
             ]
           }
         },
-        "request_object_signing_alg_values_supported": {
+        request_object_signing_alg_values_supported: {
           "$id": "#/properties/request_object_signing_alg_values_supported",
-          "type": "array", "minItems": 1,
-          "title": "The request_object_signing_alg_values_supported schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": [],
-          "examples": [
+          type: "array", minItems: 1,
+          title: "The request_object_signing_alg_values_supported schema",
+          description: "An explanation about the purpose of this instance.",
+          default: [],
+          examples: [
             %w[
               none
               RS256
             ]
           ],
-          "additionalItems": true,
-          "items": {
+          additionalItems: true,
+          items: {
             "$id": "#/properties/request_object_signing_alg_values_supported/items",
-            "anyOf": [
+            anyOf: [
               {
                 "$id": "#/properties/request_object_signing_alg_values_supported/items/anyOf/0",
-                "type": "string",
-                "title": "The first anyOf schema",
-                "description": "An explanation about the purpose of this instance.",
-                "default": "",
-                "examples": %w[
+                type: "string",
+                title: "The first anyOf schema",
+                description: "An explanation about the purpose of this instance.",
+                default: "",
+                examples: %w[
                   none
                   RS256
                 ]
@@ -496,29 +496,29 @@ module TestSchemas
             ]
           }
         },
-        "display_values_supported": {
+        display_values_supported: {
           "$id": "#/properties/display_values_supported",
-          "type": "array", "minItems": 1,
-          "title": "The display_values_supported schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": [],
-          "examples": [
+          type: "array", minItems: 1,
+          title: "The display_values_supported schema",
+          description: "An explanation about the purpose of this instance.",
+          default: [],
+          examples: [
             %w[
               page
               popup
             ]
           ],
-          "additionalItems": true,
-          "items": {
+          additionalItems: true,
+          items: {
             "$id": "#/properties/display_values_supported/items",
-            "anyOf": [
+            anyOf: [
               {
                 "$id": "#/properties/display_values_supported/items/anyOf/0",
-                "type": "string",
-                "title": "The first anyOf schema",
-                "description": "An explanation about the purpose of this instance.",
-                "default": "",
-                "examples": %w[
+                type: "string",
+                title: "The first anyOf schema",
+                description: "An explanation about the purpose of this instance.",
+                default: "",
+                examples: %w[
                   page
                   popup
                 ]
@@ -526,29 +526,29 @@ module TestSchemas
             ]
           }
         },
-        "claim_types_supported": {
+        claim_types_supported: {
           "$id": "#/properties/claim_types_supported",
-          "type": "array", "minItems": 1,
-          "title": "The claim_types_supported schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": [],
-          "examples": [
+          type: "array", minItems: 1,
+          title: "The claim_types_supported schema",
+          description: "An explanation about the purpose of this instance.",
+          default: [],
+          examples: [
             %w[
               normal
               distributed
             ]
           ],
-          "additionalItems": true,
-          "items": {
+          additionalItems: true,
+          items: {
             "$id": "#/properties/claim_types_supported/items",
-            "anyOf": [
+            anyOf: [
               {
                 "$id": "#/properties/claim_types_supported/items/anyOf/0",
-                "type": "string",
-                "title": "The first anyOf schema",
-                "description": "An explanation about the purpose of this instance.",
-                "default": "",
-                "examples": %w[
+                type: "string",
+                title: "The first anyOf schema",
+                description: "An explanation about the purpose of this instance.",
+                default: "",
+                examples: %w[
                   normal
                   distributed
                 ]
@@ -556,29 +556,29 @@ module TestSchemas
             ]
           }
         },
-        "claims_supported": {
+        claims_supported: {
           "$id": "#/properties/claims_supported",
-          "type": "array", "minItems": 1,
-          "title": "The claims_supported schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": [],
-          "examples": [
+          type: "array", minItems: 1,
+          title: "The claims_supported schema",
+          description: "An explanation about the purpose of this instance.",
+          default: [],
+          examples: [
             %w[
               sub
               iss
             ]
           ],
-          "additionalItems": true,
-          "items": {
+          additionalItems: true,
+          items: {
             "$id": "#/properties/claims_supported/items",
-            "anyOf": [
+            anyOf: [
               {
                 "$id": "#/properties/claims_supported/items/anyOf/0",
-                "type": "string",
-                "title": "The first anyOf schema",
-                "description": "An explanation about the purpose of this instance.",
-                "default": "",
-                "examples": %w[
+                type: "string",
+                title: "The first anyOf schema",
+                description: "An explanation about the purpose of this instance.",
+                default: "",
+                examples: %w[
                   sub
                   iss
                 ]
@@ -586,49 +586,49 @@ module TestSchemas
             ]
           }
         },
-        "claims_parameter_supported": {
+        claims_parameter_supported: {
           "$id": "#/properties/claims_parameter_supported",
-          "type": "boolean",
-          "title": "The claims_parameter_supported schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": false,
-          "examples": [
+          type: "boolean",
+          title: "The claims_parameter_supported schema",
+          description: "An explanation about the purpose of this instance.",
+          default: false,
+          examples: [
             true
           ]
         },
-        "service_documentation": {
+        service_documentation: {
           "$id": "#/properties/service_documentation",
-          "type": "string",
-          "title": "The service_documentation schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": "",
-          "examples": [
+          type: "string",
+          title: "The service_documentation schema",
+          description: "An explanation about the purpose of this instance.",
+          default: "",
+          examples: [
             "http://server.example.com/connect/service_documentation.html"
           ]
         },
-        "ui_locales_supported": {
+        ui_locales_supported: {
           "$id": "#/properties/ui_locales_supported",
-          "type": "array", "minItems": 1,
-          "title": "The ui_locales_supported schema",
-          "description": "An explanation about the purpose of this instance.",
-          "default": [],
-          "examples": [
+          type: "array", minItems: 1,
+          title: "The ui_locales_supported schema",
+          description: "An explanation about the purpose of this instance.",
+          default: [],
+          examples: [
             %w[
               en-US
               en-GB
             ]
           ],
-          "additionalItems": true,
-          "items": {
+          additionalItems: true,
+          items: {
             "$id": "#/properties/ui_locales_supported/items",
-            "anyOf": [
+            anyOf: [
               {
                 "$id": "#/properties/ui_locales_supported/items/anyOf/0",
-                "type": "string",
-                "title": "The first anyOf schema",
-                "description": "An explanation about the purpose of this instance.",
-                "default": "",
-                "examples": %w[
+                type: "string",
+                title: "The first anyOf schema",
+                description: "An explanation about the purpose of this instance.",
+                default: "",
+                examples: %w[
                   en-US
                   en-GB
                 ]
@@ -637,7 +637,7 @@ module TestSchemas
           }
         }
       },
-      "additionalProperties": true
+      additionalProperties: true
     }
   end
   # rubocop:enable Metrics/MethodLength
