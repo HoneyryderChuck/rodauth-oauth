@@ -42,7 +42,8 @@ module Rodauth
       :jwks_set,
       :last_account_login_at,
       :generate_jti,
-      :verify_jti
+      :verify_jti,
+      :verify_aud
     )
 
     route(:jwks) do |r|
@@ -338,6 +339,17 @@ module Rodauth
       generate_jti(payload) == jti
     end
 
+    def verify_aud(aud, payload)
+      client_aud = oauth_jwt_audience || begin
+        @oauth_application ||= db[oauth_applications_table].where(
+          oauth_applications_client_id_column => payload["client_id"]
+        ).first
+        @oauth_application[oauth_applications_client_id_column]
+      end
+
+      aud == client_aud
+    end
+
     if defined?(JSON::JWT)
 
       def jwk_import(data)
@@ -384,7 +396,7 @@ module Rodauth
 
           return unless
             claims[:iss] == issuer &&
-            claims[:aud] == (oauth_jwt_audience || oauth_application[oauth_applications_client_id_column]) &&
+            verify_aud(claims[:aud], claims) &&
             (!claims[:iat] || Time.at(claims[:iat]) > (Time.now - oauth_token_expires_in)) &&
             (!claims[:exp] || Time.at(claims[:exp]) > Time.now) &&
             (!verify_jti || verify_jti(claims[:jti], claims))
@@ -464,24 +476,28 @@ module Rodauth
         jwt_params = {
           verify_iss: true,
           iss: issuer,
-          verify_aud: true,
-          aud: (oauth_jwt_audience || oauth_application[oauth_applications_client_id_column]),
+          # can't use stock aud verification, as it's dependent on the client application id
+          verify_aud: false,
           verify_jti: (verify_jti ? method(:verify_jti) : false),
           verify_iat: true
         }
 
         # decode jwt
-        if is_authorization_server?
-          if oauth_jwt_legacy_public_key
-            algorithms = jwks_set.select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
-            JWT.decode(token, nil, verify, jwks: { keys: jwks_set }, algorithms: algorithms, **jwt_params).first
-          elsif jws_key
-            JWT.decode(token, jws_key, verify, algorithms: [jws_algorithm], **jwt_params).first
-          end
-        elsif (jwks = auth_server_jwks_set)
-          algorithms = jwks[:keys].select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
-          JWT.decode(token, nil, verify, jwks: jwks, algorithms: algorithms, **jwt_params).first
-        end
+        claims = if is_authorization_server?
+                   if oauth_jwt_legacy_public_key
+                     algorithms = jwks_set.select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
+                     JWT.decode(token, nil, verify, jwks: { keys: jwks_set }, algorithms: algorithms, **jwt_params).first
+                   elsif jws_key
+                     JWT.decode(token, jws_key, verify, algorithms: [jws_algorithm], **jwt_params).first
+                   end
+                 elsif (jwks = auth_server_jwks_set)
+                   algorithms = jwks[:keys].select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
+                   JWT.decode(token, nil, verify, jwks: jwks, algorithms: algorithms, **jwt_params).first
+                 end
+
+        return if verify && !verify_aud(claims["aud"], claims)
+
+        claims
       rescue JWT::DecodeError, JWT::JWKError
         nil
       end
