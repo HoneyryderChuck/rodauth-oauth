@@ -133,12 +133,8 @@ module Rodauth
           # beforehand. Hence, we have to do it twice: decode-and-do-not-verify, initialize
           # the @oauth_application, and then decode-and-verify.
           #
-          oauth_token = jwt_decode(param("id_token_hint"), verify: false)
+          oauth_token = jwt_decode(param("id_token_hint"), verify_claims: false)
           oauth_application_id = oauth_token["client_id"]
-          @oauth_application = db[oauth_applications_table].where(
-            oauth_applications_client_id_column => oauth_application_id
-          ).first
-          oauth_token = oauth_token_by_token(param("id_token_hint"))
 
           # check whether ID token belongs to currently logged-in user
           redirect_response_error("invalid_request") unless oauth_token["sub"] == jwt_subject(

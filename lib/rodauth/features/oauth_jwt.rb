@@ -41,8 +41,7 @@ module Rodauth
       :jwt_decode,
       :jwks_set,
       :last_account_login_at,
-      :generate_jti,
-      :verify_aud
+      :generate_jti
     )
 
     route(:jwks) do |r|
@@ -369,34 +368,31 @@ module Rodauth
       def jwt_decode(
         token,
         jws_key: oauth_jwt_public_key || _jwt_key,
-        verify: true,
+        verify_claims: true,
         verify_jti: true,
         **
       )
         token = JSON::JWT.decode(token, oauth_jwt_jwe_key).plain_text if oauth_jwt_jwe_key
 
-        if verify
-          claims = if is_authorization_server?
-                     if oauth_jwt_legacy_public_key
-                       JSON::JWT.decode(token, JSON::JWK::Set.new({ keys: jwks_set }))
-                     elsif jws_key
-                       JSON::JWT.decode(token, jws_key)
-                     end
-                   elsif (jwks = auth_server_jwks_set)
-                     JSON::JWT.decode(token, JSON::JWK::Set.new(jwks))
+        claims = if is_authorization_server?
+                   if oauth_jwt_legacy_public_key
+                     JSON::JWT.decode(token, JSON::JWK::Set.new({ keys: jwks_set }))
+                   elsif jws_key
+                     JSON::JWT.decode(token, jws_key)
                    end
+                 elsif (jwks = auth_server_jwks_set)
+                   JSON::JWT.decode(token, JSON::JWK::Set.new(jwks))
+                 end
 
-          return unless
-            claims[:iss] == issuer &&
+        if verify_claims && !(claims[:iss] == issuer &&
             verify_aud(claims[:aud], claims) &&
             (!claims[:iat] || Time.at(claims[:iat]) > (Time.now - oauth_token_expires_in)) &&
             (!claims[:exp] || Time.at(claims[:exp]) > Time.now) &&
-            (!verify_jti || verify_jti(claims[:jti], claims))
-
-          claims
-        else
-          JSON::JWT.decode(token, :skip_verification)
+            (!verify_jti || verify_jti(claims[:jti], claims)))
+          return
         end
+
+        claims
       rescue JSON::JWT::Exception
         nil
       end
@@ -450,7 +446,7 @@ module Rodauth
         token,
         jws_key: oauth_jwt_public_key || _jwt_key,
         jws_algorithm: oauth_jwt_algorithm,
-        verify: true,
+        verify_claims: true,
         verify_jti: true
       )
         # decrypt jwe
@@ -465,29 +461,33 @@ module Rodauth
         # subject can't be verified automatically without having access to the account id,
         # which we don't because that's the whole point.
         #
-        jwt_params = {
-          verify_iss: true,
-          iss: issuer,
-          # can't use stock aud verification, as it's dependent on the client application id
-          verify_aud: false,
-          verify_jti: (verify_jti ? method(:verify_jti) : false),
-          verify_iat: true
-        }
+        verify_claims_params = if verify_claims
+                                 {
+                                   verify_iss: true,
+                                   iss: issuer,
+                                   # can't use stock aud verification, as it's dependent on the client application id
+                                   verify_aud: false,
+                                   verify_jti: (verify_jti ? method(:verify_jti) : false),
+                                   verify_iat: true
+                                 }
+                               else
+                                 {}
+                               end
 
         # decode jwt
         claims = if is_authorization_server?
                    if oauth_jwt_legacy_public_key
                      algorithms = jwks_set.select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
-                     JWT.decode(token, nil, verify, jwks: { keys: jwks_set }, algorithms: algorithms, **jwt_params).first
+                     JWT.decode(token, nil, true, jwks: { keys: jwks_set }, algorithms: algorithms, **verify_claims_params).first
                    elsif jws_key
-                     JWT.decode(token, jws_key, verify, algorithms: [jws_algorithm], **jwt_params).first
+                     JWT.decode(token, jws_key, true, algorithms: [jws_algorithm], **verify_claims_params).first
                    end
                  elsif (jwks = auth_server_jwks_set)
                    algorithms = jwks[:keys].select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
-                   JWT.decode(token, nil, verify, jwks: jwks, algorithms: algorithms, **jwt_params).first
+                   JWT.decode(token, nil, true, jwks: jwks, algorithms: algorithms, **verify_claims_params).first
                  end
 
-        return if verify && !verify_aud(claims["aud"], claims)
+        return if verify_claims && !verify_aud(claims["aud"], claims)
 
         claims
       rescue JWT::DecodeError, JWT::JWKError
