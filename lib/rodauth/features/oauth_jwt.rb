@@ -334,19 +334,12 @@ module Rodauth
       Digest::SHA256.hexdigest(jti_raw)
     end
 
-    def verify_jti(jti, payload)
-      generate_jti(payload) == jti
+    def verify_jti(jti, claims)
+      generate_jti(claims) == jti
     end
 
-    def verify_aud(aud, payload)
-      client_aud = oauth_jwt_audience || begin
-        @oauth_application ||= db[oauth_applications_table].where(
-          oauth_applications_client_id_column => payload["client_id"]
-        ).first
-        @oauth_application[oauth_applications_client_id_column]
-      end
-
-      aud == client_aud
+    def verify_aud(aud, claims)
+      aud == (oauth_jwt_audience || claims["client_id"])
     end
 
     if defined?(JSON::JWT)
