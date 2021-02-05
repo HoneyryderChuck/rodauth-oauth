@@ -42,7 +42,6 @@ module Rodauth
       :jwks_set,
       :last_account_login_at,
       :generate_jti,
-      :verify_jti,
       :verify_aud
     )
 
