@@ -13,7 +13,10 @@ Sequel.migration do
       String :client_id, null: false, unique: true
       String :client_secret, null: false, unique: true
       String :scopes, null: false
+      # OIDC
       String :jws_jwk, type: :text
+      # RP-initiated logout
+      String :post_logout_redirect_uri
     end
   end
 
