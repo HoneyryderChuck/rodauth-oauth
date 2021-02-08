@@ -2,40 +2,52 @@
 
 ## master
 
+### 0.5.0 (08/02/2021)
+
+#### RP-Initiated Logout
+
+The `:oidc` plugin can now do [RP-Initiated Logout](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/wikis/RP-Initiated-Logout). It's disabled by default, so read the docs to learn how to enable it.
+
+#### Security
+
+The `:oauth_jwt` (and by association, `:oidc`) plugin(s) verifies the claims of used JWT tokens. This is a **very important security fix**, as without it, there is no protection against replay attacks and other types of misuse of the JWT token.
+
+A new auth method, `generate_jti(claims)`, was [added to the list of oauth_jwt plugin options](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/wikis/JWT-Access-Tokens#rodauth-options). By default, it'll hash the `aud` and `iat` claims together, but you can overwrite how this is done.
+
 ### 0.4.3 (09/12/2020)
 
 * Introspection requests made to an Authorization Server in "resource server" mode are not correctly encoding the body using the "application/x-www-form-urlencoded" format.
 
 ### 0.4.2 (24/11/2020)
 
-### Bugfixes
+#### Bugfixes
 
 * database extensions were being run in resource server mode, when it's not expected that the oauth db tables are around.
 
 ### 0.4.1 (24/11/2020)
 
-### Improvements
+#### Improvements
 
 When in "Resource Server" mode, calling `rodauth.authorization_token` will now return an hash of the JSON payload that the Authorization Server responds, and which was already previously used to authorize access to protected resources.
 
-### Bugfixes
+#### Bugfixes
 
 * An error occurred if the client passed an empty authorization header (`Authorization: ` or `Authorization: Bearer `), causing an unexpected error; It now responds with the proper `401 Unauthorized` status code.
 
 ### 0.4.0 (13/11/2020)
 
-### Features
+#### Features
 
 * A new method, `get_additional_param(account, claim)`, is now exposed; this method will be called whenever non-OIDC scopes are requested in the emission of the ID token.
 
 * The `form_post` response is now supported, either by passing the `response_mode=form_post` request param in the authorization URL, or by setting `oauth_response_mode "form_post"` option. This improves the overall security of an Authorization server even more, as authorization codes are sent to client applications via a POST request to the redirect URI.
 
 
-### Improvements
+#### Improvements
 
 * For the OIDC `address` scope, proper claims are now emitted as per the standard, i.e. the "formatted", "street_address", "locality", "region", "postal_code", "country". These will be the ones referenced in the `get_oidc_param` method.
 
-### Bugfixes
+#### Bugfixes
 
 * The rails templates were missing declarations from a few params, which made some of the flows (the PKCE for example) not work out-of-the box;
 * rails tests were silently not running in CI;
