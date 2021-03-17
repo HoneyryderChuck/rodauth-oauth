@@ -139,7 +139,15 @@ module Rodauth
     auth_value_method :already_in_use_response_status, 409
 
     # OAuth Applications
-    auth_value_method :oauth_applications_path, "oauth-applications"
+    auth_value_method :oauth_applications_route, "oauth-applications"
+    def oauth_applications_path(opts = {})
+      route_path(oauth_applications_route, opts)
+    end
+
+    def oauth_applications_url(opts = {})
+      route_url(oauth_applications_route, opts)
+    end
+
     auth_value_method :oauth_applications_table, :oauth_applications
 
     auth_value_method :oauth_applications_id_column, :id
@@ -192,6 +200,7 @@ module Rodauth
     auth_value_method :oauth_unique_id_generation_retries, 3
 
     auth_value_methods(
+      :oauth_application_path,
       :fetch_access_token,
       :oauth_unique_id_generator,
       :secret_matches?,
@@ -363,9 +372,13 @@ module Rodauth
       end
     end
 
+    def oauth_application_path(id)
+      "#{oauth_applications_path}/#{id}"
+    end
+
     # /oauth-applications routes
     def oauth_applications
-      request.on(oauth_applications_path) do
+      request.on(oauth_applications_route) do
         require_account
 
         request.get "new" do
@@ -422,7 +435,7 @@ module Rodauth
         false
       when revoke_path
         !json_request?
-      when authorize_path, %r{/#{oauth_applications_path}}
+      when authorize_path, oauth_applications_path
         only_json? ? false : super
       else
         super
@@ -1350,7 +1363,7 @@ module Rodauth
         issuer: issuer,
         authorization_endpoint: authorize_url,
         token_endpoint: token_url,
-        registration_endpoint: route_url(oauth_applications_path),
+        registration_endpoint: oauth_applications_url,
         scopes_supported: oauth_application_scopes,
         response_types_supported: responses_supported,
         response_modes_supported: response_modes_supported,
