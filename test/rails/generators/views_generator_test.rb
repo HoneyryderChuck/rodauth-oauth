@@ -28,7 +28,7 @@ else
     test "choosing features" do
       run_generator ["--features", "oauth_applications"]
 
-      %w[oauth_authorize oauth_applications oauth_application new_oauth_application].each do |template|
+      %w[authorize oauth_applications oauth_application new_oauth_application].each do |template|
         assert_file "app/views/rodauth/#{template}.html.erb"
       end
     end
@@ -36,7 +36,7 @@ else
     test "all features" do
       run_generator ["--all"]
 
-      %w[oauth_authorize oauth_applications oauth_application new_oauth_application].each do |template|
+      %w[authorize oauth_applications oauth_application new_oauth_application].each do |template|
         assert_file "app/views/rodauth/#{template}.html.erb"
       end
     end
@@ -44,7 +44,7 @@ else
     test "specifying directory" do
       run_generator %w[--directory oauth]
 
-      assert_file "app/views/oauth/oauth_authorize.html.erb"
+      assert_file "app/views/oauth/authorize.html.erb"
       assert_no_directory "app/views/rodauth"
     end
   end
