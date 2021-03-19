@@ -2,6 +2,20 @@
 
 ## master
 
+### 0.5.1 (19/03/2021)
+
+#### Improvements
+
+* Changing "Callback URL" to "Redirect URL" in default templates;
+
+#### Bugfixes
+
+* (rails integration) Fixed templates location;
+* (rails integration) Fixed migration name from generator;
+* (rails integration) fixed links, html tags, styling and unassigned variables from a few view templates;
+* `oauth_application_path` is now compliant with prefixes and other url helpers, while now having a `oauth_application_url` counterpart;
+* (rails integration) skipping csrf checks for "/userinfo" request (OIDC)
+
 ### 0.5.0 (08/02/2021)
 
 #### RP-Initiated Logout
