@@ -442,9 +442,13 @@ module Rodauth
       end
     end
 
-    # Overrides logged_in?, so that a valid authorization token also authnenticates a request
-    def logged_in?
-      super || authorization_token
+    # Overrides session_value, so that a valid authorization token also authenticates a request
+    def session_value
+      super || begin
+        return unless authorization_token
+
+        authorization_token[oauth_tokens_account_id_column]
+      end
     end
 
     def accepts_json?
