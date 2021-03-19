@@ -223,7 +223,11 @@ Style/RedundantSelfAssignment:
 Style/SoleNestedConditional:
   Enabled: true
 
-Style/BlockNesting:
+# this breaks some tests, to_h returns a frozen hash apparently?
+Style/HashConversion:
+  Enabled: false
+
+Metrics/BlockNesting:
   Max: 4
 
 Lint/SuppressedException:
