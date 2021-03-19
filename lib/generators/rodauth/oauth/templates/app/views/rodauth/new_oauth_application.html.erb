@@ -17,7 +17,7 @@
     <%%= rodauth.field_error('homepage_url') %>
   </div>
   <div class="form-group">
-    <%%= label_tag "redirect_uri", "Authorization callback URL" %>
+    <%%= label_tag "redirect_uri", "Redirect URL" %>
     <%%= text_field_tag "redirect_uri", rodauth.param('redirect_uri'), class: "form-control#{' is-invalid' if rodauth.field_error('redirect_uri')}" %>
     <%%= rodauth.field_error('redirect_uri') %>
   </div>
