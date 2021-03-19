@@ -215,6 +215,15 @@ module Rodauth
       end
     end
 
+    def check_csrf?
+      case request.path
+      when userinfo_path
+        false
+      else
+        super
+      end
+    end
+
     private
 
     def require_authorizable_account

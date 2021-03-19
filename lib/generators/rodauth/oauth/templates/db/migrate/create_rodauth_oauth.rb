@@ -1,4 +1,4 @@
-class CreateRodauthOAuth < ActiveRecord::Migration<%= migration_version %>
+class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
   def change
     create_table :oauth_applications do |t|
       t.integer :account_id

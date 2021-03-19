@@ -1,6 +1,6 @@
 <% apps_count = rodauth.db[rodauth.oauth_applications_table].count %>
 <div class="btn-group" role="group" aria-label="Buttons">
-  <%= link_to "Register new Oauth Application", "/#{rodauth.oauth_applications_path}/new", class: "btn btn-secondary" %>
+  <%= link_to "Register new Oauth Application", "#{rodauth.oauth_applications_path}/new", class: "btn btn-secondary" %>
 </div>
 <% if apps_count.zero? %>
   <p>No oauth applications yet!</p>
@@ -20,7 +20,7 @@
           <td><%= application[rodauth.oauth_applications_client_id_column] %></td>
           <td><%= application[rodauth.oauth_applications_name_column] %></td>
           <td><%= application[rodauth.oauth_applications_homepage_url_column] %></td>
-          <td><%= link_to "Show",  "#{rodauth.oauth_applications_path}/#{application[rodauth.oauth_applications_id_column]}" %></td>
+          <td><%= link_to "Show",   "#{rodauth.oauth_applications_path}/#{application[rodauth.oauth_applications_id_column]}" %></td>
         </tr>
       <% end %>
     </tbody>
