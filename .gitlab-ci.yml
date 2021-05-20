@@ -16,10 +16,10 @@ cache:
 
 .prepare_dbs: &prepare_dbs
   - PGPASSWORD=password createdb -h postgres -U oauth oauth-unique 'oauth database to keep single row for access tokens'
-  - MYSQL_PWD=password mysql -h mysql -u root -e 'CREATE DATABASE oauthunique'
+  - MYSQL_PWD=password mariadb -h mysql -u root -e 'CREATE DATABASE oauthunique'
 
-.deps_alpine: &deps_alpine
-  - apk --update add shared-mime-info g++ make sqlite sqlite-dev postgresql-client postgresql-dev mysql-client mysql-dev git
+.install_deps: &install_deps
+  - apt-get update && apt-get install -y shared-mime-info libsqlite3-dev libmariadb-dev-compat mariadb-client libmariadb-dev postgresql-client libpq-dev
 
 .test: &test
 - "DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
@@ -42,7 +42,7 @@ cache:
 .test_services: &test_services
  services:
     -
-      name: postgres:13-alpine
+      name: postgres:13
       alias: postgres
       # entrypoint: ["/usr/local/bin/db-postgres"]
     -
@@ -87,10 +87,10 @@ jruby:
 ruby23:
   <<: *test_services
   before_script:
-    - *deps_alpine
+    - *install_deps
     - *before_script
     - *prepare_dbs
-  image: "ruby:2.3-alpine"
+  image: "ruby:2.3"
   script:
     - *test
   artifacts:
@@ -102,10 +102,10 @@ ruby23:
 ruby24:
   <<: *test_services
   before_script:
-    - *deps_alpine
+    - *install_deps
     - *before_script
     - *prepare_dbs
-  image: "ruby:2.4-alpine"
+  image: "ruby:2.4"
   only:
     - master
   script:
@@ -119,10 +119,10 @@ ruby24:
 ruby25:
   <<: *test_services
   before_script:
-    - *deps_alpine
+    - *install_deps
     - *before_script
     - *prepare_dbs
-  image: "ruby:2.5-alpine"
+  image: "ruby:2.5"
   only:
     - master
   script:
@@ -136,10 +136,10 @@ ruby25:
 ruby26:
   <<: *test_services
   before_script:
-    - *deps_alpine
+    - *install_deps
     - *before_script
     - *prepare_dbs
-  image: "ruby:2.6-alpine"
+  image: "ruby:2.6"
   only:
     - master
   script:
@@ -153,10 +153,10 @@ ruby26:
 ruby27:
   <<: *test_services
   before_script:
-    - *deps_alpine
+    - *install_deps
     - *before_script
     - *prepare_dbs
-  image: "ruby:2.7-alpine"
+  image: "ruby:2.7"
   script:
     - *test
   parallel:
@@ -168,7 +168,7 @@ ruby27:
 ruby30:
   <<: *test_services
   before_script:
-    - *deps_alpine
+    - *install_deps
     - *before_script
     - *prepare_dbs
     # export RUBYOPT='-rbundler/setup -rrbs/test/setup'
@@ -177,7 +177,7 @@ ruby30:
     # export RBS_TEST_OPT='-Isig'
     # export RBS_TEST_TARGET='Rodauth*'
   allow_failure: true
-  image: "ruby:3.0-rc-alpine"
+  image: "ruby:3.0"
   script:
     - *test
   parallel:
@@ -191,13 +191,12 @@ ruby30:
 coverage:
   stage: prepare
   before_script:
-    - apk --update add g++ make git
     - gem install simplecov --no-doc
   dependencies:
     - jruby
     - ruby23
     - ruby27
-  image: "ruby:2.7-alpine"
+  image: "ruby:3.0"
   script:
     # this is a workaround, because simplecov doesn't support relative paths.
     #
@@ -215,12 +214,12 @@ coverage:
       - "coverage/"
 jekyll:
   stage: test
-  image: "ruby:2.7-alpine"
+  image: "ruby:2.7"
   variables:
     JEKYLL_ENV: production
     BUNDLE_GEMFILE: www/Gemfile
   before_script:
-    - *deps_alpine
+    - *install_deps
     - *before_script
   script:
     - bundle exec rake prepare_website
