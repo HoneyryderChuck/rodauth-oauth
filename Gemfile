@@ -14,8 +14,11 @@ gem "rack_csrf"
 if RUBY_VERSION < "2.5"
   gem "capybara", "~> 3.15.0"
   gem "json-jwt", "~> 1.12.0"
+elsif RUBY_VERSION < "2.6"
+  gem "capybara", "~> 3.35.0"
+  gem "json-jwt"
 else
-  gem "capybara", github: "teamcapybara/capybara", branch: "master"
+  gem "capybara"
   gem "json-jwt"
 end
 
