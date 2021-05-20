@@ -53,6 +53,7 @@ cache:
         - mysql_native_password
 
 variables:
+  BUNDLE_WITHOUT: demo
   BUNDLE_JOBS: 10
   BUNDLE_PATH: vendor
   CI: 1
