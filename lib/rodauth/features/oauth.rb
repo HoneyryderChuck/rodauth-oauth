@@ -568,12 +568,11 @@ module Rodauth
       self.class.__send__(:include, Rodauth::OAuth::ExtendDatabase(db))
 
       # Check whether we can reutilize db entries for the same account / application pair
-      one_oauth_token_per_account = begin
-        db.indexes(oauth_tokens_table).values.any? do |definition|
-          definition[:unique] &&
-            definition[:columns] == oauth_tokens_unique_columns
-        end
+      one_oauth_token_per_account = db.indexes(oauth_tokens_table).values.any? do |definition|
+        definition[:unique] &&
+          definition[:columns] == oauth_tokens_unique_columns
       end
+
       self.class.send(:define_method, :__one_oauth_token_per_account) { one_oauth_token_per_account }
     end
 
