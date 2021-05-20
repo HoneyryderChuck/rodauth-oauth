@@ -39,6 +39,14 @@ cache:
 # JWT supported libs
 - "JWT_LIB=json/jwt DATABASE_URL=postgresql://oauth:password@postgres/oauth bundle exec rake test"
 
+.truffletest: &truffletest
+- "DATABASE_URL=sqlite3::memory: bundle exec rake test"
+- "DATABASE_URL=postgresql://oauth:password@postgres/oauth bundle exec rake test"
+- "DATABASE_URL=mysql2://root:password@mysql/oauth bundle exec rake test"
+# JWT supported libs
+- "JWT_LIB=json/jwt DATABASE_URL=postgresql://oauth:password@postgres/oauth bundle exec rake test"
+
+
 .test_services: &test_services
  services:
     -
@@ -81,6 +89,18 @@ jruby:
   image: "jruby:9.2.13"
   script:
     - *jtest
+  artifacts:
+    paths:
+      - "coverage/"
+truffleruby:
+  <<: *test_services
+  allow_failure: true
+  before_script:
+    - microdnf install -y git libxslt-devel libxml2-devel sqlite-devel mysql-devel postgresql-devel
+    - *before_script
+  image: "ghcr.io/graalvm/truffleruby:latest"
+  script:
+    - *truffletest
   artifacts:
     paths:
       - "coverage/"
