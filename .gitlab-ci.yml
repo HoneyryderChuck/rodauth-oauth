@@ -19,7 +19,7 @@ cache:
   - MYSQL_PWD=password mysql -h mysql -u root -e 'CREATE DATABASE oauthunique'
 
 .deps_alpine: &deps_alpine
-  - apk --update add g++ make sqlite sqlite-dev postgresql-client postgresql-dev mysql-client mysql-dev git
+  - apk --update add shared-mime-info g++ make sqlite sqlite-dev postgresql-client postgresql-dev mysql-client mysql-dev git
 
 .test: &test
 - "DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
@@ -75,7 +75,7 @@ jruby:
   variables:
     JRUBY_OPTS: --debug
   before_script:
-    - apt-get update && apt-get install -y git
+    - apt-get update && apt-get install -y git shared-mime-info
     - *before_script
   image: "jruby:9.2.13"
   script:

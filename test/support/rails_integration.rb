@@ -23,6 +23,11 @@ else
           self
         end
       end
+
+      Rodauth::Rails.configure do |config|
+        config.app = app
+      end
+
       rodauth_blocks = @rodauth_blocks
 
       opts = rodauth_opts(type)

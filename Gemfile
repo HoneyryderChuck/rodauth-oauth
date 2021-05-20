@@ -14,8 +14,11 @@ gem "rack_csrf"
 if RUBY_VERSION < "2.5"
   gem "capybara", "~> 3.15.0"
   gem "json-jwt", "~> 1.12.0"
+elsif RUBY_VERSION < "2.6"
+  gem "capybara", "~> 3.35.0"
+  gem "json-jwt"
 else
-  gem "capybara", github: "teamcapybara/capybara", branch: "master"
+  gem "capybara"
   gem "json-jwt"
 end
 
@@ -48,12 +51,16 @@ gem "xmlenc"
 if RUBY_VERSION < "2.4"
   gem "rubocop", "~> 0.81.0"
   gem "simplecov", "< 0.18.0"
+elsif RUBY_VERSION < "2.5"
+  gem "rubocop", "~> 1.12.0"
+  gem "rubocop-performance", "~> 1.10.2"
+  gem "simplecov", "~> 0.18.0"
 else
   gem "rodauth-select-account", "~> 0.0.2"
   gem "rubocop"
+  gem "rubocop-performance"
   gem "simplecov"
 end
-gem "rubocop-performance"
 
 gem "pry"
 platform :mri do
