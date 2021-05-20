@@ -1,7 +1,7 @@
 # frozen-string-literal: true
 
 module Rodauth
-  Feature.define(:oidc) do
+  Feature.define(:oidc, :Oidc) do
     # https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
     OIDC_SCOPES_MAP = {
       "profile" => %i[name family_name given_name middle_name nickname preferred_username

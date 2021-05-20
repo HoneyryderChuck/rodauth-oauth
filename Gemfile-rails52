@@ -9,7 +9,7 @@ if RUBY_VERSION < "2.5"
   gem "sprockets", "< 4"
 end
 
-gem "rails", "5.2"
+gem "rails", "~> 5.2.0"
 
 gem "rodauth-rails"
 gem "sequel-activerecord_connection"

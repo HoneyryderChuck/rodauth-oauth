@@ -73,12 +73,17 @@ platform :mri do
   end
   gem "sqlite3"
 
+  gem "mysql2"
+  gem "pg"
+end
+
+gem "rbs" if RUBY_VERSION >= "3.0"
+
+group :demo do
   # For demo
   gem "erubi"
   gem "sassc"
-
-  gem "mysql2"
-  gem "pg"
+  gem "webrick" if RUBY_VERSION >= "3.0"
 end
 
 platform :jruby do

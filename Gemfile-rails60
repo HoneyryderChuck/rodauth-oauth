@@ -3,7 +3,7 @@
 eval File.read(File.join(__dir__, "Gemfile"))
 
 # frameworks
-gem "rails", "6.0"
+gem "rails", "~> 6.0.0"
 
 gem "rodauth-rails"
 gem "sequel-activerecord_connection"
