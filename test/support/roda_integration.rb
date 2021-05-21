@@ -37,6 +37,8 @@ DB = begin
        else
          Sequel.sqlite
        end
+  # seeing weird pool timeout errors from sequel, only in CI
+  ENV.delete("PARALLEL") if RUBY_ENGINE == "truffleruby"
 
   db.loggers << Logger.new($stderr) if ENV.key?("RODAUTH_DEBUG")
   Sequel.extension :migration

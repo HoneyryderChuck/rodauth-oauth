@@ -64,7 +64,7 @@ else
 end
 
 gem "pry"
-platform :mri do
+platform :mri, :truffleruby do
   if RUBY_VERSION < "2.5"
     gem "byebug", "~> 11.0.1"
     gem "pry-byebug", "~> 3.7.0"
