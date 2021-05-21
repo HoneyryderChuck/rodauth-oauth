@@ -2,6 +2,16 @@
 
 ## master
 
+### 0.6.0 (21/05/2021)
+
+### Improvements
+
+* RBS signatures
+
+### Chore
+
+* Ruby 3 and Truffleruby are now officially supported and tested in CI.
+
 ### 0.5.1 (19/03/2021)
 
 #### Improvements
