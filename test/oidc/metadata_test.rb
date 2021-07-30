@@ -45,6 +45,20 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
     assert json_body["claims_supported"] == %w[sub iss iat exp aud auth_time email email_verified]
   end
 
+  def test_oidc_metadata_openid_configuration_cors
+    rodauth do
+      oauth_application_scopes %w[openid email.email]
+    end
+    setup_application
+
+    options("/.well-known/openid-configuration")
+
+    assert last_response.status == 200
+    assert last_response.headers["Access-Control-Allow-Origin"] == "*"
+    assert last_response.headers["Access-Control-Allow-Methods"] == "GET, OPTIONS"
+    assert last_response.headers["Access-Control-Max-Age"] == "3600"
+  end
+
   def test_filters_out_invalid_fields
     rodauth do
       oauth_application_scopes %w[openid email]

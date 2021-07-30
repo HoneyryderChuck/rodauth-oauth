@@ -2,6 +2,8 @@
 
 ## master
 
+* Enable CORS requests for OpenID configuration endpoint (@ianks)
+
 ### 0.6.1 (08/09/2021)
 
 #### Bugfixes
