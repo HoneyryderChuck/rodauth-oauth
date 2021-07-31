@@ -280,7 +280,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     oauth_token = db[:oauth_tokens].first
 
     assert page.current_url == "#{oauth_application[:redirect_uri]}#access_token=#{oauth_token[:token]}&" \
-                             "token_type=bearer&expires_in=3600&state=STATE",
+                               "token_type=bearer&expires_in=3600&state=STATE",
            "was redirected instead to #{page.current_url}"
   end
 
