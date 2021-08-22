@@ -62,6 +62,7 @@ class RodauthOAuthTokenIntrospectTest < RodaIntegration
     assert json_body["scope"] == oauth_token[:scopes]
     assert json_body["client_id"] == oauth_application[:client_id]
     assert json_body["token_type"] == "bearer"
+    assert json_body.key?("exp")
   end
 
   def test_oauth_introspect_refresh_token
@@ -79,6 +80,7 @@ class RodauthOAuthTokenIntrospectTest < RodaIntegration
     assert json_body["scope"] == oauth_token[:scopes]
     assert json_body["client_id"] == oauth_application[:client_id]
     assert json_body["token_type"] == "bearer"
+    assert json_body.key?("exp")
   end
 
   def test_oauth_introspect_refresh_token_wrong_token_hint

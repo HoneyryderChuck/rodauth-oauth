@@ -1141,7 +1141,8 @@ module Rodauth
         scope: token[oauth_tokens_scopes_column],
         client_id: oauth_application[oauth_applications_client_id_column],
         # username
-        token_type: oauth_token_type
+        token_type: oauth_token_type,
+        exp: token[oauth_tokens_expires_in_column].to_i
       }
     end
 
