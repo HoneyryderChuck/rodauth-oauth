@@ -9,7 +9,7 @@ module Rodauth::OAuth
         source_root "#{__dir__}/templates"
         namespace "rodauth:oauth:views"
 
-        DEFAULT = %w[oauth_authorize].freeze
+        DEFAULT = %w[authorize].freeze
         VIEWS = {
           oauth_authorize: DEFAULT,
           oauth_applications: %w[oauth_applications oauth_application new_oauth_application]
