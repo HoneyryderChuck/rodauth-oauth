@@ -2,6 +2,13 @@
 
 ## master
 
+### 0.6.1 (08/09/2021)
+
+#### Bugfixes
+
+* Fixed rails view templates escaping.
+* Fixed declaration of authorize template in the generator.
+
 ### 0.6.0 (21/05/2021)
 
 ### Improvements
