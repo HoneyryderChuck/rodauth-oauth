@@ -1103,6 +1103,14 @@ module Rodauth
                           oauth_tokens_scopes_column => oauth_token[oauth_tokens_scopes_column]
                         }
 
+                        refresh_token = oauth_unique_id_generator
+
+                        if oauth_tokens_refresh_token_hash_column
+                          insert_params[oauth_tokens_refresh_token_hash_column] = generate_token_hash(refresh_token)
+                        else
+                          insert_params[oauth_tokens_refresh_token_column] = refresh_token
+                        end
+
                         # revoke the refresh token
                         oauth_tokens_ds.where(oauth_tokens_id_column => oauth_token[oauth_tokens_id_column])
                                        .update(oauth_tokens_revoked_at_column => Sequel::CURRENT_TIMESTAMP)
@@ -1116,6 +1124,7 @@ module Rodauth
                       end
 
         oauth_token[oauth_tokens_token_column] = token
+        oauth_token[oauth_tokens_refresh_token_column] = refresh_token if refresh_token
         oauth_token
       end
     end
