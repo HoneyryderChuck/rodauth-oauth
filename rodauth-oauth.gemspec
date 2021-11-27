@@ -18,7 +18,7 @@ Gem::Specification.new do |spec|
   spec.metadata["source_code_uri"] = "https://gitlab.com/honeyryderchuck/rodauth-oauth"
   spec.metadata["changelog_uri"] = "https://gitlab.com/honeyryderchuck/rodauth-oauth/-/blob/master/CHANGELOG.md"
 
-  spec.files = Dir["LICENSE.txt", "README.md", "lib/**/*.rb", "templates/*", "CHANGELOG.md"]
+  spec.files = Dir["LICENSE.txt", "README.md", "lib/**/*.rb", "templates/*", "locales/**/*.yml", "CHANGELOG.md"]
   spec.extra_rdoc_files = Dir["LICENSE.txt", "README.md", "CHANGELOG.md"]
 
   spec.require_paths = ["lib"]
