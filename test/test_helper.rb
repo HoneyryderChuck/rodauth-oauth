@@ -19,6 +19,7 @@ require "minitest/hooks"
 
 require "sequel"
 require "roda"
+require "rodauth/i18n"
 require "rodauth/oauth"
 require "rodauth/version"
 require "bcrypt"

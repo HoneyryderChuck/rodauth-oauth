@@ -97,6 +97,7 @@ class RodaIntegration < Minitest::Test
     opts[:json] = jwt_only ? :only : true
 
     app.plugin(:rodauth, opts) do
+      enable :i18n
       account_password_hash_column :ph
       rodauth_blocks.reverse_each do |rodauth_block|
         instance_exec(&rodauth_block)
