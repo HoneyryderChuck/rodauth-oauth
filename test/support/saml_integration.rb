@@ -110,6 +110,7 @@ class SAMLIntegration < RodaIntegration
         end
       end
     end
+    Rodauth::I18n.add
   end
 
   def oauth_feature
