@@ -186,6 +186,8 @@ module Rodauth
 
     def openid_configuration(alt_issuer = nil)
       request.on(".well-known/openid-configuration") do
+        allow_cors(request)
+
         request.get do
           json_response_success(openid_configuration_body(alt_issuer), cache: true)
         end
@@ -492,6 +494,16 @@ module Rodauth
           # Claims with zero elements MUST be omitted from the response
           (val.respond_to?(:empty?) && val.empty?)
       end
+    end
+
+    def allow_cors(request)
+      return unless request.request_method == "OPTIONS"
+
+      response["Access-Control-Allow-Origin"] = "*"
+      response["Access-Control-Allow-Methods"] = "GET, OPTIONS"
+      response["Access-Control-Max-Age"] = "3600"
+      response.status = 200
+      request.halt
     end
   end
 end
