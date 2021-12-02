@@ -2,7 +2,19 @@
 
 ## master
 
+#### Features
+
+* Internationalization (i18n) support by hooking on [rodauth-oauth](https://github.com/janko/rodauth-i18n).
+  * Sets all text under `translatable_method`
+  * Provides english translations for all `rodauth-oauth` related user facing text.
+
+#### Improvements
+
 * Enable CORS requests for OpenID configuration endpoint (@ianks)
+
+#### Chore
+
+Setting `rodauth` minimal supported version to `2.0.0`.
 
 ### 0.6.1 (08/09/2021)
 

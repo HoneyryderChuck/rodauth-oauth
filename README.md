@@ -516,7 +516,7 @@ payload = json.parse(response.to_s)
 puts payload #=> {
 # "access_token" => ....
 # "mac_key" => ....
-# "mac_algorithm" => 
+# "mac_algorithm" =>
 ```
 
 which you'll be able to use to generate the mac signature to send in the "Authorization" header.
@@ -565,7 +565,7 @@ plugin :rodauth do
   enable :oauth_jwt
   oauth_jwt_key rsa_private
   oauth_jwt_public_key rsa_public
-  oauth_jwt_algorithm "RS256" 
+  oauth_jwt_algorithm "RS256"
 end
 ```
 
@@ -581,7 +581,7 @@ plugin :rodauth do
   enable :oauth_jwt
   oauth_jwt_jwk_key rsa_private
   oauth_jwt_jwk_public_key rsa_public
-  oauth_jwt_jwk_algorithm "RS256" 
+  oauth_jwt_jwk_algorithm "RS256"
 end
 ```
 
@@ -627,6 +627,14 @@ puts payload #=> {
 
 You'll still need the "oauth_tokens" table, however you can remove the "token" column.
 
+#### Internationalization (i18n)
+
+`rodauth-oauth` supports translating all user-facing text found in all pages and forms, by integrating with [rodauth-i18n](https://github.com/janko/rodauth-i18n). Just set it up in your application and `rodauth` configuration.
+
+Default translations shipping with `rodauth-oauth` can be found [in this directory](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/tree/master/locales). If they're not available for the languages you'd like to support, consider getting them translated from the english text, and contributing them to this repository via a Merge Request.
+
+(This feature is available since `v0.7`.)
+
 #### Caveats
 
 Although very handy for the mentioned use case, one can't revoke a JWT token on demand (it must expire first).
@@ -646,4 +654,3 @@ After checking out the repo, run `bundle install` to install dependencies. Then,
 ## Contributing
 
 Bug reports and pull requests are welcome on Gitlab at https://gitlab.com/honeyryderchuck/rodauth-oauth.
-

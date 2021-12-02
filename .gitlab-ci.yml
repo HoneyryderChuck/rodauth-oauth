@@ -86,7 +86,7 @@ jruby:
   before_script:
     - apt-get update && apt-get install -y git shared-mime-info
     - *before_script
-  image: "jruby:9.2.13"
+  image: "jruby:9.3"
   script:
     - *jtest
   artifacts:
@@ -196,7 +196,6 @@ ruby30:
     # export RBS_TEST_LOGLEVEL=error
     # export RBS_TEST_OPT='-Isig'
     # export RBS_TEST_TARGET='Rodauth*'
-  allow_failure: true
   image: "ruby:3.0"
   script:
     - *test
@@ -214,8 +213,10 @@ coverage:
     - gem install simplecov --no-doc
   dependencies:
     - jruby
+    - truffleruby
     - ruby23
     - ruby27
+    - ruby30
   image: "ruby:3.0"
   script:
     # this is a workaround, because simplecov doesn't support relative paths.
@@ -234,7 +235,7 @@ coverage:
       - "coverage/"
 jekyll:
   stage: test
-  image: "ruby:2.7"
+  image: "ruby:3.0"
   variables:
     JEKYLL_ENV: production
     BUNDLE_GEMFILE: www/Gemfile

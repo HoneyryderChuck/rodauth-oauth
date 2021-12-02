@@ -168,24 +168,24 @@ module Rodauth
     auth_value_method :oauth_token_type, "bearer"
     auth_value_method :oauth_refresh_token_protection_policy, "none" # can be: none, sender_constrained, rotation
 
-    auth_value_method :invalid_client_message, "Invalid client"
-    auth_value_method :invalid_grant_type_message, "Invalid grant type"
-    auth_value_method :invalid_grant_message, "Invalid grant"
-    auth_value_method :invalid_scope_message, "Invalid scope"
+    translatable_method :invalid_client_message, "Invalid client"
+    translatable_method :invalid_grant_type_message, "Invalid grant type"
+    translatable_method :invalid_grant_message, "Invalid grant"
+    translatable_method :invalid_scope_message, "Invalid scope"
 
-    auth_value_method :invalid_url_message, "Invalid URL"
-    auth_value_method :unsupported_token_type_message, "Invalid token type hint"
+    translatable_method :invalid_url_message, "Invalid URL"
+    translatable_method :unsupported_token_type_message, "Invalid token type hint"
 
-    auth_value_method :unique_error_message, "is already in use"
-    auth_value_method :null_error_message, "is not filled"
-    auth_value_method :already_in_use_message, "error generating unique token"
+    translatable_method :unique_error_message, "is already in use"
+    translatable_method :null_error_message, "is not filled"
+    translatable_method :already_in_use_message, "error generating unique token"
     auth_value_method :already_in_use_error_code, "invalid_request"
 
     # PKCE
     auth_value_method :code_challenge_required_error_code, "invalid_request"
-    auth_value_method :code_challenge_required_message, "code challenge required"
+    translatable_method :code_challenge_required_message, "code challenge required"
     auth_value_method :unsupported_transform_algorithm_error_code, "invalid_request"
-    auth_value_method :unsupported_transform_algorithm_message, "transform algorithm not supported"
+    translatable_method :unsupported_transform_algorithm_message, "transform algorithm not supported"
 
     # METADATA
     auth_value_method :oauth_metadata_service_documentation, nil

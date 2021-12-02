@@ -68,7 +68,7 @@ module Rodauth
     auth_value_method :oauth_grants_nonce_column, :nonce
     auth_value_method :oauth_tokens_nonce_column, :nonce
 
-    auth_value_method :invalid_scope_message, "The Access Token expired"
+    translatable_method :invalid_scope_message, "The Access Token expired"
 
     auth_value_method :webfinger_relation, "http://openid.net/specs/connect/1.0/issuer"
 

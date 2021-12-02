@@ -44,6 +44,7 @@ gem "minitest-hooks"
 gem "rack-test"
 gem "webmock"
 
+gem "rodauth-i18n"
 gem "ruby-saml"
 gem "saml_idp"
 gem "xmlenc"

@@ -33,8 +33,8 @@ module Rodauth
     auth_value_method :oauth_jwt_jwe_copyright, nil
     auth_value_method :oauth_jwt_audience, nil
 
-    auth_value_method :request_uri_not_supported_message, "request uri is unsupported"
-    auth_value_method :invalid_request_object_message, "request object is invalid"
+    translatable_method :request_uri_not_supported_message, "request uri is unsupported"
+    translatable_method :invalid_request_object_message, "request object is invalid"
 
     auth_value_methods(
       :jwt_encode,
