@@ -171,6 +171,10 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
     assert db[:oauth_tokens].count == 2
     assert db[:oauth_tokens].where(revoked_at: nil).count == 1
 
+    new_token = db[:oauth_tokens].where(revoked_at: nil).first
+    assert new_token[:access_token] == json_body["token"]
+    assert new_token[:refresh_token] == json_body["refresh_token"]
+
     verify_refresh_token_response(json_body, oauth_token)
     assert json_body["refresh_token"] != oauth_token[:refresh_token]
 

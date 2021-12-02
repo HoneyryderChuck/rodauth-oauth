@@ -38,6 +38,7 @@ class RodauthOauthJwtTokenIntrospectTest < JWTIntegration
     assert json_body["scope"] == oauth_token[:scopes]
     assert json_body["client_id"] == oauth_application[:client_id]
     assert json_body["token_type"] == "access_token"
+    assert json_body.key?("exp")
 
     # test all other jwt props
     assert json_body.key?("exp")
