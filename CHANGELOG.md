@@ -2,15 +2,22 @@
 
 ## master
 
+### 0.7.0 (02/12/2021)
+
 #### Features
 
 * Internationalization (i18n) support by hooking on [rodauth-oauth](https://github.com/janko/rodauth-i18n).
-  * Sets all text under `translatable_method`
+  * Sets all text using `translatable_method`.
   * Provides english translations for all `rodauth-oauth` related user facing text.
 
 #### Improvements
 
 * Enable CORS requests for OpenID configuration endpoint (@ianks)
+* Introspect endpoint now exposes the `exp` token property (@gmanley)
+
+#### Bugfixes
+
+*  on rotation policy, although the first refresh token was invalidated, a new one wasn't being provided. This change allows a new refresh token to be generated and exposed in the response (@gmanley)
 
 #### Chore
 
