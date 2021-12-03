@@ -7,5 +7,5 @@
       end.join
     }
   </dl>
-  <a href="/#{"#{rodauth.oauth_applications_path}/#{@oauth_application[:id]}/#{rodauth.oauth_tokens_path}"}" class="btn btn-outline-secondary">Oauth Tokens</a>
+  <a href="#{rodauth.oauth_applications_path}/#{@oauth_application[:id]}/#{rodauth.oauth_tokens_path}" class="btn btn-outline-secondary">Oauth Tokens</a>
 </div>
