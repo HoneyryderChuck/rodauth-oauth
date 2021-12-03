@@ -3,7 +3,7 @@
 Once you'll have all dependencies installed, you can run the scripts directly:
 
 ```
-> ruby authorization_server/app.rb`
+> ruby authorization_server/app.rb
 ```
 
 The databases are in-memory (by default, the examples run sqlite). If you want to persist and use your preferred db engine, set the `DATABASE_URL` environment variable in the authorization server process.
