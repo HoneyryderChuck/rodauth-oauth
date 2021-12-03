@@ -76,8 +76,8 @@ class ClientApplication < Roda
     r.root do
       inline = if (token = session["access_token"])
                  begin
-                  @books = json_request(:get, RESOURCE_SERVER, headers: { "authorization" => "Bearer #{token}" })
-                  <<-HTML
+                   @books = json_request(:get, RESOURCE_SERVER, headers: { "authorization" => "Bearer #{token}" })
+                   <<-HTML
                     <div class="books-app">
                       <ul class="list-group">
                         <% @books.each do |book| %>
@@ -85,11 +85,14 @@ class ClientApplication < Roda
                         <% end %>
                       </ul>
                     </div>
-                  HTML
+                   HTML
                  rescue RuntimeError => e
                    <<-HTML
                     <p class="lead">
-                      There was an error retrieving the books. Did you authorize the `books.read` scope?
+                      There was an error retrieving the books. Did you authorize the <code>books.read</code> scope?
+                      <pre>
+                        #{e.message}
+                      </pre>
                     </p>
                    HTML
                  end
