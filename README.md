@@ -173,7 +173,7 @@ puts payload #=> {"access_token" => "awr23f3h8f9d2h89...", "token_type" => "Bear
 
 #### Revoking tokens
 
-Token revocation can be done both by the idenntity owner or the application owner, and can therefore be done either online (browser-based form) or server-to-server. Here's an example using server-to-server:
+Token revocation can be done both by the identity owner or the application owner, and can therefore be done either online (browser-based form) or server-to-server. Here's an example using server-to-server:
 
 ```ruby
 require "httpx"
