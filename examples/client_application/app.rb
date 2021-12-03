@@ -75,16 +75,24 @@ class ClientApplication < Roda
     r.assets
     r.root do
       inline = if (token = session["access_token"])
-                 @books = json_request(:get, RESOURCE_SERVER, headers: { "authorization" => "Bearer #{token}" })
-                 <<-HTML
-                  <div class="books-app">
-                    <ul class="list-group">
-                      <% @books.each do |book| %>
-                        <li class="list-group-item">"<%= book[:name] %>" by <b><%= book[:author] %></b></li>
-                      <% end %>
-                    </ul>
-                  </div>
-                 HTML
+                 begin
+                  @books = json_request(:get, RESOURCE_SERVER, headers: { "authorization" => "Bearer #{token}" })
+                  <<-HTML
+                    <div class="books-app">
+                      <ul class="list-group">
+                        <% @books.each do |book| %>
+                          <li class="list-group-item">"<%= book[:name] %>" by <b><%= book[:author] %></b></li>
+                        <% end %>
+                      </ul>
+                    </div>
+                  HTML
+                 rescue RuntimeError => e
+                   <<-HTML
+                    <p class="lead">
+                      There was an error retrieving the books. Did you authorize the `books.read` scope?
+                    </p>
+                   HTML
+                 end
                else
                  <<-HTML
                   <p class="lead">
