@@ -570,6 +570,8 @@ module Rodauth
       end
 
       self.class.send(:define_method, :__one_oauth_token_per_account) { one_oauth_token_per_account }
+
+      i18n_register(File.expand_path(File.join(__dir__, "..", "..", "..", "locales"))) if features.include?(:i18n)
     end
 
     def use_date_arithmetic?
