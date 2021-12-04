@@ -17,8 +17,8 @@
         <tr>
           <td><%%= oauth_token[rodauth.oauth_tokens_token_column] %></td>
           <td><%%= oauth_token[rodauth.oauth_tokens_refresh_token_column] %></td>
-          <td><%%= rodauth.convert_timestamp(oauth_token[rodauth.oauth_tokens_expires_in_column]) %></td>
-          <td><%%= rodauth.convert_timestamp(oauth_token[rodauth.oauth_tokens_revoked_at_column]) %></td>
+          <td><%%= oauth_token[rodauth.oauth_tokens_expires_in_column] %></td>
+          <td><%%= oauth_token[rodauth.oauth_tokens_revoked_at_column] %></td>
           <td>
             <%% if !oauth_token[rodauth.oauth_tokens_revoked_at_column] %>
               <%%= form_tag rodauth.oauth_revoke_path, method: :post do %>
