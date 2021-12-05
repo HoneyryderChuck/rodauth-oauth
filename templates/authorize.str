@@ -1,4 +1,4 @@
-<form method="post" class="form-horizontal" role="form" id="authorize-form">
+<form method="post" action="#{rodauth.authorize_path}" class="form-horizontal" role="form" id="authorize-form">
   #{csrf_tag(rodauth.authorize_path) if respond_to?(:csrf_tag)}
   <p class="lead">The application #{rodauth.oauth_application[rodauth.oauth_applications_name_column]} would like to access your data.</p>
 
