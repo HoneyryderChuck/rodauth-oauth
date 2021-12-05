@@ -2,11 +2,22 @@
 
 ## master
 
+### 0.7.1 (05/12/2021)
+
+#### Improvements
+
+* Adapted the `rodauth-i18n` configuration to comply with the guidelines for `v0.2.0` (which is the defacto minimmal supported version).
+
+#### Bugfixes
+
+* `convert_timestamp` was removed from the templates, as it's private API.
+* Several missing or wrong URLs in templates fixed (authorize form was wrongly processing scopes when none was selected).
+
 ### 0.7.0 (02/12/2021)
 
 #### Features
 
-* Internationalization (i18n) support by hooking on [rodauth-oauth](https://github.com/janko/rodauth-i18n).
+* Internationalization (i18n) support by hooking on [rodauth-i18n](https://github.com/janko/rodauth-i18n).
   * Sets all text using `translatable_method`.
   * Provides english translations for all `rodauth-oauth` related user facing text.
 
