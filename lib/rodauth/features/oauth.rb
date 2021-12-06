@@ -663,6 +663,13 @@ module Rodauth
     # parse client id and secret
     #
     def require_oauth_application
+      # allow authentication from session and ownership of token
+      token = oauth_token_by_token(request.params["token"])
+      if authenticated? && token && token[oauth_tokens_account_id_column] == account_from_session[:id]
+        @oauth_application = db[oauth_applications_table].where(oauth_applications_id_column => token[oauth_tokens_oauth_application_id_column]).first
+        return
+      end
+
       # get client credenntials
       client_id = client_secret = nil
 
