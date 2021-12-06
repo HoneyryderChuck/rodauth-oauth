@@ -10,7 +10,7 @@
               <th scope="col">Token</th>
               <th scope="col">Refresh Token</th>
               <th scope="col">Expires in</th>
-              <th scope="col">Revoke</th>
+              <th scope="col">Revoked at</th>
               <th scope="col"><span class="badge badge-pill badge-dark">#{@oauth_tokens.count}</span>
             </tr>
           </thead>
