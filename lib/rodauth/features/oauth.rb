@@ -474,7 +474,7 @@ module Rodauth
       when String
         scope.split(" ")
       when nil
-        [oauth_application_default_scope]
+        Array(oauth_application_default_scope)
       end
     end
 
