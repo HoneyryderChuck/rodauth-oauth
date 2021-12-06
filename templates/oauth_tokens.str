@@ -25,7 +25,7 @@
                     <td>#{oauth_token[rodauth.oauth_tokens_revoked_at_column]}</td>
                     <td>
                       #{
-                        if !oauth_token[rodauth.oauth_tokens_revoked_at_param] && !oauth_token[rodauth.oauth_tokens_token_hash_column]
+                        if !oauth_token[rodauth.oauth_tokens_revoked_at_column] && !oauth_token[rodauth.oauth_tokens_token_hash_column]
                           <<-HTML
                             <form method="post" action="#{rodauth.revoke_path}" class="form-horizontal" role="form" id="revoke-form">
                               #{csrf_tag(rodauth.revoke_path) if respond_to?(:csrf_tag)}
