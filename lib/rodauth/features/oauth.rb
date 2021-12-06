@@ -279,7 +279,7 @@ module Rodauth
       next unless is_authorization_server?
 
       before_revoke_route
-      require_oauth_application
+      require_oauth_application unless oauth_application_token_owner?
 
       r.post do
         catch_error do
@@ -663,13 +663,6 @@ module Rodauth
     # parse client id and secret
     #
     def require_oauth_application
-      # allow authentication from session and ownership of token
-      token = oauth_token_by_token(request.params["token"])
-      if authenticated? && token && token[oauth_tokens_account_id_column] == account_from_session[:id]
-        @oauth_application = db[oauth_applications_table].where(oauth_applications_id_column => token[oauth_tokens_oauth_application_id_column]).first
-        return
-      end
-
       # get client credenntials
       client_id = client_secret = nil
 
@@ -689,6 +682,18 @@ module Rodauth
       return if @oauth_application && use_oauth_pkce? && param_or_nil("code_verifier")
 
       authorization_required unless @oauth_application && secret_matches?(@oauth_application, client_secret)
+    end
+
+    # allow authentication from session and ownership of token
+    def oauth_application_token_owner?
+      return false unless authenticated?
+      return false unless (token = oauth_token_by_token(request.params["token"]))
+      return false unless token[oauth_tokens_account_id_column] == account_from_session[:id]
+
+      @oauth_application = db[oauth_applications_table]
+                           .where(oauth_applications_id_column => token[oauth_tokens_oauth_application_id_column])
+                           .first
+      true
     end
 
     def secret_matches?(oauth_application, secret)
