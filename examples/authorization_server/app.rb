@@ -111,7 +111,7 @@ class AuthorizationServer < Roda
     login_return_to_requested_location? true
 
     oauth_application_scopes %w[profile.read books.read books.write]
-    oauth_application_default_scope %w[profile.read]
+    oauth_application_default_scope "profile.read"
     oauth_valid_uri_schemes %w[http https]
 
     oauth_tokens_token_hash_column :token
