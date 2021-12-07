@@ -66,6 +66,7 @@ module Rodauth
     notice_flash "Your oauth application has been registered", "create_oauth_application"
 
     notice_flash "The oauth token has been revoked", "revoke_oauth_token"
+    error_flash "You are not authorized to revoke this token", "revoke_unauthorized_account"
 
     view "authorize", "Authorize", "authorize"
     view "oauth_applications", "Oauth Applications", "oauth_applications"
@@ -279,7 +280,12 @@ module Rodauth
       next unless is_authorization_server?
 
       before_revoke_route
-      require_oauth_application unless oauth_application_token_owner?
+
+      if logged_in?
+        require_oauth_application_from_account
+      else
+        require_oauth_application
+      end
 
       r.post do
         catch_error do
@@ -684,16 +690,22 @@ module Rodauth
       authorization_required unless @oauth_application && secret_matches?(@oauth_application, client_secret)
     end
 
-    # allow authentication from session and ownership of token
-    def oauth_application_token_owner?
-      return false unless authenticated?
-      return false unless (token = oauth_token_by_token(request.params["token"]))
-      return false unless token[oauth_tokens_account_id_column] == account_from_session[:id]
-
-      @oauth_application = db[oauth_applications_table]
-                           .where(oauth_applications_id_column => token[oauth_tokens_oauth_application_id_column])
-                           .first
-      true
+    def require_oauth_application_from_account
+      ds = db[oauth_applications_table]
+        .join(oauth_tokens_table, Sequel[oauth_tokens_table][oauth_tokens_oauth_application_id_column] => Sequel[oauth_applications_table][oauth_applications_id_column])
+      ds = if oauth_tokens_token_hash_column
+        ds.where(Sequel[oauth_tokens_table][oauth_tokens_token_hash_column] => generate_token_hash(request.params["token"]))
+      else
+        ds.where(Sequel[oauth_tokens_table][oauth_tokens_token_column] => request.params["token"])
+      end
+      ds = ds.where(Sequel[oauth_tokens_table][oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
+            .where(Sequel[oauth_tokens_table][oauth_tokens_revoked_at_column] => nil)
+            .where(Sequel[oauth_applications_table][oauth_applications_account_id_column] => account_from_session[:id])
+      @oauth_application = ds.first
+      unless @oauth_application
+        set_redirect_error_flash revoke_unauthorized_account_error_flash
+        redirect request.referer || "/"
+      end
     end
 
     def secret_matches?(oauth_application, secret)

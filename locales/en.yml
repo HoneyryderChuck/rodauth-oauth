@@ -3,6 +3,7 @@ en:
     require_authorization_error_flash: "Please authorize to continue"
     create_oauth_application_error_flash: "There was an error registering your oauth application"
     create_oauth_application_notice_flash: "Your oauth application has been registered"
+    revoke_unauthorized_account_error_flash: "You are not authorized to revoke this token"
     revoke_oauth_token_notice_flash: "The oauth token has been revoked"
     oauth_authorize_title: "Authorize"
     oauth_oauth_applications_page_title: "Oauth Applications"

@@ -9,6 +9,7 @@
       <div class="form-check">
         <%%= check_box_tag "scope[]", scope, is_default, disabled: is_default, id: scope, class: "form-check-input" %>
         <%%= label_tag scope, scope, class: "form-check-label" %>
+        <%%= hidden_field_tag "scope[]", scope if is_default %>
       </div>
     <%% end %>
     <%%= hidden_field_tag :client_id, params[:client_id] %>
