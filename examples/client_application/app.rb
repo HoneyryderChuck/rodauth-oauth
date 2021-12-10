@@ -137,6 +137,11 @@ class ClientApplication < Roda
       # the user to generate an access token.
       #
       r.get do
+        if r.params["error"]
+          flash[:error] = "Authorization failed: #{r.params['error_description'] || r.params['error']}"
+          r.redirect "/"
+        end
+
         session_state = session.delete("state")
 
         if session_state
@@ -145,11 +150,6 @@ class ClientApplication < Roda
             flash[:error] = "state doesn't match, CSRF Attack!!!"
             r.redirect "/"
           end
-        end
-
-        if r.params["error"]
-          flash[:error] = "Authorization failed: #{r.params['error_description'] || r.params['error']}"
-          r.redirect "/"
         end
 
         code = r.params["code"]
