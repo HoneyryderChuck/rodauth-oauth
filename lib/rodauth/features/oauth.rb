@@ -416,7 +416,8 @@ module Rodauth
         end
 
         request.get do
-          scope.instance_variable_set(:@oauth_applications, db[oauth_applications_table])
+          scope.instance_variable_set(:@oauth_applications, db[oauth_applications_table]
+            .where(oauth_applications_account_id_column => account_from_session[:id]))
           oauth_applications_view
         end
 
