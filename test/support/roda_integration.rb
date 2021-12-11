@@ -170,7 +170,7 @@ class RodaIntegration < Minitest::Test
     db.transaction(rollback: :always, savepoint: true, auto_savepoint: true) do
       hash = BCrypt::Password.create("0123456789", cost: BCrypt::Engine::MIN_COST)
       db[:accounts].insert(email: "foo@example.com", status_id: 2, ph: hash)
-      db[:accounts].insert(email: "bar@example.com", status_id: 3, ph: hash)
+      db[:accounts].insert(email: "bar@example.com", status_id: 2, ph: hash)
       super
     end
   end

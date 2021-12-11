@@ -394,7 +394,7 @@ module Rodauth
         request.on(oauth_applications_id_pattern) do |id|
           oauth_application = db[oauth_applications_table]
                               .where(oauth_applications_id_column => id)
-                              .where(oauth_applications_account_id_column => account_from_session[:id])
+                              .where(oauth_applications_account_id_column => account_id)
                               .first
           next unless oauth_application
 
@@ -417,7 +417,7 @@ module Rodauth
 
         request.get do
           scope.instance_variable_set(:@oauth_applications, db[oauth_applications_table]
-            .where(oauth_applications_account_id_column => account_from_session[:id]))
+            .where(oauth_applications_account_id_column => account_id))
           oauth_applications_view
         end
 
@@ -699,9 +699,9 @@ module Rodauth
            .join(oauth_tokens_table, Sequel[oauth_tokens_table][oauth_tokens_oauth_application_id_column] =>
                                      Sequel[oauth_applications_table][oauth_applications_id_column])
       ds = if oauth_tokens_token_hash_column
-             ds.where(Sequel[oauth_tokens_table][oauth_tokens_token_hash_column] => generate_token_hash(request.params["token"]))
+             ds.where(Sequel[oauth_tokens_table][oauth_tokens_token_hash_column] => generate_token_hash(param("token")))
            else
-             ds.where(Sequel[oauth_tokens_table][oauth_tokens_token_column] => request.params["token"])
+             ds.where(Sequel[oauth_tokens_table][oauth_tokens_token_column] => param("token"))
            end
       ds = ds.where(Sequel[oauth_tokens_table][oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
              .where(Sequel[oauth_tokens_table][oauth_tokens_revoked_at_column] => nil)
