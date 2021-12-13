@@ -699,7 +699,7 @@ module Rodauth
       ds = db[oauth_applications_table]
            .join(oauth_tokens_table, Sequel[oauth_tokens_table][oauth_tokens_oauth_application_id_column] =>
                                      Sequel[oauth_applications_table][oauth_applications_id_column])
-           .where(oauth_token_by_token_ds(param("token")).opts[:where])
+           .where(oauth_token_by_token_ds(param("token")).opts.fetch(:where, true))
            .where(Sequel[oauth_applications_table][oauth_applications_account_id_column] => account_id)
 
       @oauth_application = ds.qualify.first
