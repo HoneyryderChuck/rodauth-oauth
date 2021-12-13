@@ -12,6 +12,8 @@ cache:
 
 .before_script: &before_script
   # rails 5.1 and lower need older version of bundler
+  - ruby -v
+  - free -m
   - bundle install
 
 .prepare_dbs: &prepare_dbs
@@ -95,8 +97,10 @@ jruby:
 truffleruby:
   <<: *test_services
   allow_failure: true
+  variables:
+    TRUFFLERUBYOPT: "--vm.Xmx2g"
   before_script:
-    - microdnf install -y git libxslt-devel libxml2-devel sqlite-devel mysql-devel postgresql-devel
+    - microdnf install -y procps git libxslt-devel libxml2-devel sqlite-devel mysql-devel postgresql-devel
     - *before_script
   image: "ghcr.io/graalvm/truffleruby:latest"
   script:

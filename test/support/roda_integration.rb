@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "English"
 DB = begin
   db = if ENV.key?("DATABASE_URL")
          if RUBY_ENGINE == "jruby"
@@ -73,6 +74,17 @@ class RodaIntegration < Minitest::Test
   include OAuthHelpers
   include Minitest::Hooks
   include Capybara::DSL
+
+  if RUBY_ENGINE == "truffleruby"
+    def run_with_log(*args)
+      print "#{self.class.name}##{name}: "
+      run_without_log(*args)
+    ensure
+      puts " (#{`ps -o vsz -p #{$PROCESS_ID}`.split.last.to_i}) "
+    end
+    alias run_without_log run
+    alias run run_with_log
+  end
 
   def rodauth(&block)
     (@rodauth_blocks ||= []) << block
