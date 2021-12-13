@@ -282,6 +282,7 @@ module Rodauth
       before_revoke_route
 
       if logged_in?
+        require_account
         require_oauth_application_from_account
       else
         require_oauth_application
@@ -698,15 +699,10 @@ module Rodauth
       ds = db[oauth_applications_table]
            .join(oauth_tokens_table, Sequel[oauth_tokens_table][oauth_tokens_oauth_application_id_column] =>
                                      Sequel[oauth_applications_table][oauth_applications_id_column])
-      ds = if oauth_tokens_token_hash_column
-             ds.where(Sequel[oauth_tokens_table][oauth_tokens_token_hash_column] => generate_token_hash(param("token")))
-           else
-             ds.where(Sequel[oauth_tokens_table][oauth_tokens_token_column] => param("token"))
-           end
-      ds = ds.where(Sequel[oauth_tokens_table][oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
-             .where(Sequel[oauth_tokens_table][oauth_tokens_revoked_at_column] => nil)
-             .where(Sequel[oauth_applications_table][oauth_applications_account_id_column] => account_from_session[:id])
-      @oauth_application = ds.select(Sequel[oauth_applications_table].*).first
+           .where(oauth_token_by_token_ds(param("token")).opts[:where])
+           .where(Sequel[oauth_applications_table][oauth_applications_account_id_column] => account_id)
+
+      @oauth_application = ds.qualify.first
       return if @oauth_application
 
       set_redirect_error_flash revoke_unauthorized_account_error_flash
@@ -803,17 +799,21 @@ module Rodauth
       end
     end
 
-    def oauth_token_by_token(token)
+    def oauth_token_by_token_ds(token)
       ds = db[oauth_tokens_table]
 
       ds = if oauth_tokens_token_hash_column
-             ds.where(oauth_tokens_token_hash_column => generate_token_hash(token))
+             ds.where(Sequel[oauth_tokens_table][oauth_tokens_token_hash_column] => generate_token_hash(token))
            else
-             ds.where(oauth_tokens_token_column => token)
+             ds.where(Sequel[oauth_tokens_table][oauth_tokens_token_column] => token)
            end
 
-      ds.where(Sequel[oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
-        .where(oauth_tokens_revoked_at_column => nil).first
+      ds.where(Sequel[oauth_tokens_table][oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
+        .where(Sequel[oauth_tokens_table][oauth_tokens_revoked_at_column] => nil)
+    end
+
+    def oauth_token_by_token(token)
+      oauth_token_by_token_ds(token).first
     end
 
     def oauth_token_by_refresh_token(token, revoked: false)
