@@ -706,7 +706,7 @@ module Rodauth
       ds = ds.where(Sequel[oauth_tokens_table][oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
              .where(Sequel[oauth_tokens_table][oauth_tokens_revoked_at_column] => nil)
              .where(Sequel[oauth_applications_table][oauth_applications_account_id_column] => account_from_session[:id])
-      @oauth_application = ds.first
+      @oauth_application = ds.select(Sequel[oauth_applications_table].*).first
       return if @oauth_application
 
       set_redirect_error_flash revoke_unauthorized_account_error_flash
