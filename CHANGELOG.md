@@ -2,6 +2,28 @@
 
 ## master
 
+### 0.7.2 (14/12/2021)
+
+#### Features
+
+* Revoking tokens from the OAuth Application management interface (@muellerj)
+
+Token revocation was only possible when using the client ID and Secret, to aid "logout" functionality from client applications. Although the admin interface (available via `r.oauth_applications`) displayed a "Revoke" button alongside tokens in the list page, this was not working. The RFC does allow for the use case of application administrators being able to manually revoke tokens (as a result of client support, for example), so this functionality was enabled (only for the oauth application owner, for now).
+
+#### Bugfixes
+
+Default scope usage related bugfixes:
+
+* Improved default scope conversion to avoid nested arrays (@muellerj);
+* Authorize form shows a disabled checkbox and POST's no scope when default scope is to be used (@muellerj);
+* example default scope fixed for example authorization server (should be string) (@muellerj);
+* several param fixes in view templates (@muellerj);
+
+OAuth Applications Management fixes:
+
+* Access to OAuth Application page is now restricted to app owner;
+* OAuth Applications page now lists the **only** the applications owned by the logged in user;
+
 ### 0.7.1 (05/12/2021)
 
 #### Improvements
