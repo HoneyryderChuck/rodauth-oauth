@@ -126,6 +126,7 @@ class SAMLIntegration < RodaIntegration
   end
 
   def make_saml_request(requested_saml_acs_url)
+    ENV["ruby-saml/testing"] = "true"
     auth_request = OneLogin::RubySaml::Authrequest.new
     auth_request.create(saml_settings(requested_saml_acs_url))
   end

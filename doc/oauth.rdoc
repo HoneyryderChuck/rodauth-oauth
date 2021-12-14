@@ -168,6 +168,7 @@ oauth_tokens_view :: The HTML of the Oauth tokens dashboard.
 
 require_authorization_error_flash :: The flash error to display when authorization is required.
 create_oauth_application_error_flash :: The flash error to display when there were submission errors creating an Oauth application.
+revoke_unauthorized_account_error_flash :: The flash error to display when an unauthorized account tries to revoke a token.
 create_oauth_application_notice_flash :: The flash message to display when an Oauth application is created successfully.
 revoke_oauth_token_notice_flash :: The flash message to display when an access token has been revoked.
 

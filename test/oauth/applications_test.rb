@@ -26,6 +26,12 @@ class RodauthOauthApplicationsTest < RodaIntegration
     assert_includes page.html, "Client ID: "
     assert_includes page.html, "Scopes: "
     assert db[:oauth_applications].count == 1
+
+    # Application page for different user
+    logout
+    login login: "bar@example.com", pass: "0123456789"
+    visit "/oauth-applications"
+    assert_includes page.html, "No oauth applications yet!"
   end
 
   def test_oauth_applications_multiple_redirect_uris

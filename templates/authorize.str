@@ -7,12 +7,22 @@
 
     #{
       rodauth.scopes.map do |scope|
-        <<-HTML
-         	<div class="form-check">
-            <input id="#{scope}" class="form-check-input" type="checkbox" name="scope[]" value="#{scope}" #{"checked disabled" if scope == rodauth.oauth_application_default_scope}>
-            <label class="form-check-label" for="#{scope}">#{scope}</label>
-          </div>
-        HTML
+        if scope == rodauth.oauth_application_default_scope
+          <<-HTML
+            <div class="form-check">
+              <input id="#{scope}" class="form-check-input" type="checkbox" name="scope[]" value="#{scope}" checked disabled>
+              <label class="form-check-label" for="#{scope}">#{scope}</label>
+              <input type="hidden" name="scope[]" value="#{scope}">
+            </div>
+          HTML
+        else
+          <<-HTML
+            <div class="form-check">
+              <input id="#{scope}" class="form-check-input" type="checkbox" name="scope[]" value="#{scope}">
+              <label class="form-check-label" for="#{scope}">#{scope}</label>
+            </div>
+          HTML
+        end
       end.join
     }
 

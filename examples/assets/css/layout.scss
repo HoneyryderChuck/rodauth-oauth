@@ -71,3 +71,11 @@ input.rodauth_hidden {
     margin: 1.25rem 0;
   }
 }
+
+code.token {
+  display: inline-block;
+  max-width: 100px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
