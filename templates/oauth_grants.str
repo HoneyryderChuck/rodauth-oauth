@@ -1,0 +1,20 @@
+<div id="oauth-grants">
+  #{
+    if @oauth_grants.count.zero?
+      "<p>No oauth grants yet!</p>"
+    else
+      "<ul class=\"list-group\">" + 
+        @oauth_grants.map do |oauth_grant|
+          "<li class=\"list-group-item\">
+            #{oauth_grant[:id]}
+
+            <form method=\"post\" action=\"#{rodauth.oauth_grant_path(oauth_grant[:id])}\" class=\"form-horizontal\" role=\"form\" id=\"grant-revoke-form\">
+              #{csrf_tag(rodauth.oauth_grant_path(oauth_grant[:id])) if respond_to?(:csrf_tag)}
+              #{rodauth.button(rodauth.oauth_grant_revoke_button)}
+            </form>
+          </li>"
+        end.join +
+      "</ul>"
+    end
+  }
+</div>

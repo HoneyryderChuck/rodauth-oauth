@@ -20,6 +20,7 @@ en:
     oauth_applications_button: "Register"
     oauth_authorize_button: "Authorize"
     oauth_token_revoke_button: "Revoke"
+    oauth_grant_revoke_button: "Revoke"
     oauth_authorize_post_button: "Back to Client Application"
     invalid_grant_message: "Invalid grant"
     invalid_scope_message: "Invalid scope"

@@ -70,6 +70,7 @@ module Rodauth
 
     view "authorize", "Authorize", "authorize"
     view "oauth_applications", "Oauth Applications", "oauth_applications"
+    view "oauth_grants", "Oauth Grants", "oauth_grants"
     view "oauth_application", "Oauth Application", "oauth_application"
     view "new_oauth_application", "New Oauth Application", "new_oauth_application"
     view "oauth_tokens", "Oauth Tokens", "oauth_tokens"
@@ -102,6 +103,7 @@ module Rodauth
     button "Register", "oauth_application"
     button "Authorize", "oauth_authorize"
     button "Revoke", "oauth_token_revoke"
+    button "Revoke", "oauth_grant_revoke"
     button "Back to Client Application", "oauth_authorize_post"
 
     # OAuth Token
@@ -149,10 +151,21 @@ module Rodauth
       route_url(oauth_applications_route, opts)
     end
 
+    # OAuth Grants
+    auth_value_method :oauth_grants_route, "oauth-grants"
+    def oauth_grants_path(opts = {})
+      route_path(oauth_grants_route, opts)
+    end
+
+    def oauth_grants_url(opts = {})
+      route_url(oauth_grants_route, opts)
+    end
+
     auth_value_method :oauth_applications_table, :oauth_applications
 
     auth_value_method :oauth_applications_id_column, :id
     auth_value_method :oauth_applications_id_pattern, Integer
+    auth_value_method :oauth_grants_id_pattern, Integer
 
     %i[
       account_id
@@ -383,6 +396,10 @@ module Rodauth
       "#{oauth_applications_path}/#{id}"
     end
 
+    def oauth_grant_path(id)
+      "#{oauth_grants_path}/#{id}"
+    end
+
     # /oauth-applications routes
     def oauth_applications
       request.on(oauth_applications_route) do
@@ -436,6 +453,36 @@ module Rodauth
           end
           set_error_flash create_oauth_application_error_flash
           new_oauth_application_view
+        end
+      end
+    end
+
+    # /oauth-grants routes
+    def oauth_grants
+      request.on(oauth_grants_route) do
+        require_account
+
+        request.get do
+          scope.instance_variable_set(:@oauth_grants, db[oauth_grants_table]
+            .where(oauth_grants_account_id_column => account_from_session[:id]))
+          oauth_grants_view
+        end
+
+        request.post(oauth_grants_id_pattern) do |id|
+          next unless oauth_grant = db[oauth_grants_table]
+            .where(oauth_grants_id_column => id)
+            .where(oauth_grants_account_id_column => account_id)
+            .first
+
+          db[oauth_tokens_table]
+            .where(oauth_tokens_oauth_grant_id_column => id)
+            .delete
+
+          db[oauth_grants_table]
+            .where(oauth_grants_id_column => id)
+            .delete
+
+          redirect oauth_grants_path || "/"
         end
       end
     end

@@ -116,6 +116,7 @@ scopes_label :: Form label for the oauth application scopes.
 
 oauth_application_button :: Label of OAuth application form button.
 oauth_authorize_button :: Label of Authorize form button.
+oauth_grant_revoke_button :: Label for the grant revoke button.
 oauth_token_revoke_button :: Label for the token revoke button.
 oauth_application_client_id_param :: Form input for the oauth application client ID.
 oauth_application_client_secret_param :: Form input for the oauth application client secert.
@@ -162,6 +163,7 @@ after_create_oauth_application :: Run arbitrary code after creating an oauth app
 
 authorize_view :: The HTML of the Authorize form.
 oauth_applications_view :: The HTML of the Oauth applications dashboard.
+oauth_authorizations_view :: The HTML of the Oauth authorizations dashboard.
 oauth_application_view :: The HTML of an Oauth application page.
 new_oauth_application_view :: The HTML of a new Oauth application form.
 oauth_tokens_view :: The HTML of the Oauth tokens dashboard.

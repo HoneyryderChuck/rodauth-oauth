@@ -15,6 +15,7 @@
       <h5 class="my-0 mr-md-auto font-weight-normal">Rodauth Oauth Demo - Authorization Server</h5>
       <nav class="my-2 my-md-0 mr-md-3">
         <% if rodauth.logged_in? %>
+          <a class="p-2 text-dark" href="/oauth-grants">Authorizations</a>
           <a class="p-2 text-dark" href="/oauth-applications">Client Applications</a>
         <% end %>
       </nav>
