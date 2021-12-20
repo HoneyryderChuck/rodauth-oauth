@@ -29,8 +29,10 @@
                       #{
                         if !oauth_token[rodauth.oauth_tokens_revoked_at_column] && !oauth_token[rodauth.oauth_tokens_token_hash_column]
                           <<-HTML
-                            <form method="post" action="#{rodauth.oauth_token_path(oauth_token[rodauth.oauth_tokens_id_column])}" class="form-horizontal" role="form" id="token-revoke-form">
-                              #{csrf_tag(rodauth.oauth_token_path(oauth_token[rodauth.oauth_tokens_id_column])) if respond_to?(:csrf_tag)}
+                            <form method="post" action="#{rodauth.revoke_path}" class="form-horizontal" role="form" id="revoke-form">
+                              #{csrf_tag(rodauth.revoke_path) if respond_to?(:csrf_tag)}
+                              #{rodauth.input_field_string("token_type_hint", "revoke-token-type-hint", :value => "access_token", :type=>"hidden")}
+                              #{rodauth.input_field_string("token", "revoke-token", :value => oauth_token[rodauth.oauth_tokens_token_column], :type=>"hidden")}
                               #{rodauth.button(rodauth.oauth_token_revoke_button)}
                             </form>
                           HTML

@@ -78,7 +78,8 @@ module Rodauth
     view "oauth_applications", "Oauth Applications", "oauth_applications"
     view "oauth_application", "Oauth Application", "oauth_application"
     view "new_oauth_application", "New Oauth Application", "new_oauth_application"
-    view "oauth_tokens", "Oauth Tokens", "oauth_tokens"
+    view "oauth_application_oauth_tokens", "Oauth Application Tokens", "oauth_application_oauth_tokens"
+    view "oauth_tokens", "My Oauth Tokens", "oauth_tokens"
     view "device_verification", "Device Verification", "device_verification"
     view "device_search", "Device Search", "device_search"
 
@@ -137,6 +138,7 @@ module Rodauth
     button "Cancel", "oauth_cancel"
 
     # OAuth Token
+    auth_value_method :oauth_applications_oauth_tokens_path, "oauth-tokens"
     auth_value_method :oauth_tokens_path, "oauth-tokens"
     auth_value_method :oauth_tokens_table, :oauth_tokens
     auth_value_method :oauth_tokens_id_column, :id
@@ -186,10 +188,21 @@ module Rodauth
       route_url(oauth_applications_route, opts)
     end
 
+    # OAuth Tokens
+    auth_value_method :oauth_tokens_route, "oauth-tokens"
+    def oauth_tokens_path(opts = {})
+      route_path(oauth_tokens_route, opts)
+    end
+
+    def oauth_tokens_url(opts = {})
+      route_url(oauth_tokens_route, opts)
+    end
+
     auth_value_method :oauth_applications_table, :oauth_applications
 
     auth_value_method :oauth_applications_id_column, :id
     auth_value_method :oauth_applications_id_pattern, Integer
+    auth_value_method :oauth_tokens_id_pattern, Integer
 
     %i[
       account_id
@@ -529,6 +542,10 @@ module Rodauth
       "#{oauth_applications_path}/#{id}"
     end
 
+    def oauth_token_path(id)
+      "#{oauth_tokens_path}/#{id}"
+    end
+
     # /oauth-applications routes
     def oauth_applications
       request.on(oauth_applications_route) do
@@ -553,11 +570,11 @@ module Rodauth
             end
           end
 
-          request.on(oauth_tokens_path) do
+          request.on(oauth_applications_oauth_tokens_path) do
             oauth_tokens = db[oauth_tokens_table].where(oauth_tokens_oauth_application_id_column => id)
             scope.instance_variable_set(:@oauth_tokens, oauth_tokens)
             request.get do
-              oauth_tokens_view
+              oauth_application_oauth_tokens_view
             end
           end
         end
@@ -582,6 +599,29 @@ module Rodauth
           end
           set_error_flash create_oauth_application_error_flash
           new_oauth_application_view
+        end
+      end
+    end
+
+    # /oauth-tokens routes
+    def oauth_tokens
+      request.on(oauth_tokens_route) do
+        require_account
+
+        request.get do
+          scope.instance_variable_set(:@oauth_tokens, db[oauth_tokens_table]
+            .where(oauth_tokens_account_id_column => account_id))
+          oauth_tokens_view
+        end
+
+        request.post(oauth_tokens_id_pattern) do |id|
+          db[oauth_tokens_table]
+            .where(oauth_tokens_id_column => id)
+            .where(oauth_tokens_account_id_column => account_id)
+            .update(oauth_tokens_revoked_at_column => Sequel::CURRENT_TIMESTAMP)
+
+          set_notice_flash revoke_oauth_token_notice_flash
+          redirect oauth_tokens_path || "/"
         end
       end
     end
