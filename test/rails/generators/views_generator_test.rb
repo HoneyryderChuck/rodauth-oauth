@@ -2,10 +2,11 @@
 
 begin
   require "rails"
-  require_relative "../../test_helper"
-  require "generators/roda/oauth/views_generator"
 rescue LoadError
 else
+  require_relative "../../test_helper"
+  require "generators/rodauth/oauth/views_generator"
+
   class ViewsGeneratorTest < Rails::Generators::TestCase
     tests Rodauth::OAuth::Rails::Generators::ViewsGenerator
     destination File.expand_path("#{__dir__}/../../tmp")
@@ -14,9 +15,7 @@ else
     test "default views" do
       run_generator
 
-      templates = %w[oauth_authorize]
-
-      templates.each do |template|
+      %w[authorize].each do |template|
         assert_file "app/views/rodauth/#{template}.html.erb"
       end
 

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "rails/generators/base"
+require "rails/generators"
 require "rails/generators/migration"
 require "rails/generators/active_record"
 

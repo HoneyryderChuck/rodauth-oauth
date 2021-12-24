@@ -2,10 +2,11 @@
 
 begin
   require "rails"
-  require_relative "../../test_helper"
-  require "generators/roda/oauth/install_generator"
 rescue LoadError
 else
+  require_relative "../../test_helper"
+  require "generators/rodauth/oauth/install_generator"
+
   class InstallGeneratorTest < Rails::Generators::TestCase
     tests Rodauth::OAuth::Rails::Generators::InstallGenerator
     destination File.expand_path("#{__dir__}/../../tmp")
@@ -19,7 +20,7 @@ else
       end
 
       assert_migration "db/migrate/create_rodauth_oauth.rb",
-                       /class CreateRodauthOAuth < ActiveRecord::Migration#{migration_version}/
+                       /class CreateRodauthOauth < ActiveRecord::Migration#{migration_version}/
       assert_migration "db/migrate/create_rodauth_oauth.rb", /create_table :oauth_applications/
       assert_migration "db/migrate/create_rodauth_oauth.rb", /create_table :oauth_grants/
       assert_migration "db/migrate/create_rodauth_oauth.rb", /create_table :oauth_tokens/
