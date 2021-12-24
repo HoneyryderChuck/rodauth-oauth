@@ -2,10 +2,11 @@
 
 begin
   require "rails"
-  require_relative "../../test_helper"
-  require "generators/roda/oauth/install_generator"
 rescue LoadError
 else
+  require_relative "../../test_helper"
+  require "generators/rodauth/oauth/install_generator"
+
   class InstallGeneratorTest < Rails::Generators::TestCase
     tests Rodauth::OAuth::Rails::Generators::InstallGenerator
     destination File.expand_path("#{__dir__}/../../tmp")

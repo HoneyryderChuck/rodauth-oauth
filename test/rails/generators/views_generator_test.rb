@@ -2,10 +2,11 @@
 
 begin
   require "rails"
-  require_relative "../../test_helper"
-  require "generators/roda/oauth/views_generator"
 rescue LoadError
 else
+  require_relative "../../test_helper"
+  require "generators/rodauth/oauth/views_generator"
+
   class ViewsGeneratorTest < Rails::Generators::TestCase
     tests Rodauth::OAuth::Rails::Generators::ViewsGenerator
     destination File.expand_path("#{__dir__}/../../tmp")
