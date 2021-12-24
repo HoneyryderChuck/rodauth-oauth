@@ -15,9 +15,7 @@ else
     test "default views" do
       run_generator
 
-      templates = %w[oauth_authorize]
-
-      templates.each do |template|
+      %w[authorize].each do |template|
         assert_file "app/views/rodauth/#{template}.html.erb"
       end
 
