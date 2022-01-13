@@ -14,13 +14,20 @@ Gem::Specification.new do |spec|
   spec.homepage      = "https://gitlab.com/honeyryderchuck/rodauth-oauth"
   # spec.required_ruby_version = Gem::Requirement.new(">= 2.3.0")
 
-  spec.metadata["homepage_uri"] = spec.homepage
-  spec.metadata["source_code_uri"] = "https://gitlab.com/honeyryderchuck/rodauth-oauth"
-  spec.metadata["changelog_uri"] = "https://gitlab.com/honeyryderchuck/rodauth-oauth/-/blob/master/CHANGELOG.md"
+  spec.metadata = {
+    "homepage_uri" => "https://honeyryderchuck.gitlab.io/rodauth-oauth/",
+    "documentation_uri" => "https://honeyryderchuck.gitlab.io/rodauth-oauth/rdoc/",
+    "bug_tracker_uri" => "https://gitlab.com/honeyryderchuck/rodauth-oauth/issues",
+    "source_code_uri" => "https://gitlab.com/honeyryderchuck/rodauth-oauth",
+    "changelog_uri" => "https://gitlab.com/honeyryderchuck/rodauth-oauth/-/blob/master/CHANGELOG.md",
+    "rubygems_mfa_required" => "true"
+  }
   spec.license = "Apache 2.0"
 
   spec.files = Dir["LICENSE.txt", "README.md", "lib/**/*.rb", "templates/*", "locales/**/*.yml", "CHANGELOG.md"]
   spec.extra_rdoc_files = Dir["LICENSE.txt", "README.md", "CHANGELOG.md"]
 
   spec.require_paths = ["lib"]
+
+  spec.add_dependency "rodauth", "~> 2.0"
 end
