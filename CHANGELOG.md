@@ -2,6 +2,17 @@
 
 ## master
 
+### 0.7.3 (14/01/2021)
+
+#### Bugfixes
+
+* fixed generator declarations and views generator, in orderto copy templates and rewrite paths accordingly.
+* update view templates to not use "%%".
+
+#### Chore
+
+* `rodauth` is now declared as a dependency, with minimum version set `2.0`.
+
 ### 0.7.2 (14/12/2021)
 
 #### Features
