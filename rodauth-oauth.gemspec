@@ -22,9 +22,9 @@ Gem::Specification.new do |spec|
     "changelog_uri" => "https://gitlab.com/honeyryderchuck/rodauth-oauth/-/blob/master/CHANGELOG.md",
     "rubygems_mfa_required" => "true"
   }
-  spec.license = "Apache 2.0"
+  spec.license = "Apache-2.0"
 
-  spec.files = Dir["LICENSE.txt", "README.md", "lib/**/*.rb", "templates/*", "locales/**/*.yml", "CHANGELOG.md"]
+  spec.files = Dir["LICENSE.txt", "README.md", "lib/**/*.{rb,erb}", "templates/*", "locales/**/*.yml", "CHANGELOG.md"]
   spec.extra_rdoc_files = Dir["LICENSE.txt", "README.md", "CHANGELOG.md"]
 
   spec.require_paths = ["lib"]
