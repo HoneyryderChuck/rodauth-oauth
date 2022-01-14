@@ -2,7 +2,13 @@
 
 ## master
 
-### 0.7.3 (14/01/2021)
+### 0.7.4 (15/01/2022)
+
+#### Bugfixes
+
+* including missing erb templates in the package.
+
+## 0.7.3 (14/01/2022)
 
 #### Bugfixes
 
