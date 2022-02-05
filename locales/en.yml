@@ -21,6 +21,7 @@ en:
     oauth_authorize_button: "Authorize"
     oauth_token_revoke_button: "Revoke"
     oauth_authorize_post_button: "Back to Client Application"
+    invalid_client_message: "Client authentication failed"
     invalid_grant_message: "Invalid grant"
     invalid_scope_message: "Invalid scope"
     invalid_url_message: "Invalid URL"
