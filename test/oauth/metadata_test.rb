@@ -42,6 +42,18 @@ class RodauthOauthServerMetadataTest < RodaIntegration
     assert json_body["grant_types_supported"] == %w[authorization_code implicit]
   end
 
+  def test_oauth_server_metadata_with_device_code_grant
+    rodauth do
+      use_oauth_device_code_grant_type? true
+    end
+    setup_application
+    get("/.well-known/oauth-authorization-server")
+
+    assert last_response.status == 200
+    assert json_body["grant_types_supported"] == %w[authorization_code urn:ietf:params:oauth:grant-type:device_code]
+    assert json_body["device_authorization_endpoint"] == "http://example.org/device-authorization"
+  end
+
   def test_oauth_server_metadata_with_route_prefix
     rodauth do
       prefix "/auth"

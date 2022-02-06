@@ -1514,7 +1514,7 @@ module Rodauth
         grant_types_supported << "implicit"
       end
 
-      {
+      payload = {
         issuer: issuer,
         authorization_endpoint: authorize_url,
         token_endpoint: token_url,
@@ -1534,6 +1534,13 @@ module Rodauth
         introspection_endpoint_auth_methods_supported: %w[client_secret_basic],
         code_challenge_methods_supported: (use_oauth_pkce? ? oauth_pkce_challenge_method : nil)
       }
+
+      if use_oauth_device_code_grant_type?
+        grant_types_supported << "urn:ietf:params:oauth:grant-type:device_code"
+        payload[:device_authorization_endpoint] = device_authorization_url
+      end
+
+      payload
     end
   end
 end
