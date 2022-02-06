@@ -201,6 +201,11 @@ module Rodauth
     translatable_method :already_in_use_message, "error generating unique token"
     auth_value_method :already_in_use_error_code, "invalid_request"
 
+    translatable_method :expired_token_message, "the device code has expired"
+    translatable_method :access_denied_message, "the authorization request has been denied"
+    translatable_method :authorization_pending_message, "the authorization request is still pending"
+    translatable_method :slow_down_message, "authorization request is still pending but poll interval should be increased"
+
     # PKCE
     auth_value_method :code_challenge_required_error_code, "invalid_request"
     translatable_method :code_challenge_required_message, "code challenge required"
@@ -249,9 +254,32 @@ module Rodauth
           validate_oauth_token_params
 
           oauth_token = nil
+
           transaction do
             before_token
-            oauth_token = create_oauth_token(param("grant_type"))
+            if param("grant_type") == "urn:ietf:params:oauth:grant-type:device_code"
+              throw_json_response_error(invalid_oauth_response_status, "invalid_grant_type") unless use_oauth_device_code_grant_type?
+
+              oauth_grant = db[oauth_grants_table].where(
+                oauth_grants_code_column => param("device_code"),
+                oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column]
+              ).for_update.first
+
+              throw_json_response_error(invalid_oauth_response_status, "invalid_grant") unless oauth_grant
+
+              if oauth_grant[oauth_grants_revoked_at_column]
+                oauth_token = db[oauth_tokens_table].where(
+                  oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column]
+                ).first
+                throw_json_response_error(invalid_oauth_response_status, "access_denied") unless oauth_token
+              elsif oauth_grant[oauth_grants_expires_in_column] < Time.now
+                throw_json_response_error(invalid_oauth_response_status, "expired_token")
+              else
+                throw_json_response_error(invalid_oauth_response_status, "authorization_pending")
+              end
+            else
+              oauth_token = create_oauth_token(param("grant_type"))
+            end
           end
 
           json_response_success(json_access_token_payload(oauth_token))
@@ -1123,6 +1151,8 @@ module Rodauth
 
       when "refresh_token"
         redirect_response_error("invalid_request") unless param_or_nil("refresh_token")
+      when "urn:ietf:params:oauth:grant-type:device_code"
+        redirect_response_error("invalid_request") unless use_oauth_device_code_grant_type? && param_or_nil("device_code")
       else
         redirect_response_error("invalid_request")
       end
