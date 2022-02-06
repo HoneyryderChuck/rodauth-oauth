@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "capybara/minitest"
+
 DB = begin
   db = if ENV.key?("DATABASE_URL")
          if RUBY_ENGINE == "jruby"
@@ -73,6 +75,7 @@ class RodaIntegration < Minitest::Test
   include OAuthHelpers
   include Minitest::Hooks
   include Capybara::DSL
+  include Capybara::Minitest::Assertions
 
   def rodauth(&block)
     (@rodauth_blocks ||= []) << block

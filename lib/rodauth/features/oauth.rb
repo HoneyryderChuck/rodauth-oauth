@@ -63,6 +63,8 @@ module Rodauth
 
     before "device_authorization"
     after "device_authorization"
+    before "device_verification"
+    after "device_verification"
 
     error_flash "Please authorize to continue", "require_authorization"
     error_flash "There was an error registering your oauth application", "create_oauth_application"
@@ -71,11 +73,14 @@ module Rodauth
     notice_flash "The oauth token has been revoked", "revoke_oauth_token"
     error_flash "You are not authorized to revoke this token", "revoke_unauthorized_account"
 
+    notice_flash "The device is being verified", "device_verification"
+
     view "authorize", "Authorize", "authorize"
     view "oauth_applications", "Oauth Applications", "oauth_applications"
     view "oauth_application", "Oauth Application", "oauth_application"
     view "new_oauth_application", "New Oauth Application", "new_oauth_application"
     view "oauth_tokens", "Oauth Tokens", "oauth_tokens"
+    view "device_verification", "Device Verification", "device_verification"
 
     auth_value_method :json_response_content_type, "application/json"
 
@@ -113,6 +118,7 @@ module Rodauth
     end
     button "Register", "oauth_application"
     button "Authorize", "oauth_authorize"
+    button "Verify", "oauth_device_verification"
     button "Revoke", "oauth_token_revoke"
     button "Back to Client Application", "oauth_authorize_post"
 
@@ -245,7 +251,7 @@ module Rodauth
           oauth_token = nil
           transaction do
             before_token
-            oauth_token = create_oauth_token
+            oauth_token = create_oauth_token(param("grant_type"))
           end
 
           json_response_success(json_access_token_payload(oauth_token))
@@ -395,7 +401,10 @@ module Rodauth
         user_code = generate_user_code
         device_code = transaction do
           before_device_authorization
-          code = create_oauth_grant(oauth_grants_user_code_column => user_code)
+          code = create_oauth_grant(
+            oauth_grants_user_code_column => user_code
+            # oauth_grants_attempts_column => oauth_device_code_grant_user_code_max_attempts
+          )
           after_device_authorization
           code
         end
@@ -412,6 +421,28 @@ module Rodauth
 
     # /device
     route(:device) do |r|
+      next unless is_authorization_server? && use_oauth_device_code_grant_type?
+
+      before_device_route
+      require_authorizable_account
+
+      r.get do
+        device_verification_view
+      end
+
+      r.post do
+        catch_error do
+          redirect_response_error("invalid_grant") unless param_or_nil("user_code")
+
+          transaction do
+            before_device_verification
+            create_oauth_token("device_code")
+            after_device_verification
+          end
+        end
+        set_notice_flash device_verification_notice_flash
+        redirect request.referer || device_path
+      end
     end
 
     def oauth_server_metadata(issuer = nil)
@@ -1097,8 +1128,8 @@ module Rodauth
       end
     end
 
-    def create_oauth_token
-      case param("grant_type")
+    def create_oauth_token(grant_type)
+      case grant_type
       when "authorization_code"
         # fetch oauth grant
         oauth_grant = db[oauth_grants_table].where(
@@ -1111,6 +1142,33 @@ module Rodauth
                                             .first
 
         redirect_response_error("invalid_grant") unless oauth_grant
+
+        create_params = {
+          oauth_tokens_account_id_column => oauth_grant[oauth_grants_account_id_column],
+          oauth_tokens_oauth_application_id_column => oauth_grant[oauth_grants_oauth_application_id_column],
+          oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column],
+          oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column]
+        }
+        create_oauth_token_from_authorization_code(oauth_grant, create_params)
+      when "device_code"
+        redirect_response_error("invalid_grant_type") unless use_oauth_device_code_grant_type?
+
+        # fetch oauth grant
+        oauth_grant = db[oauth_grants_table].where(
+          oauth_grants_user_code_column => param("user_code"),
+          oauth_grants_revoked_at_column => nil
+        ).where(Sequel[oauth_grants_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
+                                            .for_update
+                                            .first
+
+        return unless oauth_grant
+
+        # update ownership
+        db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column])
+                              .update(
+                                oauth_grants_user_code_column => nil,
+                                oauth_grants_account_id_column => account_id
+                              )
 
         create_params = {
           oauth_tokens_account_id_column => oauth_grant[oauth_grants_account_id_column],

@@ -1,0 +1,22 @@
+<form method="post" action="#{rodauth.device_path}" class="form-horizontal" role="form" id="device-verification-form">
+  #{csrf_tag(rodauth.device_path) if respond_to?(:csrf_tag)}
+  <p class="lead">Insert the user code if you would like to authorize a device.</p>
+
+  <div class="form-group">
+    <h1 class="display-6">#{rodauth.scopes_label}</h1>
+
+    <ul>
+    #{
+      rodauth.scopes.map do |scope|
+        "<li>#{scope}</li>"
+      end.join
+    }
+    </ul>
+
+    <label for="user_code">#{rodauth.user_code_label}</label>
+    #{rodauth.input_field_string("user_code", "user_code", :value => rodauth.param_or_nil(rodauth.oauth_grant_user_code_param))}
+  </div>
+  <p class="text-center">
+    <input type="submit" class="btn btn-outline-primary" value="#{h(rodauth.oauth_device_verification_button)}"/>
+  </p>
+</form>

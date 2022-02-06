@@ -302,7 +302,7 @@ module Rodauth
       super(oauth_grant, create_params.merge(oauth_tokens_nonce_column => oauth_grant[oauth_grants_nonce_column]))
     end
 
-    def create_oauth_token
+    def create_oauth_token(*)
       oauth_token = super
       generate_id_token(oauth_token)
       oauth_token

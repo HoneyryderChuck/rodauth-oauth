@@ -78,4 +78,124 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
       "interval" => 5
     }
   end
+
+  def test_authorize_post_device_not_device_grant_supported
+    setup_application
+    visit "/device"
+    assert page.html.include?("Route not found")
+  end
+
+  def test_authorize_post_device_not_logged_in
+    rodauth do
+      use_oauth_device_code_grant_type? true
+    end
+    setup_application
+    visit "/device"
+    assert page.html.include?("Please login to continue")
+  end
+
+  def test_authorize_post_device_unexisting_grant
+    rodauth do
+      use_oauth_device_code_grant_type? true
+    end
+    setup_application
+    login
+    visit "/device"
+    assert page.html.include?("Insert the user code if you would like to authorize a device.")
+
+    fill_in "User code", with: "USERCODE"
+    click_button "Verify"
+
+    assert page.html.include?("The device is being verified")
+    assert db[:oauth_tokens].none?
+  end
+
+  def test_authorize_post_device_revoked_grant
+    rodauth do
+      use_oauth_device_code_grant_type? true
+    end
+    setup_application
+    login
+
+    grant = oauth_grant(code: "CODE", user_code: "USERCODE", revoked_at: Sequel::CURRENT_TIMESTAMP)
+
+    visit "/device"
+    assert page.html.include?("Insert the user code if you would like to authorize a device.")
+
+    fill_in "User code", with: grant[:user_code]
+    click_button "Verify"
+
+    assert page.html.include?("The device is being verified")
+    assert db[:oauth_tokens].none?
+    assert db[:oauth_grants].where(user_code: grant[:user_code]).count == 1
+  end
+
+  def test_authorize_post_device_expired_grant
+    rodauth do
+      use_oauth_device_code_grant_type? true
+    end
+    setup_application
+    login
+
+    grant = oauth_grant(code: "CODE", user_code: "USERCODE", expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 60))
+
+    visit "/device"
+    assert page.html.include?("Insert the user code if you would like to authorize a device.")
+
+    fill_in "User code", with: grant[:user_code]
+    click_button "Verify"
+
+    assert page.html.include?("The device is being verified")
+    assert db[:oauth_tokens].none?
+    assert db[:oauth_grants].where(user_code: grant[:user_code]).count == 1
+  end
+
+  def test_authorize_post_device_successful_grant
+    rodauth do
+      use_oauth_device_code_grant_type? true
+    end
+    setup_application
+    login
+
+    grant = oauth_grant(code: "CODE", user_code: "USERCODE")
+
+    visit "/device"
+    assert page.html.include?("Insert the user code if you would like to authorize a device.")
+
+    assert_field("User code")
+    fill_in "User code", with: grant[:user_code]
+    click_button "Verify"
+
+    assert page.html.include?("The device is being verified")
+
+    assert db[:oauth_grants].where(user_code: grant[:user_code]).none?
+    assert db[:oauth_tokens].count == 1
+    access_token = db[:oauth_tokens].first
+    assert access_token[:oauth_grant_id] == grant[:id]
+    verify_oauth_grant_revoked(access_token)
+  end
+
+  def test_authorize_post_device_complete_successful_grant
+    rodauth do
+      use_oauth_device_code_grant_type? true
+    end
+    setup_application
+    login
+
+    grant = oauth_grant(code: "CODE", user_code: "USERCODE")
+
+    visit "/device?user_code=#{grant[:user_code]}"
+    assert page.html.include?("Insert the user code if you would like to authorize a device.")
+
+    assert_field("User code", with: grant[:user_code])
+    click_button "Verify"
+
+    assert page.html.include?("The device is being verified")
+
+    assert db[:oauth_grants].where(user_code: grant[:user_code]).none?
+    assert db[:oauth_tokens].count == 1
+    access_token = db[:oauth_tokens].first
+    assert access_token[:oauth_grant_id] == grant[:id]
+    verify_oauth_grant_revoked(access_token)
+  end
 end

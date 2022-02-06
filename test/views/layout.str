@@ -18,7 +18,6 @@ end
 }
   <a class="p-2 text-dark" href="oauth-applications">Client Applications</a>
 
-<% end %>
 </nav>
 #{"<div id='alert'>#{opts[:sessions_convert_symbols] ? flash['error'] : flash[:error]}</div>" if opts[:sessions_convert_symbols] ? flash['error'] : flash[:error]}
 #{"<div id='notice'>#{opts[:sessions_convert_symbols] ? flash['notice'] : flash[:notice]}</div>" if opts[:sessions_convert_symbols] ? flash['notice'] : flash[:notice]}
