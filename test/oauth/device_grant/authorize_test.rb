@@ -82,7 +82,7 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
   def test_authorize_post_device_not_device_grant_supported
     setup_application
     visit "/device"
-    assert page.html.include?("Route not found")
+    assert page.status_code == 404
   end
 
   def test_authorize_post_device_not_logged_in

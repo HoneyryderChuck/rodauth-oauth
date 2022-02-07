@@ -18,7 +18,7 @@ Sequel.migration do
       String :code_challenge
       String :code_challenge_method
       String :nonce
-      # device code grant: user code
+      # device code grant
       String :user_code, null: true, unique: true
       Integer :attempts, null: true
     end

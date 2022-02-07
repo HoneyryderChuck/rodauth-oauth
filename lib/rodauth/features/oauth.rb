@@ -101,8 +101,8 @@ module Rodauth
     auth_value_method :oauth_device_code_grant_user_code_size, 8 # characters
     %w[user_code].each do |param|
       auth_value_method :"oauth_grant_#{param}_param", param
-      translatable_method :"#{param}_label", param.gsub("_", " ").capitalize
     end
+    translatable_method :oauth_grant_user_code_label, "User code"
 
     auth_value_method :oauth_valid_uri_schemes, %w[https]
 
@@ -114,13 +114,20 @@ module Rodauth
 
     (APPLICATION_REQUIRED_PARAMS + %w[client_id]).each do |param|
       auth_value_method :"oauth_application_#{param}_param", param
-      translatable_method :"#{param}_label", param.gsub("_", " ").capitalize
     end
+    translatable_method :oauth_applications_name_label, "Name"
+    translatable_method :oauth_applications_description_label, "Description"
+    translatable_method :oauth_applications_scopes_label, "Scopes"
+    translatable_method :oauth_applications_homepage_url_label, "Homepage URL"
+    translatable_method :oauth_applications_redirect_uri_label, "Redirect URI"
+    translatable_method :oauth_applications_client_secret_label, "Client Secret"
+    translatable_method :oauth_applications_client_id_label, "Client ID"
     button "Register", "oauth_application"
     button "Authorize", "oauth_authorize"
     button "Verify", "oauth_device_verification"
     button "Revoke", "oauth_token_revoke"
     button "Back to Client Application", "oauth_authorize_post"
+    button "Cancel", "oauth_cancel"
 
     # OAuth Token
     auth_value_method :oauth_tokens_path, "oauth-tokens"
@@ -133,6 +140,10 @@ module Rodauth
       expires_in revoked_at
     ].each do |column|
       auth_value_method :"oauth_tokens_#{column}_column", column
+    end
+
+    %w[token refresh_token expires_in revoked_at scopes].each do |param|
+      translatable_method :"oauth_tokens_#{param}_label", param.gsub("_", " ").capitalize
     end
 
     # Oauth Token Hash
