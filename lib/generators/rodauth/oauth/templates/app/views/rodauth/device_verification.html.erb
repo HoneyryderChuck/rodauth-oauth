@@ -1,0 +1,16 @@
+<%= form_tag rodauth.device_path, method: :post do %>
+  <p class="lead">Insert the user code if you would like to authorize a device.</p>
+
+  <div class="form-group">
+    <h1 class="display-6"><%= rodauth.scopes_label %></h1>
+
+    <ul>
+      <% rodauth.scopes.each do |scope| %>
+        <li><%= scope %></li>
+      <% end %>
+    </ul>
+  </div>
+ <p class="text-center">
+    <%= submit_tag rodauth.oauth_device_verification_button, class: "btn btn-outline-primary" %>
+  </p>
+<% end %>

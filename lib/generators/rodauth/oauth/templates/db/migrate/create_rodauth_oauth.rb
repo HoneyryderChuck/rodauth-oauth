@@ -19,6 +19,7 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.integer :oauth_application_id
       t.foreign_key :oauth_applications, column: :oauth_application_id
       t.string :code, null: false
+      t.index(%i[oauth_application_id code], unique: true)
       t.datetime :expires_in, null: false
       t.string :redirect_uri
       t.datetime :revoked_at
@@ -31,7 +32,9 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       # t.string :code_challenge_method
       # uncomment to use OIDC nonce
       # t.string :nonce
-      t.index(%i[oauth_application_id code], unique: true)
+      # device code grant
+      # t.string :user_code, null: true, unique: true
+      # t.integer :attempts, null: true
     end
 
     create_table :oauth_tokens do |t|
