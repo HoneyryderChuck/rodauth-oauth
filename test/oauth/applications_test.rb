@@ -38,7 +38,7 @@ class RodauthOauthApplicationsTest < RodaIntegration
     rodauth do
       new_oauth_application_view do
         opts = _view_opts(:new_oauth_application)
-        _view(:view, opts.merge(path: File.join(opts[:views], "new_oauth_application2.erb")))
+        scope.send(:view, opts.merge(path: File.join(opts[:views], "new_oauth_application2.erb")))
       end
     end
     setup_application
