@@ -3,17 +3,17 @@
   <p class="lead">Insert the user code if you would like to authorize a device.</p>
 
   <div class="form-group">
-    <h1 class="display-6">#{rodauth.scopes_label}</h1>
+    <h1 class="display-6">#{rodauth.oauth_tokens_scopes_label}</h1>
 
     <ul>
     #{
       rodauth.scopes.map do |scope|
-        "<li>#{scope}</li>"
+        "<li>#{h(scope)}</li>"
       end.join
     }
     </ul>
 
-    <label for="user_code">#{rodauth.user_code_label}</label>
+    <label for="user_code">#{rodauth.oauth_grant_user_code_label}</label>
     #{rodauth.input_field_string("user_code", "user_code", :value => rodauth.param_or_nil(rodauth.oauth_grant_user_code_param))}
   </div>
   <p class="text-center">

@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 <head>
-<title>#{@title}</title>
+<title>#{@page_title}</title>
 </head>
 <body>
 <nav class="my-2 my-md-0 mr-md-3">
@@ -16,7 +16,7 @@ else
   end
 end
 }
-  <a class="p-2 text-dark" href="oauth-applications">Client Applications</a>
+<a class="p-2 text-dark" href="#{rodauth.oauth_applications_path}">Client Applications</a>
 
 </nav>
 #{"<div id='alert'>#{opts[:sessions_convert_symbols] ? flash['error'] : flash[:error]}</div>" if opts[:sessions_convert_symbols] ? flash['error'] : flash[:error]}

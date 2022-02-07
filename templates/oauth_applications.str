@@ -1,10 +1,10 @@
 <div id="oauth-applications">
-  <a class="btn btn-outline-primary" href="/oauth-applications/new">Register new Oauth Application</a>
+  <a class="btn btn-outline-primary" href="/oauth-applications/new">#{rodauth.new_oauth_application_page_title}</a>
   #{
     if @oauth_applications.count.zero?
       "<p>No oauth applications yet!</p>"
     else
-      "<ul class=\"list-group\">" + 
+      "<ul class=\"list-group\">" +
         @oauth_applications.map do |application|
           "<li class=\"list-group-item\"><a href=\"/oauth-applications/#{application[:id]}\">#{application[:name]}</a></li>"
         end.join +

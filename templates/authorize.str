@@ -3,23 +3,23 @@
   <p class="lead">The application #{rodauth.oauth_application[rodauth.oauth_applications_name_column]} would like to access your data.</p>
 
   <div class="form-group">
-    <h1 class="display-6">#{rodauth.scopes_label}</h1>
+    <h1 class="display-6">#{rodauth.oauth_tokens_scopes_label}</h1>
 
     #{
       rodauth.scopes.map do |scope|
         if scope == rodauth.oauth_application_default_scope
           <<-HTML
             <div class="form-check">
-              <input id="#{scope}" class="form-check-input" type="checkbox" name="scope[]" value="#{scope}" checked disabled>
-              <label class="form-check-label" for="#{scope}">#{scope}</label>
-              <input type="hidden" name="scope[]" value="#{scope}">
+              <input id="#{scope}" class="form-check-input" type="checkbox" name="scope[]" value="#{h(scope)}" checked disabled>
+              <label class="form-check-label" for="#{scope}">#{h(scope)}</label>
+              <input type="hidden" name="scope[]" value="#{h(scope)}">
             </div>
           HTML
         else
           <<-HTML
             <div class="form-check">
-              <input id="#{scope}" class="form-check-input" type="checkbox" name="scope[]" value="#{scope}">
-              <label class="form-check-label" for="#{scope}">#{scope}</label>
+              <input id="#{scope}" class="form-check-input" type="checkbox" name="scope[]" value="#{h(scope)}">
+              <label class="form-check-label" for="#{scope}">#{h(scope)}</label>
             </div>
           HTML
         end
@@ -39,6 +39,6 @@
   </div>
   <p class="text-center">
     <input type="submit" class="btn btn-outline-primary" value="#{h(rodauth.oauth_authorize_button)}"/>
-    <a href="#{rodauth.redirect_uri}?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request#{ "&state=#{rodauth.param("state")}" if rodauth.param_or_nil("state")}" class="btn btn-outline-danger">Cancel</a>
+    <a href="#{rodauth.redirect_uri}?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request#{ "&state=#{rodauth.param("state")}" if rodauth.param_or_nil("state")}" class="btn btn-outline-danger">#{rodauth.oauth_cancel_button}</a>
   </p>
 </form>
