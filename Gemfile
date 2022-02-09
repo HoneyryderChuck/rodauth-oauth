@@ -93,3 +93,14 @@ platform :jruby do
   gem "jdbc-postgres"
   gem "jdbc-sqlite3"
 end
+
+if RUBY_VERSION >= "3.0.0"
+  group :website do
+    gem "jekyll", "~> 4.2.0"
+    gem "jekyll-brotli", "~> 2.2.0", platform: :mri
+    gem "jekyll-gzip", "~> 2.4.1"
+
+    # Docs/Website
+    gem "hanna-nouveau", require: false
+  end
+end

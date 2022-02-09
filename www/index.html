@@ -48,6 +48,23 @@ layout: default
   <div class="container">
     <section class="core-guides">
       <div class="col">
+        <a id="articles" href="#articles">
+          <h2>Articles</h2>
+        </a>
+        <ul>
+          {% for item in site.data.articles %}
+          <li>
+            <a href="{{ item.url }}">
+              {{ item.name }}
+            </a>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+    </section>
+
+    <section class="core-guides">
+      <div class="col">
         <a id="core" href="#core">
           <h2>Features (RDoc)</h2>
         </a>
@@ -62,6 +79,7 @@ layout: default
         </ul>
       </div>
     </section>
+
 
     <section>
       <a id="release-notes" href="#release-notes">

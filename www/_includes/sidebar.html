@@ -10,8 +10,9 @@
 
   <nav class="sidebar-nav">
     <a class="sidebar-nav-item{% if page.url == site.baseurl %} active{% endif %}" href="{{ site.baseurl }}/">Home</a>
-    <a class="sidebar-nav-item" href="{{ site.github.repo }}/archive/v{{ site.data.versions[0][0] }}.zip">Download</a>
-    <a class="sidebar-nav-item" href="{{ site.github.repo }}">GitHub project</a>
+    <a class="sidebar-nav-item" href="{{ site.links.rubygems }}/downloads/rodauth-oauth-{{ site.data.versions[0][0].name }}.gem">Download</a>
+    <a class="sidebar-nav-item" href="{{ site.links.gitlab }}">@Gitlab</a>
+    <a class="sidebar-nav-item" href="{{ site.links.rubygems }}/gems/rodauth-oauth">@Rubygems</a>
     <span class="sidebar-nav-item">Currently v{{ site.data.versions[0][0] }}</span>
   </nav>
 

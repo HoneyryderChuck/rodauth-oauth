@@ -61,7 +61,7 @@ cache:
         - mysql_native_password
 
 variables:
-  BUNDLE_WITHOUT: demo
+  BUNDLE_WITHOUT: demo:website
   BUNDLE_JOBS: 10
   BUNDLE_PATH: vendor
   CI: 1
@@ -237,8 +237,8 @@ jekyll:
   stage: test
   image: "ruby:3.0"
   variables:
+    BUNDLE_WITH: website
     JEKYLL_ENV: production
-    BUNDLE_GEMFILE: www/Gemfile
   before_script:
     - *install_deps
     - *before_script
