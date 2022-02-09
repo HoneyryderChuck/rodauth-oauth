@@ -34,7 +34,7 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       # t.string :nonce
       # device code grant
       # t.string :user_code, null: true, unique: true
-      # t.integer :attempts, null: true
+      # t.datetime :last_polled_at, null: true
     end
 
     create_table :oauth_tokens do |t|

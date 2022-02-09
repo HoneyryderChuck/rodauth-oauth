@@ -160,7 +160,7 @@ module Rodauth
       redirect_uri code scopes access_type
       expires_in revoked_at
       code_challenge code_challenge_method
-      user_code
+      user_code last_polled_at
     ].each do |column|
       auth_value_method :"oauth_grants_#{column}_column", column
     end
@@ -278,15 +278,27 @@ module Rodauth
 
               throw_json_response_error(invalid_oauth_response_status, "invalid_grant") unless oauth_grant
 
+              now = Time.now
+
               if oauth_grant[oauth_grants_revoked_at_column]
-                oauth_token = db[oauth_tokens_table].where(
-                  oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column]
-                ).first
+                oauth_token = db[oauth_tokens_table]
+                              .where(Sequel[oauth_tokens_table][oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
+                              .where(Sequel[oauth_tokens_table][oauth_tokens_revoked_at_column] => nil)
+                              .where(oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column])
+                              .first
+
                 throw_json_response_error(invalid_oauth_response_status, "access_denied") unless oauth_token
-              elsif oauth_grant[oauth_grants_expires_in_column] < Time.now
+              elsif oauth_grant[oauth_grants_expires_in_column] < now
                 throw_json_response_error(invalid_oauth_response_status, "expired_token")
               else
-                throw_json_response_error(invalid_oauth_response_status, "authorization_pending")
+                last_polled_at = oauth_grant[oauth_grants_last_polled_at_column]
+                if last_polled_at && last_polled_at + oauth_device_code_grant_polling_interval > now
+                  throw_json_response_error(invalid_oauth_response_status, "slow_down")
+                else
+                  db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column])
+                                        .update(oauth_grants_last_polled_at_column => Sequel::CURRENT_TIMESTAMP)
+                  throw_json_response_error(invalid_oauth_response_status, "authorization_pending")
+                end
               end
             else
               oauth_token = create_oauth_token(param("grant_type"))
@@ -440,10 +452,7 @@ module Rodauth
         user_code = generate_user_code
         device_code = transaction do
           before_device_authorization
-          code = create_oauth_grant(
-            oauth_grants_user_code_column => user_code
-            # oauth_grants_attempts_column => oauth_device_code_grant_user_code_max_attempts
-          )
+          code = create_oauth_grant(oauth_grants_user_code_column => user_code)
           after_device_authorization
           code
         end

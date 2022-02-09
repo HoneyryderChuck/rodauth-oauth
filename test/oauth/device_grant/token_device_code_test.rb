@@ -105,6 +105,31 @@ class RodauthOAuthTokenDeviceCodeTest < RodaIntegration
     assert json_body["error"] == "authorization_pending"
   end
 
+  def test_token_device_code_unverified_grant_slow_down
+    rodauth do
+      use_oauth_device_code_grant_type? true
+      oauth_device_code_grant_polling_interval 2
+    end
+    setup_application
+    grant = oauth_grant(user_code: "USERCODE", account_id: nil)
+
+    post("/token", client_id: oauth_application[:client_id], grant_type: "urn:ietf:params:oauth:grant-type:device_code",
+                   device_code: grant[:code])
+    assert last_response.status == 400
+    assert json_body["error"] == "authorization_pending"
+    @json_body = nil
+    post("/token", client_id: oauth_application[:client_id], grant_type: "urn:ietf:params:oauth:grant-type:device_code",
+                   device_code: grant[:code])
+    assert last_response.status == 400
+    assert json_body["error"] == "slow_down"
+    sleep 2
+    @json_body = nil
+    post("/token", client_id: oauth_application[:client_id], grant_type: "urn:ietf:params:oauth:grant-type:device_code",
+                   device_code: grant[:code])
+    assert last_response.status == 400
+    assert json_body["error"] == "authorization_pending"
+  end
+
   def test_token_device_code_denied_grant
     rodauth do
       use_oauth_device_code_grant_type? true

@@ -20,7 +20,7 @@ Sequel.migration do
       String :nonce
       # device code grant
       String :user_code, null: true, unique: true
-      Integer :attempts, null: true
+      Time :last_polled_at
     end
   end
 
