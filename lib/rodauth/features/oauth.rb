@@ -292,7 +292,7 @@ module Rodauth
                 throw_json_response_error(invalid_oauth_response_status, "expired_token")
               else
                 last_polled_at = oauth_grant[oauth_grants_last_polled_at_column]
-                if last_polled_at && last_polled_at + oauth_device_code_grant_polling_interval > now
+                if last_polled_at && convert_timestamp(last_polled_at) + oauth_device_code_grant_polling_interval > now
                   throw_json_response_error(invalid_oauth_response_status, "slow_down")
                 else
                   db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column])
