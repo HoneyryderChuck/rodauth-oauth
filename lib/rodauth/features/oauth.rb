@@ -62,9 +62,7 @@ module Rodauth
     after "create_oauth_application"
 
     before "device_authorization"
-    after "device_authorization"
     before "device_verification"
-    after "device_verification"
 
     error_flash "Please authorize to continue", "require_authorization"
     error_flash "There was an error registering your oauth application", "create_oauth_application"
@@ -114,6 +112,12 @@ module Rodauth
 
     (APPLICATION_REQUIRED_PARAMS + %w[client_id]).each do |param|
       auth_value_method :"oauth_application_#{param}_param", param
+      configuration_module_eval do
+        define_method :"#{param}_label" do
+          warn "#{__method__} is deprecated, switch to oauth_applications_#{__method__}"
+          before_otp_auth_route(&block)
+        end
+      end
     end
     translatable_method :oauth_applications_name_label, "Name"
     translatable_method :oauth_applications_description_label, "Description"
@@ -452,9 +456,7 @@ module Rodauth
         user_code = generate_user_code
         device_code = transaction do
           before_device_authorization
-          code = create_oauth_grant(oauth_grants_user_code_column => user_code)
-          after_device_authorization
-          code
+          create_oauth_grant(oauth_grants_user_code_column => user_code)
         end
 
         json_response_success \
@@ -485,7 +487,6 @@ module Rodauth
           transaction do
             before_device_verification
             create_oauth_token("device_code")
-            after_device_verification
           end
         end
         set_notice_flash device_verification_notice_flash
