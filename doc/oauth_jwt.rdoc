@@ -17,6 +17,8 @@ oauth_jwt_jwe_public_key :: JWT encryption public key, <tt>nil</tt> by default.
 oauth_jwt_jwe_algorithm :: JWT encryption algorithm, <tt>nil</tt> by default.
 oauth_jwt_jwe_encryption_method :: JWT encryption method, <tt>nil</tt> by default.
 oauth_jwt_jwe_copyright :: JWE copyright parameter, <tt>nil</tt> by default.
+oauth_jwt_legacy_algorithm :: legacy JWT signing algorithm, to be exposed via JWKs uri during key rotation.
+oauth_jwt_legacy_public_key :: legacy JWT public key, to be exposed via JWKs uri during key rotation.
 
 request_uri_not_supported_message :: error description for the "request_uri" OAuth error code, <tt>"request uri is unsupported"</tt> by default.
 invalid_request_object_message :: error description for the "invalid_request" OAuth error code, <tt>"request object is invalid"</tt> by default.
@@ -30,3 +32,4 @@ jwt_decode :: decodes a given JWT token.
 jwks_set :: returns the JWK set to expose over JSON.
 last_account_login_at :: retrieves the last login from an account.
 before_jwks_route :: Run arbitrary code before the JWKS route.
+generate_jti :: generates a unique jti claimm.
