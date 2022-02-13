@@ -1222,7 +1222,7 @@ module Rodauth
                               )
 
         create_params = {
-          oauth_tokens_account_id_column => oauth_grant[oauth_grants_account_id_column],
+          oauth_tokens_account_id_column => account_id,
           oauth_tokens_oauth_application_id_column => oauth_grant[oauth_grants_oauth_application_id_column],
           oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column],
           oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column]
