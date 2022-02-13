@@ -101,13 +101,12 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
     setup_application
     login
     visit "/device"
-    assert page.html.include?("Insert the user code if you would like to authorize a device.")
+    assert page.html.include?("Insert the user code from the device you'd like to authorize.")
 
     fill_in "User code", with: "USERCODE"
-    click_button "Verify"
+    click_button "Search"
 
-    assert page.html.include?("The device is being verified")
-    assert db[:oauth_tokens].none?
+    assert page.html.include?("No device to authorize with the given user code")
   end
 
   def test_authorize_post_device_revoked_grant
@@ -120,14 +119,12 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
     grant = oauth_grant(code: "CODE", user_code: "USERCODE", revoked_at: Sequel::CURRENT_TIMESTAMP)
 
     visit "/device"
-    assert page.html.include?("Insert the user code if you would like to authorize a device.")
+    assert page.html.include?("Insert the user code from the device you'd like to authorize.")
 
     fill_in "User code", with: grant[:user_code]
-    click_button "Verify"
+    click_button "Search"
 
-    assert page.html.include?("The device is being verified")
-    assert db[:oauth_tokens].none?
-    assert db[:oauth_grants].where(user_code: grant[:user_code]).count == 1
+    assert page.html.include?("No device to authorize with the given user code")
   end
 
   def test_authorize_post_device_expired_grant
@@ -140,14 +137,12 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
     grant = oauth_grant(code: "CODE", user_code: "USERCODE", expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 60))
 
     visit "/device"
-    assert page.html.include?("Insert the user code if you would like to authorize a device.")
+    assert page.html.include?("Insert the user code from the device you'd like to authorize.")
 
     fill_in "User code", with: grant[:user_code]
-    click_button "Verify"
+    click_button "Search"
 
-    assert page.html.include?("The device is being verified")
-    assert db[:oauth_tokens].none?
-    assert db[:oauth_grants].where(user_code: grant[:user_code]).count == 1
+    assert page.html.include?("No device to authorize with the given user code")
   end
 
   def test_authorize_post_device_successful_grant
@@ -160,13 +155,17 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
     grant = oauth_grant(code: "CODE", user_code: "USERCODE")
 
     visit "/device"
-    assert page.html.include?("Insert the user code if you would like to authorize a device.")
+    assert page.html.include?("Insert the user code from the device you'd like to authorize.")
 
     assert_field("User code")
     fill_in "User code", with: grant[:user_code]
+    click_button "Search"
+
+    assert page.html.include?("The device with user code #{grant[:user_code]} would like to access your data.")
+
     click_button "Verify"
 
-    assert page.html.include?("The device is being verified")
+    assert page.html.include?("The device is verified")
 
     assert db[:oauth_grants].where(user_code: grant[:user_code]).none?
     assert db[:oauth_tokens].count == 1
@@ -185,12 +184,10 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
     grant = oauth_grant(code: "CODE", user_code: "USERCODE")
 
     visit "/device?user_code=#{grant[:user_code]}"
-    assert page.html.include?("Insert the user code if you would like to authorize a device.")
-
-    assert_field("User code", with: grant[:user_code])
+    assert page.html.include?("The device with user code #{grant[:user_code]} would like to access your data.")
     click_button "Verify"
 
-    assert page.html.include?("The device is being verified")
+    assert page.html.include?("The device is verified")
 
     assert db[:oauth_grants].where(user_code: grant[:user_code]).none?
     assert db[:oauth_tokens].count == 1

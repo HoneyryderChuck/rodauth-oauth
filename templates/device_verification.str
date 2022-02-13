@@ -1,22 +1,24 @@
 <form method="post" action="#{rodauth.device_path}" class="form-horizontal" role="form" id="device-verification-form">
   #{csrf_tag(rodauth.device_path) if respond_to?(:csrf_tag)}
-  <p class="lead">Insert the user code if you would like to authorize a device.</p>
+  <p class="lead">The device with user code #{@oauth_grant[rodauth.oauth_grants_user_code_column]} would like to access your data.</p>
 
   <div class="form-group">
     <h1 class="display-6">#{rodauth.oauth_tokens_scopes_label}</h1>
 
-    <ul>
+    <ul class="list-group">
     #{
-      rodauth.scopes.map do |scope|
-        "<li>#{h(scope)}</li>"
+      scopes = @oauth_grant[rodauth.oauth_grants_scopes_column].split(rodauth.oauth_scope_separator)
+      scopes.map do |scope|
+        <<-HTML
+          <li class="list-group-item">#{scope}</li>
+        HTML
       end.join
     }
     </ul>
-
-    <label for="user_code">#{rodauth.oauth_grant_user_code_label}</label>
-    #{rodauth.input_field_string("user_code", "user_code", :value => rodauth.param_or_nil(rodauth.oauth_grant_user_code_param))}
   </div>
+  <input type="hidden" name="user_code" value="#{rodauth.param("user_code")}"/>
   <p class="text-center">
     <input type="submit" class="btn btn-outline-primary" value="#{h(rodauth.oauth_device_verification_button)}"/>
+    <a href="#{rodauth.device_path}?error=access_denied" class="btn btn-outline-danger">#{rodauth.oauth_cancel_button}</a>
   </p>
 </form>

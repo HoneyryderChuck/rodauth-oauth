@@ -1,5 +1,5 @@
 <% oauth_grant = rodauth.scope.instance_variable_get(:@oauth_grant) %>
-<%= form_tag rodauth.device_path, method: :post, class: "form-horizontal", id: "device-verification-form" do %>
+<%= form_tag rodauth.device_path, method: :post do %>
   <p class="lead">The device with user code <%= oauth_grant[rodauth.oauth_grants_user_code_column] %> would like to access your data.</p>
 
   <div class="form-group">

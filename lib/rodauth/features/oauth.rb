@@ -71,7 +71,8 @@ module Rodauth
     notice_flash "The oauth token has been revoked", "revoke_oauth_token"
     error_flash "You are not authorized to revoke this token", "revoke_unauthorized_account"
 
-    notice_flash "The device is being verified", "device_verification"
+    notice_flash "The device is verified", "device_verification"
+    error_flash "No device to authorize with the given user code", "user_code_not_found"
 
     view "authorize", "Authorize", "authorize"
     view "oauth_applications", "Oauth Applications", "oauth_applications"
@@ -79,6 +80,7 @@ module Rodauth
     view "new_oauth_application", "New Oauth Application", "new_oauth_application"
     view "oauth_tokens", "Oauth Tokens", "oauth_tokens"
     view "device_verification", "Device Verification", "device_verification"
+    view "device_search", "Device Search", "device_search"
 
     auth_value_method :json_response_content_type, "application/json"
 
@@ -129,6 +131,7 @@ module Rodauth
     button "Register", "oauth_application"
     button "Authorize", "oauth_authorize"
     button "Verify", "oauth_device_verification"
+    button "Search", "oauth_device_search"
     button "Revoke", "oauth_token_revoke"
     button "Back to Client Application", "oauth_authorize_post"
     button "Cancel", "oauth_cancel"
@@ -477,12 +480,30 @@ module Rodauth
       require_authorizable_account
 
       r.get do
-        device_verification_view
+        if (user_code = param_or_nil("user_code"))
+          oauth_grant = db[oauth_grants_table].where(
+            oauth_grants_user_code_column => user_code,
+            oauth_grants_revoked_at_column => nil
+          ).where(Sequel[oauth_grants_expires_in_column] >= Sequel::CURRENT_TIMESTAMP).first
+
+          unless oauth_grant
+            set_redirect_error_flash user_code_not_found_error_flash
+            redirect device_path
+          end
+
+          scope.instance_variable_set(:@oauth_grant, oauth_grant)
+          device_verification_view
+        else
+          device_search_view
+        end
       end
 
       r.post do
         catch_error do
-          redirect_response_error("invalid_grant") unless param_or_nil("user_code")
+          unless param_or_nil("user_code")
+            set_redirect_error_flash invalid_grant_message
+            redirect device_path
+          end
 
           transaction do
             before_device_verification
@@ -490,7 +511,7 @@ module Rodauth
           end
         end
         set_notice_flash device_verification_notice_flash
-        redirect request.referer || device_path
+        redirect device_path
       end
     end
 
