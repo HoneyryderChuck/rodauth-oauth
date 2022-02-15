@@ -10,8 +10,8 @@ class RodauthOauthApplicationsTest < RodaIntegration
     visit "/oauth-applications"
     assert_includes page.html, "No oauth applications yet!"
     # Create a new Application
-    click_link "Register new Oauth Application"
-    assert_includes page.html, "Register Oauth Application"
+    click_link "New Oauth Application"
+    assert_includes page.html, "New Oauth Application"
     fill_in "name", with: "Foo App"
     fill_in "description", with: "An app starting with Foo"
     fill_in "homepage-url", with: "https://foobar.com"
@@ -38,7 +38,7 @@ class RodauthOauthApplicationsTest < RodaIntegration
     rodauth do
       new_oauth_application_view do
         opts = _view_opts(:new_oauth_application)
-        _view(:view, opts.merge(path: File.join(opts[:views], "new_oauth_application2.erb")))
+        scope.send(:view, opts.merge(path: File.join(opts[:views], "new_oauth_application2.erb")))
       end
     end
     setup_application
@@ -47,7 +47,7 @@ class RodauthOauthApplicationsTest < RodaIntegration
     visit "/oauth-applications"
     assert_includes page.html, "No oauth applications yet!"
     # Create a new Application
-    click_link "Register new Oauth Application"
+    click_link "New Oauth Application"
     assert_includes page.html, "Register Oauth Application"
     fill_in "name", with: "Foo App"
     fill_in "description", with: "An app starting with Foo"

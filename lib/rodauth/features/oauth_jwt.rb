@@ -166,8 +166,8 @@ module Rodauth
       end
     end
 
-    def create_oauth_token
-      if param("grant_type") == "urn:ietf:params:oauth:grant-type:jwt-bearer"
+    def create_oauth_token(grant_type)
+      if grant_type == "urn:ietf:params:oauth:grant-type:jwt-bearer"
         create_oauth_token_from_assertion
       else
         super

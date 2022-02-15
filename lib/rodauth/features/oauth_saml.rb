@@ -79,8 +79,8 @@ module Rodauth
       redirect_response_error("invalid_scope") unless check_valid_scopes?
     end
 
-    def create_oauth_token
-      if param("grant_type") == SAML_GRANT_TYPE
+    def create_oauth_token(grant_type)
+      if grant_type == SAML_GRANT_TYPE
         create_oauth_token_from_saml_assertion
       else
         super

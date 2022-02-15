@@ -13,7 +13,8 @@ This gem implements the following RFCs and features of OAuth:
   * [Authorization grant flow](https://tools.ietf.org/html/rfc6749#section-1.3);
   * [Access Token generation](https://tools.ietf.org/html/rfc6749#section-1.4);
   * [Access Token refresh](https://tools.ietf.org/html/rfc6749#section-1.5);
-  * [Implicit grant (off by default)[https://tools.ietf.org/html/rfc6749#section-4.2];
+  * [Implicit grant (off by default)](https://tools.ietf.org/html/rfc6749#section-4.2);
+  * [Device code grant (off by default)](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-device-flow-15);
 * [Token revocation](https://tools.ietf.org/html/rfc7009);
 * [Token introspection](https://tools.ietf.org/html/rfc7662);
 * [Authorization Server Metadata](https://tools.ietf.org/html/rfc8414);
@@ -59,6 +60,11 @@ Or install it yourself as:
 | Documentation | https://honeyryderchuck.gitlab.io/rodauth-oauth/rdoc/       |
 | Wiki          | https://gitlab.com/honeyryderchuck/rodauth-oauth/wikis/home |
 | CI            | https://gitlab.com/honeyryderchuck/rodauth-oauth/pipelines  |
+
+## Articles
+
+* [How to use rodauth-oauth with rails and rodauth](https://honeyryderchuck.gitlab.io/httpx/2021/03/15/oidc-provider-on-rails-using-rodauth-oauth.html)
+* [How to use rodauth-oauth with rails and without rodauth](https://honeyryderchuck.gitlab.io/httpx/2021/09/08/using-rodauth-oauth-in-rails-without-rodauth-based-auth.html)
 
 ## Usage
 

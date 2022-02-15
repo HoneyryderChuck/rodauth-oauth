@@ -6,11 +6,11 @@
   <table class="table">
     <thead>
       <tr>
-        <th scope="col">Token</th>
-        <th scope="col">Refresh Token</th>
-        <th scope="col">Expires in</th>
-        <th scope="col">Revoked At</th>
-        <th scope="col">Scopes</th>
+        <th scope="col"><=% rodauth.oauth_tokens_token_label %></th>
+        <th scope="col"><=% rodauth.oauth_tokens_refresh_token_label %></th>
+        <th scope="col"><=% rodauth.oauth_tokens_expires_in_label %></th>
+        <th scope="col"><=% rodauth.oauth_tokens_revoked_at_label %></th>
+        <th scope="col"><=% rodauth.oauth_tokens_scopes_label %></th>
         <th scope="col"><span class="badge badge-pill badge-dark"><%= tokens_count %></span>
       </tr>
     </thead>
@@ -27,7 +27,7 @@
               <%= form_tag rodauth.revoke_path, method: :post do %>
                <%= hidden_field_tag :token_type_hint, "access_token" %>
                 <%= hidden_field_tag :token, oauth_token[rodauth.oauth_tokens_token_column] %>
-                <%= submit_tag "Revoke", class: "btn btn-danger" %>
+                <%= submit_tag rodauth.oauth_token_revoke_button, class: "btn btn-danger" %>
               <% end %>
             <% end %>
         </tr>

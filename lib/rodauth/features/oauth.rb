@@ -61,6 +61,9 @@ module Rodauth
     before "create_oauth_application"
     after "create_oauth_application"
 
+    before "device_authorization"
+    before "device_verification"
+
     error_flash "Please authorize to continue", "require_authorization"
     error_flash "There was an error registering your oauth application", "create_oauth_application"
     notice_flash "Your oauth application has been registered", "create_oauth_application"
@@ -68,11 +71,16 @@ module Rodauth
     notice_flash "The oauth token has been revoked", "revoke_oauth_token"
     error_flash "You are not authorized to revoke this token", "revoke_unauthorized_account"
 
+    notice_flash "The device is verified", "device_verification"
+    error_flash "No device to authorize with the given user code", "user_code_not_found"
+
     view "authorize", "Authorize", "authorize"
     view "oauth_applications", "Oauth Applications", "oauth_applications"
     view "oauth_application", "Oauth Application", "oauth_application"
     view "new_oauth_application", "New Oauth Application", "new_oauth_application"
     view "oauth_tokens", "Oauth Tokens", "oauth_tokens"
+    view "device_verification", "Device Verification", "device_verification"
+    view "device_search", "Device Search", "device_search"
 
     auth_value_method :json_response_content_type, "application/json"
 
@@ -80,12 +88,21 @@ module Rodauth
     auth_value_method :oauth_token_expires_in, 60 * 60 # 60 minutes
     auth_value_method :oauth_refresh_token_expires_in, 60 * 60 * 24 * 360 # 1 year
     auth_value_method :use_oauth_implicit_grant_type?, false
+    auth_value_method :use_oauth_device_code_grant_type?, false
     auth_value_method :use_oauth_pkce?, true
     auth_value_method :use_oauth_access_type?, true
 
     auth_value_method :oauth_require_pkce, false
     auth_value_method :oauth_pkce_challenge_method, "S256"
     auth_value_method :oauth_response_mode, "query"
+
+    # device code grant
+    auth_value_method :oauth_device_code_grant_polling_interval, 5 # seconds
+    auth_value_method :oauth_device_code_grant_user_code_size, 8 # characters
+    %w[user_code].each do |param|
+      auth_value_method :"oauth_grant_#{param}_param", param
+    end
+    translatable_method :oauth_grant_user_code_label, "User code"
 
     auth_value_method :oauth_valid_uri_schemes, %w[https]
 
@@ -97,12 +114,27 @@ module Rodauth
 
     (APPLICATION_REQUIRED_PARAMS + %w[client_id]).each do |param|
       auth_value_method :"oauth_application_#{param}_param", param
-      translatable_method :"#{param}_label", param.gsub("_", " ").capitalize
+      configuration_module_eval do
+        define_method :"#{param}_label" do
+          warn "#{__method__} is deprecated, switch to oauth_applications_#{__method__}"
+          before_otp_auth_route(&block)
+        end
+      end
     end
+    translatable_method :oauth_applications_name_label, "Name"
+    translatable_method :oauth_applications_description_label, "Description"
+    translatable_method :oauth_applications_scopes_label, "Scopes"
+    translatable_method :oauth_applications_homepage_url_label, "Homepage URL"
+    translatable_method :oauth_applications_redirect_uri_label, "Redirect URI"
+    translatable_method :oauth_applications_client_secret_label, "Client Secret"
+    translatable_method :oauth_applications_client_id_label, "Client ID"
     button "Register", "oauth_application"
     button "Authorize", "oauth_authorize"
+    button "Verify", "oauth_device_verification"
+    button "Search", "oauth_device_search"
     button "Revoke", "oauth_token_revoke"
     button "Back to Client Application", "oauth_authorize_post"
+    button "Cancel", "oauth_cancel"
 
     # OAuth Token
     auth_value_method :oauth_tokens_path, "oauth-tokens"
@@ -115,6 +147,10 @@ module Rodauth
       expires_in revoked_at
     ].each do |column|
       auth_value_method :"oauth_tokens_#{column}_column", column
+    end
+
+    %w[token refresh_token expires_in revoked_at scopes].each do |param|
+      translatable_method :"oauth_tokens_#{param}_label", param.gsub("_", " ").capitalize
     end
 
     # Oauth Token Hash
@@ -131,6 +167,7 @@ module Rodauth
       redirect_uri code scopes access_type
       expires_in revoked_at
       code_challenge code_challenge_method
+      user_code last_polled_at
     ].each do |column|
       auth_value_method :"oauth_grants_#{column}_column", column
     end
@@ -182,6 +219,11 @@ module Rodauth
     translatable_method :already_in_use_message, "error generating unique token"
     auth_value_method :already_in_use_error_code, "invalid_request"
 
+    translatable_method :expired_token_message, "the device code has expired"
+    translatable_method :access_denied_message, "the authorization request has been denied"
+    translatable_method :authorization_pending_message, "the authorization request is still pending"
+    translatable_method :slow_down_message, "authorization request is still pending but poll interval should be increased"
+
     # PKCE
     auth_value_method :code_challenge_required_error_code, "invalid_request"
     translatable_method :code_challenge_required_message, "code challenge required"
@@ -210,7 +252,8 @@ module Rodauth
       :authorization_server_url,
       :before_introspection_request,
       :require_authorizable_account,
-      :oauth_tokens_unique_columns
+      :oauth_tokens_unique_columns,
+      :generate_user_code
     )
 
     auth_value_methods(:only_json?)
@@ -229,9 +272,44 @@ module Rodauth
           validate_oauth_token_params
 
           oauth_token = nil
+
           transaction do
             before_token
-            oauth_token = create_oauth_token
+            if param("grant_type") == "urn:ietf:params:oauth:grant-type:device_code"
+              throw_json_response_error(invalid_oauth_response_status, "invalid_grant_type") unless use_oauth_device_code_grant_type?
+
+              oauth_grant = db[oauth_grants_table].where(
+                oauth_grants_code_column => param("device_code"),
+                oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column]
+              ).for_update.first
+
+              throw_json_response_error(invalid_oauth_response_status, "invalid_grant") unless oauth_grant
+
+              now = Time.now
+
+              if oauth_grant[oauth_grants_revoked_at_column]
+                oauth_token = db[oauth_tokens_table]
+                              .where(Sequel[oauth_tokens_table][oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
+                              .where(Sequel[oauth_tokens_table][oauth_tokens_revoked_at_column] => nil)
+                              .where(oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column])
+                              .first
+
+                throw_json_response_error(invalid_oauth_response_status, "access_denied") unless oauth_token
+              elsif oauth_grant[oauth_grants_expires_in_column] < now
+                throw_json_response_error(invalid_oauth_response_status, "expired_token")
+              else
+                last_polled_at = oauth_grant[oauth_grants_last_polled_at_column]
+                if last_polled_at && convert_timestamp(last_polled_at) + oauth_device_code_grant_polling_interval > now
+                  throw_json_response_error(invalid_oauth_response_status, "slow_down")
+                else
+                  db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column])
+                                        .update(oauth_grants_last_polled_at_column => Sequel::CURRENT_TIMESTAMP)
+                  throw_json_response_error(invalid_oauth_response_status, "authorization_pending")
+                end
+              end
+            else
+              oauth_token = create_oauth_token(param("grant_type"))
+            end
           end
 
           json_response_success(json_access_token_payload(oauth_token))
@@ -369,6 +447,74 @@ module Rodauth
       end
     end
 
+    # /device-authorization
+    route(:device_authorization) do |r|
+      next unless is_authorization_server? && use_oauth_device_code_grant_type?
+
+      before_device_authorization_route
+
+      r.post do
+        require_oauth_application
+
+        user_code = generate_user_code
+        device_code = transaction do
+          before_device_authorization
+          create_oauth_grant(oauth_grants_user_code_column => user_code)
+        end
+
+        json_response_success \
+          "device_code" => device_code,
+          "user_code" => user_code,
+          "verification_uri" => device_url,
+          "verification_uri_complete" => device_url(user_code: user_code),
+          "expires_in" => oauth_grant_expires_in,
+          "interval" => oauth_device_code_grant_polling_interval
+      end
+    end
+
+    # /device
+    route(:device) do |r|
+      next unless is_authorization_server? && use_oauth_device_code_grant_type?
+
+      before_device_route
+      require_authorizable_account
+
+      r.get do
+        if (user_code = param_or_nil("user_code"))
+          oauth_grant = db[oauth_grants_table].where(
+            oauth_grants_user_code_column => user_code,
+            oauth_grants_revoked_at_column => nil
+          ).where(Sequel[oauth_grants_expires_in_column] >= Sequel::CURRENT_TIMESTAMP).first
+
+          unless oauth_grant
+            set_redirect_error_flash user_code_not_found_error_flash
+            redirect device_path
+          end
+
+          scope.instance_variable_set(:@oauth_grant, oauth_grant)
+          device_verification_view
+        else
+          device_search_view
+        end
+      end
+
+      r.post do
+        catch_error do
+          unless param_or_nil("user_code")
+            set_redirect_error_flash invalid_grant_message
+            redirect device_path
+          end
+
+          transaction do
+            before_device_verification
+            create_oauth_token("device_code")
+          end
+        end
+        set_notice_flash device_verification_notice_flash
+        redirect device_path
+      end
+    end
+
     def oauth_server_metadata(issuer = nil)
       request.on(".well-known") do
         request.on("oauth-authorization-server") do
@@ -442,7 +588,7 @@ module Rodauth
 
     def check_csrf?
       case request.path
-      when token_path, introspect_path
+      when token_path, introspect_path, device_authorization_path
         false
       when revoke_path
         !json_request?
@@ -692,6 +838,11 @@ module Rodauth
       # skip if using pkce
       return if @oauth_application && use_oauth_pkce? && param_or_nil("code_verifier")
 
+      # skip if using device grant
+      #
+      # requests may be performed by devices with no knowledge of client secret.
+      return if !client_secret && (@oauth_application && use_oauth_device_code_grant_type?)
+
       authorization_required unless @oauth_application && secret_matches?(@oauth_application, client_secret)
     end
 
@@ -725,6 +876,14 @@ module Rodauth
       Base64.urlsafe_encode64(Digest::SHA256.digest(token))
     end
 
+    def generate_user_code
+      user_code_size = oauth_device_code_grant_user_code_size
+      SecureRandom.random_number(36**user_code_size)
+                  .to_s(36) # 0 to 9, a to z
+                  .upcase
+                  .rjust(user_code_size, "0")
+    end
+
     def token_from_application?(oauth_token, oauth_application)
       oauth_token[oauth_tokens_oauth_application_id_column] == oauth_application[oauth_applications_id_column]
     end
@@ -739,7 +898,7 @@ module Rodauth
 
     def generate_oauth_token(params = {}, should_generate_refresh_token = true)
       create_params = {
-        oauth_grants_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_token_expires_in)
+        oauth_tokens_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_token_expires_in)
       }.merge(params)
 
       rescue_from_uniqueness_error do
@@ -956,7 +1115,6 @@ module Rodauth
 
     def create_oauth_grant(create_params = {})
       create_params.merge!(
-        oauth_grants_account_id_column => account_id,
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
         oauth_grants_redirect_uri_column => redirect_uri,
         oauth_grants_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_grant_expires_in),
@@ -1008,7 +1166,7 @@ module Rodauth
     end
 
     def _do_authorize_code
-      { "code" => create_oauth_grant }
+      { "code" => create_oauth_grant(oauth_grants_account_id_column => account_id) }
     end
 
     def _do_authorize_token
@@ -1035,13 +1193,15 @@ module Rodauth
 
       when "refresh_token"
         redirect_response_error("invalid_request") unless param_or_nil("refresh_token")
+      when "urn:ietf:params:oauth:grant-type:device_code"
+        redirect_response_error("invalid_request") unless use_oauth_device_code_grant_type? && param_or_nil("device_code")
       else
         redirect_response_error("invalid_request")
       end
     end
 
-    def create_oauth_token
-      case param("grant_type")
+    def create_oauth_token(grant_type)
+      case grant_type
       when "authorization_code"
         # fetch oauth grant
         oauth_grant = db[oauth_grants_table].where(
@@ -1057,6 +1217,33 @@ module Rodauth
 
         create_params = {
           oauth_tokens_account_id_column => oauth_grant[oauth_grants_account_id_column],
+          oauth_tokens_oauth_application_id_column => oauth_grant[oauth_grants_oauth_application_id_column],
+          oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column],
+          oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column]
+        }
+        create_oauth_token_from_authorization_code(oauth_grant, create_params)
+      when "device_code"
+        redirect_response_error("invalid_grant_type") unless use_oauth_device_code_grant_type?
+
+        # fetch oauth grant
+        oauth_grant = db[oauth_grants_table].where(
+          oauth_grants_user_code_column => param("user_code"),
+          oauth_grants_revoked_at_column => nil
+        ).where(Sequel[oauth_grants_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
+                                            .for_update
+                                            .first
+
+        return unless oauth_grant
+
+        # update ownership
+        db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column])
+                              .update(
+                                oauth_grants_user_code_column => nil,
+                                oauth_grants_account_id_column => account_id
+                              )
+
+        create_params = {
+          oauth_tokens_account_id_column => account_id,
           oauth_tokens_oauth_application_id_column => oauth_grant[oauth_grants_oauth_application_id_column],
           oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column],
           oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column]
@@ -1399,7 +1586,7 @@ module Rodauth
         grant_types_supported << "implicit"
       end
 
-      {
+      payload = {
         issuer: issuer,
         authorization_endpoint: authorize_url,
         token_endpoint: token_url,
@@ -1419,6 +1606,13 @@ module Rodauth
         introspection_endpoint_auth_methods_supported: %w[client_secret_basic],
         code_challenge_methods_supported: (use_oauth_pkce? ? oauth_pkce_challenge_method : nil)
       }
+
+      if use_oauth_device_code_grant_type?
+        grant_types_supported << "urn:ietf:params:oauth:grant-type:device_code"
+        payload[:device_authorization_endpoint] = device_authorization_url
+      end
+
+      payload
     end
   end
 end

@@ -1,3 +1,4 @@
+<h2>#{rodauth.new_oauth_application_page_title}</h2>
 <form method="post" action="#{rodauth.oauth_applications_path}" class="rodauth" role="form" id="oauth-application-form">
   #{rodauth.csrf_tag}
   #{rodauth.render('name_field')}

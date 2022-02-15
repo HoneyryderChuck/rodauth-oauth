@@ -3,15 +3,15 @@
   <h2><%= oauth_application[rodauth.oauth_applications_name_column] %></h2>
 
   <dl>
-    <dt>Description: </dt>
+    <dt><%= rodauth.oauth_applications_description_label %>: </dt>
     <dd><%= oauth_application[rodauth.oauth_applications_description_column] %></dd>
-    <dt>Homepage URL: </dt>
+    <dt><%= rodauth.oauth_applications_homepage_url_label %>: </dt>
     <dd><%= oauth_application[rodauth.oauth_applications_homepage_url_column] %></dd>
-    <dt>Client ID: </dt>
+    <dt><%= rodauth.oauth_applications_client_id_label %>: </dt>
     <dd><%= oauth_application[rodauth.oauth_applications_client_id_column] %></dd>
-    <dt>Redirect URL: </dt>
+    <dt><%= rodauth.oauth_applications_redirect_uri_label %>: </dt>
     <dd><%= oauth_application[rodauth.oauth_applications_redirect_uri_column] %></dd>
-    <dt>Scopes: </dt>
+    <dt><%= rodauth.oauth_applications_scopes_label %>: </dt>
     <dd><%= oauth_application[rodauth.oauth_applications_scopes_column] %></dd>
   </dl>
 </div>
