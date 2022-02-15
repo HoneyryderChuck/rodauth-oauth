@@ -243,6 +243,7 @@ jekyll:
     - *install_deps
     - *before_script
   script:
+    - bundle exec rake check_method_doc
     - bundle exec rake prepare_website
     - bundle exec jekyll build -s www -d www/public
   artifacts:
