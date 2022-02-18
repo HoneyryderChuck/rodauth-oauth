@@ -1,5 +1,5 @@
-<% oauth_tokens_ds = rodauth.scope.instance_variable_get(:@oauth_tokens) %>
-<% tokens_count = oauth_tokens_ds.count %>
+<% oauth_tokens = rodauth.scope.instance_variable_get(:@oauth_tokens) %>
+<% tokens_count = oauth_tokens.count %>
 <% if tokens_count.zero? %>
   <p>No oauth tokens yet!</p>
 <% else %>
@@ -15,7 +15,7 @@
       </tr>
     </thead>
     <tbody>
-      <% oauth_tokens_ds.each do |application| %>
+      <% oauth_tokens.each do |oauth_token| %>
         <tr>
           <td><code class="token"><%= oauth_token[rodauth.oauth_tokens_token_column] %></code></td>
           <td><code class="token"><%= oauth_token[rodauth.oauth_tokens_refresh_token_column] %></code></td>
@@ -24,9 +24,7 @@
           <td><%= oauth_token[rodauth.oauth_tokens_scopes_column] %></td>
           <td>
             <% if !oauth_token[rodauth.oauth_tokens_revoked_at_column] %>
-              <%= form_tag rodauth.revoke_path, method: :post do %>
-                <%= hidden_field_tag :token_type_hint, "access_token" %>
-                <%= hidden_field_tag :token, oauth_token[rodauth.oauth_tokens_token_column] %>
+              <%= form_tag rodauth.oauth_token_path(oauth_token), method: :post do %>
                 <%= submit_tag rodauth.oauth_token_revoke_button, class: "btn btn-danger" %>
               <% end %>
             <% end %>
@@ -36,3 +34,4 @@
     </tbody>
   </table>
 <% end %>
+

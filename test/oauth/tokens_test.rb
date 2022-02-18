@@ -45,4 +45,3 @@ class RodauthTokensTest < RodaIntegration
     super(&:oauth_tokens)
   end
 end
-

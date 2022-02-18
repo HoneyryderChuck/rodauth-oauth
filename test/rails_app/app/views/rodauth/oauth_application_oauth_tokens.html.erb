@@ -24,7 +24,9 @@
           <td><%= oauth_token[rodauth.oauth_tokens_scopes_column] %></td>
           <td>
             <% if !oauth_token[rodauth.oauth_tokens_revoked_at_column] %>
-              <%= form_tag rodauth.oauth_token_path(oauth_token), method: :post do %>
+              <%= form_tag rodauth.revoke_path, method: :post do %>
+                <%= hidden_field_tag :token_type_hint, "access_token" %>
+                <%= hidden_field_tag :token, oauth_token[rodauth.oauth_tokens_token_column] %>
                 <%= submit_tag rodauth.oauth_token_revoke_button, class: "btn btn-danger" %>
               <% end %>
             <% end %>
@@ -34,4 +36,3 @@
     </tbody>
   </table>
 <% end %>
-
