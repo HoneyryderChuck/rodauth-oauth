@@ -9,7 +9,6 @@
         <th scope="col"><=% rodauth.oauth_tokens_token_label %></th>
         <th scope="col"><=% rodauth.oauth_tokens_refresh_token_label %></th>
         <th scope="col"><=% rodauth.oauth_tokens_expires_in_label %></th>
-        <th scope="col"><=% rodauth.oauth_tokens_revoked_at_label %></th>
         <th scope="col"><=% rodauth.oauth_tokens_scopes_label %></th>
         <th scope="col"><span class="badge badge-pill badge-dark"><%= tokens_count %></span>
       </tr>
@@ -20,13 +19,10 @@
           <td><code class="token"><%= oauth_token[rodauth.oauth_tokens_token_column] %></code></td>
           <td><code class="token"><%= oauth_token[rodauth.oauth_tokens_refresh_token_column] %></code></td>
           <td><%= oauth_token[rodauth.oauth_tokens_expires_in_column] %></td>
-          <td><%= oauth_token[rodauth.oauth_tokens_revoked_at_column] %></td>
           <td><%= oauth_token[rodauth.oauth_tokens_scopes_column] %></td>
           <td>
-            <% if !oauth_token[rodauth.oauth_tokens_revoked_at_column] %>
-              <%= form_tag rodauth.oauth_token_path(oauth_token), method: :post do %>
-                <%= submit_tag rodauth.oauth_token_revoke_button, class: "btn btn-danger" %>
-              <% end %>
+            <%= form_tag rodauth.oauth_token_path(oauth_token[rodauth.oauth_tokens_id_pattern]), method: :post do %>
+              <%= submit_tag rodauth.oauth_token_revoke_button, class: "btn btn-danger" %>
             <% end %>
           </td>
         </tr>
