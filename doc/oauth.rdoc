@@ -85,7 +85,8 @@ oauth_application_scopes_param: form parameter for a client application scopes, 
 oauth_application_homepage_url_param: form parameter for a client application homepage URL, <tt>homepage_url</tt> by default.
 oauth_applications_id_pattern :: pattern matcher to retrieve the client application ID from the URL, <tt>Integer</tt> by default (must respond to "match".
 oauth_application_path :: URL sub-path used for a client application view.
-oauth_tokens_path :: URL sub-path used for a client application's oauth tokens views, <tt>"oauth-tokens"</tt> by default.
+oauth_applications_oauth_tokens_path :: URL sub-path used for a client application's oauth tokens views, <tt>"oauth-tokens"</tt> by default.
+oauth_tokens_path :: URL path used for a client's oauth tokens views, <tt>"oauth-tokens"</tt> by default.
 
 
 invalid_client_message :: error description for the "invalid_client" OAuth error code, <tt>"Invalid client"</tt> by default.
@@ -118,7 +119,8 @@ authorize_page_title :: Title of authorize form page.
 new_oauth_application_page_title :: Title for the new OAuth application form.
 oauth_application_page_title :: Title for an OAuth application page.
 oauth_applications_page_title :: Title for the OAuth applications page.
-oauth_tokens_page_title :: Title for the OAuth tokens page.
+oauth_application_oauth_tokens_page_title :: Title for the OAuth tokens page for a given application.
+oauth_tokens_page_title :: Title for the client OAuth tokens page.
 oauth_applications_client_id_label :: Form label for the oauth application client ID.
 oauth_applications_name_label :: Form label for the oauth application name.
 oauth_applications_client_secret_label :: Form label for the oauth application client secret.
@@ -192,9 +194,10 @@ before_device_verification :: Run arbitrary code before verifying the device gra
 
 authorize_view :: The HTML of the Authorize form.
 oauth_applications_view :: The HTML of the Oauth applications dashboard.
+oauth_tokens_application_view :: The HTML of the Oauth tokens dashboard for a given application.
 oauth_application_view :: The HTML of an Oauth application page.
 new_oauth_application_view :: The HTML of a new Oauth application form.
-oauth_tokens_view :: The HTML of the Oauth tokens dashboard.
+oauth_tokens_view :: The HTML of the Oauth tokens dashboard for the logged in account.
 
 require_authorization_error_flash :: The flash error to display when authorization is required.
 create_oauth_application_error_flash :: The flash error to display when there were submission errors creating an Oauth application.

@@ -2,8 +2,8 @@
 
 require "test_helper"
 
-class RodauthOauthTokensTest < RodaIntegration
-  def test_oauth_tokens
+class RodauthApplicationTokensTest < RodaIntegration
+  def test_application_tokens
     setup_application
     login
     # List

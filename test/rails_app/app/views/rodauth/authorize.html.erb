@@ -2,18 +2,17 @@
   <p class="lead">The application <%= rodauth.oauth_application[rodauth.oauth_applications_name_column] %> would like to access your data.</p>
 
   <div class="form-group">
-    <h1 class="display-6">#{rodauth.oauth_tokens_scopes_label}</h1>
+    <h1 class="display-6"><%= rodauth.oauth_tokens_scopes_label %></h1>
 
     <% rodauth.scopes.each do |scope| %>
       <% is_default = scope == rodauth.oauth_application_default_scope %>
       <div class="form-check">
         <%= check_box_tag "scope[]", scope, is_default, disabled: is_default, id: scope, class: "form-check-input" %>
-        <%= hidden_field_tag "scope[]", scope if is_default %>
         <%= label_tag scope, scope, class: "form-check-label" %>
+        <%= hidden_field_tag "scope[]", scope if is_default %>
       </div>
     <% end %>
     <%= hidden_field_tag :client_id, params[:client_id] %>
-
     <% %i[access_type response_type state nonce redirect_uri code_challenge code_challenge_method].each do |oauth_param| %>
       <% if params[oauth_param] %>
         <%= hidden_field_tag oauth_param,  params[oauth_param] %>
@@ -23,8 +22,8 @@
       <%= hidden_field_tag :response_mode, params[:response_mode] %>
     <% end %>
   </div>
-  <p class="text-center">
+ <p class="text-center">
     <%= submit_tag rodauth.oauth_authorize_button, class: "btn btn-outline-primary" %>
-    <%= link_to rodauth.oauth_cancel_button, "#{rodauth.redirect_uri}?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request#{"&state=\#{params[:state]}" if params[:state]}", class: "btn btn-outline-danger" %>
+    <%= link_to rodauth.oauth_cancel_button, "#{rodauth.redirect_uri}?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request#{"&state=\#{rodauth.state}" if params[:state] }", class: "btn btn-outline-danger" %>
   </p>
 <% end %>

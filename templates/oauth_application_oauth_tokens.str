@@ -10,6 +10,7 @@
               <th scope="col">#{rodauth.oauth_tokens_token_label}</th>
               <th scope="col">#{rodauth.oauth_tokens_refresh_token_label}</th>
               <th scope="col">#{rodauth.oauth_tokens_expires_in_label}</th>
+              <th scope="col">#{rodauth.oauth_tokens_revoked_at_label}</th>
               <th scope="col">#{rodauth.oauth_tokens_scopes_label}</th>
               <th scope="col"><span class="badge badge-pill badge-dark">#{@oauth_tokens.count}</span>
             </tr>
@@ -22,13 +23,16 @@
                     <td><code class="token">#{oauth_token[rodauth.oauth_tokens_token_column]}</code></td>
                     <td><code class="token">#{oauth_token[rodauth.oauth_tokens_refresh_token_column]}</code></td>
                     <td>#{oauth_token[rodauth.oauth_tokens_expires_in_column]}</td>
+                    <td>#{oauth_token[rodauth.oauth_tokens_revoked_at_column]}</td>
                     <td>#{oauth_token[rodauth.oauth_tokens_scopes_column]}</td>
                     <td>
                       #{
-                        if !oauth_token[rodauth.oauth_tokens_token_hash_column]
+                        if !oauth_token[rodauth.oauth_tokens_revoked_at_column] && !oauth_token[rodauth.oauth_tokens_token_hash_column]
                           <<-HTML
-                            <form method="post" action="#{rodauth.oauth_token_path(oauth_token[rodauth.oauth_tokens_id_column])}" class="form-horizontal" role="form" id="token-revoke-form">
-                              #{csrf_tag(rodauth.oauth_token_path(oauth_token[rodauth.oauth_tokens_id_column])) if respond_to?(:csrf_tag)}
+                            <form method="post" action="#{rodauth.revoke_path}" class="form-horizontal" role="form" id="revoke-form">
+                              #{csrf_tag(rodauth.revoke_path) if respond_to?(:csrf_tag)}
+                              #{rodauth.input_field_string("token_type_hint", "revoke-token-type-hint", :value => "access_token", :type=>"hidden")}
+                              #{rodauth.input_field_string("token", "revoke-token", :value => oauth_token[rodauth.oauth_tokens_token_column], :type=>"hidden")}
                               #{rodauth.button(rodauth.oauth_token_revoke_button)}
                             </form>
                           HTML
