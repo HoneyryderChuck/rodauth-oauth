@@ -134,7 +134,6 @@ oauth_tokens_refresh_token_label :: Label for the oauth token refresh token.
 oauth_tokens_revoked_at_label :: Label for the oauth token revocation date.
 oauth_tokens_scopes_label :: Label for the oauth token scopes.
 oauth_tokens_token_label :: Label for the oauth token.
-oauth_tokens_oauth_application_name_label :: Label for the name of the oauth application for a given oauth token.
 
 oauth_application_button :: Label of OAuth application form button.
 oauth_authorize_button :: Label of Authorize form button.

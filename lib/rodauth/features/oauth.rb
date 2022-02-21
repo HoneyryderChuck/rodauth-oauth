@@ -151,7 +151,7 @@ module Rodauth
       auth_value_method :"oauth_tokens_#{column}_column", column
     end
 
-    %w[token refresh_token expires_in revoked_at scopes oauth_application_name].each do |param|
+    %w[token refresh_token expires_in revoked_at scopes].each do |param|
       translatable_method :"oauth_tokens_#{param}_label", param.gsub("_", " ").capitalize
     end
 
