@@ -151,7 +151,7 @@ module Rodauth
       auth_value_method :"oauth_tokens_#{column}_column", column
     end
 
-    %w[token refresh_token expires_in revoked_at scopes].each do |param|
+    %w[token refresh_token expires_in revoked_at scopes oauth_application_name].each do |param|
       translatable_method :"oauth_tokens_#{param}_label", param.gsub("_", " ").capitalize
     end
 
@@ -610,7 +610,9 @@ module Rodauth
 
         request.get do
           scope.instance_variable_set(:@oauth_tokens, db[oauth_tokens_table]
-            .where(oauth_tokens_account_id_column => account_id)
+            .join(oauth_applications_table, Sequel[oauth_tokens_table][oauth_tokens_oauth_application_id_column] =>
+              Sequel[oauth_applications_table][oauth_applications_id_column])
+            .where(Sequel[oauth_tokens_table][oauth_tokens_account_id_column] => account_id)
             .where(oauth_tokens_revoked_at_column => nil))
           oauth_tokens_view
         end
