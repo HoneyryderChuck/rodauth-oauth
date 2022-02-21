@@ -610,8 +610,11 @@ module Rodauth
 
         request.get do
           scope.instance_variable_set(:@oauth_tokens, db[oauth_tokens_table]
-            .where(oauth_tokens_account_id_column => account_id)
-            .where(oauth_tokens_revoked_at_column => nil))
+            .select(Sequel[oauth_tokens_table].*, Sequel[oauth_applications_table][oauth_applications_name_column])
+            .join(oauth_applications_table, Sequel[oauth_tokens_table][oauth_tokens_oauth_application_id_column] =>
+              Sequel[oauth_applications_table][oauth_applications_id_column])
+            .where(Sequel[oauth_tokens_table][oauth_tokens_account_id_column] => account_id)
+                .where(oauth_tokens_revoked_at_column => nil))
           oauth_tokens_view
         end
 

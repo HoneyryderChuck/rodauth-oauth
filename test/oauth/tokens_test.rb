@@ -15,6 +15,7 @@ class RodauthTokensTest < RodaIntegration
 
     # List as owner
     visit "/oauth-tokens"
+    assert_includes page.html, oauth_application[:name]
     assert_includes page.html, oauth_token[:token]
     assert_includes page.html, oauth_token[:refresh_token]
     assert_includes page.html, oauth_token[:expires_in].to_s
