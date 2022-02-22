@@ -44,14 +44,12 @@ module Rodauth
       using(SuffixExtensions)
     end
 
-    depends :oauth_base, :oauth_pkce, :oauth_implicit_grant, :oauth_device_grant
+    depends :oauth_base, :oauth_pkce, :oauth_implicit_grant, :oauth_device_grant, :oauth_token_introspection
 
     SERVER_METADATA = OAuth::TtlStore.new
 
     before "revoke"
     after "revoke"
-
-    before "introspect"
 
     before "create_oauth_application"
     after "create_oauth_application"
@@ -136,43 +134,8 @@ module Rodauth
     auth_value_method :oauth_metadata_op_tos_uri, nil
 
     auth_value_methods(
-      :oauth_application_path,
-      :before_introspection_request
+      :oauth_application_path
     )
-
-    # /introspect
-    route(:introspect) do |r|
-      next unless is_authorization_server?
-
-      before_introspect_route
-
-      r.post do
-        catch_error do
-          validate_oauth_introspect_params
-
-          before_introspect
-          oauth_token = case param("token_type_hint")
-                        when "access_token"
-                          oauth_token_by_token(param("token"))
-                        when "refresh_token"
-                          oauth_token_by_refresh_token(param("token"))
-                        else
-                          oauth_token_by_token(param("token")) || oauth_token_by_refresh_token(param("token"))
-                        end
-
-          if oauth_application
-            redirect_response_error("invalid_request") if oauth_token && !token_from_application?(oauth_token, oauth_application)
-          elsif oauth_token
-            @oauth_application = db[oauth_applications_table].where(oauth_applications_id_column =>
-              oauth_token[oauth_tokens_oauth_application_id_column]).first
-          end
-
-          json_response_success(json_token_introspect_payload(oauth_token))
-        end
-
-        throw_json_response_error(invalid_oauth_response_status, "invalid_request")
-      end
-    end
 
     # /revoke
     route(:revoke) do |r|
@@ -358,25 +321,6 @@ module Rodauth
       end
     end
 
-    def introspection_request(token_type_hint, token)
-      auth_url = URI(authorization_server_url)
-      http = Net::HTTP.new(auth_url.host, auth_url.port)
-      http.use_ssl = auth_url.scheme == "https"
-
-      request = Net::HTTP::Post.new(introspect_path)
-      request["content-type"] = "application/x-www-form-urlencoded"
-      request["accept"] = json_response_content_type
-      request.set_form_data({ "token_type_hint" => token_type_hint, "token" => token })
-
-      before_introspection_request(request)
-      response = http.request(request)
-      authorization_required unless response.code.to_i == 200
-
-      JSON.parse(response.body)
-    end
-
-    def before_introspection_request(request); end
-
     # Oauth Application
 
     def oauth_application_params
@@ -451,32 +395,6 @@ module Rodauth
     # Authorize
     def require_authorizable_account
       require_account
-    end
-
-    TOKEN_HINT_TYPES = %w[access_token refresh_token].freeze
-
-    # Token introspect
-
-    def validate_oauth_introspect_params
-      # check if valid token hint type
-      if param_or_nil("token_type_hint") && !TOKEN_HINT_TYPES.include?(param("token_type_hint"))
-        redirect_response_error("unsupported_token_type")
-      end
-
-      redirect_response_error("invalid_request") unless param_or_nil("token")
-    end
-
-    def json_token_introspect_payload(token)
-      return { active: false } unless token
-
-      {
-        active: true,
-        scope: token[oauth_tokens_scopes_column],
-        client_id: oauth_application[oauth_applications_client_id_column],
-        # username
-        token_type: oauth_token_type,
-        exp: token[oauth_tokens_expires_in_column].to_i
-      }
     end
 
     # Token revocation
