@@ -44,7 +44,7 @@ module Rodauth
       using(SuffixExtensions)
     end
 
-    depends :oauth_base, :oauth_pkce, :oauth_device_grant
+    depends :oauth_base, :oauth_pkce, :oauth_implicit_grant, :oauth_device_grant
 
     SERVER_METADATA = OAuth::TtlStore.new
 
@@ -67,8 +67,6 @@ module Rodauth
     view "new_oauth_application", "New Oauth Application", "new_oauth_application"
     view "oauth_application_oauth_tokens", "Oauth Application Tokens", "oauth_application_oauth_tokens"
     view "oauth_tokens", "My Oauth Tokens", "oauth_tokens"
-
-    auth_value_method :use_oauth_implicit_grant_type?, false
 
     auth_value_method :oauth_valid_uri_schemes, %w[https]
 

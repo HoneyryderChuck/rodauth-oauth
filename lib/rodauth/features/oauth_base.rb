@@ -154,43 +154,12 @@ module Rodauth
       end
 
       r.post do
-        redirect_url = URI.parse(redirect_uri)
-
         params, mode = transaction do
           before_authorize
           do_authorize
         end
 
-        case mode
-        when "query"
-          params = params.map { |k, v| "#{k}=#{v}" }
-          params << redirect_url.query if redirect_url.query
-          redirect_url.query = params.join("&")
-          redirect(redirect_url.to_s)
-        when "fragment"
-          params = params.map { |k, v| "#{k}=#{v}" }
-          params << redirect_url.query if redirect_url.query
-          redirect_url.fragment = params.join("&")
-          redirect(redirect_url.to_s)
-        when "form_post"
-          scope.view layout: false, inline: <<-FORM
-            <html>
-              <head><title>Authorized</title></head>
-              <body onload="javascript:document.forms[0].submit()">
-                <form method="post" action="#{redirect_uri}">
-                  #{
-                    params.map do |name, value|
-                      "<input type=\"hidden\" name=\"#{name}\" value=\"#{scope.h(value)}\" />"
-                    end.join
-                  }
-                  <input type="submit" class="btn btn-outline-primary" value="#{scope.h(oauth_authorize_post_button)}"/>
-                </form>
-              </body>
-            </html>
-          FORM
-        when "none"
-          redirect(redirect_url.to_s)
-        end
+        authorize_response(params, mode)
       end
     end
 
@@ -607,11 +576,7 @@ module Rodauth
 
     def do_authorize(response_params = {}, response_mode = param_or_nil("response_mode"))
       case param("response_type")
-      when "token"
-        redirect_response_error("invalid_request") unless use_oauth_implicit_grant_type?
 
-        response_mode ||= "fragment"
-        response_params.replace(_do_authorize_token)
       when "code"
         response_mode ||= "query"
         response_params.replace(_do_authorize_code)
@@ -631,15 +596,33 @@ module Rodauth
       { "code" => create_oauth_grant(oauth_grants_account_id_column => account_id) }
     end
 
-    def _do_authorize_token
-      create_params = {
-        oauth_tokens_account_id_column => account_id,
-        oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-        oauth_tokens_scopes_column => scopes
-      }
-      oauth_token = generate_oauth_token(create_params, false)
-
-      json_access_token_payload(oauth_token)
+    def authorize_response(params, mode)
+      redirect_url = URI.parse(redirect_uri)
+      case mode
+      when "query"
+        params = params.map { |k, v| "#{k}=#{v}" }
+        params << redirect_url.query if redirect_url.query
+        redirect_url.query = params.join("&")
+        redirect(redirect_url.to_s)
+      when "form_post"
+        scope.view layout: false, inline: <<-FORM
+          <html>
+            <head><title>Authorized</title></head>
+            <body onload="javascript:document.forms[0].submit()">
+              <form method="post" action="#{redirect_uri}">
+                #{
+                  params.map do |name, value|
+                    "<input type=\"hidden\" name=\"#{name}\" value=\"#{scope.h(value)}\" />"
+                  end.join
+                }
+                <input type="submit" class="btn btn-outline-primary" value="#{scope.h(oauth_authorize_post_button)}"/>
+              </form>
+            </body>
+          </html>
+        FORM
+      when "none"
+        redirect(redirect_url.to_s)
+      end
     end
 
     # Access Tokens
@@ -881,11 +864,7 @@ module Rodauth
     def check_valid_response_type?
       response_type = param_or_nil("response_type")
 
-      return true if response_type.nil? || response_type == "code"
-
-      return use_oauth_implicit_grant_type? if response_type == "token"
-
-      false
+      response_type.nil? || response_type == "code"
     end
   end
 end
