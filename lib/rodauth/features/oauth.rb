@@ -44,21 +44,15 @@ module Rodauth
       using(SuffixExtensions)
     end
 
-    depends :oauth_base, :oauth_pkce, :oauth_implicit_grant, :oauth_device_grant, :oauth_token_introspection
+    depends :oauth_base, :oauth_pkce, :oauth_implicit_grant, :oauth_device_grant, :oauth_token_introspection, :oauth_token_revocation
 
     SERVER_METADATA = OAuth::TtlStore.new
-
-    before "revoke"
-    after "revoke"
 
     before "create_oauth_application"
     after "create_oauth_application"
 
     error_flash "There was an error registering your oauth application", "create_oauth_application"
     notice_flash "Your oauth application has been registered", "create_oauth_application"
-
-    notice_flash "The oauth token has been revoked", "revoke_oauth_token"
-    error_flash "You are not authorized to revoke this token", "revoke_unauthorized_account"
 
     view "oauth_applications", "Oauth Applications", "oauth_applications"
     view "oauth_application", "Oauth Application", "oauth_application"
@@ -136,45 +130,6 @@ module Rodauth
     auth_value_methods(
       :oauth_application_path
     )
-
-    # /revoke
-    route(:revoke) do |r|
-      next unless is_authorization_server?
-
-      before_revoke_route
-
-      if logged_in?
-        require_account
-        require_oauth_application_from_account
-      else
-        require_oauth_application
-      end
-
-      r.post do
-        catch_error do
-          validate_oauth_revoke_params
-
-          oauth_token = nil
-          transaction do
-            before_revoke
-            oauth_token = revoke_oauth_token
-            after_revoke
-          end
-
-          if accepts_json?
-            json_response_success \
-              "token" => oauth_token[oauth_tokens_token_column],
-              "refresh_token" => oauth_token[oauth_tokens_refresh_token_column],
-              "revoked_at" => convert_timestamp(oauth_token[oauth_tokens_revoked_at_column])
-          else
-            set_notice_flash revoke_oauth_token_notice_flash
-            redirect request.referer || "/"
-          end
-        end
-
-        redirect_response_error("invalid_request", request.referer || "/")
-      end
-    end
 
     def oauth_server_metadata(issuer = nil)
       request.on(".well-known") do
@@ -395,48 +350,6 @@ module Rodauth
     # Authorize
     def require_authorizable_account
       require_account
-    end
-
-    # Token revocation
-
-    def validate_oauth_revoke_params
-      # check if valid token hint type
-      if param_or_nil("token_type_hint") && !TOKEN_HINT_TYPES.include?(param("token_type_hint"))
-        redirect_response_error("unsupported_token_type")
-      end
-
-      redirect_response_error("invalid_request") unless param_or_nil("token")
-    end
-
-    def revoke_oauth_token
-      token = param("token")
-
-      oauth_token = if param("token_type_hint") == "refresh_token"
-                      oauth_token_by_refresh_token(token)
-                    else
-                      oauth_token_by_token(token)
-                    end
-
-      redirect_response_error("invalid_request") unless oauth_token
-
-      redirect_response_error("invalid_request") unless token_from_application?(oauth_token, oauth_application)
-
-      update_params = { oauth_tokens_revoked_at_column => Sequel::CURRENT_TIMESTAMP }
-
-      ds = db[oauth_tokens_table].where(oauth_tokens_id_column => oauth_token[oauth_tokens_id_column])
-
-      oauth_token = __update_and_return__(ds, update_params)
-
-      oauth_token[oauth_tokens_token_column] = token
-      oauth_token
-
-      # If the particular
-      # token is a refresh token and the authorization server supports the
-      # revocation of access tokens, then the authorization server SHOULD
-      # also invalidate all access tokens based on the same authorization
-      # grant
-      #
-      # we don't need to do anything here, as we revalidate existing tokens
     end
 
     # Response helpers
