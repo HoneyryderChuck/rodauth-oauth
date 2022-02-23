@@ -312,6 +312,10 @@ module Rodauth
 
     private
 
+    def require_authorizable_account
+      require_account
+    end
+
     def rescue_from_uniqueness_error(&block)
       retries = oauth_unique_id_generation_retries
       begin
@@ -865,6 +869,10 @@ module Rodauth
       response_type = param_or_nil("response_type")
 
       response_type.nil? || response_type == "code"
+    end
+
+    def check_valid_uri?(uri)
+      URI::DEFAULT_PARSER.make_regexp(oauth_valid_uri_schemes).match?(uri)
     end
   end
 end

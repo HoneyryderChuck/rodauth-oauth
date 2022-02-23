@@ -44,82 +44,10 @@ module Rodauth
       using(SuffixExtensions)
     end
 
-    depends :oauth_base, :oauth_pkce, :oauth_implicit_grant, :oauth_device_grant, :oauth_token_introspection, :oauth_token_revocation
+    depends :oauth_base, :oauth_pkce, :oauth_implicit_grant, :oauth_device_grant, :oauth_token_introspection, :oauth_token_revocation,
+            :oauth_application_management, :oauth_token_management
 
     SERVER_METADATA = OAuth::TtlStore.new
-
-    before "create_oauth_application"
-    after "create_oauth_application"
-
-    error_flash "There was an error registering your oauth application", "create_oauth_application"
-    notice_flash "Your oauth application has been registered", "create_oauth_application"
-
-    view "oauth_applications", "Oauth Applications", "oauth_applications"
-    view "oauth_application", "Oauth Application", "oauth_application"
-    view "new_oauth_application", "New Oauth Application", "new_oauth_application"
-    view "oauth_application_oauth_tokens", "Oauth Application Tokens", "oauth_application_oauth_tokens"
-    view "oauth_tokens", "My Oauth Tokens", "oauth_tokens"
-
-    auth_value_method :oauth_valid_uri_schemes, %w[https]
-
-    # Application
-    APPLICATION_REQUIRED_PARAMS = %w[name description scopes homepage_url redirect_uri client_secret].freeze
-    auth_value_method :oauth_application_required_params, APPLICATION_REQUIRED_PARAMS
-
-    (APPLICATION_REQUIRED_PARAMS + %w[client_id]).each do |param|
-      auth_value_method :"oauth_application_#{param}_param", param
-      configuration_module_eval do
-        define_method :"#{param}_label" do
-          warn "#{__method__} is deprecated, switch to oauth_applications_#{__method__}"
-          before_otp_auth_route(&block)
-        end
-      end
-    end
-    translatable_method :oauth_applications_name_label, "Name"
-    translatable_method :oauth_applications_description_label, "Description"
-    translatable_method :oauth_applications_scopes_label, "Scopes"
-    translatable_method :oauth_applications_homepage_url_label, "Homepage URL"
-    translatable_method :oauth_applications_redirect_uri_label, "Redirect URI"
-    translatable_method :oauth_applications_client_secret_label, "Client Secret"
-    translatable_method :oauth_applications_client_id_label, "Client ID"
-    button "Register", "oauth_application"
-    button "Revoke", "oauth_token_revoke"
-
-    # OAuth Token
-    auth_value_method :oauth_applications_oauth_tokens_path, "oauth-tokens"
-    auth_value_method :oauth_tokens_path, "oauth-tokens"
-
-    %w[token refresh_token expires_in revoked_at].each do |param|
-      translatable_method :"oauth_tokens_#{param}_label", param.gsub("_", " ").capitalize
-    end
-
-    # OAuth Applications
-    auth_value_method :oauth_applications_route, "oauth-applications"
-    def oauth_applications_path(opts = {})
-      route_path(oauth_applications_route, opts)
-    end
-
-    def oauth_applications_url(opts = {})
-      route_url(oauth_applications_route, opts)
-    end
-
-    # OAuth Tokens
-    auth_value_method :oauth_tokens_route, "oauth-tokens"
-    def oauth_tokens_path(opts = {})
-      route_path(oauth_tokens_route, opts)
-    end
-
-    def oauth_tokens_url(opts = {})
-      route_url(oauth_tokens_route, opts)
-    end
-
-    auth_value_method :oauth_applications_id_pattern, Integer
-    auth_value_method :oauth_tokens_id_pattern, Integer
-
-    translatable_method :invalid_url_message, "Invalid URL"
-    translatable_method :unsupported_token_type_message, "Invalid token type hint"
-
-    translatable_method :null_error_message, "is not filled"
 
     # METADATA
     auth_value_method :oauth_metadata_service_documentation, nil
@@ -128,7 +56,7 @@ module Rodauth
     auth_value_method :oauth_metadata_op_tos_uri, nil
 
     auth_value_methods(
-      :oauth_application_path
+      :oauth_token_path
     )
 
     def oauth_server_metadata(issuer = nil)
@@ -137,98 +65,6 @@ module Rodauth
           request.get do
             json_response_success(oauth_server_metadata_body(issuer), true)
           end
-        end
-      end
-    end
-
-    def oauth_application_path(id)
-      "#{oauth_applications_path}/#{id}"
-    end
-
-    def oauth_token_path(id)
-      "#{oauth_tokens_path}/#{id}"
-    end
-
-    # /oauth-applications routes
-    def oauth_applications
-      request.on(oauth_applications_route) do
-        require_account
-
-        request.get "new" do
-          new_oauth_application_view
-        end
-
-        request.on(oauth_applications_id_pattern) do |id|
-          oauth_application = db[oauth_applications_table]
-                              .where(oauth_applications_id_column => id)
-                              .where(oauth_applications_account_id_column => account_id)
-                              .first
-          next unless oauth_application
-
-          scope.instance_variable_set(:@oauth_application, oauth_application)
-
-          request.is do
-            request.get do
-              oauth_application_view
-            end
-          end
-
-          request.on(oauth_applications_oauth_tokens_path) do
-            oauth_tokens = db[oauth_tokens_table].where(oauth_tokens_oauth_application_id_column => id)
-            scope.instance_variable_set(:@oauth_tokens, oauth_tokens)
-            request.get do
-              oauth_application_oauth_tokens_view
-            end
-          end
-        end
-
-        request.get do
-          scope.instance_variable_set(:@oauth_applications, db[oauth_applications_table]
-            .where(oauth_applications_account_id_column => account_id))
-          oauth_applications_view
-        end
-
-        request.post do
-          catch_error do
-            validate_oauth_application_params
-
-            transaction do
-              before_create_oauth_application
-              id = create_oauth_application
-              after_create_oauth_application
-              set_notice_flash create_oauth_application_notice_flash
-              redirect "#{request.path}/#{id}"
-            end
-          end
-          set_error_flash create_oauth_application_error_flash
-          new_oauth_application_view
-        end
-      end
-    end
-
-    # /oauth-tokens routes
-    def oauth_tokens
-      request.on(oauth_tokens_route) do
-        require_account
-
-        request.get do
-          scope.instance_variable_set(:@oauth_tokens, db[oauth_tokens_table]
-            .select(Sequel[oauth_tokens_table].*, Sequel[oauth_applications_table][oauth_applications_name_column])
-            .join(oauth_applications_table, Sequel[oauth_tokens_table][oauth_tokens_oauth_application_id_column] =>
-              Sequel[oauth_applications_table][oauth_applications_id_column])
-            .where(Sequel[oauth_tokens_table][oauth_tokens_account_id_column] => account_id)
-                .where(oauth_tokens_revoked_at_column => nil))
-          oauth_tokens_view
-        end
-
-        request.post(oauth_tokens_id_pattern) do |id|
-          db[oauth_tokens_table]
-            .where(oauth_tokens_id_column => id)
-            .where(oauth_tokens_account_id_column => account_id)
-            .update(oauth_tokens_revoked_at_column => Sequel::CURRENT_TIMESTAMP)
-
-          set_notice_flash revoke_oauth_token_notice_flash
-          redirect oauth_tokens_path || "/"
         end
       end
     end
@@ -274,88 +110,6 @@ module Rodauth
 
         [JSON.parse(response.body, symbolize_names: true), ttl]
       end
-    end
-
-    # Oauth Application
-
-    def oauth_application_params
-      @oauth_application_params ||= oauth_application_required_params.each_with_object({}) do |param, params|
-        value = request.params[__send__(:"oauth_application_#{param}_param")]
-        if value && !value.empty?
-          params[param] = value
-        else
-          set_field_error(param, null_error_message)
-        end
-      end
-    end
-
-    def validate_oauth_application_params
-      oauth_application_params.each do |key, value|
-        if key == oauth_application_homepage_url_param
-
-          set_field_error(key, invalid_url_message) unless check_valid_uri?(value)
-
-        elsif key == oauth_application_redirect_uri_param
-
-          if value.respond_to?(:each)
-            value.each do |uri|
-              next if uri.empty?
-
-              set_field_error(key, invalid_url_message) unless check_valid_uri?(uri)
-            end
-          else
-            set_field_error(key, invalid_url_message) unless check_valid_uri?(value)
-          end
-        elsif key == oauth_application_scopes_param
-
-          value.each do |scope|
-            set_field_error(key, invalid_scope_message) unless oauth_application_scopes.include?(scope)
-          end
-        end
-      end
-
-      throw :rodauth_error if @field_errors && !@field_errors.empty?
-    end
-
-    def create_oauth_application
-      create_params = {
-        oauth_applications_account_id_column => account_id,
-        oauth_applications_name_column => oauth_application_params[oauth_application_name_param],
-        oauth_applications_description_column => oauth_application_params[oauth_application_description_param],
-        oauth_applications_scopes_column => oauth_application_params[oauth_application_scopes_param],
-        oauth_applications_homepage_url_column => oauth_application_params[oauth_application_homepage_url_param]
-      }
-
-      redirect_uris = oauth_application_params[oauth_application_redirect_uri_param]
-      redirect_uris = redirect_uris.to_a.reject(&:empty?).join(" ") if redirect_uris.respond_to?(:each)
-      create_params[oauth_applications_redirect_uri_column] = redirect_uris unless redirect_uris.empty?
-      # set client ID/secret pairs
-
-      create_params.merge! \
-        oauth_applications_client_secret_column => \
-          secret_hash(oauth_application_params[oauth_application_client_secret_param])
-
-      create_params[oauth_applications_scopes_column] = if create_params[oauth_applications_scopes_column]
-                                                          create_params[oauth_applications_scopes_column].join(oauth_scope_separator)
-                                                        else
-                                                          oauth_application_default_scope
-                                                        end
-
-      rescue_from_uniqueness_error do
-        create_params[oauth_applications_client_id_column] = oauth_unique_id_generator
-        db[oauth_applications_table].insert(create_params)
-      end
-    end
-
-    # Authorize
-    def require_authorizable_account
-      require_account
-    end
-
-    # Response helpers
-
-    def check_valid_uri?(uri)
-      URI::DEFAULT_PARSER.make_regexp(oauth_valid_uri_schemes).match?(uri)
     end
 
     # Server metadata
