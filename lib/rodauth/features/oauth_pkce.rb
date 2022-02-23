@@ -81,5 +81,11 @@ module Rodauth
         redirect_response_error("unsupported_transform_algorithm")
       end
     end
+
+    def oauth_server_metadata_body(*)
+      super.tap do |data|
+        data[:code_challenge_methods_supported] = oauth_pkce_challenge_method if use_oauth_pkce?
+      end
+    end
   end
 end

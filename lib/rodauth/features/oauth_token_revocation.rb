@@ -101,5 +101,12 @@ module Rodauth
       #
       # we don't need to do anything here, as we revalidate existing tokens
     end
+
+    def oauth_server_metadata_body(*)
+      super.tap do |data|
+        data[:revocation_endpoint] = revoke_url
+        data[:revocation_endpoint_auth_methods_supported] = nil # because it's client_secret_basic
+      end
+    end
   end
 end

@@ -206,5 +206,14 @@ module Rodauth
       end
       super
     end
+
+    def oauth_server_metadata_body(*)
+      super.tap do |data|
+        if use_oauth_device_code_grant_type?
+          data[:grant_types_supported] << "urn:ietf:params:oauth:grant-type:device_code"
+          data[:device_authorization_endpoint] = device_authorization_url
+        end
+      end
+    end
   end
 end

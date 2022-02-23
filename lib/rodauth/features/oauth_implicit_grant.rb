@@ -40,6 +40,16 @@ module Rodauth
       redirect(redirect_url.to_s)
     end
 
+    def oauth_server_metadata_body(*)
+      super.tap do |data|
+        if use_oauth_implicit_grant_type?
+          data[:response_types_supported] << "token"
+          data[:response_modes_supported] << "fragment"
+          data[:grant_types_supported] << "implicit"
+        end
+      end
+    end
+
     def check_valid_response_type?
       return true if use_oauth_implicit_grant_type? && param_or_nil("response_type") == "token"
 

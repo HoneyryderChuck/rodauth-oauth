@@ -103,6 +103,12 @@ module Rodauth
 
     auth_value_method :json_request_regexp, %r{\bapplication/(?:vnd\.api\+)?json\b}i
 
+    # METADATA
+    auth_value_method :oauth_metadata_service_documentation, nil
+    auth_value_method :oauth_metadata_ui_locales_supported, nil
+    auth_value_method :oauth_metadata_op_policy_uri, nil
+    auth_value_method :oauth_metadata_op_tos_uri, nil
+
     auth_value_methods(
       :fetch_access_token,
       :secret_hash,
@@ -160,6 +166,16 @@ module Rodauth
         end
 
         authorize_response(params, mode)
+      end
+    end
+
+    def oauth_server_metadata(issuer = nil)
+      request.on(".well-known") do
+        request.on("oauth-authorization-server") do
+          request.get do
+            json_response_success(oauth_server_metadata_body(issuer), true)
+          end
+        end
       end
     end
 
@@ -754,6 +770,30 @@ module Rodauth
         oauth_token[oauth_tokens_refresh_token_column] = refresh_token if refresh_token
         oauth_token
       end
+    end
+
+    def oauth_server_metadata_body(path)
+      issuer = base_url
+      issuer += "/#{path}" if path
+
+      responses_supported = %w[code]
+      response_modes_supported = %w[query form_post]
+      grant_types_supported = %w[authorization_code]
+
+      {
+        issuer: issuer,
+        authorization_endpoint: authorize_url,
+        token_endpoint: token_url,
+        scopes_supported: oauth_application_scopes,
+        response_types_supported: responses_supported,
+        response_modes_supported: response_modes_supported,
+        grant_types_supported: grant_types_supported,
+        token_endpoint_auth_methods_supported: %w[client_secret_basic client_secret_post],
+        service_documentation: oauth_metadata_service_documentation,
+        ui_locales_supported: oauth_metadata_ui_locales_supported,
+        op_policy_uri: oauth_metadata_op_policy_uri,
+        op_tos_uri: oauth_metadata_op_tos_uri
+      }
     end
 
     def redirect_response_error(error_code, redirect_url = redirect_uri || request.referer || default_redirect)

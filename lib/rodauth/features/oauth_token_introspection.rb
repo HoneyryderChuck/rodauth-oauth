@@ -101,5 +101,12 @@ module Rodauth
     end
 
     def before_introspection_request(request); end
+
+    def oauth_server_metadata_body(*)
+      super.tap do |data|
+        data[:introspection_endpoint] = introspect_url
+        data[:introspection_endpoint_auth_methods_supported] = %w[client_secret_basic]
+      end
+    end
   end
 end
