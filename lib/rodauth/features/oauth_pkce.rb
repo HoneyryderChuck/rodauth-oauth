@@ -2,6 +2,23 @@
 
 module Rodauth
   Feature.define(:oauth_pkce, :OauthPkce) do
+    unless String.method_defined?(:delete_suffix!)
+      module SuffixExtensions
+        refine(String) do
+          def delete_suffix!(suffix)
+            suffix = suffix.to_s
+            chomp! if frozen?
+            len = suffix.length
+            return unless len.positive? && index(suffix, -len)
+
+            self[-len..-1] = ""
+            self
+          end
+        end
+      end
+      using(SuffixExtensions)
+    end
+
     depends :oauth_base
 
     auth_value_method :use_oauth_pkce?, true

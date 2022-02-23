@@ -1,7 +1,31 @@
 # frozen_string_literal: true
 
+require "time"
+require "base64"
+require "securerandom"
+require "net/http"
+require "rodauth/oauth/ttl_store"
+require "rodauth/oauth/database_extensions"
+
 module Rodauth
   Feature.define(:oauth_base, :OauthBase) do
+    # RUBY EXTENSIONS
+    unless Regexp.method_defined?(:match?)
+      # If you wonder why this is there: the oauth feature uses a refinement to enhance the
+      # Regexp class locally with #match? , but this is never tested, because ActiveSupport
+      # monkey-patches the same method... Please ActiveSupport, stop being so intrusive!
+      # :nocov:
+      module RegexpExtensions
+        refine(Regexp) do
+          def match?(*args)
+            !match(*args).nil?
+          end
+        end
+      end
+      using(RegexpExtensions)
+      # :nocov:
+    end
+
     SCOPES = %w[profile.read].freeze
 
     before "authorize"
@@ -913,6 +937,38 @@ module Rodauth
 
     def check_valid_uri?(uri)
       URI::DEFAULT_PARSER.make_regexp(oauth_valid_uri_schemes).match?(uri)
+    end
+
+    # Resource server mode
+
+    SERVER_METADATA = OAuth::TtlStore.new
+
+    def authorization_server_metadata
+      auth_url = URI(authorization_server_url)
+
+      server_metadata = SERVER_METADATA[auth_url]
+
+      return server_metadata if server_metadata
+
+      SERVER_METADATA.set(auth_url) do
+        http = Net::HTTP.new(auth_url.host, auth_url.port)
+        http.use_ssl = auth_url.scheme == "https"
+
+        request = Net::HTTP::Get.new("/.well-known/oauth-authorization-server")
+        request["accept"] = json_response_content_type
+        response = http.request(request)
+        authorization_required unless response.code.to_i == 200
+
+        # time-to-live
+        ttl = if response.key?("cache-control")
+                cache_control = response["cache-control"]
+                cache_control[/max-age=(\d+)/, 1].to_i
+              elsif response.key?("expires")
+                Time.parse(response["expires"]).to_i - Time.now.to_i
+              end
+
+        [JSON.parse(response.body, symbolize_names: true), ttl]
+      end
     end
   end
 end
