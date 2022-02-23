@@ -25,8 +25,8 @@ module Rodauth
       auth_value_method :"oauth_application_#{param}_param", param
       configuration_module_eval do
         define_method :"#{param}_label" do
-          warn "#{__method__} is deprecated, switch to oauth_applications_#{__method__}"
-          before_otp_auth_route(&block)
+          warn "#{__method__} is deprecated, switch to oauth_applications_#{__method__}_label"
+          __send__(:"oauth_applications_#{param}_label")
         end
       end
     end
