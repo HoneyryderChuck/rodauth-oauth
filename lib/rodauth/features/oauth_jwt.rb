@@ -145,51 +145,6 @@ module Rodauth
 
     # /token
 
-    def require_oauth_application
-      # requset authentication optional for assertions
-      return super unless param("grant_type") == "urn:ietf:params:oauth:grant-type:jwt-bearer"
-
-      claims = jwt_decode(param("assertion"))
-
-      redirect_response_error("invalid_grant") unless claims
-
-      @oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => claims["client_id"]).first
-
-      authorization_required unless @oauth_application
-    end
-
-    def validate_oauth_token_params
-      if param("grant_type") == "urn:ietf:params:oauth:grant-type:jwt-bearer"
-        redirect_response_error("invalid_client") unless param_or_nil("assertion")
-      else
-        super
-      end
-    end
-
-    def create_oauth_token(grant_type)
-      if grant_type == "urn:ietf:params:oauth:grant-type:jwt-bearer"
-        create_oauth_token_from_assertion
-      else
-        super
-      end
-    end
-
-    def create_oauth_token_from_assertion
-      claims = jwt_decode(param("assertion"))
-
-      account = account_ds(claims["sub"]).first
-
-      redirect_response_error("invalid_client") unless oauth_application && account
-
-      create_params = {
-        oauth_tokens_account_id_column => claims["sub"],
-        oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-        oauth_tokens_scopes_column => claims["scope"]
-      }
-
-      generate_oauth_token(create_params, false)
-    end
-
     def generate_oauth_token(params = {}, should_generate_refresh_token = true)
       create_params = {
         oauth_grants_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_token_expires_in)

@@ -7,6 +7,7 @@ class RodauthOauthJWTTokenJwtBearerTest < JWTIntegration
 
   def test_oauth_jwt_as_authorization_grant
     rodauth do
+      use_oauth_jwt_bearer_grant_type? true
       oauth_jwt_key "SECRET"
       oauth_jwt_algorithm "HS256"
     end
@@ -42,5 +43,11 @@ class RodauthOauthJWTTokenJwtBearerTest < JWTIntegration
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 200
+  end
+
+  private
+
+  def oauth_feature
+    :oauth_jwt_bearer_grant
   end
 end
