@@ -283,7 +283,7 @@ module Rodauth
           redirect_response_error("consent_required")
         end
       when "select-account"
-        # obly works if select_account plugin is available
+        # only works if select_account plugin is available
         require_select_account if respond_to?(:require_select_account)
       else
         redirect_response_error("invalid_request")
@@ -461,7 +461,8 @@ module Rodauth
       scope_claims.unshift("auth_time") if last_account_login_at
 
       response_types_supported = metadata[:response_types_supported]
-      if use_oauth_implicit_grant_type?
+
+      if metadata[:grant_types_supported].include?("implicit")
         response_types_supported += ["none", "id_token", "code token", "code id_token", "id_token token", "code id_token token"]
       end
 
