@@ -14,7 +14,7 @@ cache:
   # rails 5.1 and lower need older version of bundler
   - bundle install
   - |-
-      if [[ "$BUNDLE_GEMFILE" !=~ "rails" ]]; then
+      if [ "$BUNDLE_GEMFILE" !=~ "rails" ]; then
         cd test/rails_app && bundle exec rails generate rodauth:oauth:views -a
       fi
 
