@@ -46,13 +46,11 @@ module Rodauth
       end
     end
 
-    TOKEN_HINT_TYPES = %w[access_token refresh_token].freeze
-
     # Token introspect
 
-    def validate_oauth_introspect_params
+    def validate_oauth_introspect_params(token_hint_types = %w[access_token refresh_token].freeze)
       # check if valid token hint type
-      if param_or_nil("token_type_hint") && !TOKEN_HINT_TYPES.include?(param("token_type_hint"))
+      if param_or_nil("token_type_hint") && !token_hint_types.include?(param("token_type_hint"))
         redirect_response_error("unsupported_token_type")
       end
 
