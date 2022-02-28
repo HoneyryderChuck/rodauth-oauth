@@ -301,8 +301,8 @@ module Rodauth
       generate_jti(claims) == jti
     end
 
-    def verify_aud(aud, claims)
-      aud == (oauth_jwt_audience || claims["client_id"])
+    def verify_aud(expected_aud, aud)
+      expected_aud == aud
     end
 
     if defined?(JSON::JWT)
@@ -334,6 +334,8 @@ module Rodauth
         jws_key: oauth_jwt_public_key || _jwt_key,
         verify_claims: true,
         verify_jti: true,
+        verify_iss: true,
+        verify_aud: false,
         **
       )
         token = JSON::JWT.decode(token, oauth_jwt_jwe_key).plain_text if oauth_jwt_jwe_key
@@ -348,11 +350,15 @@ module Rodauth
                    JSON::JWT.decode(token, JSON::JWK::Set.new(jwks))
                  end
 
-        if verify_claims && !(claims[:iss] == issuer &&
-            verify_aud(claims[:aud], claims) &&
-            (!claims[:iat] || Time.at(claims[:iat]) > (Time.now - oauth_token_expires_in)) &&
-            (!claims[:exp] || Time.at(claims[:exp]) > Time.now) &&
-            (!verify_jti || verify_jti(claims[:jti], claims)))
+        now = Time.now
+        if verify_claims && (
+            (!claims[:exp] || Time.at(claims[:exp]) < now) &&
+            (claims[:nbf] && Time.at(claims[:nbf]) < now) &&
+            (claims[:iat] && Time.at(claims[:iat]) < now) &&
+            (verify_iss && claims[:iss] != issuer) &&
+            (verify_aud && !verify_aud(claims[:aud], claims[:client_id])) &&
+            (verify_jti && !verify_jti(claims[:jti], claims))
+          )
           return
         end
 
@@ -411,7 +417,9 @@ module Rodauth
         jws_key: oauth_jwt_public_key || _jwt_key,
         jws_algorithm: oauth_jwt_algorithm,
         verify_claims: true,
-        verify_jti: true
+        verify_jti: true,
+        verify_iss: true,
+        verify_aud: false
       )
         # decrypt jwe
         token = JWE.decrypt(token, oauth_jwt_jwe_key) if oauth_jwt_jwe_key
@@ -427,7 +435,7 @@ module Rodauth
         #
         verify_claims_params = if verify_claims
                                  {
-                                   verify_iss: true,
+                                   verify_iss: verify_iss,
                                    iss: issuer,
                                    # can't use stock aud verification, as it's dependent on the client application id
                                    verify_aud: false,
@@ -451,7 +459,7 @@ module Rodauth
                    JWT.decode(token, nil, true, jwks: jwks, algorithms: algorithms, **verify_claims_params).first
                  end
 
-        return if verify_claims && !verify_aud(claims["aud"], claims)
+        return if verify_claims && verify_aud && !verify_aud(claims["aud"], claims["client_id"])
 
         claims
       rescue JWT::DecodeError, JWT::JWKError

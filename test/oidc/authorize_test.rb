@@ -22,9 +22,6 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
   end
 
   def test_oidc_authorize_unverifiable_request
-    rodauth do
-      oauth_jwt_audience "Example"
-    end
     setup_application
     login
 
@@ -44,9 +41,6 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
   end
 
   def test_oidc_authorize_with_signed_request
-    rodauth do
-      oauth_jwt_audience "Example"
-    end
     setup_application
     login
 
@@ -70,7 +64,6 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     jws_public_key = jws_key.public_key
 
     rodauth do
-      oauth_jwt_audience "Example"
       oauth_jwt_jwe_key jwe_key
       oauth_jwt_jwe_algorithm "RSA-OAEP"
       oauth_jwt_jwe_encryption_method "A128CBC-HS256"
@@ -416,8 +409,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
   def generate_signed_request(application, signing_key: OpenSSL::PKey::RSA.generate(2048), encryption_key: nil)
     claims = {
-      iss: "Example",
-      aud: "Example",
+      iss: "http://www.example.com",
+      aud: "http://www.example.com",
       response_type: "code",
       client_id: application[:client_id],
       redirect_uri: application[:redirect_uri],
