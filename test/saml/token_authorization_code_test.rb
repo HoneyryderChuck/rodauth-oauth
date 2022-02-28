@@ -5,47 +5,38 @@ require "test_helper"
 class RodauthOAuthTokenSAMLAuthorizationCodeTest < SAMLIntegration
   include Rack::Test::Methods
 
-  def test_token_authorization_assertion_no_params
+  def test_token_grant_assertion_no_params
     setup_application
-    login
 
     post("/token")
     assert last_response.status == 401
     assert json_body["error"] == "invalid_client"
   end
 
-  def test_token_authorization_assertion_no_grant_type
+  def test_token_grant_assertion_no_grant_type
     setup_application
-    login
-    post("/token", assertion: saml_assertion)
+    post("/token", assertion: saml_assertion(account))
 
     assert last_response.status == 401
     assert json_body["error"] == "invalid_client"
   end
 
-  def test_token_authorization_assertion_unsupported_grant_type
+  def test_token_grant_assertion_unsupported_grant_type
     setup_application
-    login
     post("/token",
          grant_type: "smthsmth",
-         assertion: saml_assertion)
+         assertion: saml_assertion(account))
 
     assert last_response.status == 401
     assert json_body["error"] == "invalid_client"
   end
 
-  def test_token_authorization_assertion_gibberish
-    skip
-  end
-
-  def test_token_authorization_assertion_successful
+  def test_token_grant_assertion_successful
     setup_application
-    login
 
     post("/token",
-         client_id: oauth_application[:client_id],
-         grant_type: "http://oauth.net/grant_type/assertion/saml/2.0/bearer",
-         assertion: saml_assertion)
+         grant_type: "urn:ietf:params:oauth:grant-type:saml2-bearer",
+         assertion: saml_assertion(account))
 
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
@@ -62,13 +53,15 @@ class RodauthOAuthTokenSAMLAuthorizationCodeTest < SAMLIntegration
     assert !json_body["expires_in"].nil?
   end
 
-  def test_token_authorization_assertion_no_client_id
+  def test_token_grant_client_authentication_with_assertion_successful
     setup_application
-    login
 
     post("/token",
-         grant_type: "http://oauth.net/grant_type/assertion/saml/2.0/bearer",
-         assertion: saml_assertion)
+         client_assertion_type: "urn:ietf:params:oauth:client-assertion-type:saml2-bearer",
+         client_assertion: saml_assertion(oauth_application),
+         grant_type: "authorization_code",
+         code: oauth_grant[:code],
+         redirect_uri: oauth_grant[:redirect_uri])
 
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
@@ -90,9 +83,5 @@ class RodauthOAuthTokenSAMLAuthorizationCodeTest < SAMLIntegration
   def setup_application
     super
     header "Accept", "application/json"
-  end
-
-  def saml_assertion
-    page.body
   end
 end
