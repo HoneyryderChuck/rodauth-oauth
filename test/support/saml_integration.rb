@@ -46,7 +46,7 @@ class SAMLIntegration < RodaIntegration
 
     rodauth do
       db testdb
-      enable :login, feature
+      enable :login, :oauth_authorization_code_grant, feature
       login_return_to_requested_location? true
       oauth_application_default_scope scopes.first
       oauth_application_scopes scopes

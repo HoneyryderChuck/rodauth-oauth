@@ -1,28 +1,10 @@
 # frozen-string-literal: true
 
+require "rodauth/oauth/refinements"
+
 module Rodauth
   Feature.define(:oauth_http_mac, :OauthHttpMac) do
-    unless String.method_defined?(:delete_prefix)
-      module PrefixExtensions
-        refine(String) do
-          def delete_suffix(suffix)
-            suffix = suffix.to_s
-            len = suffix.length
-            return dup unless len.positive? && index(suffix, -len)
-
-            self[0...-len]
-          end
-
-          def delete_prefix(prefix)
-            prefix = prefix.to_s
-            return dup unless rindex(prefix, 0)
-
-            self[prefix.length..-1]
-          end
-        end
-      end
-      using(PrefixExtensions)
-    end
+    using PrefixExtensions
 
     depends :oauth
 

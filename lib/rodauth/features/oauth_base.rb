@@ -6,25 +6,11 @@ require "securerandom"
 require "net/http"
 require "rodauth/oauth/ttl_store"
 require "rodauth/oauth/database_extensions"
+require "rodauth/oauth/refinements"
 
 module Rodauth
   Feature.define(:oauth_base, :OauthBase) do
-    # RUBY EXTENSIONS
-    unless Regexp.method_defined?(:match?)
-      # If you wonder why this is there: the oauth feature uses a refinement to enhance the
-      # Regexp class locally with #match? , but this is never tested, because ActiveSupport
-      # monkey-patches the same method... Please ActiveSupport, stop being so intrusive!
-      # :nocov:
-      module RegexpExtensions
-        refine(Regexp) do
-          def match?(*args)
-            !match(*args).nil?
-          end
-        end
-      end
-      using(RegexpExtensions)
-      # :nocov:
-    end
+    using RegexpExtensions
 
     SCOPES = %w[profile.read].freeze
 
@@ -357,13 +343,14 @@ module Rodauth
     # parse client id and secret
     #
     def require_oauth_application
-      # get client credenntials
+      # get client credentials
       client_id = client_secret = nil
 
-      # client_secret_basic
       if (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v[/\A *Basic (.*)\Z/, 1]))
+        # client_secret_basic
         client_id, client_secret = Base64.decode64(token).split(/:/, 2)
       else
+        # client_secret_post
         client_id = param_or_nil("client_id")
         client_secret = param_or_nil("client_secret")
       end

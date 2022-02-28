@@ -4,7 +4,7 @@ require "onelogin/ruby-saml"
 
 module Rodauth
   Feature.define(:oauth_saml_bearer_grant, :OauthSamlBearerGrant) do
-    depends :oauth
+    depends :oauth_assertion_base
 
     auth_value_method :oauth_saml_cert_fingerprint, "9E:65:2E:03:06:8D:80:F2:86:C7:6C:77:A1:D9:14:97:0A:4D:F4:4D"
     auth_value_method :oauth_saml_cert_fingerprint_algorithm, nil
@@ -15,29 +15,40 @@ module Rodauth
     auth_value_method :oauth_saml_security_digest_method, XMLSecurity::Document::SHA1
     auth_value_method :oauth_saml_security_signature_method, XMLSecurity::Document::RSA_SHA1
 
+    auth_value_methods(
+      :require_oauth_application_from_saml2_bearer_assertion_issuer,
+      :require_oauth_application_from_saml2_bearer_assertion_subject,
+      :account_from_saml2_bearer_assertion
+    )
+
     private
 
-    def require_oauth_application
-      grant_type = param("grant_type")
-
-      return if grant_type == "urn:ietf:params:oauth:grant-type:saml2-bearer"
-
-      # request authentication optional for assertions
-      unless param("client_assertion_type") == "urn:ietf:params:oauth:client-assertion-type:saml2-bearer" &&
-             (assertion = param_or_nil("client_assertion"))
-        return super
-      end
-
+    def require_oauth_application_from_saml2_bearer_assertion_issuer(assertion)
       saml = saml_assertion(assertion)
 
-      redirect_response_error("invalid_grant") unless saml
+      return unless saml
 
-      # For client authentication, the Subject MUST be the "client_id" of the OAuth client.
-      @oauth_application = db[oauth_applications_table].where(
+      db[oauth_applications_table].where(
+        oauth_applications_homepage_url_column => saml.issuers
+      ).first
+    end
+
+    def require_oauth_application_from_saml2_bearer_assertion_subject(assertion)
+      saml = saml_assertion(assertion)
+
+      return unless saml
+
+      db[oauth_applications_table].where(
         oauth_applications_client_id_column => saml.nameid
       ).first
+    end
 
-      redirect_response_error("invalid_grant") unless @oauth_application
+    def account_from_saml2_bearer_assertion(assertion)
+      saml = saml_assertion(assertion)
+
+      return unless saml
+
+      db[accounts_table].where(login_column => saml.nameid).first
     end
 
     def saml_assertion(assertion)
@@ -79,56 +90,10 @@ module Rodauth
       response
     end
 
-    def validate_oauth_token_params
-      return super unless param("grant_type") == "urn:ietf:params:oauth:grant-type:saml2-bearer"
-
-      redirect_response_error("invalid_grant") unless param_or_nil("assertion")
-    end
-
-    def create_oauth_token(grant_type)
-      if grant_type == "urn:ietf:params:oauth:grant-type:saml2-bearer"
-        create_oauth_token_from_saml_assertion
-      else
-        super
-      end
-    end
-
-    def create_oauth_token_from_saml_assertion
-      # A.  For the authorization grant, the Subject typically
-      # identifies an authorized accessor for which the access token
-      # is being requested
-      assertion = saml_assertion(param("assertion"))
-
-      account = db[accounts_table].where(login_column => assertion.nameid).first
-
-      redirect_response_error("invalid_grant") unless account
-
-      @oauth_application = db[oauth_applications_table].where(
-        oauth_applications_homepage_url_column => assertion.issuers
-      ).first
-
-      redirect_response_error("invalid_grant") unless @oauth_application
-
-      grant_scopes = if param_or_nil("scope")
-                       redirect_response_error("invalid_grant") unless check_valid_scopes?
-                       scopes
-                     else
-                       @oauth_application[oauth_applications_scopes_column]
-                     end
-
-      # https://datatracker.ietf.org/doc/html/rfc7521#section-4.1
-      create_params = {
-        oauth_tokens_account_id_column => account[account_id_column],
-        oauth_tokens_oauth_application_id_column => @oauth_application[oauth_applications_id_column],
-        oauth_tokens_scopes_column => grant_scopes
-      }
-
-      generate_oauth_token(create_params, false)
-    end
-
     def oauth_server_metadata_body(*)
       super.tap do |data|
         data[:grant_types_supported] << "urn:ietf:params:oauth:grant-type:saml2-bearer"
+        data[:token_endpoint_auth_methods_supported] << "urn:ietf:params:oauth:client-assertion-type:saml2-bearer"
       end
     end
   end

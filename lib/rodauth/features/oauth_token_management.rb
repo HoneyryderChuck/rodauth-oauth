@@ -2,21 +2,7 @@
 
 module Rodauth
   Feature.define(:oauth_token_management, :OauthTokenManagement) do
-    unless Regexp.method_defined?(:match?)
-      # If you wonder why this is there: the oauth feature uses a refinement to enhance the
-      # Regexp class locally with #match? , but this is never tested, because ActiveSupport
-      # monkey-patches the same method... Please ActiveSupport, stop being so intrusive!
-      # :nocov:
-      module RegexpExtensions
-        refine(Regexp) do
-          def match?(*args)
-            !match(*args).nil?
-          end
-        end
-      end
-      using(RegexpExtensions)
-      # :nocov:
-    end
+    using RegexpExtensions
 
     depends :oauth_base
 
