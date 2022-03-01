@@ -6,12 +6,15 @@ module Rodauth
   Feature.define(:oauth_pkce, :OauthPkce) do
     using PrefixExtensions
 
-    depends :oauth_base
+    depends :oauth_authorization_code_grant
 
     auth_value_method :use_oauth_pkce?, true
 
     auth_value_method :oauth_require_pkce, false
     auth_value_method :oauth_pkce_challenge_method, "S256"
+
+    auth_value_method :oauth_grants_code_challenge_column, :code_challenge
+    auth_value_method :oauth_grants_code_challenge_method_column, :code_challenge_method
 
     auth_value_method :code_challenge_required_error_code, "invalid_request"
     translatable_method :code_challenge_required_message, "code challenge required"

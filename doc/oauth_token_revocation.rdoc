@@ -1,0 +1,14 @@
+= Documentation for OAuth Token Revocation feature
+
+The +oauth_token_revocation+ feature implements the OAuth 2.0 Token Revocation.
+
+https://datatracker.ietf.org/doc/html/rfc7009
+
+== Auth Value Methods
+
+revoke_route :: the route for revoking access tokens, defaults to +revoke+.
+before_revoke_route :: Run arbitrary code before the revoke route.
+before_revoke :: Run arbitrary code before revoking a token.
+after_revoke :: Run arbitrary code after after revoking a token.
+
+revoke_oauth_token_notice_flash :: The flash message to display when an access token has been revoked.

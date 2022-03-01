@@ -1,6 +1,8 @@
 = Documentation for OAuth JWT feature
 
-The oauth JWT feature builds on top of the oauth feature, in order to generate JWT access tokens.
+The +oauth_jwt+ feature implements the JWT profile for OAuth 2.0 access tokens, and provides JWT helper functions.
+
+https://datatracker.ietf.org/doc/html/rfc9068
 
 == Value Methods
 

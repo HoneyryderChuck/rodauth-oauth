@@ -12,6 +12,19 @@ module Rodauth
     button "Authorize", "oauth_authorize"
     button "Back to Client Application", "oauth_authorize_post"
 
+    auth_value_method :use_oauth_access_type?, true
+
+    # OAuth Grants
+    auth_value_method :oauth_grants_table, :oauth_grants
+    auth_value_method :oauth_grants_id_column, :id
+    %i[
+      account_id oauth_application_id
+      redirect_uri code scopes access_type
+      expires_in revoked_at
+    ].each do |column|
+      auth_value_method :"oauth_grants_#{column}_column", column
+    end
+
     translatable_method :oauth_tokens_scopes_label, "Scopes"
 
     # /authorize

@@ -8,9 +8,6 @@ module Rodauth
     after "revoke"
 
     notice_flash "The oauth token has been revoked", "revoke_oauth_token"
-    error_flash "You are not authorized to revoke this token", "revoke_unauthorized_account"
-
-    translatable_method :unsupported_token_type_message, "Invalid token type hint"
 
     # /revoke
     route(:revoke) do |r|

@@ -1,0 +1,89 @@
+= Documentation for OAuthBase feature
+
+The +oauth_base+ feature implements all basic functionality in order to set up an authorization server, which can emit and verify tokens.
+
+https://datatracker.ietf.org/doc/html/rfc6749
+
+It alternatively can set up a resource server.
+
+== Auth Value Methods
+
+oauth_application_default_scope :: the scope that client applications will want, <tt>"profile.read"</tt> by default.
+oauth_application_scopes :: default scopes to assign to a client application, <tt>["profile.read"]</tt> by default.
+oauth_token_type :: type of the generated access token, <tt>"bearer"</tt> by default.
+oauth_grant_expires_in :: The number of seconds an oauth grant is valid after creation, <tt>5 minutes</tt> by default.
+oauth_token_expires_in :: The number of seconds an oauth token is valid after creation, <tt>5 minutes</tt> by default.
+oauth_refresh_token_expires_in :: The number of seconds a refresh token is valid after creation, <tt>1 year</tt> by default.
+oauth_refresh_token_protection_policy :: protection policy for the refresh token (<tt>none</tt> by default).
+oauth_scope_separator :: character used to separate scopes in the db field value, white-space by default.
+oauth_response_mode :: default response mode (<tt>query</tt> by default).
+
+oauth_applications_table :: the db table where oauth applications are stored, <tt>:oauth_applications</tt> by default.
+oauth_applications_id_column :: the db column where the oauth application primary key is stored, <tt>:id</tt> by default.
+oauth_applications_account_id_column :: the db column where the oauth application account ID it belongs to is stored, <tt>:account_id</tt> by default.
+oauth_applications_name_column :: the db column where the oauth application name is stored, <tt>:name</tt> by default.
+oauth_applications_description_column :: the db column where the oauth application description is stored, <tt>:description</tt> by default.
+oauth_applications_scopes_column :: the db column where the oauth allowed scopes are stored, <tt>:scopes</tt> by default.
+oauth_applications_client_id_column :: the db column where the oauth application client ID is stored, <tt>:client_id</tt> by default.
+oauth_applications_client_secret_column :: the db column where the oauth application hashed client secret to is stored, <tt>:client_secret</tt> by default.
+oauth_applications_redirect_uri_column :: the db column where the oauth application redirect URI to is stored, <tt>:redirect_uri</tt> by default.
+oauth_applications_homepage_url_column :: the db column where the oauth application homepage URL to is stored, <tt>:homepage_url</tt> by default.
+
+oauth_tokens_table :: the db table where oauth tokens are stored, <tt>:oauth_tokens</tt> by default.
+oauth_tokens_id_column :: the db column where the oauth token primary key is stored, <tt>:id</tt> by default.
+oauth_tokens_oauth_application_id_column :: the db column where the oauth token oauth application ID is stored, <tt>:oauth_application_id</tt> by default.
+oauth_tokens_oauth_token_id_column :: the db column where the oauth token's other token ID is stored, <tt>:oauth_token_id</tt> by default.
+oauth_tokens_oauth_grant_id_column :: the db column where the oauth token oauth grant ID is stored, <tt>:oauth_grant_id</tt> by default.
+oauth_tokens_account_id_column :: the db column where the oauth token account ID is stored, <tt>:account_id</tt> by default.
+oauth_tokens_scopes_column :: the db column where the oauth token scopes are stored, <tt>:scopes</tt> by default.
+oauth_tokens_token_column :: the db column where the oauth token access token is stored (when it's stored), <tt>:token</tt> by default.
+oauth_tokens_refresh_token_column :: the db column where the oauth token refresh token is stored, <tt>:refresh_token</tt> by default.
+oauth_tokens_token_hash_column :: the db column where the oauth token access token hash is stored, <tt>nil<tt> by default.
+oauth_tokens_refresh_token_hash_column :: the db column where the oauth token refresh token hash is stored, <tt>nil<tt> by default.
+oauth_tokens_expires_in_column :: the db column where the oauth token expiration time is stored, <tt>:expires_in</tt> by default.
+oauth_tokens_revoked_at_column :: the db column where the oauth token revocation time is stored, <tt>:revoked_at</tt> by default.
+oauth_tokens_unique_columns :: uniqueness index to use in ON CONFLICT queries (when supported).
+
+
+json_response_content_type :: The content type to set for json responses, <tt>application/json</tt> by default.
+json_request_regexp :: The regexp to retrieve a valid json content type.
+authorization_required_error_status :: HTTP status code used for authorization errors, <tt>401</tt> by default.
+invalid_oauth_response_status :: HTTP status code used for invalid responses, <tt>400</tt> by default.
+already_in_use_response_status :: HTTP status code used for already in use responses, <tt>409</tt> by default.
+only_json? :: whether the application responds only with json.
+
+invalid_client_message :: error description for the "invalid_client" OAuth error code, <tt>"Invalid client"</tt> by default.
+invalid_grant_type_message :: error description for the "invalid_grant_type" OAuth error code, <tt>"Invalid grant type"</tt> by default.
+invalid_grant_type_error_code :: oauth error code for using invalid grants, <tt>"unsupported_grant_type"</tt> by default.
+invalid_grant_message :: error description for the "invalid_grant" OAuth error code, <tt>"Invalid grant"</tt> by default.
+invalid_scope_message :: error description for the "invalid_scope" OAuth error code, <tt>"Invalid scope"</tt> by default.
+unsupported_token_type_message :: error description for the "unsupported_token_type" OAuth error code, <tt>"Invalid token type hint"</tt> by default.
+unique_error_message :: error description for the "unique_error" OAuth error code, <tt>"is already in use"</tt> by default.
+already_in_use_error_code :: oauth error code for when a token is already in use, <tt>"invalid_request"</tt> by default.
+already_in_use_message :: error description for the "already_in_use" OAuth error code.
+
+oauth_metadata_service_documentation :: OAuth service documentation URL, <tt>nil</tt> by default.
+oauth_metadata_ui_locales_supported :: UI locales supported in the OAuth journey, <tt>nil</tt> by default.
+oauth_metadata_op_policy_uri :: OAuth use of data and client requirements URL, <tt>nil</tt> by default.
+oauth_metadata_op_tos_uri :: OAuth terms of service, <tt>nil</tt> by default.
+
+is_authorization_server? :: flag to signal whether it's an authorization server, <tt>true</tt> by default.
+
+token_route :: the route for token generation, defaults to +token+.
+before_token_route :: Run arbitrary code before the token route.
+before_token :: Run arbitrary code before generating an access token.
+
+fetch_access_token :: retrieves the access token from the request (defaults to fetching from the "Authorization" header).
+oauth_unique_id_generator :: generates random base64 strings, used for raw access tokens, client IDs, etc.
+oauth_unique_id_generation_retries :: max retries for token generation.
+secret_matches? :: verifies if provided secret matches the application's client secret.
+secret_hash :: calculates the hash  of a given client secret.
+generate_token_hash :: hashes an access token (when the token hash is stored in the db).
+authorization_server_url :: returns the authorization server origin URL.
+oauth_reuse_access_token :: when true, it'll reuse the same access token for a given account/client application for each new verified grant.
+require_authorizable_account :: requires the account to be logged in by default (calls `require_account`), can be overriden to add more functionality (i.e. requiring 2FA before authorization).
+
+require_authorization_error_flash :: The flash error to display when authorization is required.
+revoke_unauthorized_account_error_flash :: The flash error to display when an unauthorized account tries to revoke a token.
+
+oauth_cancel_button :: button label which cancels the device verification;

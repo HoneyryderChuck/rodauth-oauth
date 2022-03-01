@@ -6,8 +6,6 @@ module Rodauth
 
     before "introspect"
 
-    translatable_method :unsupported_token_type_message, "Invalid token type hint"
-
     auth_value_methods(
       :before_introspection_request
     )

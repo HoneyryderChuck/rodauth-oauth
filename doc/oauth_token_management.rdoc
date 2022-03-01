@@ -1,0 +1,19 @@
+= Documentation for OAuth Token Management feature
+
+The +oauth_token_management+ feature provides OAuth Token Management interfaces, so users are able to view and revoke their oauth tokens.
+
+== Auth Value Methods
+
+oauth_tokens_route :: the route for accessing oauth tokens, defaults to +oauth-tokens+.
+oauth_tokens_path :: returns URL path for oauth tokens.
+oauth_token_path ::  returns URL path for an oauth token.
+oauth_tokens_id_pattern :: pattern matcher to retrieve the oauth token ID from the URL, <tt>Integer</tt> by default (must respond to "match").
+oauth_tokens_page_title :: Title for the client OAuth tokens page.
+oauth_tokens_view :: The HTML of the Oauth tokens dashboard for the logged in account.
+
+oauth_tokens_expires_in_label :: Label for the oauth token expires in property.
+oauth_tokens_refresh_token_label :: Label for the oauth token refresh token.
+oauth_tokens_revoked_at_label :: Label for the oauth token revocation date.
+oauth_tokens_token_label :: Label for the oauth token.
+
+oauth_token_revoke_button :: Label for the token revoke button.

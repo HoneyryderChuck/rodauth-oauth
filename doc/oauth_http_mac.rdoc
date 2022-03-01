@@ -1,6 +1,8 @@
 = Documentation for OAuth HTTP Mac feature
 
-This feature adds the necessary extra options to implement the HTTP Mac authorization scheme.
+The +oauth_http_mac+ feature adds the necessary extra options to implement the HTTP Mac authorization scheme.
+
+https://tools.ietf.org/id/draft-ietf-oauth-v2-http-mac-00.html
 
 == Auth Value Methods
 

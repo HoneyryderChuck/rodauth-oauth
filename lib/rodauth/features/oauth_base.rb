@@ -17,10 +17,9 @@ module Rodauth
     before "token"
 
     error_flash "Please authorize to continue", "require_authorization"
+    error_flash "You are not authorized to revoke this token", "revoke_unauthorized_account"
 
     button "Cancel", "oauth_cancel"
-
-    auth_value_method :use_oauth_access_type?, true
 
     auth_value_method :json_response_content_type, "application/json"
 
@@ -51,19 +50,6 @@ module Rodauth
     # Access Token reuse
     auth_value_method :oauth_reuse_access_token, false
 
-    # OAuth Grants
-    auth_value_method :oauth_grants_table, :oauth_grants
-    auth_value_method :oauth_grants_id_column, :id
-    %i[
-      account_id oauth_application_id
-      redirect_uri code scopes access_type
-      expires_in revoked_at
-      code_challenge code_challenge_method
-      user_code last_polled_at
-    ].each do |column|
-      auth_value_method :"oauth_grants_#{column}_column", column
-    end
-
     auth_value_method :oauth_applications_table, :oauth_applications
     auth_value_method :oauth_applications_id_column, :id
 
@@ -90,6 +76,7 @@ module Rodauth
     translatable_method :invalid_grant_type_message, "Invalid grant type"
     translatable_method :invalid_grant_message, "Invalid grant"
     translatable_method :invalid_scope_message, "Invalid scope"
+    translatable_method :unsupported_token_type_message, "Invalid token type hint"
 
     translatable_method :unique_error_message, "is already in use"
     translatable_method :already_in_use_message, "error generating unique token"
@@ -552,7 +539,7 @@ module Rodauth
         end
 
         update_params = {
-          oauth_tokens_oauth_application_id_column => oauth_token[oauth_grants_oauth_application_id_column],
+          oauth_tokens_oauth_application_id_column => oauth_token[oauth_tokens_oauth_application_id_column],
           oauth_tokens_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_token_expires_in)
         }
         create_oauth_token_from_token(oauth_token, update_params)

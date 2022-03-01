@@ -18,7 +18,9 @@ module Rodauth
     button "Verify", "oauth_device_verification"
     button "Search", "oauth_device_search"
 
-    translatable_method :invalid_grant_type_message, "Invalid grant type"
+    auth_value_method :oauth_grants_user_code_column, :user_code
+    auth_value_method :oauth_grants_last_polled_at_column, :last_polled_at
+
     translatable_method :expired_token_message, "the device code has expired"
     translatable_method :access_denied_message, "the authorization request has been denied"
     translatable_method :authorization_pending_message, "the authorization request is still pending"
