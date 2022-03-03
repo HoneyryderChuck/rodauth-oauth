@@ -13,6 +13,11 @@ cache:
 .before_script: &before_script
   # rails 5.1 and lower need older version of bundler
   - bundle install
+  - |-
+      if [ "$BUNDLE_GEMFILE" !=~ "rails" ]; then
+        cd test/rails_app && bundle exec rails generate rodauth:oauth:views -a
+      fi
+
 
 .prepare_dbs: &prepare_dbs
   - PGPASSWORD=password createdb -h postgres -U oauth oauth-unique 'oauth database to keep single row for access tokens'

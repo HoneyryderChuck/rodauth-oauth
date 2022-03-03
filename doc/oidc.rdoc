@@ -1,6 +1,6 @@
 = Documentation for Open ID Connect feature
 
-The oidc feature builds on top of the oauth_jwt feature to implement an OpenID Connect identity provider.
+The +oidc+ feature builds on top of the oauth_jwt feature to implement an OpenID Connect identity provider.
 
 == Value Methods
 

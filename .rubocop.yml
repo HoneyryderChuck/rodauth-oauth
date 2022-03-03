@@ -151,7 +151,7 @@ Style/HashLikeCase:
   Enabled: true
 
 Style/OptionalBooleanParameter:
-  Enabled: false 
+  Enabled: false
 
 Style/RedundantAssignment:
   Enabled: true
@@ -237,4 +237,7 @@ Lint/SuppressedException:
     - test/rails/**/*
 
 Lint/ConstantDefinitionInBlock:
+  Enabled: false
+
+Metrics/ParameterLists:
   Enabled: false

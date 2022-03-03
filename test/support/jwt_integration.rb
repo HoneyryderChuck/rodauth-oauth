@@ -8,14 +8,6 @@ require_relative File.join(__dir__, "roda_integration")
 class JWTIntegration < RodaIntegration
   private
 
-  def setup_application(*)
-    rodauth do
-      oauth_jwt_token_issuer "Example"
-      oauth_jwt_audience "Audience"
-    end
-    super
-  end
-
   def oauth_feature
     :oauth_jwt
   end
@@ -46,8 +38,8 @@ class JWTIntegration < RodaIntegration
     payload, headers = JWT.decode(data["access_token"], secret, true, algorithms: [algorithm])
 
     assert headers["alg"] == algorithm
-    assert payload["iss"] == "Example"
-    assert payload["aud"] == "Audience"
+    assert payload["iss"] == "http://example.org"
+    assert payload["aud"] == "CLIENT_ID"
     assert payload["nonce"] == oauth_token[:nonce]
     payload
   end

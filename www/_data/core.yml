@@ -1,9 +1,42 @@
 -
-  name: OAuth
-  path: oauth_rdoc.html
+  name: OAuth Base
+  path: oauth_base_rdoc.html
+-
+  name: OAuth Authorization Code Grant
+  path: oauth_authorization_code_grant_rdoc.html
+-
+  name: OAuth Implicit Grant
+  path: oauth_implicit_grant_rdoc.html
+-
+  name: OAuth Device Grant
+  path: oauth_device_grant_rdoc.html
+-
+  name: OAuth PKCE
+  path: oauth_pkce_rdoc.html
+-
+  name: OAuth Token Revocation
+  path: oauth_token_revocation_rdoc.html
+-
+  name: OAuth Token Introspection
+  path: oauth_token_introspection_rdoc.html
+-
+  name: OAuth Application Management Dashboard
+  path: oauth_application_management_rdoc.html
+-
+  name: OAuth Token Management Dashboard
+  path: oauth_token_management_rdoc.html
 -
   name: Oauth JWT
   path: oauth_jwt_rdoc.html
+-
+  name: OAuth Assertion Base
+  path: oauth_assertion_base_rdoc.html
+-
+  name: OAuth SAML 2.0 Bearer Assertion
+  path: oauth_saml_bearer_grant_rdoc.html
+-
+  name: OAuth JWT Bearer Assertion
+  path: oauth_jwt_bearer_grant.html
 -
   name: OpenID Connect
   path: oidc_rdoc.html

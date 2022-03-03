@@ -9,24 +9,26 @@ This is an extension to the `rodauth` gem which implements the [OAuth 2.0 framew
 
 This gem implements the following RFCs and features of OAuth:
 
-* [The OAuth 2.0 protocol framework](https://tools.ietf.org/html/rfc6749):
-  * [Authorization grant flow](https://tools.ietf.org/html/rfc6749#section-1.3);
+* `oauth` - [The OAuth 2.0 protocol framework](https://tools.ietf.org/html/rfc6749):
   * [Access Token generation](https://tools.ietf.org/html/rfc6749#section-1.4);
   * [Access Token refresh](https://tools.ietf.org/html/rfc6749#section-1.5);
-  * [Implicit grant (off by default)](https://tools.ietf.org/html/rfc6749#section-4.2);
-  * [Device code grant (off by default)](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-device-flow-15);
-* [Token revocation](https://tools.ietf.org/html/rfc7009);
-* [Token introspection](https://tools.ietf.org/html/rfc7662);
-* [Authorization Server Metadata](https://tools.ietf.org/html/rfc8414);
-* [PKCE](https://tools.ietf.org/html/rfc7636);
-* Access Type (Token refresh online and offline);
-* [MAC Authentication Scheme](https://tools.ietf.org/html/draft-hammer-oauth-v2-mac-token-02);
-* [JWT Acess Tokens](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-07);
-* [SAML 2.0 Assertion Access Tokens](https://tools.ietf.org/html/draft-ietf-oauth-saml2-bearer-03);
+  * `oauth_authorization_code_grant` - [Authorization grant flow](https://tools.ietf.org/html/rfc6749#section-1.3);
+  * `oauth_implicit_grant` - [Implicit grant (off by default)](https://tools.ietf.org/html/rfc6749#section-4.2);
+  * `oauth_device_grant` - [Device code grant (off by default)](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-device-flow-15);
+  * `oauth_token_revocation` - [Token revocation](https://tools.ietf.org/html/rfc7009);
+  * `oauth_token_introspection` - [Token introspection](https://tools.ietf.org/html/rfc7662);
+  * [Authorization Server Metadata](https://tools.ietf.org/html/rfc8414);
+  * `oauth_pkce` - [PKCE](https://tools.ietf.org/html/rfc7636);
+  * Access Type (Token refresh online and offline);
+  * `oauth_jwt` - [JWT Access Tokens](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-07);
+* `oauth_http_mac` - [MAC Authentication Scheme](https://tools.ietf.org/html/draft-hammer-oauth-v2-mac-token-02);
+* `oauth_assertion_base` - [Assertion Framework](https://datatracker.ietf.org/doc/html/rfc7521);
+  * `oauth_saml_bearer_grant` - [SAML 2.0 Bearer Assertion](https://datatracker.ietf.org/doc/html/rfc7522);
+  * `oauth_jwt_bearer_grant` - [JWT Bearer Assertion](https://datatracker.ietf.org/doc/html/rfc7523);
 * [JWT Secured Authorization Requests](https://tools.ietf.org/html/draft-ietf-oauth-jwsreq-20);
 * OAuth application and token management dashboards;
 
-It also implements the [OpenID Connect layer](https://openid.net/connect/) on top of the OAuth features it provides, including:
+It also implements the [OpenID Connect layer](https://openid.net/connect/) (via the `openid` feature) on top of the OAuth features it provides, including:
 
 * [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html);
 * [OpenID Connect Discovery](https://openid.net/specs/openid-connect-discovery-1_0-29.html);

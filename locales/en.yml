@@ -30,6 +30,7 @@ en:
     oauth_device_verification_button: "Verify"
     oauth_device_search_button: "Search"
     invalid_client_message: "Client authentication failed"
+    invalid_grant_type_message: "Invalid grant type"
     invalid_grant_message: "Invalid grant"
     invalid_scope_message: "Invalid scope"
     invalid_url_message: "Invalid URL"

@@ -1,0 +1,19 @@
+= Documentation for OAuth SAML Bearer Grant feature
+
+The +oauth_saml_bearer_grant+ feature implements the OAuth 2.0 SAML Profile for Client Authentication and Authorization Grants.
+
+https://datatracker.ietf.org/doc/html/rfc7522
+
+== Auth Value Methods
+
+oauth_saml_cert_fingerprint :: SAML certificate fingerprint
+oauth_saml_cert_fingerprint_algorithm :: SAML certificate fingerprint algorithm (<tt>nil</tt> by default).
+oauth_saml_name_identifier_format :: SAML name ID format.
+oauth_saml_security_authn_requests_signed :: Enable signature on AuthNRequest (<tt>false</tt> by default).
+oauth_saml_security_metadata_signed :: Enable signature on Metadata (<tt>false</tt> by default).
+oauth_saml_security_digest_method :: Service Provider signature method  (<tt>"http://www.w3.org/2000/09/xmldsig#sha1"</tt> by default)
+oauth_saml_security_signature_method ::  Service Provider digest method  (<tt>"http://www.w3.org/2000/09/xmldsig#rsa-sha1"</tt> by default)
+
+require_oauth_application_from_saml2_bearer_assertion_issuer :: loads the oauth application from the SAML assertion issuer (client authorization).
+require_oauth_application_from_saml2_bearer_assertion_subject :: loads the oauth application from the SAML assertion subject (client authentication).
+account_from_saml2_bearer_assertion :: loads the user account from the SAML assertion.

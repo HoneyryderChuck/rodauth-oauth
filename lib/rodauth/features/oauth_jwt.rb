@@ -145,51 +145,6 @@ module Rodauth
 
     # /token
 
-    def require_oauth_application
-      # requset authentication optional for assertions
-      return super unless param("grant_type") == "urn:ietf:params:oauth:grant-type:jwt-bearer"
-
-      claims = jwt_decode(param("assertion"))
-
-      redirect_response_error("invalid_grant") unless claims
-
-      @oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => claims["client_id"]).first
-
-      authorization_required unless @oauth_application
-    end
-
-    def validate_oauth_token_params
-      if param("grant_type") == "urn:ietf:params:oauth:grant-type:jwt-bearer"
-        redirect_response_error("invalid_client") unless param_or_nil("assertion")
-      else
-        super
-      end
-    end
-
-    def create_oauth_token(grant_type)
-      if grant_type == "urn:ietf:params:oauth:grant-type:jwt-bearer"
-        create_oauth_token_from_assertion
-      else
-        super
-      end
-    end
-
-    def create_oauth_token_from_assertion
-      claims = jwt_decode(param("assertion"))
-
-      account = account_ds(claims["sub"]).first
-
-      redirect_response_error("invalid_client") unless oauth_application && account
-
-      create_params = {
-        oauth_tokens_account_id_column => claims["sub"],
-        oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-        oauth_tokens_scopes_column => claims["scope"]
-      }
-
-      generate_oauth_token(create_params, false)
-    end
-
     def generate_oauth_token(params = {}, should_generate_refresh_token = true)
       create_params = {
         oauth_grants_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_token_expires_in)
@@ -346,8 +301,8 @@ module Rodauth
       generate_jti(claims) == jti
     end
 
-    def verify_aud(aud, claims)
-      aud == (oauth_jwt_audience || claims["client_id"])
+    def verify_aud(expected_aud, aud)
+      expected_aud == aud
     end
 
     if defined?(JSON::JWT)
@@ -379,6 +334,8 @@ module Rodauth
         jws_key: oauth_jwt_public_key || _jwt_key,
         verify_claims: true,
         verify_jti: true,
+        verify_iss: true,
+        verify_aud: false,
         **
       )
         token = JSON::JWT.decode(token, oauth_jwt_jwe_key).plain_text if oauth_jwt_jwe_key
@@ -393,11 +350,15 @@ module Rodauth
                    JSON::JWT.decode(token, JSON::JWK::Set.new(jwks))
                  end
 
-        if verify_claims && !(claims[:iss] == issuer &&
-            verify_aud(claims[:aud], claims) &&
-            (!claims[:iat] || Time.at(claims[:iat]) > (Time.now - oauth_token_expires_in)) &&
-            (!claims[:exp] || Time.at(claims[:exp]) > Time.now) &&
-            (!verify_jti || verify_jti(claims[:jti], claims)))
+        now = Time.now
+        if verify_claims && (
+            (!claims[:exp] || Time.at(claims[:exp]) < now) &&
+            (claims[:nbf] && Time.at(claims[:nbf]) < now) &&
+            (claims[:iat] && Time.at(claims[:iat]) < now) &&
+            (verify_iss && claims[:iss] != issuer) &&
+            (verify_aud && !verify_aud(claims[:aud], claims[:client_id])) &&
+            (verify_jti && !verify_jti(claims[:jti], claims))
+          )
           return
         end
 
@@ -456,7 +417,9 @@ module Rodauth
         jws_key: oauth_jwt_public_key || _jwt_key,
         jws_algorithm: oauth_jwt_algorithm,
         verify_claims: true,
-        verify_jti: true
+        verify_jti: true,
+        verify_iss: true,
+        verify_aud: false
       )
         # decrypt jwe
         token = JWE.decrypt(token, oauth_jwt_jwe_key) if oauth_jwt_jwe_key
@@ -472,7 +435,7 @@ module Rodauth
         #
         verify_claims_params = if verify_claims
                                  {
-                                   verify_iss: true,
+                                   verify_iss: verify_iss,
                                    iss: issuer,
                                    # can't use stock aud verification, as it's dependent on the client application id
                                    verify_aud: false,
@@ -496,7 +459,7 @@ module Rodauth
                    JWT.decode(token, nil, true, jwks: jwks, algorithms: algorithms, **verify_claims_params).first
                  end
 
-        return if verify_claims && !verify_aud(claims["aud"], claims)
+        return if verify_claims && verify_aud && !verify_aud(claims["aud"], claims["client_id"])
 
         claims
       rescue JWT::DecodeError, JWT::JWKError

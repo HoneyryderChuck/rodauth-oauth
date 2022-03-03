@@ -1,0 +1,33 @@
+= Documentation for OAuth Authorization Code Grant feature
+
+The +oauth_authorization_code_grant+ feature implements the OAuth 2.0 Authorization Code Grant.
+
+https://datatracker.ietf.org/doc/html/rfc6749#section-1.3
+
+== Auth Value Methods
+
+use_oauth_access_type? :: Whether the "access_type" parameter is supported, <tt>true</tt> by default.
+
+oauth_grants_table :: the db table where oauth grants are stored, <tt>:oauth_grants</tt> by default.
+oauth_grants_id_column :: the db column where the oauth grant primary key is stored, <tt>:id</tt> by default.
+oauth_grants_oauth_application_id_column :: the db column where the oauth grant oauth application ID is stored, <tt>:oauth_application_id</tt> by default.
+oauth_grants_account_id_column :: the db column where the oauth grant account ID is stored, <tt>:account_id</tt> by default.
+oauth_grants_code_column :: the db column where the oauth grant authorization code is stored, <tt>:code</tt> by default.
+oauth_grants_redirect_uri_column :: the db column where the oauth grant redirect URI is stored, <tt>:redirect_uri</tt> by default.
+oauth_grants_scopes_column :: the db column where the oauth grant scopes are stored, <tt>:scopes<tt> by default.
+oauth_grants_access_type_column :: the db column where the oauth grant access type is stored, <tt>:access_type<tt> by default.
+oauth_grants_expires_in_column :: the db column where the oauth grant expiration time is stored, <tt>:expires_in</tt> by default.
+oauth_grants_revoked_at_column :: the db column where the oauth grant revocation time is stored, <tt>:revoked_at</tt> by default.
+
+authorize_page_title :: Title of authorize form page.
+
+oauth_authorize_button :: Label of Authorize form button.
+oauth_authorize_post_button :: Label of post-authorize form button.
+
+authorize_route :: the route for the authorize action, defaults to +authorize+.
+before_authorize_route :: Run arbitrary code before the authorize route.
+before_authorize :: Run arbitrary code before executing an "authorize" endpoint.
+after_authorize :: Run arbitrary code after authorizing a request.
+
+authorize_view :: The HTML of the Authorize form.
+oauth_tokens_scopes_label :: Label for the oauth token scopes.

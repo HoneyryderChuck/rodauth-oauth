@@ -22,7 +22,7 @@ SamlIdp.configure do |config|
   }
 
   config.name_id.formats = { # All 2.0
-    email_address: ->(principal) { principal[:email] },
+    email_address: ->(principal) { principal[:email] || principal[:client_id] },
     transient: ->(principal) { principal[:id] },
     persistent: ->(_p) { principal[:id] }
   }
@@ -46,56 +46,14 @@ class SAMLIntegration < RodaIntegration
 
     rodauth do
       db testdb
-      enable :login, feature
+      enable :login, :oauth_authorization_code_grant, feature
       login_return_to_requested_location? true
       oauth_application_default_scope scopes.first
       oauth_application_scopes scopes
     end
 
-    encode_authn_response = method(:encode_authn_response)
-
     roda do |r|
       r.rodauth
-
-      # SAML Redirect Binding
-      r.on "saml-login" do
-        rodauth.require_authentication
-
-        r.get do
-          @saml_request = SamlIdp::Request.from_deflated_request(request.params["SAMLRequest"])
-
-          if @saml_request.valid?
-            @saml_response = encode_authn_response.call(
-              rodauth.account_from_session,
-              request_id: @saml_request.request_id,
-              audience_uri: @saml_request.issuer,
-              acs_url: @saml_request.acs_url
-            )
-            <<~HTML
-              <!DOCTYPE html>
-              <html>
-                <head>
-                  <meta charset="utf-8">
-                  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
-                </head>
-                <body onload="document.forms[0].submit();" style="visibility:hidden;">
-                  <form method="post" action="#{@saml_request.acs_url}" class="rodauth" role="form">
-                    <input type="hidden" name="SAMLResponse" value="#{@saml_response}"/>
-                    <input type="hidden" name="RelayState" value="#{request.params['RelayState']}"/>
-                    <input type="submit" value="Submit" %>
-                  </form>
-                </body>
-              </html>
-            HTML
-          else
-            @saml_request.errors
-          end
-        end
-      end
-
-      r.on "callback" do
-        r.params["SAMLResponse"]
-      end
 
       r.root do
         flash["error"] || flash["notice"] || "Unauthorized"
@@ -113,16 +71,21 @@ class SAMLIntegration < RodaIntegration
   end
 
   def oauth_feature
-    :oauth_saml
+    :oauth_saml_bearer_grant
   end
 
-  def login(opts = {})
-    visit(opts[:path] || make_saml_request("http://example.com/callback")) unless opts[:visit] == false
-    fill_in "Login", with: opts.fetch(:login, "foo@example.com")
-    fill_in "Password", with: opts.fetch(:pass, "0123456789")
-    click_button "Login"
-    # this is needed because this user agent doesn't run javascript
-    click_button "Submit"
+  def saml_assertion(principal)
+    ENV["ruby-saml/testing"] = "true"
+    auth_request = OneLogin::RubySaml::Authrequest.new
+    auth_request_url = URI(auth_request.create(saml_settings("http://example.com/callback")))
+    auth_request_params = URI.decode_www_form(auth_request_url.query).to_h
+    saml_request = SamlIdp::Request.from_deflated_request(auth_request_params["SAMLRequest"])
+    encode_authn_response(
+      principal,
+      request_id: saml_request.request_id,
+      audience_uri: "http://example.org/token",
+      acs_url: saml_request.acs_url
+    )
   end
 
   def make_saml_request(requested_saml_acs_url)

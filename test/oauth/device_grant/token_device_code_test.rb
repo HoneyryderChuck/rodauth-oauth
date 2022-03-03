@@ -54,7 +54,7 @@ class RodauthOAuthTokenDeviceCodeTest < RodaIntegration
          device_code: "CODE")
 
     assert last_response.status == 400
-    assert json_body["error"] == "invalid_request"
+    assert json_body["error"] == "unsupported_grant_type"
   end
 
   def test_token_device_code_expired_grant
