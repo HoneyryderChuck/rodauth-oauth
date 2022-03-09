@@ -39,7 +39,7 @@ module Rodauth
 
       return unless claims
 
-      db[accounts_table].where(login_column => claims["sub"]).first
+      account_from_bearer_assertion_subject(claims["sub"])
     end
 
     def jwt_assertion(assertion)

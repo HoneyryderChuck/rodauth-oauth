@@ -42,6 +42,10 @@ module Rodauth
 
             __insert_and_return__(dataset, pkey, params)
           end
+
+          def __insert_or_do_nothing_and_return__(dataset, pkey, unique_columns, params)
+            __insert_and_return__(dataset.insert_conflict(target: unique_columns), pkey, params)
+          end
         else
           def __insert_or_update_and_return__(dataset, pkey, unique_columns, params, conds = nil, exclude_on_update = nil)
             find_params, update_params = params.partition { |key, _| unique_columns.include?(key) }.map { |h| Hash[h] }
@@ -64,6 +68,11 @@ module Rodauth
             else
               __insert_and_return__(dataset, pkey, params)
             end
+          end
+
+          def __insert_or_do_nothing_and_return__(dataset, pkey, unique_columns, params)
+            find_params = params.select { |key, _| unique_columns.include?(key) }
+            dataset.where(find_params).first || __insert_and_return__(dataset, pkey, params)
           end
         end
       end

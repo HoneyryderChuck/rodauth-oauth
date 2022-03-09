@@ -48,7 +48,7 @@ module Rodauth
 
       return unless saml
 
-      db[accounts_table].where(login_column => saml.nameid).first
+      account_from_bearer_assertion_subject(saml.nameid)
     end
 
     def saml_assertion(assertion)
