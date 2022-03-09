@@ -46,7 +46,12 @@ module Rodauth
     end
 
     def account_from_bearer_assertion_subject(subject)
-      __insert_or_do_nothing_and_return__(db[accounts_table], account_id_column, [login_column], login_column => subject)
+      __insert_or_do_nothing_and_return__(
+        db[accounts_table],
+        account_id_column,
+        [login_column],
+        login_column => subject
+      )
     end
 
     def create_oauth_token(grant_type)

@@ -44,7 +44,11 @@ module Rodauth
           end
 
           def __insert_or_do_nothing_and_return__(dataset, pkey, unique_columns, params)
-            __insert_and_return__(dataset.insert_conflict(target: unique_columns), pkey, params)
+            __insert_and_return__(
+              dataset.insert_conflict(target: unique_columns),
+              pkey,
+              params
+            ) || dataset.where(params).first
           end
         else
           def __insert_or_update_and_return__(dataset, pkey, unique_columns, params, conds = nil, exclude_on_update = nil)
