@@ -84,7 +84,31 @@ On your browser, go to `http://localhost:9293`. Click `Authorize` and login in t
 
 As there isn't a token lookup when verifying the token (the signature of the JWT is verified instead), you should see significant improvements here.
 
-# 4. OpenID
+# 4. SAML Bearer Grant Authorization Server / Client Application / Saml IdP
+
+In this example, the client requests SAML assertions to the identity provider, which it then sends to the authorization to generate access tokens.
+
+## How to run
+
+```
+On one shell, do
+> ruby saml_assertion/authorization_server.rb
+On another shell, do
+> ruby saml_assertion/saml_idp.rb
+On another shell, do
+> ruby saml_assertion/client_application.rb
+```
+
+## How to use
+
+On your browser, go to `http://localhost:9293`. Click `Authorize` and you should be able to login in the Identity Provider with "foo@bar.com" as email address, and "password" as your password.  You should see the user's name in the top-right corner, besides the same list of books.
+
+## What's relevant to know
+
+You'll be redirected from SSO back to the client application with a SAML assertion.
+
+
+# 5. OpenID
 
 This is a setup of an OpenID provider and consumer, where the provider has auto-discovery, and the client uses an omniauth/openid-compatible library to integrate.
 
@@ -104,4 +128,3 @@ On your browser, go to `http://localhost:9293`. Click `Authenticate` and login i
 ## What's relevant to know
 
 The user info is coming from the `id_token`, and is used to identify the user in the UI.
-
