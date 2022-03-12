@@ -402,7 +402,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
   def setup_application(*)
     rodauth do
-      oauth_application_jws_jwk_column :jws_jwk
+      oauth_applications_jws_jwk_column :jws_jwk
     end
     super
   end

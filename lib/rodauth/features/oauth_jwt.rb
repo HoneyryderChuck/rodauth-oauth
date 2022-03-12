@@ -15,7 +15,13 @@ module Rodauth
 
     auth_value_method :oauth_jwt_token_issuer, nil
 
-    auth_value_method :oauth_application_jws_jwk_column, nil
+    auth_value_method :oauth_applications_jws_jwk_column, :jws_jwk
+    auth_value_method :oauth_applications_jwt_public_key_column, :jwt_public_key
+
+    translatable_method :oauth_applications_jws_jwk_label, "JSON Web Keys"
+    translatable_method :oauth_applications_jwt_public_key_label, "Public key"
+    auth_value_method :oauth_application_jws_jwk_param, :jws_jwk
+    auth_value_method :oauth_application_jwt_public_key_param, :jwt_public_key
 
     auth_value_method :oauth_jwt_key, nil
     auth_value_method :oauth_jwt_public_key, nil
@@ -113,9 +119,7 @@ module Rodauth
 
       return super unless request_object && oauth_application
 
-      jws_jwk = if oauth_application[oauth_application_jws_jwk_column]
-                  jwk = oauth_application[oauth_application_jws_jwk_column]
-
+      jws_jwk = if (jwk = oauth_application[oauth_applications_jws_jwk_column])
                   jwk = JSON.parse(jwk, symbolize_names: true) if jwk && jwk.is_a?(String)
                 else
                   redirect_response_error("invalid_request_object")
@@ -250,7 +254,17 @@ module Rodauth
     end
 
     def _jwt_key
-      @_jwt_key ||= oauth_jwt_key || (oauth_application[oauth_applications_client_secret_column] if oauth_application)
+      @_jwt_key ||= oauth_jwt_key || begin
+        if oauth_application
+
+          if (jwk = oauth_application[oauth_applications_jws_jwk_column])
+            jwk = JSON.parse(jwk, symbolize_names: true) if jwk && jwk.is_a?(String)
+            jwk
+          else
+            oauth_application[oauth_applications_jwt_public_key_column]
+          end
+        end
+      end
     end
 
     # Resource Server only!

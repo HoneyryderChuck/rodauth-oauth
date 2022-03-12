@@ -9,8 +9,10 @@ Sequel.migration do
       foreign_key :oauth_token_id, :oauth_tokens
       foreign_key :oauth_application_id, :oauth_applications, null: false
       String :token, token: true, unique: true
+      # if hashed tokens
       String :token_hash, token: true, unique: true
       String :refresh_token, token: true, unique: true
+      # if hashed tokens
       String :refresh_token_hash, token: true, unique: true
       Time :expires_in, null: false
       Time :revoked_at
