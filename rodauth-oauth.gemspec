@@ -24,8 +24,9 @@ Gem::Specification.new do |spec|
   }
   spec.license = "Apache-2.0"
 
-  spec.files = Dir["LICENSE.txt", "README.md", "lib/**/*.{rb,erb}", "templates/*", "locales/**/*.yml", "CHANGELOG.md"]
-  spec.extra_rdoc_files = Dir["LICENSE.txt", "README.md", "CHANGELOG.md"]
+  spec.files = Dir["LICENSE.txt", "README.md", "lib/**/*.{rb,erb}", "templates/*", "locales/**/*.yml", "CHANGELOG.md",
+                   "doc/release_notes/*.md"]
+  spec.extra_rdoc_files = Dir["LICENSE.txt", "README.md", "CHANGELOG.md", "doc/release_notes/*.md"]
 
   spec.require_paths = ["lib"]
 

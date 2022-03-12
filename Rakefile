@@ -22,7 +22,8 @@ namespace :coverage do
   desc "Aggregates coverage reports"
   task :report do
     return unless ENV.key?("CI")
-    require 'simplecov'
+
+    require "simplecov"
 
     SimpleCov.collate Dir["coverage/**/.resultset.json"]
   end
@@ -33,7 +34,6 @@ CI_TASKS = RUBY_VERSION < "2.4" ? %i[test] : %i[test rubocop]
 task "test:ci": CI_TASKS
 
 task default: :test
-
 
 # Doc
 
@@ -46,7 +46,7 @@ rescue Gem::LoadError
 end
 
 rdoc_opts.concat(["--main", "README.md"])
-RDOC_FILES = %w[README.md CHANGELOG.md lib/**/*.rb]+ Dir["doc/*.rdoc"]
+RDOC_FILES = %w[README.md CHANGELOG.md lib/**/*.rb] + Dir["doc/*.rdoc"] + Dir["doc/release_notes/*.md"]
 
 RDoc::Task.new do |rdoc|
   rdoc.rdoc_dir = "rdoc"
@@ -64,8 +64,8 @@ desc "Check configuration method documentation"
 task :check_method_doc do
   docs = {}
   Dir["doc/*.rdoc"].sort.each do |f|
-    meths = File.binread(f).split("\n").grep(/\A(\w+[!?]?(\([^\)]+\))?) :: /).map{|line| line.split(/( :: |\()/, 2)[0]}.sort
-    docs[File.basename(f).sub(/\.rdoc\z/, '')] = meths unless meths.empty?
+    meths = File.binread(f).split("\n").grep(/\A(\w+[!?]?(\([^\)]+\))?) :: /).map { |line| line.split(/( :: |\()/, 2)[0] }.sort
+    docs[File.basename(f).sub(/\.rdoc\z/, "")] = meths unless meths.empty?
   end
   require "rodauth"
   docs.each do |f, doc_meths|
@@ -83,7 +83,7 @@ task :check_method_doc do
 end
 
 desc "Builds Homepage"
-task :prepare_website => [:website_rdoc] do
+task prepare_website: [:website_rdoc] do
   require "fileutils"
   Dir.chdir "www"
   system("bundle install")

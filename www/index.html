@@ -89,7 +89,7 @@ layout: default
         {% for major in site.data.versions %}
         <li>
           {% for version in major %}
-          <a href="{{ '/rdoc/files/CHANGELOG_md.html' | prepend: site.baseurl }}#label-{{ version }}">{{ version }}</a>
+          <a href="{{ '/rdoc/files/doc/release_notes/' | append: version.path | prepend: site.baseurl }}">{{ version.name }}</a>
           {% unless forloop.last %}|{% endunless %}
           {% endfor %}
         </li>
