@@ -6,6 +6,10 @@ class RodauthOauthJwtTokenRevokeTest < JWTIntegration
   include Rack::Test::Methods
 
   def test_oauth_token_revoke_access_token
+    rodauth do
+      oauth_jwt_key "SECRET"
+      oauth_jwt_algorithm "HS256"
+    end
     setup_application
     login
 
@@ -25,6 +29,10 @@ class RodauthOauthJwtTokenRevokeTest < JWTIntegration
   end
 
   def test_oauth_token_revoke_refresh_token
+    rodauth do
+      oauth_jwt_key "SECRET"
+      oauth_jwt_algorithm "HS256"
+    end
     setup_application
     login
 

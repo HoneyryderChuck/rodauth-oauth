@@ -7,6 +7,8 @@ class RodauthOAuthOIDCLogoutTest < OIDCIntegration
 
   def test_oidc_rp_initiated_logout_disabled
     rodauth do
+      oauth_jwt_key "SECRET"
+      oauth_jwt_algorithm "HS256"
       use_oauth_implicit_grant_type? true
       use_rp_initiated_logout? false
     end
