@@ -6,9 +6,10 @@ https://datatracker.ietf.org/doc/html/rfc7522
 
 == Auth Value Methods
 
-oauth_saml_cert_fingerprint :: SAML certificate fingerprint
-oauth_saml_cert_fingerprint_algorithm :: SAML certificate fingerprint algorithm (<tt>nil</tt> by default).
-oauth_saml_name_identifier_format :: SAML name ID format.
+oauth_saml_cert :: SAML Identity Provider certificate
+oauth_saml_cert_fingerprint :: SAML Identity Provider certificate fingerprint
+oauth_saml_cert_fingerprint_algorithm :: SAML Identity Provider certificate fingerprint algorithm (<tt>nil</tt> by default).
+oauth_saml_name_identifier_format :: SAML Identity Provider name ID format.
 oauth_saml_security_authn_requests_signed :: Enable signature on AuthNRequest (<tt>false</tt> by default).
 oauth_saml_security_metadata_signed :: Enable signature on Metadata (<tt>false</tt> by default).
 oauth_saml_security_digest_method :: Service Provider signature method  (<tt>"http://www.w3.org/2000/09/xmldsig#sha1"</tt> by default)

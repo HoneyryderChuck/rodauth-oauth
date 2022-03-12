@@ -1,7 +1,11 @@
 <div id="oauth-application">
   <dl>
     #{
-      (rodauth.oauth_application_required_params + %w[client_id] - %w[client_secret]).map do |param|
+      params = [*rodauth.oauth_application_required_params, "client_id", "client_secret"]
+      if rodauth.features.include?(:oauth_jwt)
+        params += %w[jws_jwk jwt_public_key]
+      end
+      params.map do |param|
         "<dt class=\"#{param}\">#{rodauth.send(:"oauth_applications_#{param}_label")}: </dt>" +
         "<dd class=\"#{param}\">#{@oauth_application[rodauth.send(:"oauth_applications_#{param}_column")]}</dd>"
       end.join

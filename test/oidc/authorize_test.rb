@@ -116,6 +116,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
   def test_oidc_authorize_post_authorize_with_implicit_grant
     rodauth do
+      oauth_jwt_key "SECRET"
+      oauth_jwt_algorithm "HS256"
       use_oauth_implicit_grant_type? true
     end
     setup_application
@@ -139,6 +141,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
   def test_oidc_authorize_post_authorize_with_id_token_response_type
     rodauth do
+      oauth_jwt_key "SECRET"
+      oauth_jwt_algorithm "HS256"
       use_oauth_implicit_grant_type? true
     end
     setup_application
@@ -179,6 +183,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
   def test_oidc_authorize_post_authorize_with_code_token_response_type
     rodauth do
+      oauth_jwt_key "SECRET"
+      oauth_jwt_algorithm "HS256"
       use_oauth_implicit_grant_type? true
     end
     setup_application
@@ -204,6 +210,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
   def test_oidc_authorize_post_authorize_with_code_id_token_response_type
     rodauth do
+      oauth_jwt_key "SECRET"
+      oauth_jwt_algorithm "HS256"
       use_oauth_implicit_grant_type? true
     end
     setup_application
@@ -229,6 +237,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
   def test_oidc_authorize_post_authorize_with_id_token_token_response_type
     rodauth do
+      oauth_jwt_key "SECRET"
+      oauth_jwt_algorithm "HS256"
       use_oauth_implicit_grant_type? true
     end
     setup_application
@@ -249,6 +259,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
   def test_oidc_authorize_post_authorize_with_code_id_token_token_response_type
     rodauth do
+      oauth_jwt_key "SECRET"
+      oauth_jwt_algorithm "HS256"
       use_oauth_implicit_grant_type? true
     end
     setup_application
@@ -402,7 +414,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
   def setup_application(*)
     rodauth do
-      oauth_application_jws_jwk_column :jws_jwk
+      oauth_applications_jws_jwk_column :jws_jwk
     end
     super
   end

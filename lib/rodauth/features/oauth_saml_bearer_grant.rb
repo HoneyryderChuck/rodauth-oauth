@@ -7,11 +7,12 @@ module Rodauth
     depends :oauth_assertion_base
 
     auth_value_method :oauth_saml_cert_fingerprint, "9E:65:2E:03:06:8D:80:F2:86:C7:6C:77:A1:D9:14:97:0A:4D:F4:4D"
+    auth_value_method :oauth_saml_cert, nil
     auth_value_method :oauth_saml_cert_fingerprint_algorithm, nil
     auth_value_method :oauth_saml_name_identifier_format, "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
 
-    auth_value_method :oauth_saml_security_authn_requests_signed, false
-    auth_value_method :oauth_saml_security_metadata_signed, false
+    auth_value_method :oauth_saml_security_authn_requests_signed, true
+    auth_value_method :oauth_saml_security_metadata_signed, true
     auth_value_method :oauth_saml_security_digest_method, XMLSecurity::Document::SHA1
     auth_value_method :oauth_saml_security_signature_method, XMLSecurity::Document::RSA_SHA1
 
@@ -48,11 +49,12 @@ module Rodauth
 
       return unless saml
 
-      db[accounts_table].where(login_column => saml.nameid).first
+      account_from_bearer_assertion_subject(saml.nameid)
     end
 
     def saml_assertion(assertion)
       settings = OneLogin::RubySaml::Settings.new
+      settings.idp_cert = oauth_saml_cert
       settings.idp_cert_fingerprint = oauth_saml_cert_fingerprint
       settings.idp_cert_fingerprint_algorithm = oauth_saml_cert_fingerprint_algorithm
       settings.name_identifier_format = oauth_saml_name_identifier_format

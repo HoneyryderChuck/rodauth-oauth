@@ -26,6 +26,18 @@
     <%= text_field_tag "client_secret", rodauth.param('client_secret'), id: "client-secret", class: "form-control#{' is-invalid' if rodauth.field_error('client_secret')}" %>
     <%= rodauth.field_error('client_secret') %>
   </div>
+  <% if rodauth.features.include?(:oauth_jwt) %>
+    <div class="form-group">
+      <%= label_tag "jws_jwk", rodauth.oauth_applications_jws_jwk_label %>
+      <%= text_field_tag "jws_jwk", rodauth.param('jws_jwk'), id: "jws-jwk", class: "form-control#{' is-invalid' if rodauth.field_error('jws_jwk')}" %>
+      <%= rodauth.field_error('jws_jwk') %>
+    </div>
+    <div class="form-group">
+      <%= label_tag "jwt_public_key", rodauth.oauth_applications_jwt_public_key_label %>
+      <%= text_field_tag "jwt_public_key", rodauth.param('jwt_public_key'), id: "jwt-public-key", class: "form-control#{' is-invalid' if rodauth.field_error('jwt_public_key')}" %>
+      <%= rodauth.field_error('jwt_public_key') %>
+    </div>
+  <% end %>
   <% rodauth.oauth_application_scopes.each do |scope| %>
     <div class="form-check">
       <%= check_box_tag "scopes[]", scope, scope == rodauth.oauth_application_default_scope, id: scope, class: "form-check-input" %>

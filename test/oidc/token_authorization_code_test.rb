@@ -6,6 +6,10 @@ class RodauthOAuthOidcTokenAuthorizationCodeTest < OIDCIntegration
   include Rack::Test::Methods
 
   def test_token_authorization_code_with_nonce
+    rodauth do
+      oauth_jwt_key "SECRET"
+      oauth_jwt_algorithm "HS256"
+    end
     setup_application
 
     grant = oauth_grant(nonce: "NONCE")

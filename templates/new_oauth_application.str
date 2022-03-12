@@ -7,5 +7,13 @@
   #{rodauth.render('redirect_uri_field')}
   #{rodauth.render('client_secret_field')}
   #{rodauth.render('scope_field')}
+  #{
+    if rodauth.features.include?(:oauth_jwt)
+      <<-HTML
+        #{rodauth.render('jwt_public_key_field')}
+        #{rodauth.render('jws_jwk_field')}
+      HTML
+    end
+  }
   #{rodauth.button(rodauth.oauth_application_button)}
 </form>

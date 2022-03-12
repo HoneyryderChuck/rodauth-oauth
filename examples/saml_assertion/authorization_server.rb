@@ -15,11 +15,10 @@ else
     primary_key :id, type: :Bignum
     String :email, null: false
     index :email, unique: true
-    String :ph, null: false
   end
   DB.create_table(:oauth_applications) do
     primary_key :id, type: Integer
-    foreign_key :account_id, :accounts, null: false
+    # foreign_key :account_id, :accounts, null: false
     String :name, null: false
     String :description, null: false
     String :homepage_url, null: false
@@ -28,25 +27,9 @@ else
     String :client_secret, null: false, unique: true
     String :scopes, null: false
   end
-  DB.create_table :oauth_grants do |_t|
-    primary_key :id, type: Integer
-    foreign_key :account_id, :accounts, null: false
-    foreign_key :oauth_application_id, :oauth_applications, null: false
-    String :code, null: false
-    DateTime :expires_in, null: false
-    String :redirect_uri
-    DateTime :revoked_at
-    String :scopes, null: false
-    index %i[oauth_application_id code], unique: true
-    String :access_type, null: false, default: "offline"
-    # if using PKCE flow
-    # String :code_challenge
-    # String :code_challenge_method
-  end
   DB.create_table :oauth_tokens do |_t|
     primary_key :id, type: Integer
     foreign_key :account_id, :accounts
-    foreign_key :oauth_grant_id, :oauth_grants
     foreign_key :oauth_token_id, :oauth_tokens
     foreign_key :oauth_application_id, :oauth_applications, null: false
     String :token, token: true
@@ -67,27 +50,17 @@ DB.freeze
 
 # OAuth with myself
 CLIENT_ID = ENV.fetch("CLIENT_ID", "CLIENT_ID")
-hash = ::BCrypt::Password.create("password", cost: BCrypt::Engine::MIN_COST)
-
-# test user
-DB[:accounts].insert_conflict(target: :email).insert(email: "foo@bar.com", ph: hash)
 
 # test application
 TEST_APPLICATION = DB[:oauth_applications].where(client_id: CLIENT_ID).first || begin
-  email = "admin@localhost.com"
-  account_id = DB[:accounts].where(email: email).get(:id) || begin
-    DB[:accounts].insert(email: email, ph: hash)
-  end
-
   application_id = DB[:oauth_applications].insert(
     client_id: CLIENT_ID,
     client_secret: BCrypt::Password.create(CLIENT_ID),
     name: "Myself",
     description: "About myself",
-    redirect_uri: "http://localhost:9293/callback",
-    homepage_url: "http://localhost:9293",
-    scopes: "profile.read books.read",
-    account_id: account_id
+    redirect_uri: "http://localhost:9294/callback",
+    homepage_url: "http://localhost:9294",
+    scopes: "profile.read books.read"
   )
   DB[:oauth_applications].where(id: application_id).first
 end
@@ -104,14 +77,11 @@ class AuthorizationServer < Roda
 
   plugin :rodauth, json: true do
     db DB
-    enable :login, :logout, :create_account, :oauth
-    login_return_to_requested_location? true
-    account_password_hash_column :ph
+    enable :oauth_saml_bearer_grant
     title_instance_variable :@page_title
 
     oauth_application_scopes %w[profile.read books.read books.write]
     oauth_application_default_scope "profile.read"
-    oauth_valid_uri_schemes %w[http https]
 
     oauth_tokens_refresh_token_hash_column :refresh_token
   end
@@ -124,8 +94,6 @@ class AuthorizationServer < Roda
   route do |r|
     r.assets
     r.rodauth
-    rodauth.oauth_applications
-    rodauth.oauth_tokens
 
     r.root do
       @application = TEST_APPLICATION

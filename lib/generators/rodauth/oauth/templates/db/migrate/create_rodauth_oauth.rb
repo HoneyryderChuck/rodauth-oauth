@@ -11,6 +11,11 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.string :client_secret, null: false, index: { unique: true }
       t.string :scopes, null: false
       t.datetime :created_at, null: false, default: -> { "CURRENT_TIMESTAMP" }
+      # JWT/OIDC per application signing verification
+      # t.text :jwt_public_key, null: true
+      # t.text :jws_jwk, null: true
+      # RP-initiated logout
+      # t.string :post_logout_redirect_uri, null: false
     end
 
     create_table :oauth_grants do |t|
