@@ -196,17 +196,32 @@ ruby30:
     - *install_deps
     - *before_script
     - *prepare_dbs
-    # export RUBYOPT='-rbundler/setup -rrbs/test/setup'
-    # export RBS_TEST_RAISE=true
-    # export RBS_TEST_LOGLEVEL=error
-    # export RBS_TEST_OPT='-Isig'
-    # export RBS_TEST_TARGET='Rodauth*'
   image: "ruby:3.0"
   script:
     - *test
   parallel:
     matrix:
       - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails70, Gemfile-rails61, Gemfile-rails60]
+  artifacts:
+    paths:
+      - "coverage/"
+ruby31:
+  <<: *test_services
+  before_script:
+    - *install_deps
+    - *before_script
+    - *prepare_dbs
+    # export RUBYOPT='-rbundler/setup -rrbs/test/setup'
+    # export RBS_TEST_RAISE=true
+    # export RBS_TEST_LOGLEVEL=error
+    # export RBS_TEST_OPT='-Isig'
+    # export RBS_TEST_TARGET='Rodauth*'
+  image: "ruby:3.1"
+  script:
+    - *test
+  parallel:
+    matrix:
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails70]
   artifacts:
     paths:
       - "coverage/"
@@ -222,7 +237,7 @@ coverage:
     - ruby23
     - ruby27
     - ruby30
-  image: "ruby:3.0"
+  image: "ruby:3.1"
   script:
     # this is a workaround, because simplecov doesn't support relative paths.
     #
@@ -240,7 +255,7 @@ coverage:
       - "coverage/"
 jekyll:
   stage: test
-  image: "ruby:3.0"
+  image: "ruby:3.1"
   variables:
     BUNDLE_WITH: website
     JEKYLL_ENV: production
