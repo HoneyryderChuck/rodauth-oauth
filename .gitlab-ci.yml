@@ -101,7 +101,7 @@ truffleruby:
   <<: *test_services
   allow_failure: true
   before_script:
-    - microdnf install -y git libxslt-devel libxml2-devel sqlite-devel mysql-devel postgresql-devel
+    - dnf install -y git libxslt-devel libxml2-devel sqlite-devel mysql-devel postgresql-devel
     - *before_script
   image: "ghcr.io/graalvm/truffleruby:latest"
   script:
@@ -196,17 +196,32 @@ ruby30:
     - *install_deps
     - *before_script
     - *prepare_dbs
-    # export RUBYOPT='-rbundler/setup -rrbs/test/setup'
-    # export RBS_TEST_RAISE=true
-    # export RBS_TEST_LOGLEVEL=error
-    # export RBS_TEST_OPT='-Isig'
-    # export RBS_TEST_TARGET='Rodauth*'
   image: "ruby:3.0"
   script:
     - *test
   parallel:
     matrix:
       - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails70, Gemfile-rails61, Gemfile-rails60]
+  artifacts:
+    paths:
+      - "coverage/"
+ruby31:
+  <<: *test_services
+  before_script:
+    - *install_deps
+    - *before_script
+    - *prepare_dbs
+    # export RUBYOPT='-rbundler/setup -rrbs/test/setup'
+    # export RBS_TEST_RAISE=true
+    # export RBS_TEST_LOGLEVEL=error
+    # export RBS_TEST_OPT='-Isig'
+    # export RBS_TEST_TARGET='Rodauth*'
+  image: "ruby:3.1"
+  script:
+    - *test
+  parallel:
+    matrix:
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails70]
   artifacts:
     paths:
       - "coverage/"
@@ -222,7 +237,7 @@ coverage:
     - ruby23
     - ruby27
     - ruby30
-  image: "ruby:3.0"
+  image: "ruby:3.1"
   script:
     # this is a workaround, because simplecov doesn't support relative paths.
     #
@@ -240,7 +255,7 @@ coverage:
       - "coverage/"
 jekyll:
   stage: test
-  image: "ruby:3.0"
+  image: "ruby:3.1"
   variables:
     BUNDLE_WITH: website
     JEKYLL_ENV: production
@@ -270,29 +285,27 @@ pages:
     - master
 
 
-prepare_job:
+prepare_release:
   stage: prepare
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:
-    - echo "EXTRA_DESCRIPTION=$(cat doc/release_notes/${${VERSION:1}//./_}.md)" >> variables.env
-    - echo "TAG=v$(cat VERSION)" >> variables.env
+    - echo "EXTRA_DESCRIPTION=$(cat doc/release_notes/${${CI_COMMIT_TAG:1}//./_}.md)" >> variables.env
+    - echo "TAG=v$(cat CI_COMMIT_TAG)" >> variables.env
   artifacts:
     reports:
       dotenv: variables.env
 
-release_job:
+release:
   stage: deploy
   image: registry.gitlab.com/gitlab-org/release-cli:latest
   needs:
-    - job: prepare_job
+    - job: prepare_release
       artifacts: true
   rules:
     - if: $CI_COMMIT_TAG
       when: never
-    - if: $CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH
   script:
     - echo "running release_job for $TAG"
   release:
