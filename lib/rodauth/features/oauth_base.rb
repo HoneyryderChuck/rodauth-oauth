@@ -58,6 +58,9 @@ module Rodauth
       name description scopes
       client_id client_secret
       homepage_url redirect_uri
+      token_endpoint_auth_method grant_types response_types
+      client_uri logo_uri tos_uri policy_uri jwks_uri
+      contacts software_id software_version
     ].each do |column|
       auth_value_method :"oauth_applications_#{column}_column", column
     end
@@ -594,7 +597,7 @@ module Rodauth
       end
     end
 
-    def oauth_server_metadata_body(path)
+    def oauth_server_metadata_body(path = nil)
       issuer = base_url
       issuer += "/#{path}" if path
 
@@ -604,7 +607,7 @@ module Rodauth
         scopes_supported: oauth_application_scopes,
         response_types_supported: [],
         response_modes_supported: [],
-        grant_types_supported: [],
+        grant_types_supported: %w[refresh_token],
         token_endpoint_auth_methods_supported: %w[client_secret_basic client_secret_post],
         service_documentation: oauth_metadata_service_documentation,
         ui_locales_supported: oauth_metadata_ui_locales_supported,
@@ -659,7 +662,7 @@ module Rodauth
       request.halt
     end
 
-    def throw_json_response_error(status, error_code)
+    def throw_json_response_error(status, error_code, message = nil)
       set_response_error_status(status)
       code = if respond_to?(:"#{error_code}_error_code")
                send(:"#{error_code}_error_code")
@@ -667,7 +670,7 @@ module Rodauth
                error_code
              end
       payload = { "error" => code }
-      payload["error_description"] = send(:"#{error_code}_message") if respond_to?(:"#{error_code}_message")
+      payload["error_description"] = message || (send(:"#{error_code}_message") if respond_to?(:"#{error_code}_message"))
       json_payload = _json_response_body(payload)
       response["Content-Type"] ||= json_response_content_type
       response["WWW-Authenticate"] = oauth_token_type.upcase if status == 401

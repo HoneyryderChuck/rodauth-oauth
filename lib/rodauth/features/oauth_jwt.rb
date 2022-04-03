@@ -245,7 +245,7 @@ module Rodauth
       }
     end
 
-    def oauth_server_metadata_body(path)
+    def oauth_server_metadata_body(path = nil)
       metadata = super
       metadata.merge! \
         jwks_uri: jwks_url,
