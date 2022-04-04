@@ -23,7 +23,7 @@ module Rodauth
 
     private
 
-    def authorized_oauth_application?(oauth_application, client_secret)
+    def authorized_oauth_application?(oauth_application, client_secret, _)
       return true if use_oauth_pkce? && param_or_nil("code_verifier")
 
       super

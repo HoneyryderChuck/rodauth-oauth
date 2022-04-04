@@ -40,48 +40,54 @@ module OAuthHelpers
   end
 
   def oauth_application(params = {})
-    @oauth_application ||= begin
-      id = db[:oauth_applications].insert({
-        account_id: account[:id],
-        name: "Foo",
-        description: "this is a foo",
-        homepage_url: "https://example.com",
-        redirect_uri: "https://example.com/callback",
-        client_id: "CLIENT_ID",
-        client_secret: generate_client_secret("CLIENT_SECRET"),
-        scopes: test_scopes.join(" ")
-      }.merge(params))
-      db[:oauth_applications].filter(id: id).first
-    end
+    @oauth_application ||= set_oauth_application(params)
+  end
+
+  def set_oauth_application(params)
+    id = db[:oauth_applications].insert({
+      account_id: account[:id],
+      name: "Foo",
+      description: "this is a foo",
+      homepage_url: "https://example.com",
+      redirect_uri: "https://example.com/callback",
+      client_id: "CLIENT_ID",
+      client_secret: generate_client_secret("CLIENT_SECRET"),
+      scopes: test_scopes.join(" ")
+    }.merge(params))
+    db[:oauth_applications].filter(id: id).first
   end
 
   def oauth_grant(params = {})
-    @oauth_grant ||= begin
-      id = db[:oauth_grants].insert({
-        oauth_application_id: oauth_application[:id],
-        account_id: account[:id],
-        code: "CODE",
-        expires_in: Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: 60 * 5),
-        redirect_uri: oauth_application[:redirect_uri],
-        scopes: oauth_application[:scopes]
-      }.merge(params))
-      db[:oauth_grants].filter(id: id).first
-    end
+    @oauth_grant ||= set_oauth_grant(oauth_application, params)
+  end
+
+  def set_oauth_grant(oauth_application, params = {})
+    id = db[:oauth_grants].insert({
+      oauth_application_id: oauth_application[:id],
+      account_id: account[:id],
+      code: "CODE",
+      expires_in: Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: 60 * 5),
+      redirect_uri: oauth_application[:redirect_uri],
+      scopes: oauth_application[:scopes]
+    }.merge(params))
+    db[:oauth_grants].filter(id: id).first
   end
 
   def oauth_token(params = {})
-    @oauth_token ||= begin
-      id = db[:oauth_tokens].insert({
-        account_id: account[:id],
-        oauth_application_id: oauth_application[:id],
-        oauth_grant_id: oauth_grant[:id],
-        token: "TOKEN",
-        refresh_token: "REFRESH_TOKEN",
-        expires_in: Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: 60 * 5),
-        scopes: oauth_grant[:scopes]
-      }.merge(params))
-      db[:oauth_tokens].filter(id: id).first
-    end
+    @oauth_token ||= set_oauth_token(oauth_grant, oauth_application, params)
+  end
+
+  def set_oauth_token(oauth_grant, oauth_application, params = {})
+    id = db[:oauth_tokens].insert({
+      account_id: account[:id],
+      oauth_application_id: oauth_application[:id],
+      oauth_grant_id: oauth_grant[:id],
+      token: "TOKEN",
+      refresh_token: "REFRESH_TOKEN",
+      expires_in: Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: 60 * 5),
+      scopes: oauth_grant[:scopes]
+    }.merge(params))
+    db[:oauth_tokens].filter(id: id).first
   end
 
   def account

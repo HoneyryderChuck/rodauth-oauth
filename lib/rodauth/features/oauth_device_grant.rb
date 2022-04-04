@@ -124,11 +124,11 @@ module Rodauth
                   .rjust(user_code_size, "0")
     end
 
-    def authorized_oauth_application?(oauth_application, client_secret)
+    def authorized_oauth_application?(oauth_application, client_secret, _)
       # skip if using device grant
       #
       # requests may be performed by devices with no knowledge of client secret.
-      return true if !client_secret && oauth_application && use_oauth_device_code_grant_type?
+      return true if !client_secret && use_oauth_device_code_grant_type?
 
       super
     end

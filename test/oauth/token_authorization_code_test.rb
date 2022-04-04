@@ -112,6 +112,69 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     verify_access_token_response(json_body, oauth_token)
   end
 
+  def test_token_authorization_code_client_secret_basic
+    setup_application
+    oauth_app = oauth_application(token_endpoint_auth_method: "client_secret_basic")
+    oauth_grant = set_oauth_grant(oauth_app)
+    post("/token",
+         client_id: oauth_app[:client_id],
+         client_secret: "CLIENT_SECRET",
+         grant_type: "authorization_code",
+         code: oauth_grant[:code],
+         redirect_uri: oauth_grant[:redirect_uri])
+    assert last_response.status == 401
+
+    header "Authorization", "Basic #{authorization_header(
+      username: oauth_app[:client_id],
+      password: 'CLIENT_SECRET'
+    )}"
+    post("/token",
+         grant_type: "authorization_code",
+         code: oauth_grant[:code],
+         redirect_uri: oauth_grant[:redirect_uri])
+
+    assert last_response.status == 200
+  end
+
+  def test_token_authorization_code_client_secret_post
+    setup_application
+    oauth_app = oauth_application(token_endpoint_auth_method: "client_secret_post")
+    oauth_grant = set_oauth_grant(oauth_app)
+
+    header "Authorization", "Basic #{authorization_header(
+      username: oauth_app[:client_id],
+      password: 'CLIENT_SECRET'
+    )}"
+    post("/token",
+         grant_type: "authorization_code",
+         code: oauth_grant[:code],
+         redirect_uri: oauth_grant[:redirect_uri])
+
+    assert last_response.status == 401
+
+    header "Authorization", nil
+    post("/token",
+         client_id: oauth_app[:client_id],
+         client_secret: "CLIENT_SECRET",
+         grant_type: "authorization_code",
+         code: oauth_grant[:code],
+         redirect_uri: oauth_grant[:redirect_uri])
+    assert last_response.status == 200
+  end
+
+  def test_token_authorization_code_none
+    setup_application
+    oauth_app = oauth_application(token_endpoint_auth_method: "none")
+    oauth_grant = set_oauth_grant(oauth_app)
+
+    post("/token",
+         client_id: oauth_app[:client_id],
+         grant_type: "authorization_code",
+         code: oauth_grant[:code],
+         redirect_uri: oauth_grant[:redirect_uri])
+    assert last_response.status == 200
+  end
+
   def test_token_authorization_code_reuse_token_successful
     rodauth do
       oauth_reuse_access_token true
