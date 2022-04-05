@@ -26,6 +26,9 @@ module Rodauth
     end
 
     translatable_method :oauth_tokens_scopes_label, "Scopes"
+    translatable_method :oauth_applications_contacts_label, "Contacts"
+    translatable_method :oauth_applications_tos_uri_label, "Terms of service URL"
+    translatable_method :oauth_applications_policy_uri_label, "Policy URL"
 
     # /authorize
     route(:authorize) do |r|
