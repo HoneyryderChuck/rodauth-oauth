@@ -55,7 +55,7 @@ module Rodauth
     end
 
     def create_oauth_token(grant_type)
-      return super unless assertion_grant_type?(grant_type)
+      return super unless assertion_grant_type?(grant_type) && supported_grant_type?(grant_type)
 
       account = __send__(:"account_from_#{assertion_grant_type}_assertion", param("assertion"))
 

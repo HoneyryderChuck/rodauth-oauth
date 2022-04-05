@@ -172,7 +172,7 @@ module Rodauth
     end
 
     def create_oauth_token(grant_type)
-      return super unless grant_type == "authorization_code"
+      return super unless supported_grant_type?(grant_type, "authorization_code")
 
       # fetch oauth grant
       oauth_grant = db[oauth_grants_table].where(

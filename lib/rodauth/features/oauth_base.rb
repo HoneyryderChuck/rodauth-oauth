@@ -538,8 +538,7 @@ module Rodauth
     end
 
     def create_oauth_token(grant_type)
-      case grant_type
-      when "refresh_token"
+      if supported_grant_type?(grant_type, "refresh_token")
         # fetch potentially revoked oauth token
         oauth_token = oauth_token_by_refresh_token(param("refresh_token"), revoked: true)
 
@@ -615,6 +614,16 @@ module Rodauth
         oauth_token[oauth_tokens_refresh_token_column] = refresh_token if refresh_token
         oauth_token
       end
+    end
+
+    def supported_grant_type?(grant_type, expected_grant_type = grant_type)
+      return false unless grant_type == expected_grant_type
+
+      return true unless (grant_types_supported = oauth_application[oauth_applications_grant_types_column])
+
+      grant_types_supported = grant_types_supported.split(/ +/)
+
+      grant_types_supported.include?(grant_type)
     end
 
     def oauth_server_metadata_body(path = nil)

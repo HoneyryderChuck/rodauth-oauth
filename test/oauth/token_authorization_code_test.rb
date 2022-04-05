@@ -91,6 +91,21 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     assert json_body["error"] == "invalid_client"
   end
 
+  def test_token_authorization_code_unsupported_application_grant_type
+    setup_application
+    oauth_app = oauth_application(grant_types: "implicit")
+    oauth_grant = set_oauth_grant(oauth_app)
+    post("/token",
+         client_id: oauth_app[:client_id],
+         client_secret: "CLIENT_SECRET",
+         grant_type: "authorization_code",
+         code: oauth_grant[:code],
+         redirect_uri: oauth_grant[:redirect_uri])
+
+    assert last_response.status == 400
+    assert json_body["error"] == "invalid_request"
+  end
+
   def test_token_authorization_code_successful
     setup_application
 
