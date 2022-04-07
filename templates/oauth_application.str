@@ -3,7 +3,7 @@
     #{
       params = [*rodauth.oauth_application_required_params, "client_id", "client_secret"]
       if rodauth.features.include?(:oauth_jwt)
-        params += %w[jws_jwk jwt_public_key]
+        params += %w[jwks jwt_public_key]
       end
       params.map do |param|
         "<dt class=\"#{param}\">#{rodauth.send(:"oauth_applications_#{param}_label")}: </dt>" +

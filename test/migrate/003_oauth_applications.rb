@@ -22,13 +22,12 @@ Sequel.migration do
       String :tos_uri, null: true
       String :policy_uri, null: true
       String :jwks_uri, null: true
-      String :jwks, null: true
+      String :jwks, null: true, type: :text
       String :contacts, null: true
       String :software_id, null: true
       String :software_version, null: true
       # JWT/OIDC per application signing verification
       String :jwt_public_key, type: :text
-      String :jws_jwk, type: :text
       # RP-initiated logout
       String :post_logout_redirect_uri
     end

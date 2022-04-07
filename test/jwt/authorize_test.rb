@@ -1,8 +1,11 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "webmock/minitest"
 
 class RodauthOauthJwtAuthorizeTest < JWTIntegration
+  include WebMock::API
+
   def test_jwt_authorize_with_request_uri
     setup_application
     login
@@ -40,14 +43,37 @@ class RodauthOauthJwtAuthorizeTest < JWTIntegration
            "was redirected instead to #{page.current_url}"
   end
 
-  def test_jwt_authorize_with_signed_request
+  def test_jwt_authorize_with_signed_request_jwks
     setup_application
     login
 
     jws_key = OpenSSL::PKey::RSA.generate(2048)
     jws_public_key = jws_key.public_key
 
-    application = oauth_application(jws_jwk: JSON.dump(JWT::JWK.new(jws_public_key).export.merge(use: "sig", alg: "RS256")))
+    application = oauth_application(jwks: JSON.dump(JWT::JWK.new(jws_public_key).export.merge(use: "sig", alg: "RS256")))
+
+    signed_request = generate_signed_request(application, signing_key: jws_key)
+
+    visit "/authorize?request=#{signed_request}&client_id=#{application[:client_id]}"
+
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+  end
+
+  def test_jwt_authorize_with_signed_request_jwks_uri
+    setup_application
+    login
+
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
+
+    stub_request(:get, "https://example.com/jwks")
+      .to_return(
+        headers: { "Expires" => (Time.now + 3600).httpdate },
+        body: JSON.dump(JWT::JWK.new(jws_public_key).export.merge(use: "sig", alg: "RS256"))
+      )
+
+    application = oauth_application(jwks_uri: "https://example.com/jwks")
 
     signed_request = generate_signed_request(application, signing_key: jws_key)
 
@@ -72,7 +98,7 @@ class RodauthOauthJwtAuthorizeTest < JWTIntegration
     setup_application
     login
 
-    application = oauth_application(jws_jwk: JSON.dump(JWT::JWK.new(jws_public_key).export.merge(use: "sig", alg: "RS256")))
+    application = oauth_application(jwks: JSON.dump(JWT::JWK.new(jws_public_key).export.merge(use: "sig", alg: "RS256")))
 
     signed_request = generate_signed_request(application, signing_key: jws_key, encryption_key: jwe_public_key)
 
@@ -86,7 +112,7 @@ class RodauthOauthJwtAuthorizeTest < JWTIntegration
 
   def setup_application
     rodauth do
-      oauth_applications_jws_jwk_column :jws_jwk
+      oauth_applications_jwks_column :jwks
     end
     super
   end

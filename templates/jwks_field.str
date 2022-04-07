@@ -1,0 +1,4 @@
+<div class="form-group">
+  <label for="name">#{rodauth.oauth_applications_jwks_label}#{rodauth.input_field_label_suffix}</label>
+  #{rodauth.input_field_string(rodauth.oauth_application_jwks_param, "jwks", :type=>"text")}
+</div>

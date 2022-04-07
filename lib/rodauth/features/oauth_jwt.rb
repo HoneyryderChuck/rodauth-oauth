@@ -15,13 +15,24 @@ module Rodauth
 
     auth_value_method :oauth_jwt_token_issuer, nil
 
-    auth_value_method :oauth_applications_jws_jwk_column, :jws_jwk
+    configuration_module_eval do
+      define_method :oauth_applications_jws_jwk_column do
+        warn "#{__method__} is deprecated, switch to `oauth_applications_jwks_column`"
+        oauth_applications_jwks_column
+      end
+      define_method :oauth_applications_jws_jwk_label do
+        warn "#{__method__} is deprecated, switch to `oauth_applications_jwks_label`"
+        oauth_applications_jws_jwk_label
+      end
+      define_method :oauth_application_jws_jwk_param do
+        warn "#{__method__} is deprecated, switch to `oauth_applications_jwks_param`"
+        oauth_applications_jwks_param
+      end
+    end
+
     auth_value_method :oauth_applications_jwt_public_key_column, :jwt_public_key
 
-    translatable_method :oauth_applications_jws_jwk_label, "JSON Web Keys"
     translatable_method :oauth_applications_jwt_public_key_label, "Public key"
-    auth_value_method :oauth_application_jws_jwk_param, :jws_jwk
-    auth_value_method :oauth_application_jwt_public_key_param, :jwt_public_key
 
     auth_value_method :oauth_jwt_key, nil
     auth_value_method :oauth_jwt_public_key, nil
@@ -119,13 +130,13 @@ module Rodauth
 
       return super unless request_object && oauth_application
 
-      jws_jwk = if (jwk = oauth_application[oauth_applications_jws_jwk_column])
-                  jwk = JSON.parse(jwk, symbolize_names: true) if jwk && jwk.is_a?(String)
-                else
-                  redirect_response_error("invalid_request_object")
-                end
+      if (jwks = oauth_application_jwks)
+        jwks = JSON.parse(jwks, symbolize_names: true) if jwks.is_a?(String)
+      else
+        redirect_response_error("invalid_request_object")
+      end
 
-      claims = jwt_decode(request_object, jws_key: jwk_import(jws_jwk), jws_algorithm: jwk[:alg], verify_jti: false)
+      claims = jwt_decode(request_object, jws_key: jwk_import(jwks), jws_algorithm: jwks[:alg], verify_jti: false)
 
       redirect_response_error("invalid_request_object") unless claims
 
@@ -257,9 +268,9 @@ module Rodauth
       @_jwt_key ||= oauth_jwt_key || begin
         if oauth_application
 
-          if (jwk = oauth_application[oauth_applications_jws_jwk_column])
-            jwk = JSON.parse(jwk, symbolize_names: true) if jwk && jwk.is_a?(String)
-            jwk
+          if (jwks = oauth_application_jwks)
+            jwks = JSON.parse(jwk, symbolize_names: true) if jwks && jwks.is_a?(String)
+            jwks
           else
             oauth_application[oauth_applications_jwt_public_key_column]
           end
@@ -317,6 +328,42 @@ module Rodauth
 
     def verify_aud(expected_aud, aud)
       expected_aud == aud
+    end
+
+    def oauth_application_jwks
+      jwks = oauth_application[oauth_applications_jwks_column]
+
+      return jwks if jwks
+
+      jwks_uri = oauth_application[oauth_applications_jwks_uri_column]
+
+      return unless jwks_uri
+
+      jwks_uri = URI(jwks_uri)
+
+      jwks = JWKS[jwks_uri]
+
+      return jwks if jwks
+
+      JWKS.set(jwks_uri) do
+        http = Net::HTTP.new(jwks_uri.host, jwks_uri.port)
+        http.use_ssl = jwks_uri.scheme == "https"
+
+        request = Net::HTTP::Get.new(jwks_uri.request_uri)
+        request["accept"] = json_response_content_type
+        response = http.request(request)
+        return unless response.code.to_i == 200
+
+        # time-to-live
+        ttl = if response.key?("cache-control")
+                cache_control = response["cache-control"]
+                cache_control[/max-age=(\d+)/, 1].to_i
+              elsif response.key?("expires")
+                Time.parse(response["expires"]).to_i - Time.now.to_i
+              end
+
+        [JSON.parse(response.body, symbolize_names: true), ttl]
+      end
     end
 
     if defined?(JSON::JWT)

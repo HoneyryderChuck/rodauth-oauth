@@ -108,8 +108,25 @@ module Rodauth
           # verify if in range and match grant type
         when "client_uri", "logo_uri", "tos_uri", "policy_uri", "jwks_uri"
           register_throw_json_response_error("invalid_client_metadata", register_invalid_uri_message(value)) unless check_valid_uri?(value)
-          key = "homepage_url" if key == "client_uri"
+          case key
+          when "client_uri"
+            key = "homepage_url"
+          when "jwks_uri"
+            if request.params.key?("jwks")
+              register_throw_json_response_error("invalid_client_metadata",
+                                                 register_invalid_jwks_param_message(key, "jwks"))
+            end
+          end
           key = __send__(:"oauth_applications_#{key}_column")
+        when "jwks"
+          register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(value)) unless value.is_a?(Hash)
+          if request.params.key?("jwks_uri")
+            register_throw_json_response_error("invalid_client_metadata",
+                                               register_invalid_jwks_param_message(key, "jwks_uri"))
+          end
+
+          key = oauth_applications_jwks_column
+          value = JSON.dump(value)
         when "scope"
           scopes = value.split(" ") - oauth_application_scopes
           register_throw_json_response_error("invalid_client_metadata", register_invalid_scopes_message(value)) unless scopes.empty?
@@ -193,6 +210,10 @@ module Rodauth
       "The '#{uri}' URL is not allowed by this server."
     end
 
+    def register_invalid_jwks_param_message(key1, key2)
+      "The param '#{key1}' cannot be accepted together with param '#{key2}'."
+    end
+
     def register_invalid_scopes_message(scopes)
       "The given scopes (#{scopes.join(', ')}) are not allowed by this server."
     end
@@ -208,6 +229,12 @@ module Rodauth
     def register_invalid_response_type_for_grant_type_message(_response_type, grant_type)
       "The grant type '#{grant_type}' must be registered for the response " \
         "type '#{response_code}' to be allowed."
+    end
+
+    def oauth_server_metadata_body(*)
+      super.tap do |data|
+        data[:registration_endpoint] = register_url
+      end
     end
   end
 end

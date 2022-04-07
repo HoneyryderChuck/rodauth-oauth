@@ -60,6 +60,18 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
     end
   end
 
+  def test_oauth_dynamic_client_jwks_and_jwks_uri
+    rodauth do
+      enable :oauth_dynamic_client_registration
+      oauth_application_scopes %w[read write]
+    end
+    setup_application
+
+    post("/register", valid_registration_params.merge("jwks" => { "a" => "b" }))
+    assert last_response.status == 400
+    assert json_body["error"] == "invalid_client_metadata"
+  end
+
   def test_oauth_dynamic_client_all_params_without_client_secret
     rodauth do
       enable :oauth_dynamic_client_registration

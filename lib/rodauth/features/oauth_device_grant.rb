@@ -134,7 +134,7 @@ module Rodauth
     end
 
     def create_oauth_token(grant_type)
-     if supported_grant_type?(grant_type, "urn:ietf:params:oauth:grant-type:device_code")
+      if supported_grant_type?(grant_type, "urn:ietf:params:oauth:grant-type:device_code")
         throw_json_response_error(invalid_oauth_response_status, "invalid_grant_type") unless use_oauth_device_code_grant_type?
 
         oauth_grant = db[oauth_grants_table].where(
