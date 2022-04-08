@@ -101,7 +101,7 @@ truffleruby:
   <<: *test_services
   allow_failure: true
   before_script:
-    - dnf install -y git libxslt-devel libxml2-devel sqlite-devel mysql-devel postgresql-devel
+    - dnf install -y git libxslt-devel libxml2-devel sqlite-devel mysql-devel postgresql-devel xz
     - *before_script
   image: "ghcr.io/graalvm/truffleruby:latest"
   script:
