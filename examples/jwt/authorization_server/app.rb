@@ -29,6 +29,19 @@ else
     String :client_id, null: false, unique: true
     String :client_secret, null: false, unique: true
     String :scopes, null: false
+
+    String :token_endpoint_auth_method, null: true
+    String :grant_types, null: true
+    String :response_types, null: true
+    String :client_uri, null: true
+    String :logo_uri, null: true
+    String :tos_uri, null: true
+    String :policy_uri, null: true
+    String :jwks_uri, null: true
+    String :jwks, null: true, type: :text
+    String :contacts, null: true
+    String :software_id, null: true
+    String :software_version, null: true
   end
   DB.create_table :oauth_grants do |_t|
     primary_key :id, type: Integer
@@ -67,31 +80,12 @@ DB.extension :date_arithmetic
 DB.freeze
 
 # OAuth with myself
-CLIENT_ID = ENV.fetch("CLIENT_ID", "CLIENT_ID")
 hash = ::BCrypt::Password.create("password", cost: BCrypt::Engine::MIN_COST)
 
 # test user
 DB[:accounts].insert_conflict(target: :email).insert(email: "foo@bar.com", ph: hash)
 
-# test application
-TEST_APPLICATION = DB[:oauth_applications].where(client_id: CLIENT_ID).first || begin
-  email = "admin@localhost.com"
-  account_id = DB[:accounts].where(email: email).get(:id) || begin
-    DB[:accounts].insert(email: email, ph: hash)
-  end
-
-  application_id = DB[:oauth_applications].insert(
-    client_id: CLIENT_ID,
-    client_secret: BCrypt::Password.create(CLIENT_ID),
-    name: "Myself",
-    description: "About myself",
-    redirect_uri: "http://localhost:9293/callback",
-    homepage_url: "http://localhost:9293",
-    scopes: "profile.read books.read",
-    account_id: account_id
-  )
-  DB[:oauth_applications].where(id: application_id).first
-end
+ADMIN_ACCOUNT = DB[:accounts].insert_conflict(target: :email).insert(email: "admin@localhost.com", ph: hash)
 
 # PRIV_KEY = OpenSSL::PKey::EC.new(File.read(File.join(__dir__, "..", "ecprivkey.pem")))
 PRIV_KEY = OpenSSL::PKey::RSA.new(File.read(File.join(__dir__, "..", "rsaprivkey.pem")))
@@ -109,7 +103,7 @@ class AuthorizationServer < Roda
 
   plugin :rodauth, json: true do
     db DB
-    enable :login, :logout, :create_account, :oauth_jwt
+    enable :login, :logout, :create_account, :oauth_jwt, :oauth_dynamic_client_registration
     login_return_to_requested_location? true
     account_password_hash_column :ph
     title_instance_variable :@page_title
@@ -124,6 +118,14 @@ class AuthorizationServer < Roda
     #     oauth_jwt_algorithm "ES256"
     oauth_jwt_algorithm "RS256"
     oauth_tokens_refresh_token_hash_column :refresh_token
+
+    before_register do
+      email = request.env["HTTP_AUTHORIZATION"]
+      authorization_required unless email
+      account = _account_from_login(email)
+      authorization_required unless account
+      @oauth_application_params[:account_id] = account[:id]
+    end
   end
 
   plugin :not_found do
