@@ -46,6 +46,134 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
     assert json_body["error"] == "invalid_client_metadata"
   end
 
+  def test_oauth_dynamic_client_redirect_uris
+    rodauth do
+      enable :oidc_dynamic_client_registration
+      oauth_application_scopes %w[read write]
+    end
+    setup_application
+    header "Accept", "application/json"
+
+    post("/register", valid_registration_params.merge("redirect_uris" => "https://just-one.com"))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge("redirect_uris" => %w[one two]))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge("redirect_uris" => %w[https://example.com/callback]))
+
+    assert last_response.status == 201
+  end
+
+  def test_oauth_dynamic_client_token_endpoint_auth_method
+    rodauth do
+      enable :oidc_dynamic_client_registration
+      oauth_application_scopes %w[read write]
+    end
+    setup_application
+    header "Accept", "application/json"
+
+    post("/register", valid_registration_params.merge("token_endpoint_auth_method" => "smthsmth"))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge("token_endpoint_auth_method" => "client_secret_post"))
+
+    assert last_response.status == 201
+
+    post("/register", valid_registration_params.merge("token_endpoint_auth_method" => "client_secret_basic"))
+
+    assert last_response.status == 201
+  end
+
+  def test_oauth_dynamic_client_grant_types
+    rodauth do
+      enable :oidc_dynamic_client_registration
+      oauth_application_scopes %w[read write]
+    end
+
+    setup_application
+    header "Accept", "application/json"
+
+    post("/register", valid_registration_params.merge("grant_types" => %w[smthsmth]))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge("grant_types" => %w[authorization_code implicit refresh_token]))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge("grant_types" => %w[authorization_code refresh_token]))
+
+    assert last_response.status == 201
+  end
+
+  def test_oauth_dynamic_client_response_types
+    rodauth do
+      enable :oidc_dynamic_client_registration
+      oauth_application_scopes %w[read write]
+    end
+
+    setup_application
+    header "Accept", "application/json"
+
+    post("/register", valid_registration_params.merge("response_types" => %w[smthsmth]))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge("response_types" => %w[code token]))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge("response_types" => %w[code]))
+
+    assert last_response.status == 201
+  end
+
+  def test_oauth_dynamic_client_scopes
+    rodauth do
+      enable :oidc_dynamic_client_registration
+      oauth_application_scopes %w[read write]
+    end
+
+    setup_application
+    header "Accept", "application/json"
+
+    post("/register", valid_registration_params.merge("scope" => "this"))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge("scope" => "read this"))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge("scope" => "read"))
+
+    assert last_response.status == 201
+  end
+
+  %w[client_uri logo_uri tos_uri policy_uri jwks_uri].each do |uri_param|
+    define_method :"test_oauth_dynamic_client_#{uri_param}" do
+      rodauth do
+        enable :oidc_dynamic_client_registration
+        oauth_application_scopes %w[read write]
+      end
+
+      setup_application
+      header "Accept", "application/json"
+
+      post("/register", valid_registration_params.merge(uri_param => "smthsmth"))
+
+      assert last_response.status == 400
+
+      post("/register", valid_registration_params.merge(uri_param => "https://example.com"))
+
+      assert last_response.status == 201
+    end
+  end
+
   def test_oauth_dynamic_client_fail_on_missing_required_params
     rodauth do
       enable :oauth_dynamic_client_registration

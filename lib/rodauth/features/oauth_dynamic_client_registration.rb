@@ -65,6 +65,9 @@ module Rodauth
           end
           key = oauth_applications_redirect_uri_column
         when "token_endpoint_auth_method"
+          unless oauth_auth_methods_supported.include?(value)
+            register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(key))
+          end
           # verify if in range
           key = oauth_applications_token_endpoint_auth_method_column
         when "grant_types"
@@ -223,7 +226,7 @@ module Rodauth
     end
 
     def register_invalid_scopes_message(scopes)
-      "The given scopes (#{scopes.join(', ')}) are not allowed by this server."
+      "The given scopes (#{scopes}) are not allowed by this server."
     end
 
     def register_invalid_grant_type_message(grant_type)
