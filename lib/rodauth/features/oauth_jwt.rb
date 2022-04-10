@@ -10,7 +10,7 @@ module Rodauth
 
     # Recommended to have hmac_secret as well
 
-    auth_value_method :oauth_jwt_subject_type, "public" # public, pairwise
+    auth_value_method :oauth_jwt_subject_type, "public" # fallback subject type: public, pairwise
     auth_value_method :oauth_jwt_subject_secret, nil # salt for pairwise generation
 
     auth_value_method :oauth_jwt_token_issuer, nil
@@ -30,6 +30,7 @@ module Rodauth
       end
     end
 
+    auth_value_method :oauth_applications_subject_type_column, :subject_type
     auth_value_method :oauth_applications_jwt_public_key_column, :jwt_public_key
 
     translatable_method :oauth_applications_jwt_public_key_label, "Public key"
@@ -219,7 +220,10 @@ module Rodauth
     end
 
     def jwt_subject(oauth_token)
-      case oauth_jwt_subject_type
+      subject_type = oauth_application ?
+        oauth_application[oauth_applications_subject_type_column] || oauth_jwt_subject_type :
+        oauth_jwt_subject_type
+      case subject_type
       when "public"
         oauth_token[oauth_tokens_account_id_column]
       when "pairwise"
@@ -227,7 +231,7 @@ module Rodauth
         application_id = oauth_token[oauth_tokens_oauth_application_id_column]
         Digest::SHA256.hexdigest("#{id}#{application_id}#{oauth_jwt_subject_secret}")
       else
-        raise StandardError, "unexpected subject (#{oauth_jwt_subject_type})"
+        raise StandardError, "unexpected subject (#{subject_type})"
       end
     end
 

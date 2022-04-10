@@ -41,13 +41,17 @@ module Rodauth
 
     private
 
+    def registration_metadata
+      oauth_server_metadata_body
+    end
+
     def validate_client_registration_params
       oauth_client_registration_required_params.each do |required_param|
         unless request.params.key?(required_param)
           register_throw_json_response_error("invalid_client_metadata", register_required_param_message(required_param))
         end
       end
-      metadata = oauth_server_metadata_body
+      metadata = registration_metadata
 
       @oauth_application_params = request.params.each_with_object({}) do |(key, value), params|
         case key
@@ -83,23 +87,7 @@ module Rodauth
                                                    register_invalid_response_type_message(response_type))
               end
 
-              case response_type
-              when "code"
-                unless grant_types.include?("authorization_code")
-                  register_throw_json_response_error("invalid_client_metadata",
-                                                     egister_invalid_response_type_for_grant_type_message(response_type,
-                                                                                                          "authorization_code"))
-                end
-              when "token"
-                unless grant_types.include?("implicit")
-                  register_throw_json_response_error("invalid_client_metadata",
-                                                     register_invalid_response_type_for_grant_type_message(response_type, "implicit"))
-                end
-              when "none"
-                if grant_types.include?("implicit") || grant_types.include?("authorization_code")
-                  register_throw_json_response_error("invalid_client_metadata", register_invalid_response_type_message(response_type))
-                end
-              end
+              validate_client_registration_response_type(response_type, grant_types)
             end.join(" ")
           else
             set_field_error(key, invalid_client_metadata_message)
@@ -150,6 +138,26 @@ module Rodauth
           end
         end
         params[key] = value
+      end
+    end
+
+    def validate_client_registration_response_type(response_type, grant_types)
+      case response_type
+      when "code"
+        unless grant_types.include?("authorization_code")
+          register_throw_json_response_error("invalid_client_metadata",
+                                             register_invalid_response_type_for_grant_type_message(response_type,
+                                                                                                   "authorization_code"))
+        end
+      when "token"
+        unless grant_types.include?("implicit")
+          register_throw_json_response_error("invalid_client_metadata",
+                                             register_invalid_response_type_for_grant_type_message(response_type, "implicit"))
+        end
+      when "none"
+        if grant_types.include?("implicit") || grant_types.include?("authorization_code")
+          register_throw_json_response_error("invalid_client_metadata", register_invalid_response_type_message(response_type))
+        end
       end
     end
 
@@ -226,9 +234,9 @@ module Rodauth
       "The response type #{response_type} is not allowed by this server."
     end
 
-    def register_invalid_response_type_for_grant_type_message(_response_type, grant_type)
+    def register_invalid_response_type_for_grant_type_message(response_type, grant_type)
       "The grant type '#{grant_type}' must be registered for the response " \
-        "type '#{response_code}' to be allowed."
+        "type '#{response_type}' to be allowed."
     end
 
     def oauth_server_metadata_body(*)

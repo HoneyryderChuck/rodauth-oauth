@@ -26,6 +26,9 @@ Sequel.migration do
       String :contacts, null: true
       String :software_id, null: true
       String :software_version, null: true
+      # oidc extra params
+      String :application_type, null: true
+      String :subject_type, null: true
       # JWT/OIDC per application signing verification
       String :jwt_public_key, type: :text
       # RP-initiated logout

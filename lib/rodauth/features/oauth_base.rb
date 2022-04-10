@@ -732,6 +732,10 @@ module Rodauth
       (scopes - oauth_application[oauth_applications_scopes_column].split(oauth_scope_separator)).empty?
     end
 
+    def check_valid_uri?(uri)
+      URI::DEFAULT_PARSER.make_regexp(oauth_valid_uri_schemes).match?(uri)
+    end
+
     # Resource server mode
 
     SERVER_METADATA = OAuth::TtlStore.new

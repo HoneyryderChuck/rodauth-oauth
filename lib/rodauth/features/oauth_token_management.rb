@@ -69,9 +69,5 @@ module Rodauth
         super
       end
     end
-
-    def check_valid_uri?(uri)
-      URI::DEFAULT_PARSER.make_regexp(oauth_valid_uri_schemes).match?(uri)
-    end
   end
 end

@@ -443,7 +443,7 @@ module Rodauth
 
     # Metadata
 
-    def openid_configuration_body(path)
+    def openid_configuration_body(path = nil)
       metadata = oauth_server_metadata_body(path).select do |k, _|
         VALID_METADATA_KEYS.include?(k)
       end
