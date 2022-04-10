@@ -219,8 +219,6 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
   def test_oidc_authorize_post_authorize_with_code_id_token_response_type
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
       use_oauth_implicit_grant_type? true
     end
     setup_application
@@ -467,6 +465,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
   def setup_application(*)
     rodauth do
+      oauth_jwt_key OpenSSL::PKey::RSA.generate(2048)
+      oauth_jwt_algorithm "RS256"
       oauth_applications_jwks_column :jwks
     end
     super

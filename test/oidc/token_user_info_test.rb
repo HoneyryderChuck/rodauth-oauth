@@ -119,8 +119,8 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
 
   def setup_application
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_key OpenSSL::PKey::RSA.generate(2048)
+      oauth_jwt_algorithm "RS256"
       get_oidc_param do |account, claim|
         case claim
         when :email_verified

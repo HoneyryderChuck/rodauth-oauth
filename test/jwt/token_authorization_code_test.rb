@@ -260,6 +260,10 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
   def setup_application
     super
+    rodauth do
+      oauth_jwt_key OpenSSL::PKey::RSA.new(2048)
+      oauth_jwt_algorithm "HS256"
+    end
     header "Accept", "application/json"
   end
 end

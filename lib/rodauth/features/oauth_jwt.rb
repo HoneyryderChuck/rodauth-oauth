@@ -270,7 +270,7 @@ module Rodauth
       metadata = super
       metadata.merge! \
         jwks_uri: jwks_url,
-        token_endpoint_auth_signing_alg_values_supported: [oauth_jwt_algorithm]
+        token_endpoint_auth_signing_alg_values_supported: (oauth_jwt_keys.keys + [oauth_jwt_algorithm]).uniq
       metadata
     end
 

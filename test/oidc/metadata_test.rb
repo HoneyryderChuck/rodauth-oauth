@@ -10,7 +10,7 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
     rodauth do
       use_oauth_implicit_grant_type? true
       oauth_application_scopes %w[openid email]
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_algorithm "RS256"
     end
     setup_application
     get("/.well-known/openid-configuration")
@@ -35,12 +35,12 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
     assert json_body["grant_types_supported"] == %w[refresh_token authorization_code implicit]
     assert json_body["subject_types_supported"] == %w[public]
 
-    assert json_body["id_token_signing_alg_values_supported"] == %w[HS256]
+    assert json_body["id_token_signing_alg_values_supported"] == %w[RS256]
 
     assert json_body["token_endpoint_auth_methods_supported"] == %w[client_secret_basic client_secret_post]
-    assert json_body["token_endpoint_auth_signing_alg_values_supported"] == %w[HS256]
+    assert json_body["token_endpoint_auth_signing_alg_values_supported"] == %w[RS256]
 
-    # assert json_body["display_values_supported"] == %w[HS256]
+    # assert json_body["display_values_supported"] == %w[RS256]
     assert json_body["claim_types_supported"] == %w[normal]
     assert json_body["claims_supported"] == %w[sub iss iat exp aud auth_time email email_verified]
   end
@@ -62,7 +62,7 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
   def test_filters_out_invalid_fields
     rodauth do
       oauth_application_scopes %w[openid email]
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_algorithm "RS256"
     end
     setup_application
     get("/.well-known/openid-configuration")
