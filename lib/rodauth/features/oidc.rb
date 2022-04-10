@@ -337,7 +337,8 @@ module Rodauth
 
       fill_with_account_claims(id_token_claims, account, oauth_scopes)
 
-      oauth_token[:id_token] = jwt_encode(id_token_claims)
+      algo = oauth_application[oauth_applications_id_token_signed_response_alg_column] || oauth_jwt_algorithm
+      oauth_token[:id_token] = jwt_encode(id_token_claims, algo)
     end
 
     # aka fill_with_standard_claims

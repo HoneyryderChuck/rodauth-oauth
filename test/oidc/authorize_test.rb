@@ -115,9 +115,12 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
   end
 
   def test_oidc_authorize_post_authorize_with_implicit_grant
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_key jws_key
+      oauth_jwt_public_key jws_public_key
+      oauth_jwt_algorithm "RS256"
       use_oauth_implicit_grant_type? true
     end
     setup_application
@@ -140,9 +143,12 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
   end
 
   def test_oidc_authorize_post_authorize_with_id_token_response_type
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_key jws_key
+      oauth_jwt_public_key jws_public_key
+      oauth_jwt_algorithm "RS256"
       use_oauth_implicit_grant_type? true
     end
     setup_application
@@ -182,9 +188,12 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
   # Multiple Response Types
 
   def test_oidc_authorize_post_authorize_with_code_token_response_type
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_key jws_key
+      oauth_jwt_public_key jws_public_key
+      oauth_jwt_algorithm "RS256"
       use_oauth_implicit_grant_type? true
     end
     setup_application
@@ -236,9 +245,12 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
   end
 
   def test_oidc_authorize_post_authorize_with_id_token_token_response_type
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_key jws_key
+      oauth_jwt_public_key jws_public_key
+      oauth_jwt_algorithm "RS256"
       use_oauth_implicit_grant_type? true
     end
     setup_application
@@ -258,9 +270,12 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
   end
 
   def test_oidc_authorize_post_authorize_with_code_id_token_token_response_type
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_key jws_key
+      oauth_jwt_public_key jws_public_key
+      oauth_jwt_algorithm "RS256"
       use_oauth_implicit_grant_type? true
     end
     setup_application
@@ -409,6 +424,44 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
   # TODO: if rodauth ever supports definition of multiple accounts
   # def test_oidc_authorize_post_authorize_prompt_select_account
   # end
+
+  def test_oidc_authorize_post_authorize_with_id_token_signing_alg
+    jws_rs256_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_rs512_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_rs512_public_key = jws_rs512_key.public_key
+    rodauth do
+      oauth_jwt_keys { { "RS256" => jws_rs256_key, "RS512" => jws_rs512_key } }
+      oauth_jwt_key { oauth_jwt_keys["RS256"] }
+      oauth_jwt_algorithm "RS256"
+      use_oauth_implicit_grant_type? true
+    end
+    setup_application
+    login
+
+    application = oauth_application(id_token_signed_response_alg: "RS512")
+
+    # show the authorization form
+    visit "/authorize?client_id=#{application[:client_id]}&scope=openid&response_type=id_token"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+
+    # submit authorization request
+    click_button "Authorize"
+
+    assert db[:oauth_tokens].count == 1,
+           "no token has been created"
+
+    assert page.current_url =~ /#{oauth_application[:redirect_uri]}#token_type=bearer&expires_in=3600&id_token=([^&]+)/,
+           "was redirected instead to #{page.current_url}"
+
+    id_token = Regexp.last_match(1)
+    begin
+      JWT.decode(id_token, jws_rs512_public_key, true, { "algorithm" => "RS512" })
+      assert true
+    rescue JWT::VerificationError, JWT::IncorrectAlgorithm
+      assert false
+    end
+  end
 
   private
 

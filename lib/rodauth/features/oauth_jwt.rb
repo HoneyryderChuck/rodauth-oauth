@@ -38,6 +38,7 @@ module Rodauth
 
     translatable_method :oauth_applications_jwt_public_key_label, "Public key"
 
+    auth_value_method :oauth_jwt_keys, {}
     auth_value_method :oauth_jwt_key, nil
     auth_value_method :oauth_jwt_public_key, nil
     auth_value_method :oauth_jwt_algorithm, "HS256"
@@ -223,9 +224,11 @@ module Rodauth
     end
 
     def jwt_subject(oauth_token)
-      subject_type = oauth_application ?
-        oauth_application[oauth_applications_subject_type_column] || oauth_jwt_subject_type :
-        oauth_jwt_subject_type
+      subject_type = if oauth_application
+                       oauth_application[oauth_applications_subject_type_column] || oauth_jwt_subject_type
+                     else
+                       oauth_jwt_subject_type
+                     end
       case subject_type
       when "public"
         oauth_token[oauth_tokens_account_id_column]
@@ -276,11 +279,27 @@ module Rodauth
         if oauth_application
 
           if (jwks = oauth_application_jwks)
-            jwks = JSON.parse(jwk, symbolize_names: true) if jwks && jwks.is_a?(String)
+            jwks = JSON.parse(jwks, symbolize_names: true) if jwks && jwks.is_a?(String)
             jwks
           else
             oauth_application[oauth_applications_jwt_public_key_column]
           end
+        end
+      end
+    end
+
+    def _jwt_public_key
+      @_jwt_public_key ||= oauth_jwt_public_key || begin
+        if oauth_application
+
+          if (jwks = oauth_application_jwks)
+            jwks = JSON.parse(jwks, symbolize_names: true) if jwks && jwks.is_a?(String)
+            jwks
+          else
+            oauth_application[oauth_applications_jwt_public_key_column]
+          end
+        else
+          _jwt_key
         end
       end
     end
@@ -393,12 +412,16 @@ module Rodauth
         JSON::JWK.new(data)
       end
 
-      def jwt_encode(payload)
+      def jwt_encode(payload, algorithm = oauth_jwt_algorithm)
         payload[:jti] = generate_jti(payload)
         jwt = JSON::JWT.new(payload)
-        jwk = JSON::JWK.new(_jwt_key)
 
-        jwt = jwt.sign(jwk, oauth_jwt_algorithm)
+        key = oauth_jwt_keys[algorithm] || _jwt_key
+        key = key.first if key.is_a?(Array)
+
+        jwk = JSON::JWK.new(key)
+
+        jwt = jwt.sign(jwk, algorithm)
         jwt.kid = jwk.thumbprint
 
         if oauth_jwt_jwe_key
@@ -412,7 +435,7 @@ module Rodauth
 
       def jwt_decode(
         token,
-        jws_key: oauth_jwt_public_key || _jwt_key,
+        jws_key: _jwt_public_key,
         verify_claims: true,
         verify_jti: true,
         verify_iss: true,
@@ -484,13 +507,15 @@ module Rodauth
         JWT::JWK.import(data).keypair
       end
 
-      def jwt_encode(payload)
+      def jwt_encode(payload, algorithm = oauth_jwt_algorithm)
         headers = {}
 
-        key = _jwt_key
+        key = oauth_jwt_keys[algorithm] || _jwt_key
+        key = key.first if key.is_a?(Array)
 
-        if key.is_a?(OpenSSL::PKey::RSA)
-          jwk = JWT::JWK.new(_jwt_key)
+        case key
+        when OpenSSL::PKey::PKey
+          jwk = JWT::JWK.new(key)
           headers[:kid] = jwk.kid
 
           key = jwk.keypair
@@ -498,7 +523,7 @@ module Rodauth
 
         # @see JWT reserved claims - https://tools.ietf.org/html/draft-jones-json-web-token-07#page-7
         payload[:jti] = generate_jti(payload)
-        token = JWT.encode(payload, key, oauth_jwt_algorithm, headers)
+        token = JWT.encode(payload, key, algorithm, headers)
 
         if oauth_jwt_jwe_key
           params = {
