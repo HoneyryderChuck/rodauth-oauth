@@ -83,6 +83,38 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
     assert json_body["fruit"] == "tutti-frutti"
   end
 
+  def test_oidc_userinfo_userinfo_signed_response_alg
+    jws_rs256_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_rs512_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_rs512_public_key = jws_rs512_key.public_key
+    rodauth do
+      oauth_jwt_keys { { "RS256" => jws_rs256_key, "RS512" => jws_rs512_key } }
+      oauth_jwt_key { oauth_jwt_keys["RS256"] }
+      oauth_jwt_algorithm "RS256"
+    end
+    setup_application
+    oauth_application(userinfo_signed_response_alg: "RS512")
+
+    access_token = generate_access_token("openid fruit")
+    login(access_token)
+
+    @json_body = nil
+    # valid token, and now we're getting somewhere
+    get("/userinfo")
+
+    assert last_response.status == 200
+
+    begin
+      json_body = JWT.decode(last_response.body, jws_rs512_public_key, true, { "algorithm" => "RS512" }).first
+      assert true
+    rescue JWT::DecodeError
+      assert false
+    end
+
+    assert json_body.key?("sub")
+    assert json_body.key?("fruit")
+  end
+
   private
 
   def setup_application

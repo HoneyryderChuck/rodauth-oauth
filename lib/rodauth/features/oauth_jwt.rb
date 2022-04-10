@@ -630,5 +630,20 @@ module Rodauth
 
       super
     end
+
+    def jwt_response_success(jwt, cache = false)
+      response.status = 200
+      response["Content-Type"] ||= "application/jwt"
+      if cache
+        # defaulting to 1-day for everyone, for now at least
+        max_age = 60 * 60 * 24
+        response["Cache-Control"] = "private, max-age=#{max_age}"
+      else
+        response["Cache-Control"] = "no-store"
+        response["Pragma"] = "no-cache"
+      end
+      response.write(jwt)
+      request.halt
+    end
   end
 end

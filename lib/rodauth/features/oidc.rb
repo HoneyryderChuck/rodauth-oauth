@@ -113,7 +113,14 @@ module Rodauth
 
           fill_with_account_claims(oidc_claims, account, oauth_scopes)
 
-          json_response_success(oidc_claims)
+          oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => oauth_token["client_id"]).first
+
+          if (algo = oauth_application && oauth_application[oauth_applications_userinfo_signed_response_alg_column])
+            jwt = jwt_encode(oidc_claims, algo)
+            jwt_response_success(jwt)
+          else
+            json_response_success(oidc_claims)
+          end
         end
 
         throw_json_response_error(authorization_required_error_status, "invalid_token")
