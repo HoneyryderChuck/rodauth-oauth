@@ -29,6 +29,16 @@ Sequel.migration do
       # oidc extra params
       String :application_type, null: true
       String :subject_type, null: true
+      String :id_token_signed_response_alg, null: true
+      String :id_token_encrypted_response_alg, null: true
+      String :id_token_encrypted_response_enc, null: true
+      String :userinfo_signed_response_alg, null: true
+      String :userinfo_encrypted_response_alg, null: true
+      String :userinfo_encrypted_response_enc, null: true
+      String :request_object_signing_alg, null: true
+      String :request_object_encryption_alg, null: true
+      String :request_object_encryption_enc, null: true
+
       # JWT/OIDC per application signing verification
       String :jwt_public_key, type: :text
       # RP-initiated logout

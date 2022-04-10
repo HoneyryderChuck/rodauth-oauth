@@ -65,6 +65,13 @@ module Rodauth
     auth_value_method :oauth_application_default_scope, "openid"
     auth_value_method :oauth_application_scopes, %w[openid]
 
+    auth_value_method :oauth_applications_id_token_signed_response_alg_column, :id_token_signed_response_alg
+    auth_value_method :oauth_applications_id_token_encrypted_response_alg_column, :id_token_encrypted_response_alg
+    auth_value_method :oauth_applications_id_token_encrypted_response_enc_column, :id_token_encrypted_response_enc
+    auth_value_method :oauth_applications_userinfo_signed_response_alg_column, :userinfo_signed_response_alg
+    auth_value_method :oauth_applications_userinfo_encrypted_response_alg_column, :userinfo_encrypted_response_alg
+    auth_value_method :oauth_applications_userinfo_encrypted_response_enc_column, :userinfo_encrypted_response_enc
+
     auth_value_method :oauth_grants_nonce_column, :nonce
     auth_value_method :oauth_tokens_nonce_column, :nonce
 

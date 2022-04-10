@@ -32,6 +32,9 @@ module Rodauth
 
     auth_value_method :oauth_applications_subject_type_column, :subject_type
     auth_value_method :oauth_applications_jwt_public_key_column, :jwt_public_key
+    auth_value_method :oauth_applications_request_object_signing_alg_column, :request_object_signing_alg
+    auth_value_method :oauth_applications_request_object_encryption_alg_column, :request_object_encryption_alg
+    auth_value_method :oauth_applications_request_object_encryption_enc_column, :request_object_encryption_enc
 
     translatable_method :oauth_applications_jwt_public_key_label, "Public key"
 
@@ -371,12 +374,25 @@ module Rodauth
     end
 
     if defined?(JSON::JWT)
+      # json-jwt
+
+      auth_value_method :oauth_jwt_algorithms_supported, %w[
+        HS256 HS384 HS512
+        RS256 RS384 RS512
+        PS256 PS384 PS512
+        ES256 ES384 ES512 ES256K
+      ]
+      auth_value_method :oauth_jwt_jwe_algorithms_supported, %w[
+        RSA1_5 RSA-OAEP dir A128KW A256KW
+      ]
+      auth_value_method :oauth_jwt_jwe_encryption_methods_supported, %w[
+        A128GCM A256GCM A128CBC-HS256 A256CBC-HS512
+      ]
 
       def jwk_import(data)
         JSON::JWK.new(data)
       end
 
-      # json-jwt
       def jwt_encode(payload)
         payload[:jti] = generate_jti(payload)
         jwt = JSON::JWT.new(payload)
@@ -441,8 +457,28 @@ module Rodauth
       end
 
     elsif defined?(JWT)
-
       # ruby-jwt
+
+      auth_value_method :oauth_jwt_algorithms_supported, %w[
+        HS256 HS384 HS512 HS512256
+        RS256 RS384 RS512
+        ED25519
+        ES256 ES384 ES512
+        PS256 PS384 PS512
+      ]
+
+      auth_value_methods(
+        :oauth_jwt_jwe_algorithms_supported,
+        :oauth_jwt_jwe_encryption_methods_supported
+      )
+
+      def oauth_jwt_jwe_algorithms_supported
+        JWE::VALID_ALG
+      end
+
+      def oauth_jwt_jwe_encryption_methods_supported
+        JWE::VALID_ENC
+      end
 
       def jwk_import(data)
         JWT::JWK.import(data).keypair
