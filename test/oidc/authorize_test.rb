@@ -47,7 +47,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     jws_key = OpenSSL::PKey::RSA.generate(2048)
     jws_public_key = jws_key.public_key
 
-    application = oauth_application(jwks: JSON.dump(JWT::JWK.new(jws_public_key).export.merge(use: "sig", alg: "RS256")))
+    application = oauth_application(jwks: JSON.dump([JWT::JWK.new(jws_public_key).export.merge(use: "sig", alg: "RS256")]))
 
     signed_request = generate_signed_request(application, signing_key: jws_key)
 
@@ -71,7 +71,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     setup_application
     login
 
-    application = oauth_application(jwks: JSON.dump(JWT::JWK.new(jws_public_key).export.merge(use: "sig", alg: "RS256")))
+    application = oauth_application(jwks: JSON.dump([JWT::JWK.new(jws_public_key).export.merge(use: "sig", alg: "RS256")]))
 
     signed_request = generate_signed_request(application, signing_key: jws_key, encryption_key: jwe_public_key)
 

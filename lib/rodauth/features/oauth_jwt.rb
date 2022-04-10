@@ -141,7 +141,9 @@ module Rodauth
         redirect_response_error("invalid_request_object")
       end
 
-      claims = jwt_decode(request_object, jws_key: jwk_import(jwks), jws_algorithm: jwks[:alg], verify_jti: false)
+      algo = oauth_application[oauth_applications_request_object_signing_alg_column] || oauth_jwt_algorithm
+
+      claims = jwt_decode(request_object, jwks: jwks, jws_algorithm: algo, verify_jti: false)
 
       redirect_response_error("invalid_request_object") unless claims
 
@@ -436,6 +438,7 @@ module Rodauth
       def jwt_decode(
         token,
         jws_key: _jwt_public_key,
+        jwks: nil,
         verify_claims: true,
         verify_jti: true,
         verify_iss: true,
@@ -447,6 +450,8 @@ module Rodauth
         claims = if is_authorization_server?
                    if oauth_jwt_legacy_public_key
                      JSON::JWT.decode(token, JSON::JWK::Set.new({ keys: jwks_set }))
+                   elsif jwks
+                    JSON::JWT.decode(token, JSON::JWK::Set.new({ keys: jwks }))
                    elsif jws_key
                      JSON::JWT.decode(token, jws_key)
                    end
@@ -541,6 +546,7 @@ module Rodauth
       def jwt_decode(
         token,
         jws_key: oauth_jwt_public_key || _jwt_key,
+        jwks: nil,
         jws_algorithm: oauth_jwt_algorithm,
         verify_claims: true,
         verify_jti: true,
@@ -577,6 +583,8 @@ module Rodauth
                    if oauth_jwt_legacy_public_key
                      algorithms = jwks_set.select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
                      JWT.decode(token, nil, true, jwks: { keys: jwks_set }, algorithms: algorithms, **verify_claims_params).first
+                   elsif jwks
+                     JWT.decode(token, nil, true, algorithms: [jws_algorithm], jwks: { keys: jwks }, **verify_claims_params).first
                    elsif jws_key
                      JWT.decode(token, jws_key, true, algorithms: [jws_algorithm], **verify_claims_params).first
                    end
