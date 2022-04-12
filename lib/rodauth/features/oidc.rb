@@ -116,7 +116,12 @@ module Rodauth
           oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => oauth_token["client_id"]).first
 
           if (algo = oauth_application && oauth_application[oauth_applications_userinfo_signed_response_alg_column])
-            jwt = jwt_encode(oidc_claims, algo)
+            jwt = jwt_encode(
+              oidc_claims,
+              signing_algorithm: algo,
+              encryption_algorithm: oauth_application[oauth_applications_userinfo_encrypted_response_alg_column],
+              encryption_method: oauth_application[oauth_applications_userinfo_encrypted_response_enc_column]
+            )
             jwt_response_success(jwt)
           else
             json_response_success(oidc_claims)
@@ -345,7 +350,12 @@ module Rodauth
       fill_with_account_claims(id_token_claims, account, oauth_scopes)
 
       algo = oauth_application[oauth_applications_id_token_signed_response_alg_column] || oauth_jwt_algorithm
-      oauth_token[:id_token] = jwt_encode(id_token_claims, algo)
+      oauth_token[:id_token] = jwt_encode(
+        id_token_claims,
+        signing_algorithm: algo,
+        encryption_algorithm: oauth_application[oauth_applications_id_token_encrypted_response_alg_column],
+        encryption_method: oauth_application[oauth_applications_id_token_encrypted_response_enc_column]
+      )
     end
 
     # aka fill_with_standard_claims
