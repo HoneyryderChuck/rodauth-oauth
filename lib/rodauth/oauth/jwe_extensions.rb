@@ -22,6 +22,23 @@ module JWE
     apply_zip(header, plaintext, :decompress)
   end
 
+  def self.__rodauth_oauth_encrypt_from_jwks(payload, jwks, alg: "RSA-OAEP", enc: "A128GCM", **more_headers)
+    header = generate_header(alg, enc, more_headers)
+
+    key = find_key_by_alg_enc(jwks, alg, enc)
+
+    check_params(header, key)
+    payload = apply_zip(header, payload, :compress)
+
+    cipher = Enc.for(enc)
+    cipher.cek = key if alg == "dir"
+
+    json_hdr = header.to_json
+    ciphertext = cipher.encrypt(payload, Base64.jwe_encode(json_hdr))
+
+    generate_serialization(json_hdr, Alg.encrypt_cek(alg, key, cipher.cek), ciphertext, cipher)
+  end
+
   def self.find_key_by_kid(jwks, kid, alg, enc)
     raise DecodeError, "No key id (kid) found from token headers" unless kid
 
@@ -30,6 +47,17 @@ module JWE
     raise DecodeError, "Could not find public key for kid #{kid}" unless jwk
     raise DecodeError, "Expected a different encryption algorithm" unless alg == (jwk[:alg] || jwk["alg"])
     raise DecodeError, "Expected a different encryption method" unless enc == (jwk[:enc] || jwk["enc"])
+
+    ::JWT::JWK.import(jwk).keypair
+  end
+
+  def self.find_key_by_alg_enc(jwks, alg, enc)
+    jwk = jwks.find do |key, _|
+      (key[:alg] || key["alg"]) == alg &&
+        (key[:enc] || key["enc"]) == enc
+    end
+
+    raise DecodeError, "No key found" unless jwk
 
     ::JWT::JWK.import(jwk).keypair
   end

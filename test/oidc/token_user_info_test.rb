@@ -83,7 +83,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
     assert json_body["fruit"] == "tutti-frutti"
   end
 
-  def test_oidc_userinfo_userinfo_signed_response_alg
+  def test_oidc_userinfo_signed_response_alg
     jws_rs256_key = OpenSSL::PKey::RSA.generate(2048)
     jws_rs512_key = OpenSSL::PKey::RSA.generate(2048)
     jws_rs512_public_key = jws_rs512_key.public_key
@@ -108,6 +108,49 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
       json_body = JWT.decode(last_response.body, jws_rs512_public_key, true, { "algorithm" => "RS512" }).first
       assert true
     rescue JWT::DecodeError
+      assert false
+    end
+
+    assert json_body.key?("sub")
+    assert json_body.key?("fruit")
+  end
+
+  def test_oidc_userinfo_signed_encrypted_response_alg
+    jwe_key = OpenSSL::PKey::RSA.new(2048)
+    jwe_hs512_key = OpenSSL::PKey::RSA.new(2048)
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
+
+    rodauth do
+      oauth_jwt_key jws_key
+      oauth_jwt_algorithm "RS256"
+    end
+    setup_application
+    oauth_application(
+      jwks: JSON.dump([
+                        JWT::JWK.new(jwe_key.public_key).export.merge(use: "enc", alg: "RSA-OAEP", enc: "A128CBC-HS256"),
+                        JWT::JWK.new(jwe_hs512_key.public_key).export.merge(use: "enc", alg: "RSA-OAEP", enc: "A256CBC-HS512")
+                      ]),
+      userinfo_signed_response_alg: "RS256",
+      userinfo_encrypted_response_alg: "RSA-OAEP",
+      userinfo_encrypted_response_enc: "A256CBC-HS512"
+    )
+
+    access_token = generate_access_token("openid fruit")
+    login(access_token)
+
+    @json_body = nil
+    # valid token, and now we're getting somewhere
+    get("/userinfo")
+
+    assert last_response.status == 200
+
+    begin
+      jws_body = JWE.decrypt(last_response.body, jwe_hs512_key)
+      json_body = JWT.decode(jws_body, jws_public_key, true, { "algorithm" => "RS256" }).first
+
+      assert json_body["fruit"] == "tutti-frutti"
+    rescue JWE::DecodeError, JWT::DecodeError
       assert false
     end
 
