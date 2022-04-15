@@ -26,6 +26,7 @@ This gem implements the following RFCs and features of OAuth:
   * `oauth_saml_bearer_grant` - [SAML 2.0 Bearer Assertion](https://datatracker.ietf.org/doc/html/rfc7522);
   * `oauth_jwt_bearer_grant` - [JWT Bearer Assertion](https://datatracker.ietf.org/doc/html/rfc7523);
 * [JWT Secured Authorization Requests](https://tools.ietf.org/html/draft-ietf-oauth-jwsreq-20);
+* [Dynamic Client Registration Protocol](https://datatracker.ietf.org/doc/html/rfc7591);
 * OAuth application and token management dashboards;
 
 It also implements the [OpenID Connect layer](https://openid.net/connect/) (via the `openid` feature) on top of the OAuth features it provides, including:
@@ -33,6 +34,7 @@ It also implements the [OpenID Connect layer](https://openid.net/connect/) (via 
 * [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html);
 * [OpenID Connect Discovery](https://openid.net/specs/openid-connect-discovery-1_0-29.html);
 * [OpenID Multiple Response Types](https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html);
+* [OpenID Connect Dynamic Client Registration](https://openid.net/specs/openid-connect-registration-1_0.html);
 * [RP Initiated Logout](https://openid.net/specs/openid-connect-rpinitiated-1_0.html);
 
 This gem supports also rails (through [rodauth-rails]((https://github.com/janko/rodauth-rails))).

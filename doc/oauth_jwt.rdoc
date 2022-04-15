@@ -10,13 +10,14 @@ oauth_jwt_subject_type :: JWT subject claim type, <tt>"public"</tt> by default.
 oauth_jwt_subject_secret :: hashing secret to use when subject claim type is "pairwise", <tt>nil</tt> by default.
 oauth_jwt_token_issuer :: JWT issuer claim, <tt>nil</tt> by default.
 oauth_jwt_audience :: JWT audience claim, <tt>nil</tt> by default.
-oauth_application_jws_jwk_param :: form parameter for a client application JSON Web tokens, <tt>:jws_jwk</tt> by default.
-oauth_application_jwt_public_key_param :: form parameter for a client application public key, <tt>:jwt_public_key</tt> by default.
-oauth_applications_jws_jwk_label :: Form label for the oauth application JSON Web tokens.
 oauth_applications_jwt_public_key_label :: Form label for the oauth application client application public key.
-oauth_applications_jws_jwk_column :: db column where to store an oauth application's JWS keys set, used for verifying signed JWT tokens and authorization requests, <tt>:jws_jwk</tt> by default (supports both text and JSON columns).
 oauth_applications_jwt_public_key_column :: db column where to store an oauth application's publid key, used for verifying JWT tokens, <tt>:jwt_public_key</tt> by default.
-oauth_jwt_key :: the JWT signing key, can be a String or an RSA/EC key.
+oauth_applications_request_object_encryption_alg_column :: db column where to store the encryption algorithm used for the request object JWT for the oauth application, <tt>:request_object_encryption_alg</tt> by default.
+oauth_applications_request_object_encryption_enc_column :: db column where to store the encryption method used for the request object JWT for the oauth application, <tt>:request_object_encryption_enc</tt> by default.
+oauth_applications_request_object_signing_alg_column :: db column where to store the signing algorithm used for the request object JWT for the oauth application, <tt>:request_object_signing_alg</tt> by default.
+oauth_applications_subject_type_column :: db column where to store the type of subject claim used for the oauth application, <tt>:subject_type</tt> by default.
+oauth_jwt_key :: the signing key, can be a String or an RSA/EC key.
+oauth_jwt_keys :: collection of the auth server signing keys indexed by algo, **must** include <tt>oauth_jwt_key</tt>.
 oauth_jwt_public_key :: the JWT verification key, can be an RSA/EC public key.
 oauth_jwt_algorithm :: JWT signing algorithm, <tt>"HS256"</tt> by default.
 oauth_jwt_jwe_key :: JWE encryption/decryption key, <tt>nil</tt> by default.

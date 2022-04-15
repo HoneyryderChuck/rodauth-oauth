@@ -60,7 +60,7 @@ module Rodauth
       client_id client_secret
       homepage_url redirect_uri
       token_endpoint_auth_method grant_types response_types
-      client_uri logo_uri tos_uri policy_uri jwks jwks_uri
+      logo_uri tos_uri policy_uri jwks jwks_uri
       contacts software_id software_version
     ].each do |column|
       auth_value_method :"oauth_applications_#{column}_column", column
