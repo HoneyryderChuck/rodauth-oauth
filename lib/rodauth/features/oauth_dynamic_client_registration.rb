@@ -19,8 +19,10 @@ module Rodauth
       validate_client_registration_params
 
       r.post do
-        before_register
-        response_params = do_register
+        response_params = transaction do
+          before_register
+          do_register
+        end
 
         response.status = 201
         response["Content-Type"] = json_response_content_type
@@ -164,13 +166,12 @@ module Rodauth
       end
     end
 
-    def do_register
-      return_params = request.params.dup
+    def do_register(return_params = request.params.dup)
       # set defaults
       create_params = @oauth_application_params
       create_params[oauth_applications_scopes_column] ||= return_params["scopes"] = oauth_application_default_scope.join(" ")
       create_params[oauth_applications_token_endpoint_auth_method_column] ||= begin
-        return_params["token_endpoint_auth_method"] = %w[client_secret_basic]
+        return_params["token_endpoint_auth_method"] = "client_secret_basic"
         "client_secret_basic"
       end
       create_params[oauth_applications_grant_types_column] ||= begin

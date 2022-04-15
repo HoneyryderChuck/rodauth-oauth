@@ -145,7 +145,6 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
     assert last_response.status == 400
 
     post("/register", valid_registration_params.merge("id_token_signed_response_alg" => "RS256"))
-
     assert last_response.status == 201
 
     post("/register", valid_registration_params.merge("id_token_encrypted_response_alg" => "smth"))
@@ -155,6 +154,8 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
     post("/register", valid_registration_params.merge("id_token_encrypted_response_alg" => "RSA-OAEP"))
 
     assert last_response.status == 201
+    assert JSON.parse(last_response.body)["id_token_encrypted_response_alg"] == "RSA-OAEP"
+    assert JSON.parse(last_response.body)["id_token_encrypted_response_enc"] == "A128CBC-HS256"
 
     post("/register", valid_registration_params.merge("id_token_encrypted_response_enc" => "smth"))
 
@@ -188,6 +189,8 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
     post("/register", valid_registration_params.merge("userinfo_encrypted_response_alg" => "RSA-OAEP"))
 
     assert last_response.status == 201
+    assert JSON.parse(last_response.body)["userinfo_encrypted_response_alg"] == "RSA-OAEP"
+    assert JSON.parse(last_response.body)["userinfo_encrypted_response_enc"] == "A128CBC-HS256"
 
     post("/register", valid_registration_params.merge("userinfo_encrypted_response_enc" => "smth"))
 
@@ -221,6 +224,8 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
     post("/register", valid_registration_params.merge("request_object_encryption_alg" => "RSA-OAEP"))
 
     assert last_response.status == 201
+    assert JSON.parse(last_response.body)["request_object_encryption_alg"] == "RSA-OAEP"
+    assert JSON.parse(last_response.body)["request_object_encryption_enc"] == "A128CBC-HS256"
 
     post("/register", valid_registration_params.merge("request_object_encryption_enc" => "smth"))
 
