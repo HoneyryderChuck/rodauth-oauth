@@ -32,11 +32,11 @@ class RodauthOAuthOidcTokenAuthorizationCodeTest < OIDCIntegration
   private
 
   def setup_application
-    super
     rodauth do
       oauth_jwt_key OpenSSL::PKey::RSA.generate(2048)
       oauth_jwt_algorithm "RS256"
     end
+    super
     header "Accept", "application/json"
   end
 end

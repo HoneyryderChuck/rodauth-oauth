@@ -41,7 +41,7 @@ module Rodauth
     auth_value_method :oauth_jwt_keys, {}
     auth_value_method :oauth_jwt_key, nil
     auth_value_method :oauth_jwt_public_key, nil
-    auth_value_method :oauth_jwt_algorithm, "HS256"
+    auth_value_method :oauth_jwt_algorithm, "RS256"
 
     auth_value_method :oauth_jwt_jwe_key, nil
     auth_value_method :oauth_jwt_jwe_public_key, nil
