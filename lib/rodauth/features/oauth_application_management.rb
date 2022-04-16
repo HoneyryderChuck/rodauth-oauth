@@ -48,6 +48,7 @@ module Rodauth
 
     auth_value_method :oauth_applications_oauth_tokens_path, "oauth-tokens"
     auth_value_method :oauth_applications_route, "oauth-applications"
+    auth_value_method :oauth_applications_per_page, 20
     auth_value_method :oauth_applications_id_pattern, Integer
 
     translatable_method :invalid_url_message, "Invalid URL"
@@ -102,8 +103,12 @@ module Rodauth
         end
 
         request.get do
+          page = Integer(param_or_nil("page") || 1)
+          per_page = Integer(param_or_nil("per_page") || oauth_applications_per_page)
           scope.instance_variable_set(:@oauth_applications, db[oauth_applications_table]
-            .where(oauth_applications_account_id_column => account_id))
+            .where(oauth_applications_account_id_column => account_id)
+            .paginate(page, per_page))
+
           oauth_applications_view
         end
 
@@ -131,6 +136,50 @@ module Rodauth
         only_json? ? false : super
       else
         super
+      end
+    end
+
+    def post_configure
+      super
+      db.extension :pagination
+    end
+
+    def oauth_management_pagination_links(paginated_ds)
+      html = +'<nav aria-label="Pagination"><ul class="pagination">'
+      html << oauth_applications_pagination_link(paginated_ds.prev_page, label: "Previous")
+      html << oauth_applications_pagination_link(paginated_ds.current_page - 1) unless paginated_ds.first_page?
+      html << oauth_applications_pagination_link(paginated_ds.current_page, label: paginated_ds.current_page, current: true)
+      html << oauth_applications_pagination_link(paginated_ds.current_page + 1) unless paginated_ds.last_page?
+      html << oauth_applications_pagination_link(paginated_ds.next_page, label: "Next")
+      html << "</ul></nav>"
+    end
+
+    def oauth_applications_pagination_link(page, label: page, current: false, classes: "")
+      classes += " disabled" if current || !page
+      classes += " active" if current
+      if page
+        params = request.GET.merge("page" => page).map do |k, v|
+          v ? "#{CGI.escape(String(k))}=#{CGI.escape(String(v))}" : CGI.escape(String(k))
+        end.join("&")
+
+        href = "#{request.path}?#{params}"
+
+        <<-HTML
+          <li class="page-item #{classes}" #{'aria-current="page"' if current}>
+            <a class="page-link" href="#{href}" tabindex="-1" aria-disabled="#{current || !page}">
+              #{label}
+            </a>
+          </li>
+        HTML
+      else
+        <<-HTML
+          <li class="page-item #{classes}">
+            <span class="page-link">
+              #{label}
+              #{'<span class="sr-only">(current)</span>' if current}
+            </span>
+          </li>
+        HTML
       end
     end
 

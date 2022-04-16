@@ -3,6 +3,43 @@
 require "test_helper"
 
 class RodauthOauthApplicationsTest < RodaIntegration
+  def test_oauuth_applications_pages
+    setup_application
+    login
+
+    6.times do |i|
+      set_oauth_application(name: "Foo #{i}", client_id: "ID#{i}")
+    end
+
+    # List
+    visit "/oauth-applications"
+    assert_includes page.html, "Foo 5"
+
+    visit "/oauth-applications?per_page=5"
+    assert_includes page.html, "Foo 0"
+    assert_includes page.html, "Foo 1"
+    assert_includes page.html, "Foo 2"
+    assert_includes page.html, "Foo 3"
+    assert_includes page.html, "Foo 4"
+    refute_includes page.html, "Foo 5"
+
+    click_link "Next"
+    refute_includes page.html, "Foo 0"
+    refute_includes page.html, "Foo 1"
+    refute_includes page.html, "Foo 2"
+    refute_includes page.html, "Foo 3"
+    refute_includes page.html, "Foo 4"
+    assert_includes page.html, "Foo 5"
+    click_link "Previous"
+
+    assert_includes page.html, "Foo 0"
+    assert_includes page.html, "Foo 1"
+    assert_includes page.html, "Foo 2"
+    assert_includes page.html, "Foo 3"
+    assert_includes page.html, "Foo 4"
+    refute_includes page.html, "Foo 5"
+  end
+
   def test_oauth_applications_successful
     setup_application
     login

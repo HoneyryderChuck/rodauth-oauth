@@ -11,4 +11,5 @@
       "</ul>"
     end
   }
+  #{rodauth.oauth_management_pagination_links(@oauth_applications)}
 </div>
