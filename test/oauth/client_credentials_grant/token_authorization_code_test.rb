@@ -49,6 +49,7 @@ class RodauthClientCredentialsGrantOAuthTokenAuthorizationCodeTest < RodaIntegra
     oauth_token = db[:oauth_tokens].first
 
     verify_access_token_response(json_body, oauth_token)
+    assert !json_body.key?("refresh_token")
   end
 
   private
