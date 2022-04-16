@@ -1,6 +1,55 @@
 <form method="post" action="#{rodauth.authorize_path}" class="form-horizontal" role="form" id="authorize-form">
   #{csrf_tag(rodauth.authorize_path) if respond_to?(:csrf_tag)}
-  <p class="lead">The application #{rodauth.oauth_application[rodauth.oauth_applications_name_column]} would like to access your data.</p>
+  #{
+    if rodauth.oauth_application[rodauth.oauth_applications_logo_uri_column]
+      <<-HTML
+        <img src="#{h(rodauth.oauth_application[rodauth.oauth_applications_logo_uri_column])}" />
+      HTML
+    end
+  }
+  <p class="lead">
+    The application
+    <a target="_blank" href="#{h(rodauth.oauth_application[rodauth.oauth_applications_homepage_url_column])}">
+      #{h(rodauth.oauth_application[rodauth.oauth_applications_name_column])}
+    </a> would like to access your data.
+  </p>
+  <div class="list-group">
+  #{
+    if rodauth.oauth_application[rodauth.oauth_applications_tos_uri_column]
+      <<-HTML
+        <a class="list-group-item" target="_blank" href="#{h(rodauth.oauth_application[rodauth.oauth_applications_tos_uri_column])}">
+          #{rodauth.oauth_applications_tos_uri_label}
+        </a>
+      HTML
+    end
+  }
+  #{
+    if rodauth.oauth_application[rodauth.oauth_applications_policy_uri_column]
+      <<-HTML
+        <a class="list-group-item" target="_blank" href="#{h(rodauth.oauth_application[rodauth.oauth_applications_policy_uri_column])}">
+          #{rodauth.oauth_applications_policy_uri_label}
+        </a>
+      HTML
+    end
+  }
+  </div>
+
+  #{
+    if rodauth.oauth_application[rodauth.oauth_applications_contacts_column]
+      data = <<-HTML
+        <div class="list-group">
+          <h3 class="display-6">#{rodauth.oauth_applications_contacts_label}</h3>
+      HTML
+      rodauth.oauth_application[rodauth.oauth_applications_contacts_column].split(/ +/).each do |contact|
+        data << <<-HTML
+          <div class="list-group-item">
+            #{h(contact)}
+          </div>
+        HTML
+      end
+      data << "</div>"
+    end
+  }
 
   <div class="form-group">
     <h1 class="display-6">#{rodauth.oauth_tokens_scopes_label}</h1>

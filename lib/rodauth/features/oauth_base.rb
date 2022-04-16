@@ -29,6 +29,7 @@ module Rodauth
     auth_value_method :oauth_unique_id_generation_retries, 3
 
     auth_value_method :oauth_response_mode, "query"
+    auth_value_method :oauth_auth_methods_supported, %w[client_secret_basic client_secret_post]
 
     auth_value_method :oauth_scope_separator, " "
 
@@ -58,6 +59,9 @@ module Rodauth
       name description scopes
       client_id client_secret
       homepage_url redirect_uri
+      token_endpoint_auth_method grant_types response_types
+      logo_uri tos_uri policy_uri jwks jwks_uri
+      contacts software_id software_version
     ].each do |column|
       auth_value_method :"oauth_applications_#{column}_column", column
     end
@@ -331,26 +335,45 @@ module Rodauth
     #
     def require_oauth_application
       # get client credentials
+      auth_method = nil
       client_id = client_secret = nil
 
       if (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v[/\A *Basic (.*)\Z/, 1]))
         # client_secret_basic
         client_id, client_secret = Base64.decode64(token).split(/:/, 2)
+        auth_method = "client_secret_basic"
       else
         # client_secret_post
         client_id = param_or_nil("client_id")
         client_secret = param_or_nil("client_secret")
+        auth_method = "client_secret_post" if client_secret
       end
 
       authorization_required unless client_id
 
       @oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => client_id).first
 
-      authorization_required unless authorized_oauth_application?(@oauth_application, client_secret)
+      authorization_required unless @oauth_application
+
+      authorization_required unless authorized_oauth_application?(@oauth_application, client_secret, auth_method)
     end
 
-    def authorized_oauth_application?(oauth_application, client_secret)
-      oauth_application && secret_matches?(oauth_application, client_secret)
+    def authorized_oauth_application?(oauth_application, client_secret, auth_method)
+      supported_auth_methods = if oauth_application[oauth_applications_token_endpoint_auth_method_column]
+                                 oauth_application[oauth_applications_token_endpoint_auth_method_column].split(/ +/)
+                               else
+                                 oauth_auth_methods_supported
+                               end
+
+      if auth_method
+        supported_auth_methods.include?(auth_method) && secret_matches?(oauth_application, client_secret)
+      else
+        supported_auth_methods.include?("none")
+      end
+    end
+
+    def no_auth_oauth_application?(_oauth_application)
+      supported_auth_methods.include?("none")
     end
 
     def require_oauth_application_from_account
@@ -515,8 +538,7 @@ module Rodauth
     end
 
     def create_oauth_token(grant_type)
-      case grant_type
-      when "refresh_token"
+      if supported_grant_type?(grant_type, "refresh_token")
         # fetch potentially revoked oauth token
         oauth_token = oauth_token_by_refresh_token(param("refresh_token"), revoked: true)
 
@@ -594,7 +616,17 @@ module Rodauth
       end
     end
 
-    def oauth_server_metadata_body(path)
+    def supported_grant_type?(grant_type, expected_grant_type = grant_type)
+      return false unless grant_type == expected_grant_type
+
+      return true unless (grant_types_supported = oauth_application[oauth_applications_grant_types_column])
+
+      grant_types_supported = grant_types_supported.split(/ +/)
+
+      grant_types_supported.include?(grant_type)
+    end
+
+    def oauth_server_metadata_body(path = nil)
       issuer = base_url
       issuer += "/#{path}" if path
 
@@ -604,8 +636,8 @@ module Rodauth
         scopes_supported: oauth_application_scopes,
         response_types_supported: [],
         response_modes_supported: [],
-        grant_types_supported: [],
-        token_endpoint_auth_methods_supported: %w[client_secret_basic client_secret_post],
+        grant_types_supported: %w[refresh_token],
+        token_endpoint_auth_methods_supported: oauth_auth_methods_supported,
         service_documentation: oauth_metadata_service_documentation,
         ui_locales_supported: oauth_metadata_ui_locales_supported,
         op_policy_uri: oauth_metadata_op_policy_uri,
@@ -659,7 +691,7 @@ module Rodauth
       request.halt
     end
 
-    def throw_json_response_error(status, error_code)
+    def throw_json_response_error(status, error_code, message = nil)
       set_response_error_status(status)
       code = if respond_to?(:"#{error_code}_error_code")
                send(:"#{error_code}_error_code")
@@ -667,7 +699,7 @@ module Rodauth
                error_code
              end
       payload = { "error" => code }
-      payload["error_description"] = send(:"#{error_code}_message") if respond_to?(:"#{error_code}_message")
+      payload["error_description"] = message || (send(:"#{error_code}_message") if respond_to?(:"#{error_code}_message"))
       json_payload = _json_response_body(payload)
       response["Content-Type"] ||= json_response_content_type
       response["WWW-Authenticate"] = oauth_token_type.upcase if status == 401
@@ -698,6 +730,10 @@ module Rodauth
       return false unless scopes
 
       (scopes - oauth_application[oauth_applications_scopes_column].split(oauth_scope_separator)).empty?
+    end
+
+    def check_valid_uri?(uri)
+      URI::DEFAULT_PARSER.make_regexp(oauth_valid_uri_schemes).match?(uri)
     end
 
     # Resource server mode

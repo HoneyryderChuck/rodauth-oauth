@@ -17,6 +17,7 @@ oauth_refresh_token_expires_in :: The number of seconds a refresh token is valid
 oauth_refresh_token_protection_policy :: protection policy for the refresh token (<tt>none</tt> by default).
 oauth_scope_separator :: character used to separate scopes in the db field value, white-space by default.
 oauth_response_mode :: default response mode (<tt>query</tt> by default).
+oauth_auth_methods_supported :: list of supported auth methods.
 
 oauth_applications_table :: the db table where oauth applications are stored, <tt>:oauth_applications</tt> by default.
 oauth_applications_id_column :: the db column where the oauth application primary key is stored, <tt>:id</tt> by default.
@@ -26,8 +27,19 @@ oauth_applications_description_column :: the db column where the oauth applicati
 oauth_applications_scopes_column :: the db column where the oauth allowed scopes are stored, <tt>:scopes</tt> by default.
 oauth_applications_client_id_column :: the db column where the oauth application client ID is stored, <tt>:client_id</tt> by default.
 oauth_applications_client_secret_column :: the db column where the oauth application hashed client secret to is stored, <tt>:client_secret</tt> by default.
-oauth_applications_redirect_uri_column :: the db column where the oauth application redirect URI to is stored, <tt>:redirect_uri</tt> by default.
-oauth_applications_homepage_url_column :: the db column where the oauth application homepage URL to is stored, <tt>:homepage_url</tt> by default.
+oauth_applications_redirect_uri_column :: the db column where the oauth application redirect URI is stored, <tt>:redirect_uri</tt> by default.
+oauth_applications_homepage_url_column :: the db column where the oauth application homepage URL is stored, <tt>:homepage_url</tt> by default.
+oauth_applications_contacts_column :: the db column where the oauth application contacts are stored, <tt>:contacts</tt> by default.
+oauth_applications_grant_types_column :: the db column where the oauth application supported grant types are stored, <tt>:grant_types</tt> by default.
+oauth_applications_response_types_column :: the db column where the oauth application supported response types are stored, <tt>:response_types</tt> by default.
+oauth_applications_jwks_column :: the db column where the oauth application JSON Web Keys are stored, <tt>:jwks</tt> by default.
+oauth_applications_jwks_uri_column :: the db column where the oauth application JSON Web Keys URI is stored, <tt>:jwks_uri</tt> by default.
+oauth_applications_logo_uri_column :: the db column where the oauth application logo URL is stored, <tt>:logo_uri</tt> by default.
+oauth_applications_policy_uri_column :: the db column where the oauth application policy URL is stored, <tt>:policy_uri</tt> by default.
+oauth_applications_tos_uri_column :: the db column where the oauth application terms of service URL is stored, <tt>:tos_uri</tt> by default.
+oauth_applications_software_id_column :: the db column where the oauth application software ID is stored, <tt>:software_id</tt> by default.
+oauth_applications_software_version_column :: the db column where the oauth application software version is stored, <tt>:software_version</tt> by default.
+oauth_applications_token_endpoint_auth_method_column :: the db column where the oauth application supported auth method for the token endpoint is stored, <tt>:software_id</tt> by default.
 
 oauth_tokens_table :: the db table where oauth tokens are stored, <tt>:oauth_tokens</tt> by default.
 oauth_tokens_id_column :: the db column where the oauth token primary key is stored, <tt>:id</tt> by default.

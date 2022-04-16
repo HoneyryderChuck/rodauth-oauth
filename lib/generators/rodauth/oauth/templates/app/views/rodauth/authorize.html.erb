@@ -1,5 +1,26 @@
 <%= form_tag rodauth.authorize_path, method: :post do %>
-  <p class="lead">The application <%= rodauth.oauth_application[rodauth.oauth_applications_name_column] %> would like to access your data.</p>
+  <% if rodauth.oauth_application[rodauth.oauth_applications_logo_uri_column] %>
+    <%= image_tag rodauth.oauth_application[rodauth.oauth_applications_logo_uri_column] %>
+  <% end %>
+  <p class="lead">The application <%= link_to rodauth.oauth_application[rodauth.oauth_applications_name_column],  rodauth.oauth_application[rodauth.oauth_applications_homepage_url_column] %> would like to access your data.</p>
+
+  <div class="list-group">
+    <% if rodauth.oauth_application[rodauth.oauth_applications_tos_uri_column] %>
+      <%= link_to rodauth.oauth_applications_tos_uri_label, rodauth.oauth_application[rodauth.oauth_applications_tos_uri_column], class: "list-group-item" %>
+    <% end %>
+    <% if rodauth.oauth_application[rodauth.oauth_applications_policy_uri_column] %>
+      <%= link_to rodauth.oauth_applications_policy_uri_label, rodauth.oauth_application[rodauth.oauth_applications_policy_uri_column], class: "list-group-item" %>
+    <% end %>
+  </div>
+
+  <% if rodauth.oauth_application[rodauth.oauth_applications_contacts_column] %>
+    <div class="list-group">
+      <h3 class="display-6"><%= rodauth.oauth_applications_contacts_label %></h3>
+      <% rodauth.oauth_application[rodauth.oauth_applications_contacts_column].split(/ +/).each do |contact| %>
+        <div class="list-group-item"><%= contact %></div>
+      <% end %>
+    </div>
+  <% end %>
 
   <div class="form-group">
     <h1 class="display-6"><%= rodauth.oauth_tokens_scopes_label %></h1>

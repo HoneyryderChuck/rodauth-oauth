@@ -31,3 +31,6 @@ after_authorize :: Run arbitrary code after authorizing a request.
 
 authorize_view :: The HTML of the Authorize form.
 oauth_tokens_scopes_label :: Label for the oauth token scopes.
+oauth_applications_contacts_label :: Form label for the oauth application contacts.
+oauth_applications_policy_uri_label :: Form label for the oauth application Policy URI.
+oauth_applications_tos_uri_label :: Form label for the oauth application Terms of Service URI.

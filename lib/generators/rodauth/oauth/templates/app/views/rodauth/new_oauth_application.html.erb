@@ -28,9 +28,14 @@
   </div>
   <% if rodauth.features.include?(:oauth_jwt) %>
     <div class="form-group">
-      <%= label_tag "jws_jwk", rodauth.oauth_applications_jws_jwk_label %>
-      <%= text_field_tag "jws_jwk", rodauth.param('jws_jwk'), id: "jws-jwk", class: "form-control#{' is-invalid' if rodauth.field_error('jws_jwk')}" %>
-      <%= rodauth.field_error('jws_jwk') %>
+      <%= label_tag "jwks", rodauth.oauth_applications_jwks_label %>
+      <%= text_field_tag "jwks", rodauth.param('jwks'), id: "jwks", class: "form-control#{' is-invalid' if rodauth.field_error('jwks')}" %>
+      <%= rodauth.field_error('jwks') %>
+    </div>
+    <div class="form-group">
+      <%= label_tag "jwks_uri", rodauth.oauth_applications_jwks_uri_label %>
+      <%= text_field_tag "jwks_uri", rodauth.param('jwks_uri'), id: "jwks-uri", class: "form-control#{' is-invalid' if rodauth.field_error('jwks_uri')}" %>
+      <%= rodauth.field_error('jwks_uri') %>
     </div>
     <div class="form-group">
       <%= label_tag "jwt_public_key", rodauth.oauth_applications_jwt_public_key_label %>

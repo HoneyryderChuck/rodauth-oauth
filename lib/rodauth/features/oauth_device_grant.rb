@@ -124,18 +124,17 @@ module Rodauth
                   .rjust(user_code_size, "0")
     end
 
-    def authorized_oauth_application?(oauth_application, client_secret)
+    def authorized_oauth_application?(oauth_application, client_secret, _)
       # skip if using device grant
       #
       # requests may be performed by devices with no knowledge of client secret.
-      return true if !client_secret && oauth_application && use_oauth_device_code_grant_type?
+      return true if !client_secret && use_oauth_device_code_grant_type?
 
       super
     end
 
     def create_oauth_token(grant_type)
-      case grant_type
-      when "urn:ietf:params:oauth:grant-type:device_code"
+      if supported_grant_type?(grant_type, "urn:ietf:params:oauth:grant-type:device_code")
         throw_json_response_error(invalid_oauth_response_status, "invalid_grant_type") unless use_oauth_device_code_grant_type?
 
         oauth_grant = db[oauth_grants_table].where(
@@ -168,7 +167,7 @@ module Rodauth
           end
         end
         oauth_token
-      when "device_code"
+      elsif grant_type == "device_code"
         redirect_response_error("invalid_grant_type") unless use_oauth_device_code_grant_type?
 
         # fetch oauth grant

@@ -26,6 +26,9 @@ module Rodauth
     end
 
     translatable_method :oauth_tokens_scopes_label, "Scopes"
+    translatable_method :oauth_applications_contacts_label, "Contacts"
+    translatable_method :oauth_applications_tos_uri_label, "Terms of service URL"
+    translatable_method :oauth_applications_policy_uri_label, "Policy URL"
 
     # /authorize
     route(:authorize) do |r|
@@ -172,7 +175,7 @@ module Rodauth
     end
 
     def create_oauth_token(grant_type)
-      return super unless grant_type == "authorization_code"
+      return super unless supported_grant_type?(grant_type, "authorization_code")
 
       # fetch oauth grant
       oauth_grant = db[oauth_grants_table].where(

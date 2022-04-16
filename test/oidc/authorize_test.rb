@@ -47,7 +47,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     jws_key = OpenSSL::PKey::RSA.generate(2048)
     jws_public_key = jws_key.public_key
 
-    application = oauth_application(jws_jwk: JSON.dump(JWT::JWK.new(jws_public_key).export.merge(use: "sig", alg: "RS256")))
+    application = oauth_application(jwks: JSON.dump([JWT::JWK.new(jws_public_key).export.merge(use: "sig", alg: "RS256")]))
 
     signed_request = generate_signed_request(application, signing_key: jws_key)
 
@@ -71,7 +71,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     setup_application
     login
 
-    application = oauth_application(jws_jwk: JSON.dump(JWT::JWK.new(jws_public_key).export.merge(use: "sig", alg: "RS256")))
+    application = oauth_application(jwks: JSON.dump([JWT::JWK.new(jws_public_key).export.merge(use: "sig", alg: "RS256")]))
 
     signed_request = generate_signed_request(application, signing_key: jws_key, encryption_key: jwe_public_key)
 
@@ -115,9 +115,12 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
   end
 
   def test_oidc_authorize_post_authorize_with_implicit_grant
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_key jws_key
+      oauth_jwt_public_key jws_public_key
+      oauth_jwt_algorithm "RS256"
       use_oauth_implicit_grant_type? true
     end
     setup_application
@@ -140,9 +143,12 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
   end
 
   def test_oidc_authorize_post_authorize_with_id_token_response_type
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_key jws_key
+      oauth_jwt_public_key jws_public_key
+      oauth_jwt_algorithm "RS256"
       use_oauth_implicit_grant_type? true
     end
     setup_application
@@ -182,9 +188,12 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
   # Multiple Response Types
 
   def test_oidc_authorize_post_authorize_with_code_token_response_type
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_key jws_key
+      oauth_jwt_public_key jws_public_key
+      oauth_jwt_algorithm "RS256"
       use_oauth_implicit_grant_type? true
     end
     setup_application
@@ -210,8 +219,6 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
   def test_oidc_authorize_post_authorize_with_code_id_token_response_type
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
       use_oauth_implicit_grant_type? true
     end
     setup_application
@@ -236,9 +243,12 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
   end
 
   def test_oidc_authorize_post_authorize_with_id_token_token_response_type
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_key jws_key
+      oauth_jwt_public_key jws_public_key
+      oauth_jwt_algorithm "RS256"
       use_oauth_implicit_grant_type? true
     end
     setup_application
@@ -258,9 +268,12 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
   end
 
   def test_oidc_authorize_post_authorize_with_code_id_token_token_response_type
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_key jws_key
+      oauth_jwt_public_key jws_public_key
+      oauth_jwt_algorithm "RS256"
       use_oauth_implicit_grant_type? true
     end
     setup_application
@@ -410,11 +423,99 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
   # def test_oidc_authorize_post_authorize_prompt_select_account
   # end
 
+  def test_oidc_authorize_post_authorize_with_id_token_signed_alg
+    jws_rs256_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_rs512_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_rs512_public_key = jws_rs512_key.public_key
+    rodauth do
+      oauth_jwt_keys { { "RS256" => jws_rs256_key, "RS512" => jws_rs512_key } }
+      oauth_jwt_key { oauth_jwt_keys["RS256"] }
+      oauth_jwt_algorithm "RS256"
+      use_oauth_implicit_grant_type? true
+    end
+    setup_application
+    login
+
+    application = oauth_application(id_token_signed_response_alg: "RS512")
+
+    # show the authorization form
+    visit "/authorize?client_id=#{application[:client_id]}&scope=openid&response_type=id_token"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+
+    # submit authorization request
+    click_button "Authorize"
+
+    assert db[:oauth_tokens].count == 1,
+           "no token has been created"
+
+    assert page.current_url =~ /#{oauth_application[:redirect_uri]}#token_type=bearer&expires_in=3600&id_token=([^&]+)/,
+           "was redirected instead to #{page.current_url}"
+
+    id_token = Regexp.last_match(1)
+    begin
+      json_body = JWT.decode(id_token, jws_rs512_public_key, true, { "algorithm" => "RS512" }).first
+      assert json_body["sub"] == account[:id]
+    rescue JWT::VerificationError, JWT::IncorrectAlgorithm
+      assert false
+    end
+  end
+
+  def test_oidc_authorize_post_authorize_with_id_token_signed_encrypted_alg
+    jwe_key = OpenSSL::PKey::RSA.new(2048)
+    jwe_hs512_key = OpenSSL::PKey::RSA.new(2048)
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
+    rodauth do
+      oauth_jwt_key jws_key
+      oauth_jwt_algorithm "RS256"
+      use_oauth_implicit_grant_type? true
+    end
+    setup_application
+    login
+
+    application = oauth_application(
+      jwks: JSON.dump([
+                        JWT::JWK.new(jwe_key.public_key).export.merge(use: "enc", alg: "RSA-OAEP", enc: "A128CBC-HS256"),
+                        JWT::JWK.new(jwe_hs512_key.public_key).export.merge(use: "enc", alg: "RSA-OAEP", enc: "A256CBC-HS512")
+                      ]),
+      id_token_signed_response_alg: "RS256",
+      id_token_encrypted_response_alg: "RSA-OAEP",
+      id_token_encrypted_response_enc: "A256CBC-HS512"
+    )
+
+    # show the authorization form
+    visit "/authorize?client_id=#{application[:client_id]}&scope=openid&response_type=id_token"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+
+    # submit authorization request
+    click_button "Authorize"
+
+    assert db[:oauth_tokens].count == 1,
+           "no token has been created"
+
+    assert page.current_url =~ /#{oauth_application[:redirect_uri]}#token_type=bearer&expires_in=3600&id_token=([^&]+)/,
+           "was redirected instead to #{page.current_url}"
+
+    id_token = Regexp.last_match(1)
+
+    begin
+      jws_body = JWE.decrypt(id_token, jwe_hs512_key)
+      json_body = JWT.decode(jws_body, jws_public_key, true, { "algorithm" => "RS256" }).first
+      assert json_body["sub"] == account[:id]
+    rescue JWE::DecodeError, JWT::VerificationError, JWT::IncorrectAlgorithm
+      assert false
+    end
+  end
+
   private
 
   def setup_application(*)
     rodauth do
-      oauth_applications_jws_jwk_column :jws_jwk
+      oauth_jwt_key OpenSSL::PKey::RSA.generate(2048)
+      oauth_jwt_algorithm "RS256"
+      oauth_applications_jwks_column :jwks
     end
     super
   end

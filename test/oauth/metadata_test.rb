@@ -20,7 +20,7 @@ class RodauthOauthServerMetadataTest < RodaIntegration
     assert json_body["scopes_supported"] == %w[read write]
     assert json_body["response_types_supported"] == %w[code]
     assert json_body["response_modes_supported"] == %w[query form_post]
-    assert json_body["grant_types_supported"] == %w[authorization_code]
+    assert json_body["grant_types_supported"] == %w[refresh_token authorization_code]
     assert json_body["token_endpoint_auth_methods_supported"] == %w[client_secret_basic client_secret_post]
     assert json_body["revocation_endpoint"] == "http://example.org/revoke"
     assert json_body["introspection_endpoint"] == "http://example.org/introspect"
@@ -39,7 +39,7 @@ class RodauthOauthServerMetadataTest < RodaIntegration
     assert json_body["scopes_supported"] == %w[read write]
     assert json_body["response_types_supported"] == %w[code token]
     assert json_body["response_modes_supported"] == %w[query form_post fragment]
-    assert json_body["grant_types_supported"] == %w[authorization_code implicit]
+    assert json_body["grant_types_supported"] == %w[refresh_token authorization_code implicit]
   end
 
   def test_oauth_server_metadata_with_device_code_grant
@@ -50,7 +50,7 @@ class RodauthOauthServerMetadataTest < RodaIntegration
     get("/.well-known/oauth-authorization-server")
 
     assert last_response.status == 200
-    assert json_body["grant_types_supported"] == %w[authorization_code urn:ietf:params:oauth:grant-type:device_code]
+    assert json_body["grant_types_supported"] == %w[refresh_token authorization_code urn:ietf:params:oauth:grant-type:device_code]
     assert json_body["device_authorization_endpoint"] == "http://example.org/device-authorization"
   end
 

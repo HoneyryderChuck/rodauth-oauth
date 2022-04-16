@@ -24,12 +24,18 @@ class Rodauth::OAuth::TtlStore
     @store_mutex.synchronize do
       # short circuit
       return @store[key][:payload] if @store[key] && @store[key][:ttl] < now
-
-      payload, ttl = block.call
-      @store[key] = { payload: payload, ttl: (ttl || (now + DEFAULT_TTL)) }
-
-      @store[key][:payload]
     end
+
+    payload, ttl = block.call
+
+    @store_mutex.synchronize do
+      # given that the block call triggers network, and two requests for the same key be processed
+      # at the same time, this ensures the first one wins.
+      return @store[key][:payload] if @store[key] && @store[key][:ttl] < now
+
+      @store[key] = { payload: payload, ttl: (ttl || (now + DEFAULT_TTL)) }
+    end
+    @store[key][:payload]
   end
 
   def uncache(key)

@@ -7,7 +7,7 @@ class RodauthOauthJwtJwksUriTest < JWTIntegration
 
   def test_oauth_jwt_jwks_no_key
     rodauth do
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_algorithm "RS256"
     end
     setup_application
     get("/jwks")

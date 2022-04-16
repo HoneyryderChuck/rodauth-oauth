@@ -31,6 +31,11 @@ oauth_applications_description_label :: Form label for the oauth application des
 oauth_applications_homepage_url_label :: Form label for the oauth application homepage URL.
 oauth_applications_redirect_uri_label :: Form label for the oauth application redirect URI.
 oauth_applications_scopes_label :: Form label for the oauth application scopes.
+oauth_applications_contacts_label :: Form label for the oauth application contacts.
+oauth_applications_jwks_label :: Form label for the oauth application JSON Web Keys.
+oauth_applications_jwks_uri_label :: Form label for the oauth application URI where to load JSON Web Keys from.
+oauth_applications_policy_uri_label :: Form label for the oauth application Policy URI.
+oauth_applications_tos_uri_label :: Form label for the oauth application Terms of Service URI.
 
 oauth_application_button :: Label of OAuth application form button.
 oauth_token_revoke_button :: Label for the token revoke button.

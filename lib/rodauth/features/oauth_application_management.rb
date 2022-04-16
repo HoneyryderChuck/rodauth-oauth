@@ -18,10 +18,10 @@ module Rodauth
     auth_value_method :oauth_valid_uri_schemes, %w[https]
 
     # Application
-    APPLICATION_REQUIRED_PARAMS = %w[name description scopes homepage_url redirect_uri client_secret].freeze
+    APPLICATION_REQUIRED_PARAMS = %w[name scopes homepage_url redirect_uri client_secret].freeze
     auth_value_method :oauth_application_required_params, APPLICATION_REQUIRED_PARAMS
 
-    (APPLICATION_REQUIRED_PARAMS + %w[client_id]).each do |param|
+    (APPLICATION_REQUIRED_PARAMS + %w[description client_id]).each do |param|
       auth_value_method :"oauth_application_#{param}_param", param
       configuration_module_eval do
         define_method :"#{param}_label" do
@@ -34,6 +34,11 @@ module Rodauth
     translatable_method :oauth_applications_name_label, "Name"
     translatable_method :oauth_applications_description_label, "Description"
     translatable_method :oauth_applications_scopes_label, "Scopes"
+    translatable_method :oauth_applications_contacts_label, "Contacts"
+    translatable_method :oauth_applications_tos_uri_label, "Terms of service"
+    translatable_method :oauth_applications_policy_uri_label, "Policy"
+    translatable_method :oauth_applications_jwks_label, "JSON Web Keys"
+    translatable_method :oauth_applications_jwks_uri_label, "JSON Web Keys URI"
     translatable_method :oauth_applications_homepage_url_label, "Homepage URL"
     translatable_method :oauth_applications_redirect_uri_label, "Redirect URI"
     translatable_method :oauth_applications_client_secret_label, "Client Secret"

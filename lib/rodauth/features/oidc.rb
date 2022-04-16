@@ -65,6 +65,13 @@ module Rodauth
     auth_value_method :oauth_application_default_scope, "openid"
     auth_value_method :oauth_application_scopes, %w[openid]
 
+    auth_value_method :oauth_applications_id_token_signed_response_alg_column, :id_token_signed_response_alg
+    auth_value_method :oauth_applications_id_token_encrypted_response_alg_column, :id_token_encrypted_response_alg
+    auth_value_method :oauth_applications_id_token_encrypted_response_enc_column, :id_token_encrypted_response_enc
+    auth_value_method :oauth_applications_userinfo_signed_response_alg_column, :userinfo_signed_response_alg
+    auth_value_method :oauth_applications_userinfo_encrypted_response_alg_column, :userinfo_encrypted_response_alg
+    auth_value_method :oauth_applications_userinfo_encrypted_response_enc_column, :userinfo_encrypted_response_enc
+
     auth_value_method :oauth_grants_nonce_column, :nonce
     auth_value_method :oauth_tokens_nonce_column, :nonce
 
@@ -106,7 +113,23 @@ module Rodauth
 
           fill_with_account_claims(oidc_claims, account, oauth_scopes)
 
-          json_response_success(oidc_claims)
+          @oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => oauth_token["client_id"]).first
+
+          if (algo = @oauth_application && @oauth_application[oauth_applications_userinfo_signed_response_alg_column])
+            params = {
+              jwks: oauth_application_jwks,
+              encryption_algorithm: @oauth_application[oauth_applications_userinfo_encrypted_response_alg_column],
+              encryption_method: @oauth_application[oauth_applications_userinfo_encrypted_response_enc_column]
+            }
+            jwt = jwt_encode(
+              oidc_claims,
+              signing_algorithm: algo,
+              **params
+            )
+            jwt_response_success(jwt)
+          else
+            json_response_success(oidc_claims)
+          end
         end
 
         throw_json_response_error(authorization_required_error_status, "invalid_token")
@@ -330,7 +353,13 @@ module Rodauth
 
       fill_with_account_claims(id_token_claims, account, oauth_scopes)
 
-      oauth_token[:id_token] = jwt_encode(id_token_claims)
+      params = {
+        jwks: oauth_application_jwks,
+        signing_algorithm: oauth_application[oauth_applications_id_token_signed_response_alg_column] || oauth_jwt_algorithm,
+        encryption_algorithm: oauth_application[oauth_applications_id_token_encrypted_response_alg_column],
+        encryption_method: oauth_application[oauth_applications_id_token_encrypted_response_enc_column]
+      }
+      oauth_token[:id_token] = jwt_encode(id_token_claims, **params)
     end
 
     # aka fill_with_standard_claims
@@ -443,7 +472,7 @@ module Rodauth
 
     # Metadata
 
-    def openid_configuration_body(path)
+    def openid_configuration_body(path = nil)
       metadata = oauth_server_metadata_body(path).select do |k, _|
         VALID_METADATA_KEYS.include?(k)
       end
