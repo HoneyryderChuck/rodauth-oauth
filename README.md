@@ -11,7 +11,7 @@ This gem implements the following RFCs and features of OAuth:
 
 * `oauth` - [The OAuth 2.0 protocol framework](https://tools.ietf.org/html/rfc6749):
   * [Access Token generation](https://tools.ietf.org/html/rfc6749#section-1.4);
-  * [Access Token refresh](https://tools.ietf.org/html/rfc6749#section-1.5);
+  * [Access Token refresh token grant](https://tools.ietf.org/html/rfc6749#section-1.5);
   * `oauth_authorization_code_grant` - [Authorization code grant](https://tools.ietf.org/html/rfc6749#section-1.3);
   * `oauth_implicit_grant` - [Implicit grant (off by default)](https://tools.ietf.org/html/rfc6749#section-4.2);
   * `oauth_client_credentials_grant` - [Client credentials grant (off by default)](https://tools.ietf.org/html/rfc6749#section-4.4);

@@ -94,7 +94,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
   def test_token_authorization_code_unsupported_application_grant_type
     setup_application
     oauth_app = oauth_application(grant_types: "implicit")
-    oauth_grant = set_oauth_grant(oauth_app)
+    oauth_grant = set_oauth_grant(oauth_application: oauth_app)
     post("/token",
          client_id: oauth_app[:client_id],
          client_secret: "CLIENT_SECRET",
@@ -130,7 +130,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
   def test_token_authorization_code_client_secret_basic
     setup_application
     oauth_app = oauth_application(token_endpoint_auth_method: "client_secret_basic")
-    oauth_grant = set_oauth_grant(oauth_app)
+    oauth_grant = set_oauth_grant(oauth_application: oauth_app)
     post("/token",
          client_id: oauth_app[:client_id],
          client_secret: "CLIENT_SECRET",
@@ -154,7 +154,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
   def test_token_authorization_code_client_secret_post
     setup_application
     oauth_app = oauth_application(token_endpoint_auth_method: "client_secret_post")
-    oauth_grant = set_oauth_grant(oauth_app)
+    oauth_grant = set_oauth_grant(oauth_application: oauth_app)
 
     header "Authorization", "Basic #{authorization_header(
       username: oauth_app[:client_id],
@@ -180,7 +180,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
   def test_token_authorization_code_none
     setup_application
     oauth_app = oauth_application(token_endpoint_auth_method: "none")
-    oauth_grant = set_oauth_grant(oauth_app)
+    oauth_grant = set_oauth_grant(oauth_application: oauth_app)
 
     post("/token",
          client_id: oauth_app[:client_id],
