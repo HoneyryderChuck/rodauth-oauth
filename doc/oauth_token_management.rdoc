@@ -10,6 +10,7 @@ oauth_token_path ::  returns URL path for an oauth token.
 oauth_tokens_id_pattern :: pattern matcher to retrieve the oauth token ID from the URL, <tt>Integer</tt> by default (must respond to "match").
 oauth_tokens_page_title :: Title for the client OAuth tokens page.
 oauth_tokens_view :: The HTML of the Oauth tokens dashboard for the logged in account.
+oauth_tokens_per_page :: max number of oauth tokens to list in the routes listing oauth tokens.
 
 oauth_tokens_expires_in_label :: Label for the oauth token expires in property.
 oauth_tokens_refresh_token_label :: Label for the oauth token refresh token.
