@@ -50,6 +50,7 @@ module Rodauth
               Sequel[oauth_applications_table][oauth_applications_id_column])
             .where(Sequel[oauth_tokens_table][oauth_tokens_account_id_column] => account_id)
             .where(oauth_tokens_revoked_at_column => nil)
+            .order(Sequel.desc(oauth_tokens_id_column))
             .paginate(page, per_page))
           oauth_tokens_view
         end

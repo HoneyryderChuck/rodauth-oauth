@@ -13,31 +13,31 @@ class RodauthOauthApplicationsTest < RodaIntegration
 
     # List
     visit "/oauth-applications"
-    assert_includes page.html, "Foo 5"
+    assert_includes page.html, "Foo 0"
 
     visit "/oauth-applications?per_page=5"
-    assert_includes page.html, "Foo 0"
-    assert_includes page.html, "Foo 1"
-    assert_includes page.html, "Foo 2"
-    assert_includes page.html, "Foo 3"
+    assert_includes page.html, "Foo 5"
     assert_includes page.html, "Foo 4"
-    refute_includes page.html, "Foo 5"
+    assert_includes page.html, "Foo 3"
+    assert_includes page.html, "Foo 2"
+    assert_includes page.html, "Foo 1"
+    refute_includes page.html, "Foo 0"
 
     click_link "Next"
-    refute_includes page.html, "Foo 0"
-    refute_includes page.html, "Foo 1"
-    refute_includes page.html, "Foo 2"
-    refute_includes page.html, "Foo 3"
+    refute_includes page.html, "Foo 5"
     refute_includes page.html, "Foo 4"
-    assert_includes page.html, "Foo 5"
+    refute_includes page.html, "Foo 3"
+    refute_includes page.html, "Foo 2"
+    refute_includes page.html, "Foo 1"
+    assert_includes page.html, "Foo 0"
     click_link "Previous"
 
-    assert_includes page.html, "Foo 0"
-    assert_includes page.html, "Foo 1"
-    assert_includes page.html, "Foo 2"
-    assert_includes page.html, "Foo 3"
+    assert_includes page.html, "Foo 5"
     assert_includes page.html, "Foo 4"
-    refute_includes page.html, "Foo 5"
+    assert_includes page.html, "Foo 3"
+    assert_includes page.html, "Foo 2"
+    assert_includes page.html, "Foo 1"
+    refute_includes page.html, "Foo 0"
   end
 
   def test_oauth_applications_successful

@@ -50,6 +50,7 @@ module Rodauth
     auth_value_method :oauth_applications_route, "oauth-applications"
     auth_value_method :oauth_applications_per_page, 20
     auth_value_method :oauth_applications_id_pattern, Integer
+    auth_value_method :oauth_tokens_per_page, 20
 
     translatable_method :invalid_url_message, "Invalid URL"
     translatable_method :null_error_message, "is not filled"
@@ -95,8 +96,10 @@ module Rodauth
 
           request.on(oauth_applications_oauth_tokens_path) do
             page = Integer(param_or_nil("page") || 1)
-            per_page = Integer(param_or_nil("per_page") || oauth_applications_per_page)
-            oauth_tokens = db[oauth_tokens_table].where(oauth_tokens_oauth_application_id_column => id)
+            per_page = Integer(param_or_nil("per_page") || oauth_tokens_per_page)
+            oauth_tokens = db[oauth_tokens_table]
+              .where(oauth_tokens_oauth_application_id_column => id)
+              .order(Sequel.desc(oauth_tokens_id_column))
             scope.instance_variable_set(:@oauth_tokens, oauth_tokens.paginate(page, per_page))
             request.get do
               oauth_application_oauth_tokens_view
@@ -109,6 +112,7 @@ module Rodauth
           per_page = Integer(param_or_nil("per_page") || oauth_applications_per_page)
           scope.instance_variable_set(:@oauth_applications, db[oauth_applications_table]
             .where(oauth_applications_account_id_column => account_id)
+            .order(Sequel.desc(oauth_applications_id_column))
             .paginate(page, per_page))
 
           oauth_applications_view

@@ -49,31 +49,31 @@ class RodauthTokensTest < RodaIntegration
       # List
       visit "/oauth-tokens"
 
-      assert_includes page.html, "TOKEN5"
+      assert_includes page.html, "TOKEN0"
 
       visit "/oauth-tokens?per_page=5"
-      assert_includes page.html, "TOKEN0"
-      assert_includes page.html, "TOKEN1"
-      assert_includes page.html, "TOKEN2"
-      assert_includes page.html, "TOKEN3"
+      assert_includes page.html, "TOKEN5"
       assert_includes page.html, "TOKEN4"
-      refute_includes page.html, "TOKEN5"
+      assert_includes page.html, "TOKEN3"
+      assert_includes page.html, "TOKEN2"
+      assert_includes page.html, "TOKEN1"
+      refute_includes page.html, "TOKEN0"
 
       click_link "Next"
-      refute_includes page.html, "TOKEN0"
-      refute_includes page.html, "TOKEN1"
-      refute_includes page.html, "TOKEN2"
-      refute_includes page.html, "TOKEN3"
+      refute_includes page.html, "TOKEN5"
       refute_includes page.html, "TOKEN4"
-      assert_includes page.html, "TOKEN5"
+      refute_includes page.html, "TOKEN3"
+      refute_includes page.html, "TOKEN2"
+      refute_includes page.html, "TOKEN1"
+      assert_includes page.html, "TOKEN0"
       click_link "Previous"
 
-      assert_includes page.html, "TOKEN0"
-      assert_includes page.html, "TOKEN1"
-      assert_includes page.html, "TOKEN2"
-      assert_includes page.html, "TOKEN3"
+      assert_includes page.html, "TOKEN5"
       assert_includes page.html, "TOKEN4"
-      refute_includes page.html, "TOKEN5"
+      assert_includes page.html, "TOKEN3"
+      assert_includes page.html, "TOKEN2"
+      assert_includes page.html, "TOKEN1"
+      refute_includes page.html, "TOKEN0"
     end
   end
 
