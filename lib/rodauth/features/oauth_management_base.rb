@@ -9,15 +9,15 @@ module Rodauth
 
     def oauth_management_pagination_links(paginated_ds)
       html = +'<nav aria-label="Pagination"><ul class="pagination">'
-      html << oauth_applications_pagination_link(paginated_ds.prev_page, label: oauth_management_pagination_previous_button)
-      html << oauth_applications_pagination_link(paginated_ds.current_page - 1) unless paginated_ds.first_page?
-      html << oauth_applications_pagination_link(paginated_ds.current_page, label: paginated_ds.current_page, current: true)
-      html << oauth_applications_pagination_link(paginated_ds.current_page + 1) unless paginated_ds.last_page?
-      html << oauth_applications_pagination_link(paginated_ds.next_page, label: oauth_management_pagination_next_button)
+      html << oauth_management_pagination_link(paginated_ds.prev_page, label: oauth_management_pagination_previous_button)
+      html << oauth_management_pagination_link(paginated_ds.current_page - 1) unless paginated_ds.first_page?
+      html << oauth_management_pagination_link(paginated_ds.current_page, label: paginated_ds.current_page, current: true)
+      html << oauth_management_pagination_link(paginated_ds.current_page + 1) unless paginated_ds.last_page?
+      html << oauth_management_pagination_link(paginated_ds.next_page, label: oauth_management_pagination_next_button)
       html << "</ul></nav>"
     end
 
-    def oauth_applications_pagination_link(page, label: page, current: false, classes: "")
+    def oauth_management_pagination_link(page, label: page, current: false, classes: "")
       classes += " disabled" if current || !page
       classes += " active" if current
       if page
