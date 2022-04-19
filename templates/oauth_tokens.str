@@ -43,6 +43,7 @@
             }
           </tbody>
         </table>
+        #{rodauth.oauth_management_pagination_links(@oauth_tokens)}
       HTML
     end
   }

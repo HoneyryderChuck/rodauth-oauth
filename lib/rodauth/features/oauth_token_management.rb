@@ -4,7 +4,7 @@ module Rodauth
   Feature.define(:oauth_token_management, :OauthTokenManagement) do
     using RegexpExtensions
 
-    depends :oauth_base
+    depends :oauth_management_base
 
     view "oauth_tokens", "My Oauth Tokens", "oauth_tokens"
 
@@ -18,6 +18,7 @@ module Rodauth
 
     auth_value_method :oauth_tokens_route, "oauth-tokens"
     auth_value_method :oauth_tokens_id_pattern, Integer
+    auth_value_method :oauth_tokens_per_page, 20
 
     auth_value_methods(
       :oauth_token_path
@@ -40,12 +41,17 @@ module Rodauth
         require_account
 
         request.get do
+          page = Integer(param_or_nil("page") || 1)
+          per_page = per_page_param(oauth_tokens_per_page)
+
           scope.instance_variable_set(:@oauth_tokens, db[oauth_tokens_table]
             .select(Sequel[oauth_tokens_table].*, Sequel[oauth_applications_table][oauth_applications_name_column])
             .join(oauth_applications_table, Sequel[oauth_tokens_table][oauth_tokens_oauth_application_id_column] =>
               Sequel[oauth_applications_table][oauth_applications_id_column])
             .where(Sequel[oauth_tokens_table][oauth_tokens_account_id_column] => account_id)
-                .where(oauth_tokens_revoked_at_column => nil))
+            .where(oauth_tokens_revoked_at_column => nil)
+            .order(Sequel.desc(oauth_tokens_id_column))
+            .paginate(page, per_page))
           oauth_tokens_view
         end
 

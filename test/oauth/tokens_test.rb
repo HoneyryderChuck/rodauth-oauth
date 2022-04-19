@@ -37,6 +37,46 @@ class RodauthTokensTest < RodaIntegration
     assert db[:oauth_tokens].where(revoked_at: nil).count.zero?
   end
 
+  unless ENV.key?("ONLY_ONE_TOKEN")
+    def test_oauth_tokens_pages
+      setup_application
+      login
+
+      6.times do |i|
+        set_oauth_token(token: "TOKEN#{i}", refresh_token: "REFRESH_TOKEN#{i}")
+      end
+
+      # List
+      visit "/oauth-tokens"
+
+      assert_includes page.html, "TOKEN0"
+
+      visit "/oauth-tokens?per_page=5"
+      assert_includes page.html, "TOKEN5"
+      assert_includes page.html, "TOKEN4"
+      assert_includes page.html, "TOKEN3"
+      assert_includes page.html, "TOKEN2"
+      assert_includes page.html, "TOKEN1"
+      refute_includes page.html, "TOKEN0"
+
+      click_link "Next"
+      refute_includes page.html, "TOKEN5"
+      refute_includes page.html, "TOKEN4"
+      refute_includes page.html, "TOKEN3"
+      refute_includes page.html, "TOKEN2"
+      refute_includes page.html, "TOKEN1"
+      assert_includes page.html, "TOKEN0"
+      click_link "Previous"
+
+      assert_includes page.html, "TOKEN5"
+      assert_includes page.html, "TOKEN4"
+      assert_includes page.html, "TOKEN3"
+      assert_includes page.html, "TOKEN2"
+      assert_includes page.html, "TOKEN1"
+      refute_includes page.html, "TOKEN0"
+    end
+  end
+
   private
 
   def setup_application

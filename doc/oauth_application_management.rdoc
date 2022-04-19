@@ -18,6 +18,8 @@ oauth_application_path :: URL sub-path used for a client application view.
 oauth_applications_oauth_tokens_path :: URL sub-path used for a client application's oauth tokens views, <tt>"oauth-tokens"</tt> by default
 invalid_url_message :: error description for the "invalid_url" OAuth error code, <tt>"Invalid URL"</tt> by default.
 null_error_message :: error description for the "null_error" OAuth error code, <tt>"is not filled"</tt> by default.
+oauth_applications_per_page :: max number of oauth applications to list in the oauth applications route.
+oauth_tokens_per_page :: max number of oauth tokens to list in the routes listing oauth tokens.
 
 new_oauth_application_page_title :: Title for the new OAuth application form.
 oauth_application_page_title :: Title for an OAuth application page.
