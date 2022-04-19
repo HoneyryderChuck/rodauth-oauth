@@ -50,5 +50,19 @@ module Rodauth
       super
       db.extension :pagination
     end
+
+    private
+
+    def per_page_param(default_per_page)
+      per_page = param_or_nil("per_page")
+
+      return default_per_page unless per_page
+
+      per_page = per_page.to_i
+
+      return default_per_page if per_page <= 0
+
+      [per_page, default_per_page].min
+    end
   end
 end

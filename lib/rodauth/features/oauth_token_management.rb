@@ -42,7 +42,7 @@ module Rodauth
 
         request.get do
           page = Integer(param_or_nil("page") || 1)
-          per_page = Integer(param_or_nil("per_page") || oauth_tokens_per_page)
+          per_page = per_page_param(oauth_tokens_per_page)
 
           scope.instance_variable_set(:@oauth_tokens, db[oauth_tokens_table]
             .select(Sequel[oauth_tokens_table].*, Sequel[oauth_applications_table][oauth_applications_name_column])
