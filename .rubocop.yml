@@ -177,6 +177,9 @@ Style/StringLiterals:
 Style/SafeNavigation:
   Enabled: false
 
+Style/FetchEnvVar:
+  Enabled: false
+
 Metrics/ClassLength:
   Max: 1500
 
