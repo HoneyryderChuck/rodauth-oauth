@@ -10,7 +10,7 @@
 # See https://github.com/rubocop-hq/rubocop/blob/master/manual/configuration.md
 AllCops:
   NewCops: enable
-  TargetRubyVersion: 2.5
+  TargetRubyVersion: 2.7
   Include:
     - lib/**/*.rb
     - test/**/*.rb
@@ -178,6 +178,9 @@ Style/SafeNavigation:
   Enabled: false
 
 Style/FetchEnvVar:
+  Enabled: false
+
+Style/SlicingWithRange:
   Enabled: false
 
 Metrics/ClassLength:
