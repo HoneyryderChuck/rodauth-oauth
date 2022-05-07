@@ -714,8 +714,7 @@ module Rodauth
         response["Cache-Control"] = "no-store"
         response["Pragma"] = "no-cache"
       end
-      response.write(jwt)
-      request.halt
+      return_response(jwt)
     end
   end
 end
