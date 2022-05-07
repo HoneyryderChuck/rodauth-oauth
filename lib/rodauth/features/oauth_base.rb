@@ -7,6 +7,7 @@ require "net/http"
 require "rodauth/oauth/ttl_store"
 require "rodauth/oauth/database_extensions"
 require "rodauth/oauth/refinements"
+require "rodauth/version"
 
 module Rodauth
   Feature.define(:oauth_base, :OauthBase) do
@@ -687,8 +688,7 @@ module Rodauth
         response["Pragma"] = "no-cache"
       end
       json_payload = _json_response_body(body)
-      response.write(json_payload)
-      request.halt
+      return_response(json_payload)
     end
 
     def throw_json_response_error(status, error_code, message = nil)
@@ -703,8 +703,7 @@ module Rodauth
       json_payload = _json_response_body(payload)
       response["Content-Type"] ||= json_response_content_type
       response["WWW-Authenticate"] = oauth_token_type.upcase if status == 401
-      response.write(json_payload)
-      request.halt
+      return_response(json_payload)
     end
 
     unless method_defined?(:_json_response_body)
@@ -714,6 +713,13 @@ module Rodauth
         else
           JSON.dump(hash)
         end
+      end
+    end
+
+    if Gem::Version.new(Rodauth.version) < Gem::Version.new("2.23")
+      def return_response(body = nil)
+        response.write(body) if body
+        request.halt
       end
     end
 

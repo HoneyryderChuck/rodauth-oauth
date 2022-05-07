@@ -234,8 +234,7 @@ module Rodauth
                                        href: authorization_server_url
                                      }]
                                    })
-          response.write(json_payload)
-          request.halt
+          return_response(json_payload)
         end
       end
     end
@@ -533,7 +532,7 @@ module Rodauth
       response["Access-Control-Allow-Methods"] = "GET, OPTIONS"
       response["Access-Control-Max-Age"] = "3600"
       response.status = 200
-      request.halt
+      return_response
     end
   end
 end
