@@ -46,7 +46,6 @@ if ENV.delete("RODAUTH_DEBUG")
 end
 
 DB.extension :date_arithmetic
-DB.freeze
 
 # OAuth with myself
 CLIENT_ID = ENV.fetch("CLIENT_ID", "CLIENT_ID")
@@ -137,6 +136,8 @@ class AuthorizationServer < Roda
   end
   freeze
 end
+
+DB.freeze
 
 if $PROGRAM_NAME == __FILE__
   require "rack"

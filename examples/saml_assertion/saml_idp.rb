@@ -24,8 +24,6 @@ if ENV.delete("RODAUTH_DEBUG")
   DB.loggers << Logger.new($stdout)
 end
 
-DB.freeze
-
 hash = ::BCrypt::Password.create("password", cost: BCrypt::Engine::MIN_COST)
 # test user
 DB[:accounts].insert_conflict(target: :email).insert(email: "foo@bar.com", ph: hash)
@@ -133,6 +131,8 @@ class SAMLServer < Roda
     end
   end
 end
+
+DB.freeze
 
 if $PROGRAM_NAME == __FILE__
   require "rack"
