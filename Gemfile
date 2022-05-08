@@ -18,7 +18,7 @@ elsif RUBY_VERSION < "2.6"
   gem "capybara", "~> 3.35.0"
   gem "json-jwt"
 else
-  gem "capybara"
+  gem "capybara", "< 3.37.0"
   gem "json-jwt"
 end
 

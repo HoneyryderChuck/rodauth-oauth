@@ -77,7 +77,6 @@ if ENV.delete("RODAUTH_DEBUG")
 end
 
 DB.extension :date_arithmetic
-DB.freeze
 
 # OAuth with myself
 hash = ::BCrypt::Password.create("password", cost: BCrypt::Engine::MIN_COST)
@@ -181,6 +180,8 @@ class AuthorizationServer < Roda
   end
   freeze
 end
+
+DB.freeze
 
 if $PROGRAM_NAME == __FILE__
   require "rack"

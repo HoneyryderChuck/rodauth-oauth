@@ -4,10 +4,11 @@ require "time"
 require "base64"
 require "securerandom"
 require "net/http"
+require "rodauth/version"
+require "rodauth/oauth/version"
 require "rodauth/oauth/ttl_store"
 require "rodauth/oauth/database_extensions"
 require "rodauth/oauth/refinements"
-require "rodauth/version"
 
 module Rodauth
   Feature.define(:oauth_base, :OauthBase) do
