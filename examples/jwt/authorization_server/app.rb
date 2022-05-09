@@ -139,7 +139,6 @@ class AuthorizationServer < Roda
     rodauth.oauth_server_metadata
 
     r.root do
-      @application = TEST_APPLICATION
       view inline: <<~HTML
         <% if rodauth.logged_in? %>
         <p class="lead">

@@ -51,8 +51,8 @@ DB.extension :date_arithmetic
 CLIENT_ID = ENV.fetch("CLIENT_ID", "CLIENT_ID")
 
 # test application
-TEST_APPLICATION = DB[:oauth_applications].where(client_id: CLIENT_ID).first || begin
-  application_id = DB[:oauth_applications].insert(
+unless DB[:oauth_applications].where(client_id: CLIENT_ID).first
+  DB[:oauth_applications].insert(
     client_id: CLIENT_ID,
     client_secret: BCrypt::Password.create(CLIENT_ID),
     name: "Myself",
@@ -61,7 +61,6 @@ TEST_APPLICATION = DB[:oauth_applications].where(client_id: CLIENT_ID).first || 
     homepage_url: "http://localhost:9294",
     scopes: "profile.read books.read"
   )
-  DB[:oauth_applications].where(id: application_id).first
 end
 
 class AuthorizationServer < Roda
@@ -95,7 +94,6 @@ class AuthorizationServer < Roda
     r.rodauth
 
     r.root do
-      @application = TEST_APPLICATION
       view inline: <<~HTML
         <% if rodauth.logged_in? %>
         <p class="lead">
