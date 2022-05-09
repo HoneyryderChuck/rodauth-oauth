@@ -1,5 +1,6 @@
 # frozen-string-literal: true
 
+require "rodauth/oauth/version"
 require "rodauth/oauth/ttl_store"
 
 module Rodauth
