@@ -48,6 +48,10 @@ module Rodauth
 
     def post_configure
       super
+
+      # TODO: remove this in v1, when resource-server mode does not load all of the provider features.
+      return unless db
+
       db.extension :pagination
     end
 
