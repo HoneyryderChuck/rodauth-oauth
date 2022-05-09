@@ -76,7 +76,7 @@ hash = ::BCrypt::Password.create("password", cost: BCrypt::Engine::MIN_COST)
 DB[:accounts].insert_conflict(target: :email).insert(name: "Fernando Pessoa", email: "foo@bar.com", ph: hash)
 
 # test application
-TEST_APPLICATION = DB[:oauth_applications].where(client_id: CLIENT_ID).first || begin
+unless DB[:oauth_applications].where(client_id: CLIENT_ID).first
   email = "admin@localhost.com"
   account_id = DB[:accounts].where(email: email).get(:id) || begin
     DB[:accounts].insert(email: email, ph: hash)
@@ -152,7 +152,6 @@ class AuthenticationServer < Roda
     rodauth.webfinger
 
     r.root do
-      @application = TEST_APPLICATION
       view inline: <<~HTML
         <% if rodauth.logged_in? %>
         <p class="lead">
