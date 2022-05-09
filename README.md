@@ -73,7 +73,7 @@ Or install it yourself as:
 
 ## Usage
 
-This tutorial assumes you already read the documentation and know how to set up `rodauth`. After that, integrating `roda-auth` will look like:
+This tutorial assumes you already read the documentation and know how to set up `rodauth`. After that, integrating `rodauth-oauth` will look like:
 
 ```ruby
 plugin :rodauth do
