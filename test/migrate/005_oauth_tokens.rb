@@ -23,6 +23,6 @@ Sequel.migration do
   end
 
   down do
-    drop_table(:oauth_grants)
+    drop_table(:oauth_tokens)
   end
 end
