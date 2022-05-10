@@ -13,6 +13,7 @@ REDIRECT_URI = "http://localhost:9293/auth/openid_connect/callback"
 CLIENT_ID = ENV.fetch("CLIENT_ID", "CLIENT_ID")
 CLIENT_SECRET = ENV.fetch("CLIENT_SECRET", CLIENT_ID)
 
+OmniAuth::AuthenticityTokenProtection.default_options(key: "csrf.token", authenticity_param: "_csrf")
 OpenIDConnect.debug!
 WebFinger.url_builder = URI::HTTP
 SWD.url_builder = URI::HTTP
@@ -55,7 +56,7 @@ class ClientApplication < Roda
             <% if !session["access_token"] %>
               <li class="nav-item">
                 <form action="/auth/openid_connect" class="navbar-form pull-right" method="post">
-                  <%= csrf_tag("/auth/openid_connect") %>
+                  <%= csrf_tag %>
                   <button type="submit" class="btn btn-outline-primary">Authenticate</button>
                 </form>
               </li>
@@ -65,7 +66,7 @@ class ClientApplication < Roda
               </li>
               <li class="nav-item">
                 <form action="/logout" class="navbar-form pull-right" method="post">
-                  <%= csrf_tag("/logout") %>
+                  <%= csrf_tag %>
                   <input class="btn btn-outline-primary" type="submit" value="Logout" />
                 </form>
               </li>
@@ -91,10 +92,12 @@ class ClientApplication < Roda
   plugin :flash
   plugin :common_logger
   plugin :assets, css: "layout.scss", path: File.expand_path("../assets", __dir__)
-  plugin :route_csrf
+  plugin :csrf, skip_middleware: true
 
   secret = ENV.delete("RODAUTH_SESSION_SECRET") || SecureRandom.random_bytes(64)
-  use RodaSessionMiddleware, secret: secret, key: "client-application.session"
+  # use RodaSessionMiddleware, secret: secret, key: "client-application.session"
+
+  use Rack::Session::Cookie, key: "rack.session", secret: secret
 
   auth_server_uri = URI(AUTHORIZATION_SERVER)
 
