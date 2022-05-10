@@ -315,7 +315,7 @@ module Rodauth
     def create_oauth_grant(create_params = {})
       return super unless (nonce = param_or_nil("nonce"))
 
-      super(oauth_grants_nonce_column => nonce)
+      super(create_params.merge(oauth_grants_nonce_column => nonce))
     end
 
     def create_oauth_token_from_authorization_code(oauth_grant, create_params)
