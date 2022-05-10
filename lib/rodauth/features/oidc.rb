@@ -120,7 +120,8 @@ module Rodauth
               jwks: oauth_application_jwks,
               encryption_algorithm: @oauth_application[oauth_applications_userinfo_encrypted_response_alg_column],
               encryption_method: @oauth_application[oauth_applications_userinfo_encrypted_response_enc_column]
-            }
+            }.compact
+
             jwt = jwt_encode(
               oidc_claims,
               signing_algorithm: algo,
@@ -357,7 +358,8 @@ module Rodauth
         signing_algorithm: oauth_application[oauth_applications_id_token_signed_response_alg_column] || oauth_jwt_algorithm,
         encryption_algorithm: oauth_application[oauth_applications_id_token_encrypted_response_alg_column],
         encryption_method: oauth_application[oauth_applications_id_token_encrypted_response_enc_column]
-      }
+      }.compact
+
       oauth_token[:id_token] = jwt_encode(id_token_claims, **params)
     end
 
