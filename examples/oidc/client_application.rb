@@ -123,22 +123,30 @@ class ClientApplication < Roda
 
     r.root do
       inline = if (token = session["access_token"])
-                 @books = json_request(:get, RESOURCE_SERVER, headers: { "authorization" => "Bearer #{token}" })
-                 <<-HTML
-                  <div class="books-app">
-                    <ul class="list-group">
-                      <% @books.each do |book| %>
-                        <li class="list-group-item">"<%= book[:name] %>" by <b><%= book[:author] %></b></li>
-                      <% end %>
-                    </ul>
-                  </div>
-                 HTML
+                 begin
+                   @books = json_request(:get, RESOURCE_SERVER, headers: { "authorization" => "Bearer #{token}" })
+                   <<-HTML
+            <div class="books-app">
+              <ul class="list-group">
+                <% @books.each do |book| %>
+                  <li class="list-group-item">"<%= book[:name] %>" by <b><%= book[:author] %></b></li>
+                <% end %>
+              </ul>
+            </div>
+                   HTML
+                 rescue RuntimeError => e
+                   <<-HTML
+            <p class="lead">
+              Error fetching books: #{e.message}
+            </p>
+                   HTML
+                 end
                else
                  <<-HTML
-                  <p class="lead">
-                    You can use this application to test the OpenID Connect framework.
-                    Once you authenticate, you'll see a list of books available in the resource server, and your name.
-                  </p>
+        <p class="lead">
+          You can use this application to test the OpenID Connect framework.
+          Once you authenticate, you'll see a list of books available in the resource server, and your name.
+        </p>
                  HTML
                end
 
