@@ -33,7 +33,7 @@ module Rodauth
 
     translatable_method :oauth_applications_name_label, "Name"
     translatable_method :oauth_applications_description_label, "Description"
-    translatable_method :oauth_applications_scopes_label, "Scopes"
+    translatable_method :oauth_applications_scopes_label, "Default scopes"
     translatable_method :oauth_applications_contacts_label, "Contacts"
     translatable_method :oauth_applications_tos_uri_label, "Terms of service"
     translatable_method :oauth_applications_policy_uri_label, "Policy"
