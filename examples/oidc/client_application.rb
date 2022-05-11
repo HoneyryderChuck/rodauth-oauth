@@ -74,11 +74,11 @@ class ClientApplication < Roda
           </ul>
         </div>
         <div class="container">
-          <% if flash['notice'] %>
-            <div class="alert alert-success"><p><%= flash['notice'] %></p></div>
+          <% if flash[:notice] %>
+            <div class="alert alert-success"><p><%= flash[:notice] %></p></div>
           <% end %>
-          <% if flash['error'] %>
-            <div class="alert alert-danger"><p><%= flash['error'] %></p></div>
+          <% if flash[:error] %>
+            <div class="alert alert-danger"><p><%= flash[:error] %></p></div>
           <% end %>
           <div class="main px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
             <h1 class="display-4">Book Store</h1>
