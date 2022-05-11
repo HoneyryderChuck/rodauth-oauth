@@ -119,7 +119,7 @@ class AuthenticationServer < Roda
     login_return_to_requested_location? true
 
     oauth_application_scopes %w[openid email profile books.read]
-    oauth_application_default_scope %w[openid email profile books.read]
+    oauth_application_default_scope %w[]
     oauth_valid_uri_schemes %w[http https]
 
     oauth_jwt_key PRIV_KEY
