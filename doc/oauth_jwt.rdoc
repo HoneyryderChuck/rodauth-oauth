@@ -11,6 +11,8 @@ oauth_jwt_subject_secret :: hashing secret to use when subject claim type is "pa
 oauth_jwt_token_issuer :: JWT issuer claim, <tt>nil</tt> by default.
 oauth_jwt_audience :: JWT audience claim, <tt>nil</tt> by default.
 oauth_applications_jwt_public_key_label :: Form label for the oauth application client application public key.
+oauth_application_jwt_public_key_param :: Form param for the oauth application client application public key.
+oauth_application_jwks_param :: Form param for the oauth application client application JSON Web Keys.
 oauth_applications_jwt_public_key_column :: db column where to store an oauth application's publid key, used for verifying JWT tokens, <tt>:jwt_public_key</tt> by default.
 oauth_applications_request_object_encryption_alg_column :: db column where to store the encryption algorithm used for the request object JWT for the oauth application, <tt>:request_object_encryption_alg</tt> by default.
 oauth_applications_request_object_encryption_enc_column :: db column where to store the encryption method used for the request object JWT for the oauth application, <tt>:request_object_encryption_enc</tt> by default.

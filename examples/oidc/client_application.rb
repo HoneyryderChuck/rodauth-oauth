@@ -13,6 +13,7 @@ REDIRECT_URI = "http://localhost:9293/auth/openid_connect/callback"
 CLIENT_ID = ENV.fetch("CLIENT_ID", "CLIENT_ID")
 CLIENT_SECRET = ENV.fetch("CLIENT_SECRET", CLIENT_ID)
 
+OmniAuth::AuthenticityTokenProtection.default_options(key: "csrf.token", authenticity_param: "_csrf")
 OpenIDConnect.debug!
 WebFinger.url_builder = URI::HTTP
 SWD.url_builder = URI::HTTP
@@ -55,7 +56,7 @@ class ClientApplication < Roda
             <% if !session["access_token"] %>
               <li class="nav-item">
                 <form action="/auth/openid_connect" class="navbar-form pull-right" method="post">
-                  <%= csrf_tag("/auth/openid_connect") %>
+                  <%= csrf_tag %>
                   <button type="submit" class="btn btn-outline-primary">Authenticate</button>
                 </form>
               </li>
@@ -65,7 +66,7 @@ class ClientApplication < Roda
               </li>
               <li class="nav-item">
                 <form action="/logout" class="navbar-form pull-right" method="post">
-                  <%= csrf_tag("/logout") %>
+                  <%= csrf_tag %>
                   <input class="btn btn-outline-primary" type="submit" value="Logout" />
                 </form>
               </li>
@@ -73,11 +74,11 @@ class ClientApplication < Roda
           </ul>
         </div>
         <div class="container">
-          <% if flash['notice'] %>
-            <div class="alert alert-success"><p><%= flash['notice'] %></p></div>
+          <% if flash[:notice] %>
+            <div class="alert alert-success"><p><%= flash[:notice] %></p></div>
           <% end %>
-          <% if flash['error'] %>
-            <div class="alert alert-danger"><p><%= flash['error'] %></p></div>
+          <% if flash[:error] %>
+            <div class="alert alert-danger"><p><%= flash[:error] %></p></div>
           <% end %>
           <div class="main px-3 py-3 pt-md-5 pb-md-4 mx-auto text-center">
             <h1 class="display-4">Book Store</h1>
@@ -91,10 +92,12 @@ class ClientApplication < Roda
   plugin :flash
   plugin :common_logger
   plugin :assets, css: "layout.scss", path: File.expand_path("../assets", __dir__)
-  plugin :route_csrf
+  plugin :csrf, skip_middleware: true
 
   secret = ENV.delete("RODAUTH_SESSION_SECRET") || SecureRandom.random_bytes(64)
-  use RodaSessionMiddleware, secret: secret, key: "client-application.session"
+  # use RodaSessionMiddleware, secret: secret, key: "client-application.session"
+
+  use Rack::Session::Cookie, key: "rack.session", secret: secret
 
   auth_server_uri = URI(AUTHORIZATION_SERVER)
 
@@ -120,22 +123,30 @@ class ClientApplication < Roda
 
     r.root do
       inline = if (token = session["access_token"])
-                 @books = json_request(:get, RESOURCE_SERVER, headers: { "authorization" => "Bearer #{token}" })
-                 <<-HTML
-                  <div class="books-app">
-                    <ul class="list-group">
-                      <% @books.each do |book| %>
-                        <li class="list-group-item">"<%= book[:name] %>" by <b><%= book[:author] %></b></li>
-                      <% end %>
-                    </ul>
-                  </div>
-                 HTML
+                 begin
+                   @books = json_request(:get, RESOURCE_SERVER, headers: { "authorization" => "Bearer #{token}" })
+                   <<-HTML
+            <div class="books-app">
+              <ul class="list-group">
+                <% @books.each do |book| %>
+                  <li class="list-group-item">"<%= book[:name] %>" by <b><%= book[:author] %></b></li>
+                <% end %>
+              </ul>
+            </div>
+                   HTML
+                 rescue RuntimeError => e
+                   <<-HTML
+            <p class="lead">
+              Error fetching books: #{e.message}
+            </p>
+                   HTML
+                 end
                else
                  <<-HTML
-                  <p class="lead">
-                    You can use this application to test the OpenID Connect framework.
-                    Once you authenticate, you'll see a list of books available in the resource server, and your name.
-                  </p>
+        <p class="lead">
+          You can use this application to test the OpenID Connect framework.
+          Once you authenticate, you'll see a list of books available in the resource server, and your name.
+        </p>
                  HTML
                end
 

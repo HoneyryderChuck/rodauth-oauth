@@ -61,7 +61,7 @@ class RodauthOauthApplicationsTest < RodaIntegration
     # Application page
     assert_equal page.find("#notice").text, "Your oauth application has been registered"
     assert_includes page.html, "Client ID: "
-    assert_includes page.html, "Scopes: "
+    assert_includes page.html, "Default scopes: "
     assert db[:oauth_applications].count == 1
 
     # Application page for different user
@@ -99,7 +99,7 @@ class RodauthOauthApplicationsTest < RodaIntegration
     # Application page
     assert_equal page.find("#notice").text, "Your oauth application has been registered"
     assert_includes page.html, "Client ID: "
-    assert_includes page.html, "Scopes: "
+    assert_includes page.html, "Default scopes: "
     assert db[:oauth_applications].count == 1
     assert db[:oauth_applications].first[:redirect_uri] == "https://foobar.com/callback https://foobar.com/callback2"
   end

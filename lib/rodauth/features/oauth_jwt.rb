@@ -39,6 +39,9 @@ module Rodauth
 
     translatable_method :oauth_applications_jwt_public_key_label, "Public key"
 
+    auth_value_method :oauth_application_jwt_public_key_param, "jwt_public_key"
+    auth_value_method :oauth_application_jwks_param, "jwks"
+
     auth_value_method :oauth_jwt_keys, {}
     auth_value_method :oauth_jwt_key, nil
     auth_value_method :oauth_jwt_public_key, nil

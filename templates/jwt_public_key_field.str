@@ -1,4 +1,4 @@
 <div class="form-group">
   <label for="name">#{rodauth.oauth_applications_jwt_public_key_label}#{rodauth.input_field_label_suffix}</label>
-  #{rodauth.input_field_string(rodauth.oauth_application_jwt_public_key_param, "jwt_public_key", :type=>"text")}
+  #{rodauth.input_field_string(rodauth.oauth_application_jwt_public_key_param, "jwt_public_key", :type=>"text", :required=>false)}
 </div>

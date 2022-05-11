@@ -19,7 +19,7 @@ en:
     oauth_management_pagination_next_button: "Next"
     oauth_applications_name_label: "Name"
     oauth_applications_description_label: "Description"
-    oauth_applications_scopes_label: "Scopes"
+    oauth_applications_scopes_label: "Default scopes"
     oauth_applications_contacts_label: "Contacts"
     oauth_applications_homepage_url_label: "Homepage URL"
     oauth_applications_tos_uri_label: "Terms of Service URL"
