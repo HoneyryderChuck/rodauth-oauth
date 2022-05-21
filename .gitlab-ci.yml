@@ -229,6 +229,7 @@ ruby31:
 
 coverage:
   stage: prepare
+  coverage: '/\(\d+.\d+%\) covered/'
   before_script:
     - gem install simplecov --no-doc
   dependencies:
