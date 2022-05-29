@@ -587,28 +587,19 @@ module Rodauth
         oauth_tokens_ds = db[oauth_tokens_table]
         access_token = _generate_access_token(update_params)
 
-        oauth_token = if oauth_refresh_token_protection_policy == "rotation"
-                        insert_params = {
-                          **update_params,
-                          oauth_tokens_oauth_token_id_column => oauth_token[oauth_tokens_id_column],
-                          oauth_tokens_account_id_column => oauth_token[oauth_tokens_account_id_column],
-                          oauth_tokens_scopes_column => oauth_token[oauth_tokens_scopes_column]
-                        }
+        if oauth_refresh_token_protection_policy == "rotation"
+          update_params = {
+            **update_params,
+            oauth_tokens_oauth_token_id_column => oauth_token[oauth_tokens_id_column],
+            oauth_tokens_account_id_column => oauth_token[oauth_tokens_account_id_column],
+            oauth_tokens_scopes_column => oauth_token[oauth_tokens_scopes_column]
+          }
 
-                        refresh_token = _generate_refresh_token(insert_params)
-
-                        # revoke the refresh token
-                        oauth_tokens_ds.where(oauth_tokens_id_column => oauth_token[oauth_tokens_id_column])
-                                       .update(oauth_tokens_revoked_at_column => Sequel::CURRENT_TIMESTAMP)
-
-                        insert_params[oauth_tokens_oauth_token_id_column] = oauth_token[oauth_tokens_id_column]
-                        __insert_and_return__(oauth_tokens_ds, oauth_tokens_id_column, insert_params)
-                      else
-                        refresh_token = param("refresh_token")
-                        # includes none
-                        ds = oauth_tokens_ds.where(oauth_tokens_id_column => oauth_token[oauth_tokens_id_column])
-                        __update_and_return__(ds, update_params)
-                      end
+          refresh_token = _generate_refresh_token(update_params)
+        else
+          refresh_token = param("refresh_token")
+        end
+        oauth_token = __update_and_return__(oauth_tokens_ds, update_params)
 
         oauth_token[oauth_tokens_token_column] = access_token
         oauth_token[oauth_tokens_refresh_token_column] = refresh_token

@@ -123,19 +123,12 @@ class RodauthOAuthOIDCRefreshTokenTest < OIDCIntegration
          grant_type: "refresh_token",
          refresh_token: oauth_token[:refresh_token])
 
-    assert last_response.status == 200
-    assert last_response.headers["Content-Type"] == "application/json"
-
-    # previous token gets revoked
-    assert db[:oauth_tokens].count == 2
-    assert db[:oauth_tokens].where(revoked_at: nil).count == 1
-
-    new_token = db[:oauth_tokens].where(revoked_at: nil).first
-    assert new_token[:access_token] == json_body["token"]
-    assert new_token[:refresh_token] == json_body["refresh_token"]
-
+    verify_response
     verify_refresh_token_response(json_body, oauth_token)
     assert json_body["refresh_token"] != oauth_token[:refresh_token]
+
+    # previous token gets revoked
+    assert db[:oauth_tokens].count == 1
 
     verify_access_token_response(json_body, oauth_token, "SECRET", "HS256")
 
@@ -151,8 +144,6 @@ class RodauthOAuthOIDCRefreshTokenTest < OIDCIntegration
     assert last_response.headers["Content-Type"] == "application/json"
     assert json_body["error"] == "invalid_grant"
     assert json_body["error_description"] == "Invalid grant"
-
-    assert db[:oauth_tokens].where(revoked_at: nil).count.zero?
   end
 
   private
