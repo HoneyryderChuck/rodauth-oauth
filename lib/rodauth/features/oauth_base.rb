@@ -591,6 +591,7 @@ module Rodauth
                         insert_params = {
                           **update_params,
                           oauth_tokens_oauth_token_id_column => oauth_token[oauth_tokens_id_column],
+                          oauth_tokens_account_id_column => oauth_token[oauth_tokens_account_id_column],
                           oauth_tokens_scopes_column => oauth_token[oauth_tokens_scopes_column]
                         }
 

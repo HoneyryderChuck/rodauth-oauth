@@ -31,7 +31,8 @@ class OIDCIntegration < JWTIntegration
     payload, headers = JWT.decode(data["id_token"], secret, true, algorithms: [algorithm])
 
     assert headers["alg"] == algorithm
-    assert payload["iss"] == "Example"
+    assert payload["nonce"] == oauth_token[:nonce]
+    assert payload["iss"] == "http://example.org"
     assert payload["sub"] == account[:id]
     assert payload.key?("aud")
     assert payload.key?("exp")
