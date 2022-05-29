@@ -75,7 +75,7 @@ class RodauthOAuthOIDCRefreshTokenTest < OIDCIntegration
     end
     setup_application
 
-    prev_token = oauth_token(refresh_token_hash: generate_hashed_token("REFRESH_TOKEN"))
+    prev_token = oauth_token(refresh_token: nil, refresh_token_hash: generate_hashed_token("REFRESH_TOKEN"))
 
     post("/token",
          client_secret: "CLIENT_SECRET",
@@ -87,6 +87,7 @@ class RodauthOAuthOIDCRefreshTokenTest < OIDCIntegration
     # oauth_token = verify_oauth_token
     verify_access_token_response(json_body, oauth_token, "SECRET", "HS256")
     verify_refresh_token_response(json_body, prev_token)
+    assert json_body["refresh_token"] == "REFRESH_TOKEN"
     assert prev_token[:refresh_token_hash] == oauth_token[:refresh_token_hash]
   end
 

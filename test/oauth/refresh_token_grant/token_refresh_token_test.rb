@@ -110,7 +110,7 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
     end
     setup_application
 
-    prev_token = oauth_token(refresh_token_hash: generate_hashed_token("REFRESH_TOKEN"))
+    prev_token = oauth_token(refresh_token: nil, refresh_token_hash: generate_hashed_token("REFRESH_TOKEN"))
 
     post("/token",
          client_secret: "CLIENT_SECRET",
@@ -126,6 +126,7 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
     oauth_token = db[:oauth_tokens].first
 
     verify_refresh_token_response(json_body, prev_token)
+    assert json_body["refresh_token"] == "REFRESH_TOKEN"
     assert prev_token[:token_hash] != oauth_token[:token_hash]
     assert prev_token[:refresh_token_hash] == oauth_token[:refresh_token_hash]
   end

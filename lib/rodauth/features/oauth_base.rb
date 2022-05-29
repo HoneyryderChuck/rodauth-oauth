@@ -604,13 +604,14 @@ module Rodauth
                         insert_params[oauth_tokens_oauth_token_id_column] = oauth_token[oauth_tokens_id_column]
                         __insert_and_return__(oauth_tokens_ds, oauth_tokens_id_column, insert_params)
                       else
+                        refresh_token = param("refresh_token")
                         # includes none
                         ds = oauth_tokens_ds.where(oauth_tokens_id_column => oauth_token[oauth_tokens_id_column])
                         __update_and_return__(ds, update_params)
                       end
 
         oauth_token[oauth_tokens_token_column] = access_token
-        oauth_token[oauth_tokens_refresh_token_column] = refresh_token if refresh_token
+        oauth_token[oauth_tokens_refresh_token_column] = refresh_token
         oauth_token
       end
     end

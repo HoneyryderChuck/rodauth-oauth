@@ -93,7 +93,7 @@ class RodauthOAuthJWTRefreshTokenTest < JWTIntegration
     end
     setup_application
 
-    prev_token = oauth_token(refresh_token_hash: generate_hashed_token("REFRESH_TOKEN"))
+    prev_token = oauth_token(refresh_token: nil, refresh_token_hash: generate_hashed_token("REFRESH_TOKEN"))
 
     post("/token",
          client_secret: "CLIENT_SECRET",
@@ -109,11 +109,10 @@ class RodauthOAuthJWTRefreshTokenTest < JWTIntegration
     oauth_token = db[:oauth_tokens].first
 
     verify_refresh_token_response(json_body, prev_token)
+    assert json_body["refresh_token"] == "REFRESH_TOKEN"
     assert prev_token[:refresh_token_hash] == oauth_token[:refresh_token_hash]
 
-    token = json_body["access_token"]
-
-    verify_access_token_response(json_body.merge("access_token" => token), oauth_token, "SECRET", "HS256")
+    verify_access_token_response(json_body, oauth_token, "SECRET", "HS256")
   end
 
   def test_token_refresh_token_protection_policy_none_successful
