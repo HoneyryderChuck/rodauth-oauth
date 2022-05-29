@@ -34,6 +34,7 @@ class OIDCIntegration < JWTIntegration
     assert payload["nonce"] == oauth_token[:nonce]
     assert payload["iss"] == "http://example.org"
     assert payload["sub"] == account[:id]
+    assert payload["auth_time"] == oauth_token[:auth_time].to_i
     assert payload.key?("aud")
     assert payload.key?("exp")
     assert payload.key?("iat")

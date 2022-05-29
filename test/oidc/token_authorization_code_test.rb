@@ -17,24 +17,21 @@ class RodauthOAuthOidcTokenAuthorizationCodeTest < OIDCIntegration
          code: grant[:code],
          redirect_uri: grant[:redirect_uri])
 
-    assert last_response.status == 200
-    assert last_response.headers["Content-Type"] == "application/json"
+    verify_response
 
-    assert db[:oauth_tokens].count == 1
-
-    access_token = db[:oauth_tokens].first
-
-    oauth_grant = db[:oauth_grants].where(id: access_token[:oauth_grant_id]).first
-    assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
+    oauth_token = verify_oauth_token
+    oauth_grant = db[:oauth_grants].where(id: oauth_token[:oauth_grant_id]).first
     assert oauth_grant[:nonce] == "NONCE", "nonce should be passed to token"
+
+    verify_access_token_response(json_body, oauth_token, "SECRET", "HS256")
   end
 
   private
 
   def setup_application
     rodauth do
-      oauth_jwt_key OpenSSL::PKey::RSA.generate(2048)
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_key "SECRET"
+      oauth_jwt_algorithm "HS256"
     end
     super
     header "Accept", "application/json"
