@@ -56,6 +56,7 @@ else
     String :refresh_token, token: true
     DateTime :expires_in, null: false
     DateTime :revoked_at
+    DateTime :auth_time
     String :scopes, null: false
     String :nonce
   end

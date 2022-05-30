@@ -40,6 +40,5 @@ jwks_route :: the route for the jwks, defaults to +jwks+.
 jwt_encode :: encodes a given JWT token.
 jwt_decode :: decodes a given JWT token.
 jwks_set :: returns the JWK set to expose over JSON.
-last_account_login_at :: retrieves the last login from an account.
 before_jwks_route :: Run arbitrary code before the JWKS route.
 generate_jti :: generates a unique jti claimm.

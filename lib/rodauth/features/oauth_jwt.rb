@@ -66,7 +66,6 @@ module Rodauth
       :jwt_encode,
       :jwt_decode,
       :jwks_set,
-      :last_account_login_at,
       :generate_jti
     )
 
@@ -98,12 +97,6 @@ module Rodauth
     end
 
     private
-
-    unless method_defined?(:last_account_login_at)
-      def last_account_login_at
-        nil
-      end
-    end
 
     def issuer
       @issuer ||= oauth_jwt_token_issuer || authorization_server_url
@@ -175,41 +168,38 @@ module Rodauth
 
     # /token
 
+    def create_oauth_token_from_token(oauth_token, update_params)
+      otoken = super
+      access_token = _generate_jwt_access_token(otoken)
+      otoken[oauth_tokens_token_column] = access_token
+      otoken
+    end
+
     def generate_oauth_token(params = {}, should_generate_refresh_token = true)
-      create_params = {
-        oauth_grants_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_token_expires_in)
-      }.merge(params)
+      oauth_token = super
+      access_token = _generate_jwt_access_token(oauth_token)
+      oauth_token[oauth_tokens_token_column] = access_token
+      oauth_token
+    end
 
-      oauth_token = rescue_from_uniqueness_error do
-        if should_generate_refresh_token
-          refresh_token = oauth_unique_id_generator
-
-          if oauth_tokens_refresh_token_hash_column
-            create_params[oauth_tokens_refresh_token_hash_column] = generate_token_hash(refresh_token)
-          else
-            create_params[oauth_tokens_refresh_token_column] = refresh_token
-          end
-        end
-
-        _generate_oauth_token(create_params)
-      end
-
+    def _generate_jwt_access_token(oauth_token)
       claims = jwt_claims(oauth_token)
 
       # one of the points of using jwt is avoiding database lookups, so we put here all relevant
       # token data.
       claims[:scope] = oauth_token[oauth_tokens_scopes_column]
 
-      token = jwt_encode(claims)
+      jwt_encode(claims)
+    end
 
-      oauth_token[oauth_tokens_token_column] = token
-      oauth_token
+    def _generate_access_token(*)
+      # no op
     end
 
     def jwt_claims(oauth_token)
       issued_at = Time.now.to_i
 
-      claims = {
+      {
         iss: issuer, # issuer
         iat: issued_at, # issued at
         #
@@ -227,10 +217,6 @@ module Rodauth
         exp: issued_at + oauth_token_expires_in,
         aud: (oauth_jwt_audience || oauth_application[oauth_applications_client_id_column])
       }
-
-      claims[:auth_time] = last_account_login_at.to_i if last_account_login_at
-
-      claims
     end
 
     def jwt_subject(oauth_token)

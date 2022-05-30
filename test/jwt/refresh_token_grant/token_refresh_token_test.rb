@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodauthOAuthRefreshTokenTest < RodaIntegration
+class RodauthOAuthJWTRefreshTokenTest < JWTIntegration
   include Rack::Test::Methods
 
   def test_token_refresh_token_no_token
@@ -43,29 +43,6 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
     assert json_body["error"] == "invalid_client"
   end
 
-  def test_token_refresh_token_same_code
-    rodauth do
-      oauth_unique_id_generator { "TOKEN" }
-    end
-    setup_application
-    login
-
-    _prev_token = oauth_token(token: "TOKEN")
-    @oauth_token = nil
-    token = oauth_token(token: "OLD_TOKEN", refresh_token: "OTHER_REFRESH_TOKEN", scopes: "user.read")
-
-    post("/token",
-         client_secret: "CLIENT_SECRET",
-         client_id: oauth_application[:client_id],
-         grant_type: "refresh_token",
-         refresh_token: token[:refresh_token])
-
-    assert last_response.status == 409
-    assert last_response.headers["Content-Type"] == "application/json"
-    assert json_body["error"] == "invalid_request"
-    assert json_body["error_description"] == "error generating unique token"
-  end
-
   def test_token_refresh_token_expired_token
     rodauth do
       oauth_refresh_token_expires_in 2 # 2 sec
@@ -89,6 +66,8 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
   def test_token_refresh_token_successful
     setup_application
 
+    oauth_token = set_oauth_token
+
     post("/token",
          client_secret: "CLIENT_SECRET",
          client_id: oauth_application[:client_id],
@@ -101,16 +80,20 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
     assert db[:oauth_tokens].where(revoked_at: nil).count == 1
 
     verify_refresh_token_response(json_body, oauth_token)
+    # oauth_token = verify_oauth_token
+
+    token = json_body["access_token"]
+
+    verify_access_token_response(json_body.merge("access_token" => token), oauth_token, "SECRET", "HS256")
   end
 
   def test_token_refresh_token_hash_columns_successful
     rodauth do
-      oauth_tokens_token_hash_column :token_hash
       oauth_tokens_refresh_token_hash_column :refresh_token_hash
     end
     setup_application
 
-    prev_token = oauth_token(refresh_token_hash: generate_hashed_token("REFRESH_TOKEN"))
+    prev_token = oauth_token(refresh_token: nil, refresh_token_hash: generate_hashed_token("REFRESH_TOKEN"))
 
     post("/token",
          client_secret: "CLIENT_SECRET",
@@ -126,8 +109,10 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
     oauth_token = db[:oauth_tokens].first
 
     verify_refresh_token_response(json_body, prev_token)
-    assert prev_token[:token_hash] != oauth_token[:token_hash]
+    assert json_body["refresh_token"] == "REFRESH_TOKEN"
     assert prev_token[:refresh_token_hash] == oauth_token[:refresh_token_hash]
+
+    verify_access_token_response(json_body, oauth_token, "SECRET", "HS256")
   end
 
   def test_token_refresh_token_protection_policy_none_successful
@@ -142,13 +127,15 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
          grant_type: "refresh_token",
          refresh_token: oauth_token[:refresh_token])
 
-    assert last_response.status == 200
-    assert last_response.headers["Content-Type"] == "application/json"
+    verify_response
 
     assert db[:oauth_tokens].where(revoked_at: nil).count == 1
 
     verify_refresh_token_response(json_body, oauth_token)
     assert json_body["refresh_token"] == oauth_token[:refresh_token]
+    token = json_body["access_token"]
+
+    verify_access_token_response(json_body.merge("access_token" => token), oauth_token, "SECRET", "HS256")
   end
 
   def test_token_refresh_token_protection_policy_rotation
@@ -164,19 +151,14 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
          grant_type: "refresh_token",
          refresh_token: oauth_token[:refresh_token])
 
-    assert last_response.status == 200
-    assert last_response.headers["Content-Type"] == "application/json"
-
-    # previous token gets revoked
-    assert db[:oauth_tokens].count == 2
-    assert db[:oauth_tokens].where(revoked_at: nil).count == 1
-
-    new_token = db[:oauth_tokens].where(revoked_at: nil).first
-    assert new_token[:access_token] == json_body["token"]
-    assert new_token[:refresh_token] == json_body["refresh_token"]
-
+    verify_response
     verify_refresh_token_response(json_body, oauth_token)
     assert json_body["refresh_token"] != oauth_token[:refresh_token]
+
+    # previous token gets revoked
+    assert db[:oauth_tokens].count == 1
+
+    verify_access_token_response(json_body, oauth_token, "SECRET", "HS256")
 
     # invalidates all tokens generated from that token
     @json_body = nil
@@ -190,13 +172,15 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
     assert last_response.headers["Content-Type"] == "application/json"
     assert json_body["error"] == "invalid_grant"
     assert json_body["error_description"] == "Invalid grant"
-
-    assert db[:oauth_tokens].where(revoked_at: nil).count.zero?
   end
 
   private
 
   def setup_application
+    rodauth do
+      oauth_jwt_key "SECRET"
+      oauth_jwt_algorithm "HS256"
+    end
     super
     header "Accept", "application/json"
   end

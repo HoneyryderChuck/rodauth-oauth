@@ -30,9 +30,8 @@ class JWTIntegration < RodaIntegration
     assert last_response.headers["Content-Type"] == "application/json"
   end
 
-  def verify_access_token_response(data, oauth_token, secret, algorithm)
+  def verify_access_token_response(data, _oauth_token, secret, algorithm)
     verify_token_common_response(data)
-    assert data["refresh_token"] == oauth_token[:refresh_token]
 
     assert data.key?("access_token")
     payload, headers = JWT.decode(data["access_token"], secret, true, algorithms: [algorithm])
@@ -40,7 +39,6 @@ class JWTIntegration < RodaIntegration
     assert headers["alg"] == algorithm
     assert payload["iss"] == "http://example.org"
     assert payload["aud"] == "CLIENT_ID"
-    assert payload["nonce"] == oauth_token[:nonce]
     payload
   end
 end
