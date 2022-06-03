@@ -140,6 +140,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#access_token=([^&]+)&token_type=bearer&expires_in=3600/,
            "was redirected instead to #{page.current_url}"
+    verify_access_token(Regexp.last_match(1), db[:oauth_tokens].first, signing_key: jws_public_key, signing_algo: "RS256")
   end
 
   def test_oidc_authorize_post_authorize_with_id_token_response_type
@@ -167,6 +168,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#token_type=bearer&expires_in=3600&id_token=([^&]+)/,
            "was redirected instead to #{page.current_url}"
+    verify_id_token(Regexp.last_match(1), db[:oauth_tokens].first, signing_key: jws_public_key, signing_algo: "RS256")
   end
 
   def test_oidc_authorize_post_authorize_with_none_response_type
@@ -215,10 +217,14 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#code=([^&]+)&access_token=([^&]+)&token_type=bearer&expires_in=3600/,
            "was redirected instead to #{page.current_url}"
+    verify_access_token(Regexp.last_match(2), db[:oauth_tokens].first, signing_key: jws_public_key, signing_algo: "RS256")
   end
 
   def test_oidc_authorize_post_authorize_with_code_id_token_response_type
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
     rodauth do
+      oauth_jwt_key jws_key
       use_oauth_implicit_grant_type? true
     end
     setup_application
@@ -240,6 +246,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#code=([^&]+)&token_type=bearer&expires_in=3600&id_token=([^&]+)/,
            "was redirected instead to #{page.current_url}"
+
+    verify_id_token(Regexp.last_match(2), db[:oauth_tokens].first, signing_key: jws_public_key, signing_algo: "RS256")
   end
 
   def test_oidc_authorize_post_authorize_with_id_token_token_response_type
@@ -262,9 +270,10 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     # submit authorization request
     click_button "Authorize"
 
-    assert page.current_url =~ /#{oauth_application[:redirect_uri]}#token_type=bearer&|
-                                expires_in=3600&id_token=([^&]+)&access_token=([^&]+)/,
+    assert page.current_url =~ /#{oauth_application[:redirect_uri]}#token_type=bearer&expires_in=3600&id_token=([^&]+)&access_token=([^&]+)/,
            "was redirected instead to #{page.current_url}"
+    verify_id_token(Regexp.last_match(1), db[:oauth_tokens].first, signing_key: jws_public_key, signing_algo: "RS256")
+    verify_access_token(Regexp.last_match(2), db[:oauth_tokens].first, signing_key: jws_public_key, signing_algo: "RS256")
   end
 
   def test_oidc_authorize_post_authorize_with_code_id_token_token_response_type
@@ -290,9 +299,10 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     assert db[:oauth_grants].count == 1,
            "no grant has been created"
 
-    assert page.current_url =~ /#{oauth_application[:redirect_uri]}#code=([^&]+)&|
-                                token_type=bearer&expires_in=3600&id_token=([^&]+)&access_token=([^&]+)/,
+    assert page.current_url =~ /#{oauth_application[:redirect_uri]}#code=([^&]+)&token_type=bearer&expires_in=3600&id_token=([^&]+)&access_token=([^&]+)/,
            "was redirected instead to #{page.current_url}"
+    verify_id_token(Regexp.last_match(2), db[:oauth_tokens].first, signing_key: jws_public_key, signing_algo: "RS256")
+    verify_access_token(Regexp.last_match(3), db[:oauth_tokens].first, signing_key: jws_public_key, signing_algo: "RS256")
   end
 
   def test_oidc_authorize_post_authorize_prompt_none
@@ -419,10 +429,6 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
            "was redirected instead to #{page.current_url}"
   end
 
-  # TODO: if rodauth ever supports definition of multiple accounts
-  # def test_oidc_authorize_post_authorize_prompt_select_account
-  # end
-
   def test_oidc_authorize_post_authorize_with_id_token_signed_alg
     jws_rs256_key = OpenSSL::PKey::RSA.generate(2048)
     jws_rs512_key = OpenSSL::PKey::RSA.generate(2048)
@@ -452,13 +458,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#token_type=bearer&expires_in=3600&id_token=([^&]+)/,
            "was redirected instead to #{page.current_url}"
 
-    id_token = Regexp.last_match(1)
-    begin
-      json_body = JWT.decode(id_token, jws_rs512_public_key, true, { "algorithm" => "RS512" }).first
-      assert json_body["sub"] == account[:id]
-    rescue JWT::VerificationError, JWT::IncorrectAlgorithm
-      assert false
-    end
+    verify_id_token(Regexp.last_match(1), db[:oauth_tokens].first, signing_key: jws_rs512_public_key, signing_algo: "RS512")
   end
 
   def test_oidc_authorize_post_authorize_with_id_token_signed_encrypted_alg
@@ -498,14 +498,10 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#token_type=bearer&expires_in=3600&id_token=([^&]+)/,
            "was redirected instead to #{page.current_url}"
 
-    id_token = Regexp.last_match(1)
+    verify_id_token(Regexp.last_match(1), db[:oauth_tokens].first, signing_key: jws_public_key, decryption_key: jwe_hs512_key,
+                                                                   signing_algo: "RS256")
+  end
 
-    begin
-      jws_body = JWE.decrypt(id_token, jwe_hs512_key)
-      json_body = JWT.decode(jws_body, jws_public_key, true, { "algorithm" => "RS256" }).first
-      assert json_body["sub"] == account[:id]
-    rescue JWE::DecodeError, JWT::VerificationError, JWT::IncorrectAlgorithm
-      assert false
     end
   end
 

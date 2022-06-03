@@ -28,14 +28,20 @@ class OIDCIntegration < JWTIntegration
   def verify_access_token_response(data, oauth_token, secret, algorithm)
     super
     assert data.key?("id_token")
-    payload, headers = JWT.decode(data["id_token"], secret, true, algorithms: [algorithm])
+    verify_id_token(data["id_token"], oauth_token, signing_key: secret, signing_algo: algorithm)
+  end
 
-    assert headers["alg"] == algorithm
-    assert payload["nonce"] == oauth_token[:nonce]
-    assert payload["iss"] == "http://example.org"
-    assert payload["sub"] == account[:id]
-    assert payload.key?("aud")
-    assert payload.key?("exp")
-    assert payload.key?("iat")
+  def verify_id_token(data, oauth_token, signing_key:, signing_algo: "RS256", decryption_key: nil)
+    data = JWE.decrypt(data, decryption_key) if decryption_key
+    claims, headers = JWT.decode(data, signing_key, true, { "algorithm" => signing_algo })
+
+    assert headers["alg"] == signing_algo
+    verify_id_token_claims(claims, oauth_token)
+  end
+
+  def verify_id_token_claims(claims, oauth_token)
+    verify_jwt_claims(claims, oauth_token)
+
+    assert claims["nonce"] == oauth_token[:nonce]
   end
 end

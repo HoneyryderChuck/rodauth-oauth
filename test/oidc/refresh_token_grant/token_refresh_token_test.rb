@@ -63,7 +63,6 @@ class RodauthOAuthOIDCRefreshTokenTest < OIDCIntegration
          refresh_token: oauth_token[:refresh_token])
 
     verify_response
-    # oauth_token = verify_oauth_token
     verify_access_token_response(json_body, oauth_token, "SECRET", "HS256")
     verify_refresh_token_response(json_body, oauth_token)
     assert json_body["refresh_token"] == oauth_token[:refresh_token]

@@ -77,6 +77,8 @@ class RodaIntegration < Minitest::Test
   include Capybara::DSL
   include Capybara::Minitest::Assertions
 
+  private
+
   def rodauth(&block)
     (@rodauth_blocks ||= []) << block
   end
