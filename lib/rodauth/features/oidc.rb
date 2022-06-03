@@ -74,7 +74,6 @@ module Rodauth
 
     auth_value_method :oauth_grants_nonce_column, :nonce
     auth_value_method :oauth_tokens_nonce_column, :nonce
-    auth_value_method :oauth_tokens_auth_time_column, :auth_time
 
     translatable_method :invalid_scope_message, "The Access Token expired"
 
@@ -342,7 +341,8 @@ module Rodauth
 
       # Time when the End-User authentication occurred.
       #
-      id_token_claims[:auth_time] = oauth_token[oauth_tokens_auth_time_column].to_i
+      # Sounds like the same as issued at claim.
+      id_token_claims[:auth_time] = id_token_claims[:iat]
 
       account = db[accounts_table].where(account_id_column => oauth_token[oauth_tokens_account_id_column]).first
 
@@ -488,7 +488,7 @@ module Rodauth
         end
       end
 
-      scope_claims.unshift("auth_time")
+      scope_claims.unshift("auth_time") if last_account_login_at
 
       response_types_supported = metadata[:response_types_supported]
 

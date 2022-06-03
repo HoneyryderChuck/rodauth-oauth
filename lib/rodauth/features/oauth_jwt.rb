@@ -66,6 +66,7 @@ module Rodauth
       :jwt_encode,
       :jwt_decode,
       :jwks_set,
+      :last_account_login_at,
       :generate_jti
     )
 
@@ -97,6 +98,12 @@ module Rodauth
     end
 
     private
+
+    unless method_defined?(:last_account_login_at)
+      def last_account_login_at
+        nil
+      end
+    end
 
     def issuer
       @issuer ||= oauth_jwt_token_issuer || authorization_server_url
@@ -199,7 +206,7 @@ module Rodauth
     def jwt_claims(oauth_token)
       issued_at = Time.now.to_i
 
-      {
+      claims = {
         iss: issuer, # issuer
         iat: issued_at, # issued at
         #
@@ -217,6 +224,10 @@ module Rodauth
         exp: issued_at + oauth_token_expires_in,
         aud: (oauth_jwt_audience || oauth_application[oauth_applications_client_id_column])
       }
+
+      claims[:auth_time] = last_account_login_at.to_i if last_account_login_at
+
+      claims
     end
 
     def jwt_subject(oauth_token)

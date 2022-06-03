@@ -77,7 +77,6 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.datetime :created_at, null: false, default: -> { "CURRENT_TIMESTAMP" }
       # uncomment to use OIDC nonce
       # t.string :nonce
-      # t.datetime :auth_time
     end
   end
 end

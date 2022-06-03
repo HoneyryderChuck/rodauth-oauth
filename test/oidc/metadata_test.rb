@@ -101,6 +101,11 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
   private
 
   def setup_application
+    rodauth do
+      last_account_login_at do
+        Time.now - 60
+      end
+    end
     super(&:openid_configuration)
   end
 end
