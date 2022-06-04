@@ -7,7 +7,7 @@ en:
     revoke_oauth_token_notice_flash: "The oauth token has been revoked"
     device_verification_notice_flash: "The device is verified"
     user_code_not_found_error_flash: "No device to authorize with the given user code"
-    oauth_authorize_title: "Authorize"
+    authorize_page_title: "Authorize"
     oauth_applications_page_title: "Oauth Applications"
     oauth_application_page_title: "Oauth Application"
     new_oauth_application_page_title: "New Oauth Application"
