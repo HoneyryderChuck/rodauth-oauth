@@ -251,6 +251,19 @@ module Rodauth
 
     private
 
+    if defined?(::I18n)
+      def before_authorize_route
+        if (ui_locales = param_or_nil("ui_locales"))
+          ui_locales = ui_locales.split(" ").map(&:to_sym)
+          ui_locales &= ::I18n.available_locales
+
+          ::I18n.locale = ui_locales.first unless ui_locales.empty?
+        end
+
+        super
+      end
+    end
+
     def require_authorizable_account
       try_prompt if param_or_nil("prompt")
       super

@@ -123,11 +123,13 @@ class RodaIntegration < Minitest::Test
     rodauth do
       db DB
       enable :login, :logout, :http_basic_auth, *features
+      title_instance_variable :@page_title
       login_return_to_requested_location? true
       oauth_application_default_scope scopes.first
       oauth_application_scopes scopes
     end
     roda do |r|
+      ::I18n.locale = :en
       r.rodauth
 
       r.on "callback" do

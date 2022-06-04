@@ -502,6 +502,17 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
                                                                    signing_algo: "RS256")
   end
 
+  def test_oidc_authorize_post_authorize_ui_locales
+    setup_application
+    login
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+          "ui_locales=pt de es"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    assert page.html.include?("Autorizar")
+  end
+
     end
   end
 
