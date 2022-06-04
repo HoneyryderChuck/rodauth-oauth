@@ -60,7 +60,7 @@ module Rodauth
       id_token_signing_alg_values_supported
     ].freeze
 
-    depends :oauth_jwt
+    depends :account_expiration, :oauth_jwt
 
     auth_value_method :oauth_application_default_scope, "openid"
     auth_value_method :oauth_application_scopes, %w[openid]
@@ -87,7 +87,10 @@ module Rodauth
     auth_value_method :oauth_applications_post_logout_redirect_uri_column, :post_logout_redirect_uri
     auth_value_method :use_rp_initiated_logout?, false
 
-    auth_value_methods(:get_oidc_param, :get_additional_param)
+    auth_value_methods(
+      :get_oidc_param,
+      :get_additional_param
+    )
 
     # /userinfo
     route(:userinfo) do |r|
@@ -350,12 +353,11 @@ module Rodauth
       return unless oauth_scopes.include?("openid")
 
       id_token_claims = jwt_claims(oauth_token)
+
       id_token_claims[:nonce] = oauth_token[oauth_tokens_nonce_column] if oauth_token[oauth_tokens_nonce_column]
 
       # Time when the End-User authentication occurred.
-      #
-      # Sounds like the same as issued at claim.
-      id_token_claims[:auth_time] = id_token_claims[:iat]
+      id_token_claims[:auth_time] = last_account_login_at.to_i
 
       account = db[accounts_table].where(account_id_column => oauth_token[oauth_tokens_account_id_column]).first
 
@@ -533,7 +535,7 @@ module Rodauth
         end
       end
 
-      scope_claims.unshift("auth_time") if last_account_login_at
+      scope_claims.unshift("auth_time")
 
       response_types_supported = metadata[:response_types_supported]
 

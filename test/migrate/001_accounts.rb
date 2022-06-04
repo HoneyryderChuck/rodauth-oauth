@@ -17,9 +17,17 @@ Sequel.migration do
       String :email, null: false
       index :email, unique: true
     end
+
+    # Used by the account expiration feature (OIDC requirement)
+    create_table(:account_activity_times) do
+      foreign_key :id, :accounts, primary_key: true, type: Integer
+      DateTime :last_activity_at, null: false
+      DateTime :last_login_at, null: false
+      DateTime :expired_at
+    end
   end
 
   down do
-    drop_table(:accounts, :account_statuses)
+    drop_table(:accounts, :account_statuses, :account_activity_times)
   end
 end
