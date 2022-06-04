@@ -513,6 +513,50 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     assert page.html.include?("Autorizar")
   end
 
+  def test_oidc_authorize_post_authorize_claims_locales
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
+    rodauth do
+      oauth_jwt_key jws_key
+      oauth_jwt_algorithm "RS256"
+      use_oauth_implicit_grant_type? true
+      get_additional_param do |account, claim, locale|
+        case claim
+        when :name
+          locale == :pt ? "Tiago" : "James"
+        else
+          account[claim]
+        end
+      end
+    end
+    setup_application
+    login
+
+    oauth_application(scopes: "openid name")
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid name&" \
+          "claims_locales=pt en&response_type=id_token"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+
+    check "name"
+    # submit authorization request
+    click_button "Authorize"
+
+    assert db[:oauth_tokens].count == 1,
+           "no token has been created"
+
+    assert page.current_url =~ /#{oauth_application[:redirect_uri]}#token_type=bearer&expires_in=3600&id_token=([^&]+)/,
+           "was redirected instead to #{page.current_url}"
+
+    verify_id_token(
+      Regexp.last_match(1),
+      db[:oauth_tokens].first,
+      signing_key: jws_public_key,
+      signing_algo: "RS256"
+    ) do |claims|
+      assert claims["name#pt"] == "Tiago"
+      assert claims["name#en"] == "James"
     end
   end
 

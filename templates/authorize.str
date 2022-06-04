@@ -86,6 +86,7 @@
     #{"<input type=\"hidden\" name=\"code_challenge_method\" value=\"#{rodauth.param("code_challenge_method")}\"/>" if rodauth.features.include?(:oauth_pkce) && rodauth.param_or_nil("code_challenge_method")}
     #{"<input type=\"hidden\" name=\"nonce\" value=\"#{rodauth.param("nonce")}\"/>" if rodauth.features.include?(:oidc) && rodauth.param_or_nil("nonce")}
     #{"<input type=\"hidden\" name=\"ui_locales\" value=\"#{rodauth.param("ui_locales")}\"/>" if rodauth.features.include?(:oidc) && rodauth.param_or_nil("ui_locales")}
+    #{"<input type=\"hidden\" name=\"claims_locales\" value=\"#{rodauth.param("claims_locales")}\"/>" if rodauth.features.include?(:oidc) && rodauth.param_or_nil("claims_locales")}
     #{
       if rodauth.features.include?(:oauth_resource_indicators) && rodauth.resource_indicators
         rodauth.resource_indicators.map do |resource|

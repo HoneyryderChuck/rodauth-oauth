@@ -265,13 +265,13 @@ module Rodauth
     end
 
     def require_authorizable_account
-      try_prompt if param_or_nil("prompt")
+      try_prompt
       super
     end
 
     # this executes before checking for a logged in account
     def try_prompt
-      prompt = param_or_nil("prompt")
+      return unless (prompt = param_or_nil("prompt"))
 
       case prompt
       when "none"
@@ -390,16 +390,23 @@ module Rodauth
 
       oidc_scopes, additional_scopes = scopes_by_claim.keys.partition { |key| OIDC_SCOPES_MAP.key?(key) }
 
+      if (claims_locales = param_or_nil("claims_locales"))
+        claims_locales = claims_locales.split(" ").map(&:to_sym)
+      end
+
       unless oidc_scopes.empty?
         if respond_to?(:get_oidc_param)
+          get_oidc_param = proxy_get_param(:get_oidc_param, claims, claims_locales)
+
           oidc_scopes.each do |scope|
             scope_claims = claims
             params = scopes_by_claim[scope]
             params = params.empty? ? OIDC_SCOPES_MAP[scope] : (OIDC_SCOPES_MAP[scope] & params)
 
             scope_claims = (claims["address"] = {}) if scope == "address"
+
             params.each do |param|
-              scope_claims[param] = __send__(:get_oidc_param, account, param)
+              get_oidc_param[account, param, scope_claims]
             end
           end
         else
@@ -410,11 +417,36 @@ module Rodauth
       return if additional_scopes.empty?
 
       if respond_to?(:get_additional_param)
+        get_additional_param = proxy_get_param(:get_additional_param, claims, claims_locales)
+
         additional_scopes.each do |scope|
-          claims[scope] = __send__(:get_additional_param, account, scope.to_sym)
+          get_additional_param[account, scope.to_sym]
         end
       else
         warn "`get_additional_param(account, claim)` must be implemented to use oidc scopes."
+      end
+    end
+
+    def proxy_get_param(get_param_func, claims, claims_locales)
+      meth = method(get_param_func)
+      if meth.arity == 2
+        ->(account, param, cl = claims) { cl[param] = meth[account, param] }
+      elsif claims_locales.nil?
+        ->(account, param, cl = claims) { cl[param] = meth[account, param, nil] }
+      else
+        lambda do |account, param, cl = claims|
+          claims_values = claims_locales.map do |locale|
+            meth[account, param, locale]
+          end
+
+          if claims_values.uniq.size == 1
+            cl[param] = claims_values.first
+          else
+            claims_locales.zip(claims_values).each do |locale, value|
+              cl["#{param}##{locale}"] = value
+            end
+          end
+        end
       end
     end
 
