@@ -502,6 +502,19 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
                                                                    signing_algo: "RS256")
   end
 
+  # minimum level of support required for this parameter is simply that its use must not result in an error.
+  %w[page popup touch wap].each do |display|
+    define_method :"test_oidc_authorize_post_authorize_display_#{display}" do
+      setup_application
+      login
+
+      visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+            "display=consent"
+      assert page.current_path == "/authorize",
+             "was redirected instead to #{page.current_path}"
+    end
+  end
+
   def test_oidc_authorize_post_authorize_ui_locales
     setup_application
     login
