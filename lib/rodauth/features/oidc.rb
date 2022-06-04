@@ -267,6 +267,21 @@ module Rodauth
       end
     end
 
+    def validate_oauth_grant_params
+      return super unless (max_age = param_or_nil("max_age"))
+
+      max_age = Integer(max_age)
+
+      redirect_response_error("invalid_request") unless max_age.positive?
+
+      return unless Time.now - last_account_login_at > max_age
+
+      # force user to re-login
+      clear_session
+      set_session_value(login_redirect_session_key, request.fullpath)
+      redirect require_login_redirect
+    end
+
     def require_authorizable_account
       try_prompt
       super

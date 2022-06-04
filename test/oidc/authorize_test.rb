@@ -560,6 +560,21 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     end
   end
 
+  def test_oidc_authorize_post_authorize_max_age
+    setup_application
+    login
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+          "max_age=1"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    sleep(2)
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+          "max_age=1"
+    assert page.current_path == "/login",
+           "was redirected instead to #{page.current_path}"
+  end
+
   private
 
   def setup_application(*)
