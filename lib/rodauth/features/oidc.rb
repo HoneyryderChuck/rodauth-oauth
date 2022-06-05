@@ -73,7 +73,9 @@ module Rodauth
     auth_value_method :oauth_applications_userinfo_encrypted_response_enc_column, :userinfo_encrypted_response_enc
 
     auth_value_method :oauth_grants_nonce_column, :nonce
+    auth_value_method :oauth_grants_acr_column, :acr
     auth_value_method :oauth_tokens_nonce_column, :nonce
+    auth_value_method :oauth_tokens_acr_column, :acr
 
     translatable_method :invalid_scope_message, "The Access Token expired"
 
@@ -89,7 +91,10 @@ module Rodauth
 
     auth_value_methods(
       :get_oidc_param,
-      :get_additional_param
+      :get_additional_param,
+      :require_acr_value_phr,
+      :require_acr_value_phrh,
+      :require_acr_value
     )
 
     # /userinfo
@@ -285,6 +290,7 @@ module Rodauth
     def require_authorizable_account
       try_prompt
       super
+      try_acr_values
     end
 
     # this executes before checking for a logged in account
@@ -344,16 +350,46 @@ module Rodauth
       end
     end
 
-    def create_oauth_grant(create_params = {})
-      return super unless (nonce = param_or_nil("nonce"))
+    def try_acr_values
+      return unless (acr_values = param_or_nil("acr_values"))
 
-      super(create_params.merge(oauth_grants_nonce_column => nonce))
+      acr_values.split(" ").each do |acr_value|
+        case acr_value
+        when "phr" then require_acr_value_phr
+        when "phrh" then require_acr_value_phrh
+        else
+          require_acr_value(acr_value)
+        end
+      end
+    end
+
+    def require_acr_value_phr
+      return unless respond_to?(:require_two_factor_authenticated)
+
+      require_two_factor_authenticated
+    end
+
+    def require_acr_value_phrh
+      require_acr_value_phr && two_factor_login_type_match?("webauthn")
+    end
+
+    def require_acr_value(_acr); end
+
+    def create_oauth_grant(create_params = {})
+      if (nonce = param_or_nil("nonce"))
+        create_params[oauth_grants_nonce_column] = nonce
+      end
+      if (acr = param_or_nil("acr"))
+        create_params[oauth_grants_acr_column] = acr
+      end
+      super
     end
 
     def create_oauth_token_from_authorization_code(oauth_grant, create_params)
-      return super unless oauth_grant[oauth_grants_nonce_column]
+      create_params[oauth_tokens_nonce_column] = oauth_grant[oauth_grants_nonce_column] if oauth_grant[oauth_grants_nonce_column]
+      create_params[oauth_tokens_acr_column] = oauth_grant[oauth_grants_acr_column] if oauth_grant[oauth_grants_acr_column]
 
-      super(oauth_grant, create_params.merge(oauth_tokens_nonce_column => oauth_grant[oauth_grants_nonce_column]))
+      super
     end
 
     def create_oauth_token(*)
@@ -370,6 +406,8 @@ module Rodauth
       id_token_claims = jwt_claims(oauth_token)
 
       id_token_claims[:nonce] = oauth_token[oauth_tokens_nonce_column] if oauth_token[oauth_tokens_nonce_column]
+
+      id_token_claims[:acr] = oauth_token[oauth_tokens_acr_column] if oauth_token[oauth_tokens_acr_column]
 
       # Time when the End-User authentication occurred.
       id_token_claims[:auth_time] = last_account_login_at.to_i
@@ -514,6 +552,12 @@ module Rodauth
         oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
         oauth_tokens_scopes_column => scopes
       }
+      if (nonce = param_or_nil("nonce"))
+        create_params[oauth_grants_nonce_column] = nonce
+      end
+      if (acr = param_or_nil("acr"))
+        create_params[oauth_grants_acr_column] = acr
+      end
       oauth_token = generate_oauth_token(create_params, false)
       generate_id_token(oauth_token)
       params = json_access_token_payload(oauth_token)

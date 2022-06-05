@@ -36,6 +36,7 @@ else
 
       app.plugin :render, views: "test/views"
       app.configure(nil, **opts) do
+        enable :i18n
         # OAuth
         rodauth_blocks.reverse_each do |rodauth_block|
           instance_exec(&rodauth_block)

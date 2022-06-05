@@ -588,6 +588,112 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
            "was redirected instead to #{page.current_path}"
   end
 
+  def test_oidc_authorize_post_authorize_acr_value_phr_no_2factor
+    setup_application
+    login
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+          "acr_values=phr"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+  end
+
+  def test_oidc_authorize_post_authorize_acr_value_phr_with_2factor
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
+    rodauth do
+      oauth_jwt_key jws_key
+      oauth_jwt_public_key jws_public_key
+      enable :otp
+      two_factor_auth_return_to_requested_location? true
+      use_oauth_implicit_grant_type? true
+    end
+    setup_application
+    login
+
+    # Set OTP
+    secret_length = (ROTP::Base32.respond_to?(:random_base32) ? ROTP::Base32.random_base32 : ROTP::Base32.random).length
+    visit "/otp-setup"
+    assert page.title == "Setup TOTP Authentication"
+    assert page.html.include? "<svg"
+    secret = page.html.match(/Secret: ([a-z2-7]{#{secret_length}})/)[1]
+    totp = ROTP::TOTP.new(secret)
+    fill_in "Password", with: "0123456789"
+    fill_in "Authentication Code", with: totp.now
+    click_button "Setup TOTP Authentication"
+    assert page.html.include? "TOTP authentication is now setup"
+    assert page.current_path == "/"
+    reset_otp_last_use
+
+    logout
+    login
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&&response_type=id_token&" \
+          "acr_values=phr"
+    assert page.current_path == "/otp-auth",
+           "was redirected instead to #{page.current_path}"
+    fill_in "Authentication Code", with: totp.now
+    click_button "Authenticate Using TOTP"
+
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    # submit authorization request
+    click_button "Authorize"
+
+    assert page.current_url =~ /#{oauth_application[:redirect_uri]}#token_type=bearer&expires_in=3600&id_token=([^&]+)/,
+           "was redirected instead to #{page.current_url}"
+    verify_id_token(Regexp.last_match(1), db[:oauth_tokens].first, signing_key: jws_public_key, signing_algo: "RS256")
+  end
+
+  begin
+    require "webauthn/fake_client"
+  rescue LoadError
+  else
+    def test_oidc_authorize_post_authorize_acr_value_phrh_with_2factor_webauthn
+      rodauth do
+        enable :webauthn_login
+        two_factor_auth_return_to_requested_location? true
+        use_oauth_implicit_grant_type? true
+        hmac_secret "12345678"
+      end
+      setup_application
+
+      webauthn_client = WebAuthn::FakeClient.new("http://www.example.com")
+      visit "/login"
+      fill_in "Login", with: "foo@example.com"
+      click_button "Login"
+      fill_in "Password", with: "0123456789"
+      click_button "Login"
+
+      # Set OTP
+      visit "/webauthn-setup"
+      challenge = JSON.parse(page.find("#webauthn-setup-form")["data-credential-options"])["challenge"]
+      fill_in "Password", with: "0123456789"
+      fill_in "webauthn_setup", with: webauthn_client.create(challenge: challenge).to_json
+      click_button "Setup WebAuthn Authentication"
+      assert page.html.include? "WebAuthn authentication is now setup"
+      assert page.current_path == "/"
+
+      logout
+      visit "/login"
+      fill_in "Login", with: "foo@example.com"
+      click_button "Login"
+      fill_in "Password", with: "0123456789"
+      click_button "Login"
+
+      visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+            "acr_values=phrh"
+      assert page.current_path == "/webauthn-auth",
+             "was redirected instead to #{page.current_path}"
+      challenge = JSON.parse(page.find("#webauthn-auth-form")["data-credential-options"])["challenge"]
+      fill_in "webauthn_auth", with: webauthn_client.get(challenge: challenge).to_json
+      click_button "Authenticate Using WebAuthn"
+
+      assert page.current_path == "/authorize",
+             "was redirected instead to #{page.current_path}"
+    end
+  end
+
   private
 
   def setup_application(*)
@@ -597,5 +703,40 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
       oauth_applications_jwks_column :jwks
     end
     super
+  end
+
+  def reset_otp_last_use
+    db[:account_otp_keys].update(last_use: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 600))
+  end
+
+  def generate_signed_request(application, signing_key: OpenSSL::PKey::RSA.generate(2048), encryption_key: nil)
+    claims = {
+      iss: "http://www.example.com",
+      aud: "http://www.example.com",
+      response_type: "code",
+      client_id: application[:client_id],
+      redirect_uri: application[:redirect_uri],
+      scope: application[:scopes],
+      state: "ABCDEF"
+    }
+
+    headers = {}
+
+    jwk = JWT::JWK.new(signing_key)
+    headers[:kid] = jwk.kid
+
+    signing_key = jwk.keypair
+
+    token = JWT.encode(claims, signing_key, "RS256", headers)
+
+    if encryption_key
+      params = {
+        enc: "A128CBC-HS256",
+        alg: "RSA-OAEP"
+      }
+      token = JWE.encrypt(token, encryption_key, **params)
+    end
+
+    token
   end
 end
