@@ -20,6 +20,8 @@ Sequel.migration do
       String :nonce
       Time :auth_time
       index %i[oauth_application_id account_id scopes], unique: true if ENV.key?("ONLY_ONE_TOKEN")
+      # resource indicators
+      String :resource
     end
   end
 

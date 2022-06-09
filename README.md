@@ -21,14 +21,16 @@ This gem implements the following RFCs and features of OAuth:
   * `oauth_token_introspection` - [Token introspection](https://tools.ietf.org/html/rfc7662);
   * [Authorization Server Metadata](https://tools.ietf.org/html/rfc8414);
   * `oauth_pkce` - [PKCE](https://tools.ietf.org/html/rfc7636);
-  * Access Type (Token refresh online and offline);
   * `oauth_jwt` - [JWT Access Tokens](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-07);
+    * Supports [JWT Secured Authorization Request](https://tools.ietf.org/html/draft-ietf-oauth-jwsreq-20);
+  * `oauth_resource_indicators` - [Resource Indicators](https://datatracker.ietf.org/doc/html/rfc8707);
+  * Access Type (Token refresh online and offline);
 * `oauth_http_mac` - [MAC Authentication Scheme](https://tools.ietf.org/html/draft-hammer-oauth-v2-mac-token-02);
 * `oauth_assertion_base` - [Assertion Framework](https://datatracker.ietf.org/doc/html/rfc7521);
   * `oauth_saml_bearer_grant` - [SAML 2.0 Bearer Assertion](https://datatracker.ietf.org/doc/html/rfc7522);
   * `oauth_jwt_bearer_grant` - [JWT Bearer Assertion](https://datatracker.ietf.org/doc/html/rfc7523);
-* [JWT Secured Authorization Requests](https://tools.ietf.org/html/draft-ietf-oauth-jwsreq-20);
-* [Dynamic Client Registration Protocol](https://datatracker.ietf.org/doc/html/rfc7591);
+
+* `oauth_dynamic_client_registration` - [Dynamic Client Registration Protocol](https://datatracker.ietf.org/doc/html/rfc7591);
 * OAuth application and token management dashboards;
 
 It also implements the [OpenID Connect layer](https://openid.net/connect/) (via the `openid` feature) on top of the OAuth features it provides, including:

@@ -30,7 +30,8 @@ class JWTIntegration < RodaIntegration
     assert last_response.headers["Content-Type"] == "application/json"
   end
 
-  def verify_access_token_response(data, _oauth_token, secret, algorithm)
+  def verify_access_token_response(data, _oauth_token, secret, algorithm,
+                                   audience: "CLIENT_ID")
     verify_token_common_response(data)
 
     assert data.key?("access_token")
@@ -38,7 +39,45 @@ class JWTIntegration < RodaIntegration
 
     assert headers["alg"] == algorithm
     assert payload["iss"] == "http://example.org"
-    assert payload["aud"] == "CLIENT_ID"
+    assert payload["aud"] == audience
     payload
+  end
+
+  def generate_signed_request(application,
+                              signing_key: OpenSSL::PKey::RSA.generate(2048),
+                              signing_algorithm: "RS256",
+                              encryption_key: nil,
+                              encryption_method: "A128CBC-HS256",
+                              encryption_algorithm: "RSA-OAEP", **extra_claims)
+    claims = {
+      iss: "http://www.example.com",
+      aud: "http://www.example.com",
+      response_type: "code",
+      client_id: application[:client_id],
+      redirect_uri: application[:redirect_uri],
+      scope: application[:scopes],
+      state: "ABCDEF"
+    }.merge(extra_claims)
+
+    headers = {}
+
+    jwk = JWT::JWK.new(signing_key)
+    headers[:kid] = jwk.kid
+
+    signing_key = jwk.keypair
+
+    token = JWT.encode(claims, signing_key, signing_algorithm, headers)
+
+    if encryption_key
+      jwk = JWT::JWK.new(encryption_key)
+      params = {
+        enc: encryption_method,
+        alg: encryption_algorithm,
+        kid: jwk.kid
+      }
+      token = JWE.encrypt(token, encryption_key, **params)
+    end
+
+    token
   end
 end

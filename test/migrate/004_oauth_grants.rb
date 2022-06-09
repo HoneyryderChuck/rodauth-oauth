@@ -21,6 +21,8 @@ Sequel.migration do
       # device code grant
       String :user_code, null: true, unique: true
       Time :last_polled_at
+      # resource indicators
+      String :resource
     end
   end
 

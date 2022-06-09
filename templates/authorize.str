@@ -83,8 +83,15 @@
     #{"<input type=\"hidden\" name=\"state\" value=\"#{rodauth.param("state")}\"/>" if rodauth.param_or_nil("state")}
     #{"<input type=\"hidden\" name=\"nonce\" value=\"#{rodauth.param("nonce")}\"/>" if rodauth.param_or_nil("nonce")}
     #{"<input type=\"hidden\" name=\"redirect_uri\" value=\"#{rodauth.redirect_uri}\"/>" if rodauth.param_or_nil("redirect_uri")}
-    #{"<input type=\"hidden\" name=\"code_challenge\" value=\"#{rodauth.param("code_challenge")}\"/>" if rodauth.param_or_nil("code_challenge")}
-    #{"<input type=\"hidden\" name=\"code_challenge_method\" value=\"#{rodauth.param("code_challenge_method")}\"/>" if rodauth.param_or_nil("code_challenge_method")}
+    #{"<input type=\"hidden\" name=\"code_challenge\" value=\"#{rodauth.param("code_challenge")}\"/>" if rodauth.features.include?(:oauth_pkce) && rodauth.param_or_nil("code_challenge")}
+    #{"<input type=\"hidden\" name=\"code_challenge_method\" value=\"#{rodauth.param("code_challenge_method")}\"/>" if rodauth.features.include?(:oauth_pkce) && rodauth.param_or_nil("code_challenge_method")}
+    #{
+      if rodauth.features.include?(:oauth_resource_indicators) && rodauth.resource_indicators
+        rodauth.resource_indicators.map do |resource|
+          "<input type=\"hidden\" name=\"resource\" value=\"#{resource}\"/>"
+        end.join
+      end
+      }
   </div>
   <p class="text-center">
     <input type="submit" class="btn btn-outline-primary" value="#{h(rodauth.oauth_authorize_button)}"/>
