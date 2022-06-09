@@ -44,10 +44,13 @@ module Rodauth
 
     auth_value_method :oauth_jwt_keys, {}
     auth_value_method :oauth_jwt_key, nil
+    auth_value_method :oauth_jwt_public_keys, {}
     auth_value_method :oauth_jwt_public_key, nil
     auth_value_method :oauth_jwt_algorithm, "RS256"
 
+    auth_value_method :oauth_jwt_jwe_keys, {}
     auth_value_method :oauth_jwt_jwe_key, nil
+    auth_value_method :oauth_jwt_jwe_public_keys, {}
     auth_value_method :oauth_jwt_jwe_public_key, nil
     auth_value_method :oauth_jwt_jwe_algorithm, nil
     auth_value_method :oauth_jwt_jwe_encryption_method, nil
@@ -407,10 +410,11 @@ module Rodauth
 
       def jwt_encode(payload,
                      jwks: nil,
-                     jwe_key: oauth_jwt_jwe_public_key || oauth_jwt_jwe_key,
-                     signing_algorithm: oauth_jwt_algorithm,
                      encryption_algorithm: oauth_jwt_jwe_algorithm,
-                     encryption_method: oauth_jwt_jwe_encryption_method)
+                     encryption_method: oauth_jwt_jwe_encryption_method,
+                     jwe_key: oauth_jwt_jwe_keys[[encryption_algorithm,
+                                                  encryption_method]] || oauth_jwt_jwe_public_key || oauth_jwt_jwe_key,
+                     signing_algorithm: oauth_jwt_algorithm || oauth_jwt_keys.keys.first)
         payload[:jti] = generate_jti(payload)
         jwt = JSON::JWT.new(payload)
 
@@ -427,6 +431,7 @@ module Rodauth
           jwe = jwt.encrypt(jwk, encryption_algorithm.to_sym, encryption_method.to_sym)
           jwe.to_s
         elsif jwe_key
+          jwe_key = jwe_key.first if jwe_key.is_a?(Array)
           algorithm = encryption_algorithm.to_sym if encryption_algorithm
           meth = encryption_method.to_sym if encryption_method
           jwt.encrypt(jwe_key, algorithm, meth)
@@ -438,11 +443,11 @@ module Rodauth
       def jwt_decode(
         token,
         jwks: nil,
-        jws_algorithm: oauth_jwt_algorithm,
+        jws_algorithm: oauth_jwt_algorithm || oauth_jwt_public_key.keys.first || oauth_jwt_keys.keys.first,
         jws_key: oauth_jwt_public_key || oauth_jwt_keys[jws_algorithm] || _jwt_key,
-        jwe_key: oauth_jwt_jwe_key,
         jws_encryption_algorithm: oauth_jwt_jwe_algorithm,
         jws_encryption_method: oauth_jwt_jwe_encryption_method,
+        jwe_key: oauth_jwt_jwe_keys[[jws_encryption_algorithm, jws_encryption_method]] || oauth_jwt_jwe_key,
         verify_claims: true,
         verify_jti: true,
         verify_iss: true,
@@ -451,7 +456,10 @@ module Rodauth
       )
         jws_key = jws_key.first if jws_key.is_a?(Array)
 
-        token = JSON::JWT.decode(token, oauth_jwt_jwe_key).plain_text if jwe_key
+        if jwe_key
+          jwe_key = jwe_key.first if jwe_key.is_a?(Array)
+          token = JSON::JWT.decode(token, jwe_key).plain_text
+        end
 
         claims = if is_authorization_server?
                    if oauth_jwt_legacy_public_key
@@ -489,6 +497,21 @@ module Rodauth
 
       def jwks_set
         @jwks_set ||= [
+          *(
+            unless oauth_jwt_public_keys.empty?
+              oauth_jwt_public_keys.flat_map { |algo, pkeys| pkeys.map { |pkey| JSON::JWK.new(pkey).merge(use: "sig", alg: algo) } }
+            end
+          ),
+          *(
+            unless oauth_jwt_jwe_public_keys.empty?
+              oauth_jwt_jwe_public_keys.flat_map do |(algo, _enc), pkeys|
+                pkeys.map do |pkey|
+                  JSON::JWK.new(pkey).merge(use: "enc", alg: algo)
+                end
+              end
+            end
+          ),
+          # legacy
           (JSON::JWK.new(oauth_jwt_public_key).merge(use: "sig", alg: oauth_jwt_algorithm) if oauth_jwt_public_key),
           (JSON::JWK.new(oauth_jwt_legacy_public_key).merge(use: "sig", alg: oauth_jwt_legacy_algorithm) if oauth_jwt_legacy_public_key),
           (JSON::JWK.new(oauth_jwt_jwe_public_key).merge(use: "enc", alg: oauth_jwt_jwe_algorithm) if oauth_jwt_jwe_public_key)
@@ -524,7 +547,8 @@ module Rodauth
         JWT::JWK.import(data).keypair
       end
 
-      def jwt_encode(payload, signing_algorithm: oauth_jwt_algorithm)
+      def jwt_encode(payload,
+                     signing_algorithm: oauth_jwt_algorithm || oauth_jwt_keys.keys.first)
         headers = {}
 
         key = oauth_jwt_keys[signing_algorithm] || _jwt_key
@@ -547,11 +571,11 @@ module Rodauth
         def jwt_encode_with_jwe(
           payload,
           jwks: nil,
-          jwe_key: oauth_jwt_jwe_public_key || oauth_jwt_jwe_key,
           encryption_algorithm: oauth_jwt_jwe_algorithm,
-          encryption_method: oauth_jwt_jwe_encryption_method, **args
+          encryption_method: oauth_jwt_jwe_encryption_method,
+          jwe_key: oauth_jwt_jwe_public_key || oauth_jwt_jwe_keys[[encryption_algorithm, encryption_method]] || oauth_jwt_jwe_key,
+          **args
         )
-
           token = jwt_encode_without_jwe(payload, **args)
 
           return token unless encryption_algorithm && encryption_method
@@ -559,6 +583,7 @@ module Rodauth
           if jwks && jwks.any? { |k| k[:use] == "enc" }
             JWE.__rodauth_oauth_encrypt_from_jwks(token, jwks, alg: encryption_algorithm, enc: encryption_method)
           elsif jwe_key
+            jwe_key = jwe_key.first if jwe_key.is_a?(Array)
             params = {
               zip: "DEF",
               copyright: oauth_jwt_jwe_copyright
@@ -578,7 +603,7 @@ module Rodauth
       def jwt_decode(
         token,
         jwks: nil,
-        jws_algorithm: oauth_jwt_algorithm,
+        jws_algorithm: oauth_jwt_algorithm || oauth_jwt_public_key.keys.first || oauth_jwt_keys.keys.first,
         jws_key: oauth_jwt_public_key || oauth_jwt_keys[jws_algorithm] || _jwt_key,
         verify_claims: true,
         verify_jti: true,
@@ -635,15 +660,16 @@ module Rodauth
         def jwt_decode_with_jwe(
           token,
           jwks: nil,
-          jwe_key: oauth_jwt_jwe_key,
           jws_encryption_algorithm: oauth_jwt_jwe_algorithm,
           jws_encryption_method: oauth_jwt_jwe_encryption_method,
+          jwe_key: oauth_jwt_jwe_keys[[jws_encryption_algorithm, jws_encryption_method]] || oauth_jwt_jwe_key,
           **args
         )
 
           token = if jwks && jwks.any? { |k| k[:use] == "enc" }
                     JWE.__rodauth_oauth_decrypt_from_jwks(token, jwks, alg: jws_encryption_algorithm, enc: jws_encryption_method)
                   elsif jwe_key
+                    jwe_key = jwe_key.first if jwe_key.is_a?(Array)
                     JWE.decrypt(token, jwe_key)
                   else
                     token
@@ -660,6 +686,21 @@ module Rodauth
 
       def jwks_set
         @jwks_set ||= [
+          *(
+            unless oauth_jwt_public_keys.empty?
+              oauth_jwt_public_keys.flat_map { |algo, pkeys| pkeys.map { |pkey| JWT::JWK.new(pkey).export.merge(use: "sig", alg: algo) } }
+            end
+          ),
+          *(
+            unless oauth_jwt_jwe_public_keys.empty?
+              oauth_jwt_jwe_public_keys.flat_map do |(algo, _enc), pkeys|
+                pkeys.map do |pkey|
+                  JWT::JWK.new(pkey).export.merge(use: "enc", alg: algo)
+                end
+              end
+            end
+          ),
+          # legacy
           (JWT::JWK.new(oauth_jwt_public_key).export.merge(use: "sig", alg: oauth_jwt_algorithm) if oauth_jwt_public_key),
           (
              if oauth_jwt_legacy_public_key

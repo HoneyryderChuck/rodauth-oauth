@@ -19,9 +19,12 @@ oauth_applications_request_object_encryption_enc_column :: db column where to st
 oauth_applications_request_object_signing_alg_column :: db column where to store the signing algorithm used for the request object JWT for the oauth application, <tt>:request_object_signing_alg</tt> by default.
 oauth_applications_subject_type_column :: db column where to store the type of subject claim used for the oauth application, <tt>:subject_type</tt> by default.
 oauth_jwt_key :: the signing key, can be a String or an RSA/EC key.
-oauth_jwt_keys :: collection of the auth server signing keys indexed by algo, **must** include <tt>oauth_jwt_key</tt>.
+oauth_jwt_keys :: collection of the auth server signing keys indexed by algo (**must** include <tt>oauth_jwt_key</tt> unless nil).
+oauth_jwt_public_keys :: collection of the auth server public signing keys, which will be exposed in the JWKs endpoint.
 oauth_jwt_public_key :: the JWT verification key, can be an RSA/EC public key.
 oauth_jwt_algorithm :: JWT signing algorithm, <tt>"HS256"</tt> by default.
+oauth_jwt_jwe_keys :: collection of the auth server encryption keys indexed by algo/method tuple (**must** include <tt>oauth_jwe_key</tt> unless nil).
+oauth_jwt_jwe_public_keys :: collection of the auth server public encryption keys, which will be exposed in the JWKs endpoint.
 oauth_jwt_jwe_key :: JWE encryption/decryption key, <tt>nil</tt> by default.
 oauth_jwt_jwe_public_key :: JWT encryption public key, <tt>nil</tt> by default.
 oauth_jwt_jwe_algorithm :: JWT encryption algorithm, <tt>nil</tt> by default.
@@ -40,6 +43,5 @@ jwks_route :: the route for the jwks, defaults to +jwks+.
 jwt_encode :: encodes a given JWT token.
 jwt_decode :: decodes a given JWT token.
 jwks_set :: returns the JWK set to expose over JSON.
-last_account_login_at :: retrieves the last login from an account.
 before_jwks_route :: Run arbitrary code before the JWKS route.
 generate_jti :: generates a unique jti claimm.

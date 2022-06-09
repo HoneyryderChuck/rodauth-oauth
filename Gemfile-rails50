@@ -14,5 +14,5 @@ end
 
 gem "rails", "~> 5.0.0"
 
-gem "rodauth-rails", branch: "master"
+gem "rodauth-rails", git: "https://github.com/janko/rodauth-rails.git", branch: "master"
 gem "sequel-activerecord_connection"
