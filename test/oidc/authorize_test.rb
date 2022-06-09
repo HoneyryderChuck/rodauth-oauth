@@ -435,7 +435,6 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     jws_rs512_public_key = jws_rs512_key.public_key
     rodauth do
       oauth_jwt_keys { { "RS256" => jws_rs256_key, "RS512" => jws_rs512_key } }
-      oauth_jwt_key { oauth_jwt_keys["RS256"] }
       oauth_jwt_algorithm "RS256"
       use_oauth_implicit_grant_type? true
     end

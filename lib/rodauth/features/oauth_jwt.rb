@@ -438,8 +438,8 @@ module Rodauth
       def jwt_decode(
         token,
         jwks: nil,
-        jws_key: oauth_jwt_public_key || _jwt_key,
         jws_algorithm: oauth_jwt_algorithm,
+        jws_key: oauth_jwt_public_key || oauth_jwt_keys[jws_algorithm] || _jwt_key,
         jwe_key: oauth_jwt_jwe_key,
         jws_encryption_algorithm: oauth_jwt_jwe_algorithm,
         jws_encryption_method: oauth_jwt_jwe_encryption_method,
@@ -449,6 +449,8 @@ module Rodauth
         verify_aud: false,
         **
       )
+        jws_key = jws_key.first if jws_key.is_a?(Array)
+
         token = JSON::JWT.decode(token, oauth_jwt_jwe_key).plain_text if jwe_key
 
         claims = if is_authorization_server?
@@ -576,13 +578,15 @@ module Rodauth
       def jwt_decode(
         token,
         jwks: nil,
-        jws_key: oauth_jwt_public_key || _jwt_key,
         jws_algorithm: oauth_jwt_algorithm,
+        jws_key: oauth_jwt_public_key || oauth_jwt_keys[jws_algorithm] || _jwt_key,
         verify_claims: true,
         verify_jti: true,
         verify_iss: true,
         verify_aud: false
       )
+        jws_key = jws_key.first if jws_key.is_a?(Array)
+
         # verifying the JWT implies verifying:
         #
         # issuer: check that server generated the token
