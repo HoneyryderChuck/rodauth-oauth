@@ -34,13 +34,15 @@
       </div>
     <% end %>
     <%= hidden_field_tag :client_id, params[:client_id] %>
-    <% %i[access_type response_type state nonce redirect_uri code_challenge code_challenge_method].each do |oauth_param| %>
+    <% %i[access_type response_type response_mode state nonce redirect_uri code_challenge code_challenge_method].each do |oauth_param| %>
       <% if params[oauth_param] %>
         <%= hidden_field_tag oauth_param,  params[oauth_param] %>
       <% end %>
     <% end %>
-    <% if params[:response_mode] %>
-      <%= hidden_field_tag :response_mode, params[:response_mode] %>
+    <% if rodauth.features.include?(:oauth_resource_indicators) && rodauth.resource_indicators %>
+      <% rodauth.resource_indicators.each do |resource| %>
+        <%= hidden_field_tag "resource", resource %>
+      <% end %>
     <% end %>
   </div>
  <p class="text-center">

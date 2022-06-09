@@ -52,6 +52,8 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       # device code grant
       # t.string :user_code, null: true, unique: true
       # t.datetime :last_polled_at, null: true
+      # when using :oauth_resource_indicators feature
+      # t.string :resource
     end
 
     create_table :oauth_tokens do |t|
@@ -77,6 +79,9 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.datetime :created_at, null: false, default: -> { "CURRENT_TIMESTAMP" }
       # uncomment to use OIDC nonce
       # t.string :nonce
+      # t.datetime :auth_time
+      # when using :oauth_resource_indicators feature
+      # t.string :resource
     end
   end
 end
