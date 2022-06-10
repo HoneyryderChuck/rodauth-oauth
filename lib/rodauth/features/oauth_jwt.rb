@@ -32,10 +32,54 @@ module Rodauth
     auth_value_method :oauth_application_jwks_param, "jwks"
 
     auth_value_method :oauth_jwt_keys, {}
-    auth_value_method :oauth_jwt_key, nil
     auth_value_method :oauth_jwt_public_keys, {}
-    auth_value_method :oauth_jwt_public_key, nil
     auth_value_method :oauth_jwt_algorithm, "RS256"
+
+    configuration_module_eval do
+      define_method(:oauth_jwt_key) do |obj = nil, &block|
+        warn("Deprecated `#{__method__}` method used during configuration, switch to using `oauth_jwt_key` instead")
+        if obj
+          send(:oauth_jwt_keys) { { oauth_jwt_algorithm => [obj] } }
+        else
+          send(:oauth_jwt_keys) { { oauth_jwt_algorithm => [block.call] } }
+        end
+      end
+      define_method(:oauth_jwt_public_key) do |obj = nil, &block|
+        warn("Deprecated `#{__method__}` method used during configuration, switch to using `oauth_jwt_public_keys` instead")
+        if obj
+          send(:oauth_jwt_public_keys) { { oauth_jwt_algorithm => [obj] } }
+        else
+          send(:oauth_jwt_public_keys) { { oauth_jwt_algorithm => [block.call] } }
+        end
+      end
+      define_method(:oauth_jwt_legacy_public_key) do |obj = nil, &block|
+        warn("Deprecated `#{__method__}` method used during configuration, use `oauth_jwt_public_keys` " \
+             "instead, put legacy keys at the end of the list")
+        if obj
+          send(:oauth_jwt_public_keys) { super[oauth_jwt_algorithm] << obj }
+        else
+          send(:oauth_jwt_public_keys) { super[oauth_jwt_algorithm] << block.call }
+        end
+      end
+    end
+    define_method(:oauth_jwt_key) do
+      warn("Deprecated `#{__method__}` method called at runtime, switch to using `oauth_jwt_key`")
+      _, key = send(:oauth_jwt_keys).first
+      key = key.first if key.is_a?(Array)
+      key
+    end
+    define_method(:oauth_jwt_public_key) do
+      warn("Deprecated `#{__method__}` method called at runtime, switch to using `oauth_jwt_public_keys`")
+      _, key = send(:oauth_jwt_public_keys).first
+      key = key.first if key.is_a?(Array)
+      key
+    end
+    define_method(:oauth_jwt_legacy_public_key) do
+      warn("Deprecated `#{__method__}` method called at runtime, switch to using `oauth_jwt_public_keys[algo] and pick up one of the last`")
+      _, key = send(:oauth_jwt_public_keys).first
+      key = key.last if key.is_a?(Array)
+      key
+    end
 
     auth_value_method :oauth_jwt_jwe_keys, {}
     auth_value_method :oauth_jwt_jwe_key, nil
@@ -45,7 +89,6 @@ module Rodauth
     auth_value_method :oauth_jwt_jwe_encryption_method, nil
 
     # values used for rotating keys
-    auth_value_method :oauth_jwt_legacy_public_key, nil
     auth_value_method :oauth_jwt_legacy_algorithm, nil
 
     auth_value_method :oauth_jwt_jwe_copyright, nil
@@ -451,9 +494,7 @@ module Rodauth
         end
 
         claims = if is_authorization_server?
-                   if oauth_jwt_legacy_public_key
-                     JSON::JWT.decode(token, JSON::JWK::Set.new({ keys: jwks_set }))
-                   elsif jwks
+                   if jwks
                      enc_algs = [jws_encryption_algorithm].compact
                      enc_meths = [jws_encryption_method].compact
                      sig_algs = [jws_algorithm].compact.map(&:to_sym)
@@ -462,6 +503,8 @@ module Rodauth
                      jws
                    elsif jws_key
                      JSON::JWT.decode(token, jws_key)
+                   else
+                     JSON::JWT.decode(token, JSON::JWK::Set.new({ keys: jwks_set }))
                    end
                  elsif (jwks = auth_server_jwks_set)
                    JSON::JWT.decode(token, JSON::JWK::Set.new(jwks))
@@ -488,21 +531,19 @@ module Rodauth
         @jwks_set ||= [
           *(
             unless oauth_jwt_public_keys.empty?
-              oauth_jwt_public_keys.flat_map { |algo, pkeys| pkeys.map { |pkey| JSON::JWK.new(pkey).merge(use: "sig", alg: algo) } }
+              oauth_jwt_public_keys.flat_map { |algo, pkeys| Array(pkeys).map { |pkey| JSON::JWK.new(pkey).merge(use: "sig", alg: algo) } }
             end
           ),
           *(
             unless oauth_jwt_jwe_public_keys.empty?
               oauth_jwt_jwe_public_keys.flat_map do |(algo, _enc), pkeys|
-                pkeys.map do |pkey|
+                Array(pkeys).map do |pkey|
                   JSON::JWK.new(pkey).merge(use: "enc", alg: algo)
                 end
               end
             end
           ),
           # legacy
-          (JSON::JWK.new(oauth_jwt_public_key).merge(use: "sig", alg: oauth_jwt_algorithm) if oauth_jwt_public_key),
-          (JSON::JWK.new(oauth_jwt_legacy_public_key).merge(use: "sig", alg: oauth_jwt_legacy_algorithm) if oauth_jwt_legacy_public_key),
           (JSON::JWK.new(oauth_jwt_jwe_public_key).merge(use: "enc", alg: oauth_jwt_jwe_algorithm) if oauth_jwt_jwe_public_key)
         ].compact
       end
@@ -625,13 +666,13 @@ module Rodauth
 
         # decode jwt
         claims = if is_authorization_server?
-                   if oauth_jwt_legacy_public_key
-                     algorithms = jwks_set.select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
-                     JWT.decode(token, nil, true, jwks: { keys: jwks_set }, algorithms: algorithms, **verify_claims_params).first
-                   elsif jwks
+                   if jwks
                      JWT.decode(token, nil, true, algorithms: [jws_algorithm], jwks: { keys: jwks }, **verify_claims_params).first
                    elsif jws_key
                      JWT.decode(token, jws_key, true, algorithms: [jws_algorithm], **verify_claims_params).first
+                   else
+                     algorithms = jwks_set.select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
+                     JWT.decode(token, nil, true, jwks: { keys: jwks_set }, algorithms: algorithms, **verify_claims_params).first
                    end
                  elsif (jwks = auth_server_jwks_set)
                    algorithms = jwks[:keys].select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
@@ -677,25 +718,23 @@ module Rodauth
         @jwks_set ||= [
           *(
             unless oauth_jwt_public_keys.empty?
-              oauth_jwt_public_keys.flat_map { |algo, pkeys| pkeys.map { |pkey| JWT::JWK.new(pkey).export.merge(use: "sig", alg: algo) } }
+              oauth_jwt_public_keys.flat_map do |algo, pkeys|
+                Array(pkeys).map do |pkey|
+                  JWT::JWK.new(pkey).export.merge(use: "sig", alg: algo)
+                end
+              end
             end
           ),
           *(
             unless oauth_jwt_jwe_public_keys.empty?
               oauth_jwt_jwe_public_keys.flat_map do |(algo, _enc), pkeys|
-                pkeys.map do |pkey|
+                Array(pkeys).map do |pkey|
                   JWT::JWK.new(pkey).export.merge(use: "enc", alg: algo)
                 end
               end
             end
           ),
           # legacy
-          (JWT::JWK.new(oauth_jwt_public_key).export.merge(use: "sig", alg: oauth_jwt_algorithm) if oauth_jwt_public_key),
-          (
-             if oauth_jwt_legacy_public_key
-               JWT::JWK.new(oauth_jwt_legacy_public_key).export.merge(use: "sig", alg: oauth_jwt_legacy_algorithm)
-             end
-           ),
           (JWT::JWK.new(oauth_jwt_jwe_public_key).export.merge(use: "enc", alg: oauth_jwt_jwe_algorithm) if oauth_jwt_jwe_public_key)
         ].compact
       end

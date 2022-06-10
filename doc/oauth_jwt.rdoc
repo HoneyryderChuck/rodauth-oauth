@@ -18,10 +18,8 @@ oauth_applications_request_object_encryption_alg_column :: db column where to st
 oauth_applications_request_object_encryption_enc_column :: db column where to store the encryption method used for the request object JWT for the oauth application, <tt>:request_object_encryption_enc</tt> by default.
 oauth_applications_request_object_signing_alg_column :: db column where to store the signing algorithm used for the request object JWT for the oauth application, <tt>:request_object_signing_alg</tt> by default.
 oauth_applications_subject_type_column :: db column where to store the type of subject claim used for the oauth application, <tt>:subject_type</tt> by default.
-oauth_jwt_key :: the signing key, can be a String or an RSA/EC key.
-oauth_jwt_keys :: collection of the auth server signing keys indexed by algo (**must** include <tt>oauth_jwt_key</tt> unless nil).
+oauth_jwt_keys :: collection of the auth server signing keys indexed by algo (values can be an array of keys, legacy keys last).
 oauth_jwt_public_keys :: collection of the auth server public signing keys, which will be exposed in the JWKs endpoint.
-oauth_jwt_public_key :: the JWT verification key, can be an RSA/EC public key.
 oauth_jwt_algorithm :: JWT signing algorithm, <tt>"HS256"</tt> by default.
 oauth_jwt_jwe_keys :: collection of the auth server encryption keys indexed by algo/method tuple (**must** include <tt>oauth_jwe_key</tt> unless nil).
 oauth_jwt_jwe_public_keys :: collection of the auth server public encryption keys, which will be exposed in the JWKs endpoint.
@@ -31,7 +29,6 @@ oauth_jwt_jwe_algorithm :: JWT encryption algorithm, <tt>nil</tt> by default.
 oauth_jwt_jwe_encryption_method :: JWT encryption method, <tt>nil</tt> by default.
 oauth_jwt_jwe_copyright :: JWE copyright parameter, <tt>nil</tt> by default.
 oauth_jwt_legacy_algorithm :: legacy JWT signing algorithm, to be exposed via JWKs uri during key rotation.
-oauth_jwt_legacy_public_key :: legacy JWT public key, to be exposed via JWKs uri during key rotation.
 
 request_uri_not_supported_message :: error description for the "request_uri" OAuth error code, <tt>"request uri is unsupported"</tt> by default.
 invalid_request_object_message :: error description for the "invalid_request" OAuth error code, <tt>"request object is invalid"</tt> by default.
