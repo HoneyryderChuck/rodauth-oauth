@@ -18,6 +18,7 @@ Sequel.migration do
       Time :revoked_at
       String :scopes, null: false
       String :nonce
+      String :acr
       index %i[oauth_application_id account_id scopes], unique: true if ENV.key?("ONLY_ONE_TOKEN")
       # resource indicators
       String :resource

@@ -17,9 +17,39 @@ Sequel.migration do
       String :email, null: false
       index :email, unique: true
     end
+
+    # Used by the account expiration feature (OIDC requirement)
+    create_table(:account_activity_times) do
+      foreign_key :id, :accounts, primary_key: true, type: Integer
+      DateTime :last_activity_at, null: false
+      DateTime :last_login_at, null: false
+      DateTime :expired_at
+    end
+
+    # Used by the otp feature
+    create_table(:account_otp_keys) do
+      foreign_key :id, :accounts, primary_key: true, type: Integer
+      String :key, null: false
+      Integer :num_failures, null: false, default: 0
+      Time :last_use, null: false, default: Sequel::CURRENT_TIMESTAMP
+    end
+
+    # Used by the webauthn feature
+    create_table(:account_webauthn_user_ids) do
+      foreign_key :id, :accounts, primary_key: true, type: Integer
+      String :webauthn_id, null: false
+    end
+    create_table(:account_webauthn_keys) do
+      foreign_key :account_id, :accounts, type: Integer
+      String :webauthn_id
+      String :public_key, null: false
+      Integer :sign_count, null: false
+      Time :last_use, null: false, default: Sequel::CURRENT_TIMESTAMP
+      primary_key %i[account_id webauthn_id]
+    end
   end
 
   down do
-    drop_table(:accounts, :account_statuses)
+    drop_table(:accounts, :account_statuses, :account_activity_times, :account_otp_keys)
   end
 end

@@ -18,7 +18,7 @@ elsif RUBY_VERSION < "2.6"
   gem "capybara", "~> 3.35.0"
   gem "json-jwt"
 else
-  gem "capybara", "< 3.37.0"
+  gem "capybara"
   gem "json-jwt"
 end
 
@@ -45,6 +45,8 @@ gem "rack-test"
 gem "webmock"
 
 gem "rodauth-i18n", ">= 0.2.0"
+gem "rotp"
+gem "rqrcode"
 gem "ruby-saml"
 gem "saml_idp"
 gem "xmlenc"
@@ -71,6 +73,7 @@ platform :mri, :truffleruby do
     gem "pry-byebug", "~> 3.7.0"
   else
     gem "pry-byebug"
+    gem "webauthn"
   end
   gem "sqlite3"
 

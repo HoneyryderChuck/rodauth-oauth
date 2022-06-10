@@ -60,7 +60,7 @@ module Rodauth
       id_token_signing_alg_values_supported
     ].freeze
 
-    depends :oauth_jwt
+    depends :account_expiration, :oauth_jwt
 
     auth_value_method :oauth_application_default_scope, "openid"
     auth_value_method :oauth_application_scopes, %w[openid]
@@ -73,7 +73,9 @@ module Rodauth
     auth_value_method :oauth_applications_userinfo_encrypted_response_enc_column, :userinfo_encrypted_response_enc
 
     auth_value_method :oauth_grants_nonce_column, :nonce
+    auth_value_method :oauth_grants_acr_column, :acr
     auth_value_method :oauth_tokens_nonce_column, :nonce
+    auth_value_method :oauth_tokens_acr_column, :acr
 
     translatable_method :invalid_scope_message, "The Access Token expired"
 
@@ -87,7 +89,13 @@ module Rodauth
     auth_value_method :oauth_applications_post_logout_redirect_uri_column, :post_logout_redirect_uri
     auth_value_method :use_rp_initiated_logout?, false
 
-    auth_value_methods(:get_oidc_param, :get_additional_param)
+    auth_value_methods(
+      :get_oidc_param,
+      :get_additional_param,
+      :require_acr_value_phr,
+      :require_acr_value_phrh,
+      :require_acr_value
+    )
 
     # /userinfo
     route(:userinfo) do |r|
@@ -251,14 +259,43 @@ module Rodauth
 
     private
 
+    if defined?(::I18n)
+      def before_authorize_route
+        if (ui_locales = param_or_nil("ui_locales"))
+          ui_locales = ui_locales.split(" ").map(&:to_sym)
+          ui_locales &= ::I18n.available_locales
+
+          ::I18n.locale = ui_locales.first unless ui_locales.empty?
+        end
+
+        super
+      end
+    end
+
+    def validate_oauth_grant_params
+      return super unless (max_age = param_or_nil("max_age"))
+
+      max_age = Integer(max_age)
+
+      redirect_response_error("invalid_request") unless max_age.positive?
+
+      return unless Time.now - last_account_login_at > max_age
+
+      # force user to re-login
+      clear_session
+      set_session_value(login_redirect_session_key, request.fullpath)
+      redirect require_login_redirect
+    end
+
     def require_authorizable_account
-      try_prompt if param_or_nil("prompt")
+      try_prompt
       super
+      try_acr_values
     end
 
     # this executes before checking for a logged in account
     def try_prompt
-      prompt = param_or_nil("prompt")
+      return unless (prompt = param_or_nil("prompt"))
 
       case prompt
       when "none"
@@ -313,16 +350,46 @@ module Rodauth
       end
     end
 
-    def create_oauth_grant(create_params = {})
-      return super unless (nonce = param_or_nil("nonce"))
+    def try_acr_values
+      return unless (acr_values = param_or_nil("acr_values"))
 
-      super(create_params.merge(oauth_grants_nonce_column => nonce))
+      acr_values.split(" ").each do |acr_value|
+        case acr_value
+        when "phr" then require_acr_value_phr
+        when "phrh" then require_acr_value_phrh
+        else
+          require_acr_value(acr_value)
+        end
+      end
+    end
+
+    def require_acr_value_phr
+      return unless respond_to?(:require_two_factor_authenticated)
+
+      require_two_factor_authenticated
+    end
+
+    def require_acr_value_phrh
+      require_acr_value_phr && two_factor_login_type_match?("webauthn")
+    end
+
+    def require_acr_value(_acr); end
+
+    def create_oauth_grant(create_params = {})
+      if (nonce = param_or_nil("nonce"))
+        create_params[oauth_grants_nonce_column] = nonce
+      end
+      if (acr = param_or_nil("acr"))
+        create_params[oauth_grants_acr_column] = acr
+      end
+      super
     end
 
     def create_oauth_token_from_authorization_code(oauth_grant, create_params)
-      return super unless oauth_grant[oauth_grants_nonce_column]
+      create_params[oauth_tokens_nonce_column] = oauth_grant[oauth_grants_nonce_column] if oauth_grant[oauth_grants_nonce_column]
+      create_params[oauth_tokens_acr_column] = oauth_grant[oauth_grants_acr_column] if oauth_grant[oauth_grants_acr_column]
 
-      super(oauth_grant, create_params.merge(oauth_tokens_nonce_column => oauth_grant[oauth_grants_nonce_column]))
+      super
     end
 
     def create_oauth_token(*)
@@ -337,12 +404,13 @@ module Rodauth
       return unless oauth_scopes.include?("openid")
 
       id_token_claims = jwt_claims(oauth_token)
+
       id_token_claims[:nonce] = oauth_token[oauth_tokens_nonce_column] if oauth_token[oauth_tokens_nonce_column]
 
+      id_token_claims[:acr] = oauth_token[oauth_tokens_acr_column] if oauth_token[oauth_tokens_acr_column]
+
       # Time when the End-User authentication occurred.
-      #
-      # Sounds like the same as issued at claim.
-      id_token_claims[:auth_time] = id_token_claims[:iat]
+      id_token_claims[:auth_time] = last_account_login_at.to_i
 
       account = db[accounts_table].where(account_id_column => oauth_token[oauth_tokens_account_id_column]).first
 
@@ -377,16 +445,23 @@ module Rodauth
 
       oidc_scopes, additional_scopes = scopes_by_claim.keys.partition { |key| OIDC_SCOPES_MAP.key?(key) }
 
+      if (claims_locales = param_or_nil("claims_locales"))
+        claims_locales = claims_locales.split(" ").map(&:to_sym)
+      end
+
       unless oidc_scopes.empty?
         if respond_to?(:get_oidc_param)
+          get_oidc_param = proxy_get_param(:get_oidc_param, claims, claims_locales)
+
           oidc_scopes.each do |scope|
             scope_claims = claims
             params = scopes_by_claim[scope]
             params = params.empty? ? OIDC_SCOPES_MAP[scope] : (OIDC_SCOPES_MAP[scope] & params)
 
             scope_claims = (claims["address"] = {}) if scope == "address"
+
             params.each do |param|
-              scope_claims[param] = __send__(:get_oidc_param, account, param)
+              get_oidc_param[account, param, scope_claims]
             end
           end
         else
@@ -397,11 +472,36 @@ module Rodauth
       return if additional_scopes.empty?
 
       if respond_to?(:get_additional_param)
+        get_additional_param = proxy_get_param(:get_additional_param, claims, claims_locales)
+
         additional_scopes.each do |scope|
-          claims[scope] = __send__(:get_additional_param, account, scope.to_sym)
+          get_additional_param[account, scope.to_sym]
         end
       else
         warn "`get_additional_param(account, claim)` must be implemented to use oidc scopes."
+      end
+    end
+
+    def proxy_get_param(get_param_func, claims, claims_locales)
+      meth = method(get_param_func)
+      if meth.arity == 2
+        ->(account, param, cl = claims) { cl[param] = meth[account, param] }
+      elsif claims_locales.nil?
+        ->(account, param, cl = claims) { cl[param] = meth[account, param, nil] }
+      else
+        lambda do |account, param, cl = claims|
+          claims_values = claims_locales.map do |locale|
+            meth[account, param, locale]
+          end
+
+          if claims_values.uniq.size == 1
+            cl[param] = claims_values.first
+          else
+            claims_locales.zip(claims_values).each do |locale, value|
+              cl["#{param}##{locale}"] = value
+            end
+          end
+        end
       end
     end
 
@@ -452,6 +552,12 @@ module Rodauth
         oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
         oauth_tokens_scopes_column => scopes
       }
+      if (nonce = param_or_nil("nonce"))
+        create_params[oauth_grants_nonce_column] = nonce
+      end
+      if (acr = param_or_nil("acr"))
+        create_params[oauth_grants_acr_column] = acr
+      end
       oauth_token = generate_oauth_token(create_params, false)
       generate_id_token(oauth_token)
       params = json_access_token_payload(oauth_token)
@@ -488,7 +594,7 @@ module Rodauth
         end
       end
 
-      scope_claims.unshift("auth_time") if last_account_login_at
+      scope_claims.unshift("auth_time")
 
       response_types_supported = metadata[:response_types_supported]
 

@@ -185,6 +185,8 @@ Metrics/ClassLength:
 
 Layout/LineLength:
   Max: 140
+  Exclude:
+    - test/oidc/authorize_test.rb
 
 Metrics/AbcSize:
   Enabled: false

@@ -56,6 +56,8 @@ class CreateRodauthOauth < superclass
       t.datetime :expires_in, null: false
       t.datetime :revoked_at
       t.string :scopes, null: false
+      t.string :nonce
+      t.string :acr
       t.datetime :created_at, null: false, default: -> { "CURRENT_TIMESTAMP" }
     end unless table_exists?(:oauth_tokens)
   end

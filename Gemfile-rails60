@@ -5,5 +5,5 @@ eval File.read(File.join(__dir__, "Gemfile"))
 # frameworks
 gem "rails", "~> 6.0.0"
 
-gem "rodauth-rails"
+gem "rodauth-rails", git: "https://github.com/janko/rodauth-rails.git", branch: "master"
 gem "sequel-activerecord_connection"
