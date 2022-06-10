@@ -16,20 +16,9 @@ module Rodauth
 
     auth_value_method :oauth_jwt_token_issuer, nil
 
-    configuration_module_eval do
-      define_method :oauth_applications_jws_jwk_column do
-        warn "#{__method__} is deprecated, switch to `oauth_applications_jwks_column`"
-        oauth_applications_jwks_column
-      end
-      define_method :oauth_applications_jws_jwk_label do
-        warn "#{__method__} is deprecated, switch to `oauth_applications_jwks_label`"
-        oauth_applications_jws_jwk_label
-      end
-      define_method :oauth_application_jws_jwk_param do
-        warn "#{__method__} is deprecated, switch to `oauth_applications_jwks_param`"
-        oauth_applications_jwks_param
-      end
-    end
+    def_deprecated_alias :oauth_applications_jwks_column, :oauth_applications_jws_jwk_column
+    def_deprecated_alias :oauth_applications_jwks_label, :oauth_applications_jws_jwk_label
+    def_deprecated_alias :oauth_applications_jwks_param, :oauth_application_jws_jwk_param
 
     auth_value_method :oauth_applications_subject_type_column, :subject_type
     auth_value_method :oauth_applications_jwt_public_key_column, :jwt_public_key

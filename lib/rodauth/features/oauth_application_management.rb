@@ -23,12 +23,7 @@ module Rodauth
 
     (APPLICATION_REQUIRED_PARAMS + %w[description client_id]).each do |param|
       auth_value_method :"oauth_application_#{param}_param", param
-      configuration_module_eval do
-        define_method :"#{param}_label" do
-          warn "#{__method__} is deprecated, switch to oauth_applications_#{__method__}_label"
-          __send__(:"oauth_applications_#{param}_label")
-        end
-      end
+      def_deprecated_alias :"oauth_applications_#{param}_label", :"#{param}_label"
     end
 
     translatable_method :oauth_applications_name_label, "Name"
