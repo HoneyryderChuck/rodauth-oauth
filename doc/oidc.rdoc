@@ -9,7 +9,9 @@ use_rp_initiated_logout? :: whether to use RP-initiated logout flow, +false+ my 
 oauth_application_default_scope :: overwrites the default to <tt>"openid"</tt>
 oauth_application_scopes :: overwrites the default to <tt>["openid"]</tt>.
 oauth_grants_nonce_column :: db column where an authorization nonce is stored, <tt>:nonce</tt> by default.
+oauth_grants_acr_column :: db column where an authorization acr values are stored, <tt>:acr</tt> by default.
 oauth_tokens_nonce_column :: db column where a token respective nonce is stored, <tt>:nonce</tt> by default.
+oauth_tokens_acr_column :: db column where token acr values are stored, <tt>:acr</tt> by default.
 oauth_applications_post_logout_redirect_uri_column :: db colummn where the logout redirect URI is stored.
 oauth_applications_id_token_encrypted_response_alg_column :: db column where to store the encryption algorithm used for the id token for the oauth application, <tt>:id_token_encrypted_response_alg</tt> by default.
 oauth_applications_id_token_encrypted_response_enc_column :: db column where to store the encryption method used for the id token for the oauth application, <tt>:id_token_encrypted_response_enc</tt> by default.
@@ -32,6 +34,10 @@ get_additional_param :: sets the values for additional scopes.
 oauth_prompt_login_cookie_key :: try prompt cookie key.
 oauth_prompt_login_cookie_options :: prompt cookie options.
 oauth_prompt_login_interval :: prompt cookie lifetime.
+
+require_acr_value_phr :: called before authorization request if "phr" in acr values, will request 2-factor authentication if any such `rodauth` feature is loaded.
+require_acr_value_phrh :: called before authorization request if "phrh" in acr values, will request webauthn authentication if `webauthn` feature from rodauth is loaded.
+require_acr_value :: called before authorization request with each acr value, does nothing by default.
 
 
 before_userinfo_route :: Run arbitrary code before the userinfo route.

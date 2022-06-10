@@ -173,7 +173,7 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
     rodauth do
       oauth_jwt_key "SECRET"
       oauth_jwt_algorithm "HS256"
-      oauth_jwt_jwe_key jwe_key
+      oauth_jwt_jwe_keys { { %w[RSA-OAEP A128CBC-HS256] => jwe_key } }
       oauth_jwt_jwe_public_key jwe_key.public_key
       oauth_jwt_jwe_algorithm "RSA-OAEP"
       oauth_jwt_jwe_encryption_method "A128CBC-HS256"
@@ -208,14 +208,10 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
   def test_oauth_jwt_authorization_code_legacy_jws
     legacy_rsa_private = OpenSSL::PKey::RSA.generate 2048
     legacy_rsa_public = legacy_rsa_private.public_key
-    rsa_private = OpenSSL::PKey::RSA.generate 2048
-    rsa_public = rsa_private.public_key
 
     # Get Legacy Token
     rodauth do
-      oauth_jwt_key legacy_rsa_private
-      oauth_jwt_public_key legacy_rsa_public
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys { { "RS256" => legacy_rsa_private } }
     end
     setup_application
 
@@ -235,13 +231,10 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
     # Set up new app and tokens
     # Get Legacy Token
+    # Resource server
     @rodauth_blocks.clear
     rodauth do
-      oauth_jwt_key rsa_private
-      oauth_jwt_public_key rsa_public
-      oauth_jwt_algorithm "RS256"
-      oauth_jwt_legacy_public_key legacy_rsa_public
-      oauth_jwt_legacy_algorithm "RS256"
+      oauth_jwt_keys { { "RS256" => legacy_rsa_public } }
     end
     setup_application
 

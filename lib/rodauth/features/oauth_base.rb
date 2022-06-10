@@ -425,6 +425,11 @@ module Rodauth
         oauth_tokens_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_token_expires_in)
       }.merge(params)
 
+      if create_params[oauth_tokens_scopes_column].is_a?(Array)
+        create_params[oauth_tokens_scopes_column] =
+          create_params[oauth_tokens_scopes_column].join(" ")
+      end
+
       rescue_from_uniqueness_error do
         access_token = _generate_access_token(create_params)
         refresh_token = _generate_refresh_token(create_params) if should_generate_refresh_token
