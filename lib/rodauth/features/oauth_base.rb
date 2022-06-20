@@ -589,7 +589,7 @@ module Rodauth
       redirect_response_error("invalid_grant") unless token_from_application?(oauth_token, oauth_application)
 
       rescue_from_uniqueness_error do
-        oauth_tokens_ds = db[oauth_tokens_table]
+        oauth_tokens_ds = db[oauth_tokens_table].where(oauth_tokens_id_column => oauth_token[oauth_tokens_id_column])
         access_token = _generate_access_token(update_params)
 
         if oauth_refresh_token_protection_policy == "rotation"
