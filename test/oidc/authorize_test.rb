@@ -578,12 +578,12 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
       login
 
       visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
-            "max_age=1"
+            "max_age=3"
       assert page.current_path == "/authorize",
              "was redirected instead to #{page.current_path}"
-      sleep(2)
+      sleep(4)
       visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
-            "max_age=1"
+            "max_age=3"
       assert page.current_path == "/login",
              "was redirected instead to #{page.current_path}"
     end
