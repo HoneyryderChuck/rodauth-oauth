@@ -43,7 +43,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
   def test_authorize_get_authorize_invalid_scope
     setup_application
     login
-    visit "/authorize?client_id=#{oauth_application[:client_id]}& "\
+    visit "/authorize?client_id=#{oauth_application[:client_id]}& " \
           "redirect_uri=#{oauth_application[:redirect_uri]}&" \
           "scope=marvel"
     assert page.current_url.include?("?error=invalid_scope"),
