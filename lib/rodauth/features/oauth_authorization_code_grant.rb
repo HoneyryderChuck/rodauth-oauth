@@ -152,9 +152,8 @@ module Rodauth
         params = params.map { |k, v| "#{k}=#{v}" }
         params << redirect_url.query if redirect_url.query
         redirect_url.query = params.join("&")
-        redirect(redirect_url.to_s)
       when "form_post"
-        scope.view layout: false, inline: <<-FORM
+        return scope.view layout: false, inline: <<-FORM
           <html>
             <head><title>Authorized</title></head>
             <body onload="javascript:document.forms[0].submit()">
@@ -170,6 +169,11 @@ module Rodauth
           </html>
         FORM
       when "none"
+      end
+
+      if accepts_json?
+        json_response_success("callback_url" => redirect_url.to_s)
+      else
         redirect(redirect_url.to_s)
       end
     end
