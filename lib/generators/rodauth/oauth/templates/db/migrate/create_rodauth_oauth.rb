@@ -4,7 +4,7 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.integer :account_id
       t.foreign_key :accounts, column: :account_id
       t.string :name, null: false
-      t.string :description, null: false
+      t.string :description, null: true
       t.string :homepage_url, null: false
       t.string :redirect_uri, null: false
       t.string :client_id, null: false, index: { unique: true }
