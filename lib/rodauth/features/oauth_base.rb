@@ -33,6 +33,7 @@ module Rodauth
     auth_value_method :oauth_response_mode, "query"
     auth_value_method :oauth_auth_methods_supported, %w[client_secret_basic client_secret_post]
 
+    auth_value_method :oauth_valid_uri_schemes, %w[https]
     auth_value_method :oauth_scope_separator, " "
 
     auth_value_method :oauth_tokens_table, :oauth_tokens
