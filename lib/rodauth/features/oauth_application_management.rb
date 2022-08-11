@@ -15,8 +15,6 @@ module Rodauth
     view "new_oauth_application", "New Oauth Application", "new_oauth_application"
     view "oauth_application_oauth_tokens", "Oauth Application Tokens", "oauth_application_oauth_tokens"
 
-    auth_value_method :oauth_valid_uri_schemes, %w[https]
-
     # Application
     APPLICATION_REQUIRED_PARAMS = %w[name scopes homepage_url redirect_uri client_secret].freeze
     auth_value_method :oauth_application_required_params, APPLICATION_REQUIRED_PARAMS
