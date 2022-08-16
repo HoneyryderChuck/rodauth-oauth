@@ -1,4 +1,4 @@
-# frozen-string-literal: true
+# frozen_string_literal: true
 
 require "rodauth/oauth/version"
 require "rodauth/oauth/ttl_store"
