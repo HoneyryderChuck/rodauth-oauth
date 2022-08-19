@@ -39,4 +39,10 @@ class RodauthOauthImplicitGrantAuthorizeTest < RodaIntegration
                                "token_type=bearer&expires_in=3600&state=STATE",
            "was redirected instead to #{page.current_url}"
   end
+
+  private
+
+  def oauth_feature
+    :oauth_implicit_grant
+  end
 end

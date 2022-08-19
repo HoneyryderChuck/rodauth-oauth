@@ -194,4 +194,8 @@ class RodauthOAuthTokenDeviceCodeTest < RodaIntegration
     super
     header "Accept", "application/json"
   end
+
+  def oauth_feature
+    :oauth_device_grant
+  end
 end

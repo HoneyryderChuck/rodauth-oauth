@@ -72,4 +72,10 @@ class RodauthOauthPkceAuthorizeTest < RodaIntegration
     assert page.current_url.include?("?error=invalid_request"),
            "code challenge required"
   end
+
+  private
+
+  def oauth_feature
+    :oauth_pkce
+  end
 end

@@ -195,4 +195,10 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
     assert access_token[:oauth_grant_id] == grant[:id]
     verify_oauth_grant_revoked(access_token)
   end
+
+  private
+
+  def oauth_feature
+    :oauth_device_grant
+  end
 end
