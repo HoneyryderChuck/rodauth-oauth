@@ -96,6 +96,35 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
     assert last_response.status == 200
   end
 
+  def test_token_access_private_auth_server_with_path
+    setup_application("https://auth-server-valid-token/oauth")
+
+    rsa_private = OpenSSL::PKey::RSA.generate 2048
+    rsa_public = rsa_private.public_key
+
+    stub_request(:get, "https://auth-server-valid-token/.well-known/oauth-authorization-server")
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(jwks_uri: "https://auth-server/oauth/jwks-uri-valid-token.json")
+      )
+      .times(1)
+
+    stub_request(:get, "https://auth-server/oauth/jwks-uri-valid-token.json")
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(keys: [JWT::JWK.new(rsa_public).export.merge(use: "sig", alg: "RS256")])
+      )
+
+    token = generate_access_token(rsa_private, "RS256", iss: "https://auth-server-valid-token/oauth", scope: "profile.read")
+
+    header "Accept", "application/json"
+    header "Authorization", "Bearer #{token}"
+
+    # valid token, and now we're getting somewhere
+    get("/private")
+    assert last_response.status == 200
+  end
+
   private
 
   def generate_access_token(priv_key, alg, params = {})
