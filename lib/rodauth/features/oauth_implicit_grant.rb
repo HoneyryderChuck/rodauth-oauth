@@ -2,11 +2,17 @@
 
 module Rodauth
   Feature.define(:oauth_implicit_grant, :OauthImplicitGrant) do
-    depends :oauth_base
+    depends :oauth_authorize_base
 
     auth_value_method :use_oauth_implicit_grant_type?, false
 
     private
+
+    def check_valid_response_type?
+      response_type = param_or_nil("response_type")
+
+      response_type.nil? || response_type == "token" || super
+    end
 
     def do_authorize(response_params = {}, response_mode = param_or_nil("response_mode"))
       return super unless param("response_type") == "token" && use_oauth_implicit_grant_type?

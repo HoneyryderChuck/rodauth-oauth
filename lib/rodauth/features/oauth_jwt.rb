@@ -127,7 +127,7 @@ module Rodauth
 
     # /authorize
 
-    def validate_oauth_grant_params
+    def validate_authorize_params
       # TODO: add support for requst_uri
       redirect_response_error("request_uri_not_supported") if param_or_nil("request_uri")
 

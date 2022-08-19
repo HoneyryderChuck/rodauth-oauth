@@ -5,7 +5,7 @@ require "rodauth/oauth/ttl_store"
 
 module Rodauth
   Feature.define(:oauth_resource_indicators, :OauthResourceIndicators) do
-    depends :oauth_base
+    depends :oauth_authorize_base
 
     auth_value_method :oauth_grants_resource_column, :resource
     auth_value_method :oauth_tokens_resource_column, :resource
@@ -80,7 +80,7 @@ module Rodauth
     module IndicatorAuthorizationCodeGrant
       private
 
-      def validate_oauth_grant_params
+      def validate_authorize_params
         super
 
         return unless resource_indicators
@@ -90,7 +90,7 @@ module Rodauth
         end
       end
 
-      def create_oauth_token_from_authorization_code(oauth_grant, create_params)
+      def create_oauth_token_from_authorization_code(oauth_grant, create_params, *args)
         return super unless resource_indicators
 
         redirect_response_error("invalid_target") unless oauth_grant[oauth_grants_resource_column]
@@ -101,7 +101,7 @@ module Rodauth
 
         redirect_response_error("invalid_target") unless (grant_indicators - resource_indicators) != grant_indicators
 
-        super(oauth_grant, create_params.merge(oauth_tokens_resource_column => resource_indicators))
+        super(oauth_grant, create_params.merge(oauth_tokens_resource_column => resource_indicators), *args)
       end
 
       def create_oauth_grant(create_params = {})
