@@ -7,7 +7,6 @@ class RodauthOAuthResourceIndicatorsTokenAccessTest < RodaIntegration
 
   def test_token_access_private_invalid_resource
     rodauth do
-      enable :oauth_resource_indicators
       oauth_application_scopes %w[read write]
     end
     setup_application
@@ -21,7 +20,6 @@ class RodauthOAuthResourceIndicatorsTokenAccessTest < RodaIntegration
 
   def test_token_access_private_valid_token
     rodauth do
-      enable :oauth_resource_indicators
       oauth_application_scopes %w[read write]
     end
     setup_application
@@ -31,5 +29,11 @@ class RodauthOAuthResourceIndicatorsTokenAccessTest < RodaIntegration
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 200
+  end
+
+  private
+
+  def oauth_feature
+    :oauth_resource_indicators
   end
 end

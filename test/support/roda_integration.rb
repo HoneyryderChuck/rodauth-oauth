@@ -118,7 +118,7 @@ class RodaIntegration < Minitest::Test
   end
 
   def setup_application(*features)
-    features << oauth_feature
+    features.concat(Array(oauth_feature))
     scopes = test_scopes
     rodauth do
       db DB

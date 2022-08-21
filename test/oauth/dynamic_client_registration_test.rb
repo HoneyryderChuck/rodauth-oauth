@@ -5,33 +5,6 @@ require "test_helper"
 class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
   include Rack::Test::Methods
 
-  def test_oauth_no_dynamic_client_registration
-    rodauth do
-      oauth_application_scopes %w[read write]
-    end
-    setup_application
-    header "Accept", "application/json"
-
-    post("/register", {
-           redirect_uris: %w[https://foobar.com/callback],
-           token_endpoint_auth_method: "client_secret_post",
-           grant_types: %w[authorization_code refresh_token], # default: authorization code
-           response_types: %w[code], # default code,
-           client_name: "This client name",
-           client_uri: "https://foobar.com",
-           logo_uri: "https://foobar.com/logo.png",
-           scope: %w[read write],
-           contacts: %w[emp@mail.com],
-           tos_uri: "https://foobar.com/tos",
-           policy_uri: "https://foobar.com/policy",
-           jwks_uri: "https://foobar.com/jwks",
-           software_id: "12",
-           software_version: "XHR-123"
-         })
-
-    assert last_response.status == 401
-  end
-
   def test_oauth_dynamic_client_wrong_params
     rodauth do
       enable :oauth_dynamic_client_registration
@@ -48,7 +21,6 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
   def test_oauth_dynamic_client_redirect_uris
     rodauth do
-      enable :oidc_dynamic_client_registration
       oauth_application_scopes %w[read write]
     end
     setup_application
@@ -69,7 +41,7 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
   def test_oauth_dynamic_client_grant_types
     rodauth do
-      enable :oidc_dynamic_client_registration
+      enable :oauth_authorization_code_grant
       oauth_application_scopes %w[read write]
     end
 
@@ -97,7 +69,7 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
   def test_oauth_dynamic_client_response_types
     rodauth do
-      enable :oidc_dynamic_client_registration
+      enable :oauth_authorization_code_grant
       oauth_application_scopes %w[read write]
     end
 
@@ -124,7 +96,6 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
   def test_oauth_dynamic_client_scopes
     rodauth do
-      enable :oidc_dynamic_client_registration
       oauth_application_scopes %w[read write]
     end
 
@@ -151,7 +122,6 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
   %w[client_uri logo_uri tos_uri policy_uri jwks_uri].each do |uri_param|
     define_method :"test_oauth_dynamic_client_#{uri_param}" do
       rodauth do
-        enable :oidc_dynamic_client_registration
         oauth_application_scopes %w[read write]
       end
 
@@ -170,7 +140,6 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
   def test_oauth_dynamic_client_fail_on_missing_required_params
     rodauth do
-      enable :oauth_dynamic_client_registration
       oauth_application_scopes %w[read write]
     end
     setup_application
@@ -184,7 +153,6 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
   def test_oauth_dynamic_client_jwks_and_jwks_uri
     rodauth do
-      enable :oauth_dynamic_client_registration
       oauth_application_scopes %w[read write]
     end
     setup_application
@@ -196,7 +164,6 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
   def test_oauth_dynamic_client_all_params_without_client_secret
     rodauth do
-      enable :oauth_dynamic_client_registration
       oauth_application_scopes %w[read write]
     end
     setup_application
@@ -218,7 +185,6 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
   def test_oauth_dynamic_client_all_params_with_client_secret
     rodauth do
-      enable :oauth_dynamic_client_registration
       oauth_application_scopes %w[read write]
     end
     setup_application
@@ -240,7 +206,6 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
   def test_oauth_dynamic_client_token_endpoint_auth_method
     rodauth do
-      enable :oauth_dynamic_client_registration
       oauth_application_scopes %w[read write]
     end
     setup_application
@@ -255,6 +220,10 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
   end
 
   private
+
+  def oauth_feature
+    :oauth_dynamic_client_registration
+  end
 
   def valid_registration_params
     @valid_registration_params ||= {

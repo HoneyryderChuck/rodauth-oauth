@@ -110,4 +110,10 @@ class RodauthOAuthTokenAccessTest < RodaIntegration
     get("/private", access_token: oauth_token[:token])
     assert last_response.status == 200
   end
+
+  private
+
+  def oauth_feature
+    :oauth_authorization_code_grant
+  end
 end

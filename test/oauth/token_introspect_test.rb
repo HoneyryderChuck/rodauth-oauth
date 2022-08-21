@@ -115,6 +115,10 @@ class RodauthOAuthTokenIntrospectTest < RodaIntegration
 
   private
 
+  def oauth_feature
+    :oauth_token_introspection
+  end
+
   # overriding to implement the client/secret basic authorization
   def login
     header "Authorization", "Basic #{authorization_header(

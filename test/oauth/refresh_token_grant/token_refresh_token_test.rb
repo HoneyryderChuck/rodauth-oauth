@@ -189,6 +189,10 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
 
   private
 
+  def oauth_feature
+    :oauth_base
+  end
+
   def setup_application
     super
     header "Accept", "application/json"

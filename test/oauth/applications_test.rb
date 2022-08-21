@@ -126,6 +126,10 @@ class RodauthOauthApplicationsTest < RodaIntegration
 
   private
 
+  def oauth_feature
+    :oauth_application_management
+  end
+
   def setup_application
     super(&:oauth_applications)
   end
