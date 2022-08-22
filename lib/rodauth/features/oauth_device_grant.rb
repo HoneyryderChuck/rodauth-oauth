@@ -2,7 +2,7 @@
 
 module Rodauth
   Feature.define(:oauth_device_grant, :OauthDeviceGrant) do
-    depends :oauth_base
+    depends :oauth_authorize_base
 
     auth_value_method :use_oauth_device_code_grant_type?, false
 

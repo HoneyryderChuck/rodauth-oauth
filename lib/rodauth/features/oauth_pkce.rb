@@ -29,7 +29,7 @@ module Rodauth
       super
     end
 
-    def validate_oauth_grant_params
+    def validate_authorize_params
       validate_pkce_challenge_params if use_oauth_pkce?
 
       super
@@ -47,7 +47,7 @@ module Rodauth
       super
     end
 
-    def create_oauth_token_from_authorization_code(oauth_grant, create_params)
+    def create_oauth_token_from_authorization_code(oauth_grant, create_params, *)
       if use_oauth_pkce?
         if oauth_grant[oauth_grants_code_challenge_column]
           code_verifier = param_or_nil("code_verifier")

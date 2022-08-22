@@ -16,8 +16,16 @@ else
   end
 end
 }
-<a class="p-2 text-dark" href="#{rodauth.oauth_tokens_path}">Tokens</a>
-<a class="p-2 text-dark" href="#{rodauth.oauth_applications_path}">Client Applications</a>
+#{
+  if rodauth.features.include?(:oauth_token_management)
+  %Q{<a class="p-2 text-dark" href="#{rodauth.oauth_tokens_path}">Tokens</a>}
+  end
+}
+#{
+  if rodauth.features.include?(:oauth_application_management)
+    %Q{<a class="p-2 text-dark" href="#{rodauth.oauth_applications_path}">Client Applications</a>}
+  end
+}
 
 </nav>
 #{"<div id='alert'>#{opts[:sessions_convert_symbols] ? flash['error'] : flash[:error]}</div>" if opts[:sessions_convert_symbols] ? flash['error'] : flash[:error]}

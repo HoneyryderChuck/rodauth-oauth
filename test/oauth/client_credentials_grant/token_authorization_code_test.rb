@@ -58,4 +58,8 @@ class RodauthClientCredentialsGrantOAuthTokenAuthorizationCodeTest < RodaIntegra
     super
     header "Accept", "application/json"
   end
+
+  def oauth_feature
+    :oauth_client_credentials_grant
+  end
 end

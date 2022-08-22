@@ -2,7 +2,7 @@
 
 module Rodauth
   Feature.define(:oauth_management_base, :OauthManagementBase) do
-    depends :oauth_base
+    depends :oauth_authorize_base
 
     button "Previous", "oauth_management_pagination_previous"
     button "Next", "oauth_management_pagination_next"

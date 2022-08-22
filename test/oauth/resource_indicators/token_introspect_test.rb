@@ -7,7 +7,6 @@ class RodauthOAuthResourceIndicatorsTokenIntrospectTest < RodaIntegration
 
   def test_oauth_introspect_access_token
     rodauth do
-      enable :oauth_resource_indicators
       oauth_application_scopes %w[read write]
     end
 
@@ -29,5 +28,11 @@ class RodauthOAuthResourceIndicatorsTokenIntrospectTest < RodaIntegration
     assert json_body["token_type"] == "bearer"
     assert json_body["aud"] == %w[https://example.org]
     assert json_body.key?("exp")
+  end
+
+  private
+
+  def oauth_feature
+    %i[oauth_token_introspection oauth_resource_indicators]
   end
 end

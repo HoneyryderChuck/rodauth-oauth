@@ -293,4 +293,10 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     assert page.current_url == oauth_application[:redirect_uri].to_s,
            "was redirected instead to #{page.current_url}"
   end
+
+  private
+
+  def oauth_feature
+    :oauth_authorization_code_grant
+  end
 end

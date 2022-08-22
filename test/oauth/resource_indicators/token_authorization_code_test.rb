@@ -7,7 +7,6 @@ class RodauthOAuthResourceIndicatorsTokenAuthorizationCodeTest < RodaIntegration
 
   def test_token_authorization_code_unsupported_unsupported_resource
     rodauth do
-      enable :oauth_resource_indicators
       oauth_application_scopes %w[read write]
     end
     setup_application
@@ -26,7 +25,6 @@ class RodauthOAuthResourceIndicatorsTokenAuthorizationCodeTest < RodaIntegration
 
   def test_token_authorization_code_exact
     rodauth do
-      enable :oauth_resource_indicators
       oauth_application_scopes %w[read write]
     end
     setup_application
@@ -54,7 +52,6 @@ class RodauthOAuthResourceIndicatorsTokenAuthorizationCodeTest < RodaIntegration
 
   def test_token_authorization_code_one_of
     rodauth do
-      enable :oauth_resource_indicators
       oauth_application_scopes %w[read write]
     end
     setup_application
@@ -81,6 +78,10 @@ class RodauthOAuthResourceIndicatorsTokenAuthorizationCodeTest < RodaIntegration
   end
 
   private
+
+  def oauth_feature
+    %i[oauth_authorization_code_grant oauth_resource_indicators]
+  end
 
   def setup_application
     super

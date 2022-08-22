@@ -47,6 +47,17 @@ module Rodauth
       auth_value_method :"oauth_tokens_#{column}_column", column
     end
 
+    # OAuth Grants
+    auth_value_method :oauth_grants_table, :oauth_grants
+    auth_value_method :oauth_grants_id_column, :id
+    %i[
+      account_id oauth_application_id
+      redirect_uri code scopes access_type
+      expires_in revoked_at
+    ].each do |column|
+      auth_value_method :"oauth_grants_#{column}_column", column
+    end
+
     # Oauth Token Hash
     auth_value_method :oauth_tokens_token_hash_column, nil
     auth_value_method :oauth_tokens_refresh_token_hash_column, nil

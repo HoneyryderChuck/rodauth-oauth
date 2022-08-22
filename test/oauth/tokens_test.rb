@@ -79,6 +79,10 @@ class RodauthTokensTest < RodaIntegration
 
   private
 
+  def oauth_feature
+    %i[oauth_application_management oauth_token_management]
+  end
+
   def setup_application
     super(&:oauth_tokens)
   end

@@ -2,81 +2,20 @@
 
 module Rodauth
   Feature.define(:oauth_authorization_code_grant, :OauthAuthorizationCodeGrant) do
-    depends :oauth_base
-
-    before "authorize"
-    after "authorize"
-
-    view "authorize", "Authorize", "authorize"
-
-    button "Authorize", "oauth_authorize"
-    button "Back to Client Application", "oauth_authorize_post"
+    depends :oauth_authorize_base
 
     auth_value_method :use_oauth_access_type?, true
 
-    # OAuth Grants
-    auth_value_method :oauth_grants_table, :oauth_grants
-    auth_value_method :oauth_grants_id_column, :id
-    %i[
-      account_id oauth_application_id
-      redirect_uri code scopes access_type
-      expires_in revoked_at
-    ].each do |column|
-      auth_value_method :"oauth_grants_#{column}_column", column
-    end
-
-    translatable_method :oauth_tokens_scopes_label, "Scopes"
-    translatable_method :oauth_applications_contacts_label, "Contacts"
-    translatable_method :oauth_applications_tos_uri_label, "Terms of service URL"
-    translatable_method :oauth_applications_policy_uri_label, "Policy URL"
-
-    # /authorize
-    route(:authorize) do |r|
-      next unless is_authorization_server?
-
-      before_authorize_route
-      require_authorizable_account
-
-      validate_oauth_grant_params
-      try_approval_prompt if use_oauth_access_type? && request.get?
-
-      r.get do
-        authorize_view
-      end
-
-      r.post do
-        params, mode = transaction do
-          before_authorize
-          do_authorize
-        end
-
-        authorize_response(params, mode)
-      end
-    end
-
-    def check_csrf?
-      case request.path
-      when authorize_path
-        only_json? ? false : super
-      else
-        super
-      end
-    end
-
     private
 
-    def validate_oauth_grant_params
-      redirect_response_error("invalid_request", request.referer || default_redirect) unless oauth_application && check_valid_redirect_uri?
+    def validate_authorize_params
+      super
 
-      unless oauth_application && check_valid_redirect_uri? && check_valid_access_type? &&
-             check_valid_approval_prompt? && check_valid_response_type?
-        redirect_response_error("invalid_request")
-      end
-      redirect_response_error("invalid_scope") unless check_valid_scopes?
+      redirect_response_error("invalid_request") unless check_valid_access_type? && check_valid_approval_prompt?
 
-      return unless (response_mode = param_or_nil("response_mode")) && response_mode != "form_post"
+      redirect_response_error("invalid_request") if (response_mode = param_or_nil("response_mode")) && response_mode != "form_post"
 
-      redirect_response_error("invalid_request")
+      try_approval_prompt if use_oauth_access_type? && request.get?
     end
 
     def validate_oauth_token_params
@@ -134,6 +73,8 @@ module Rodauth
       when "", nil
         response_mode ||= oauth_response_mode
         response_params.replace(_do_authorize_code)
+      else
+        return super if response_params.empty?
       end
 
       response_params["state"] = param("state") if param_or_nil("state")
@@ -142,7 +83,12 @@ module Rodauth
     end
 
     def _do_authorize_code
-      { "code" => create_oauth_grant(oauth_grants_account_id_column => account_id) }
+      create_params = { oauth_grants_account_id_column => account_id }
+      # Access Type flow
+      if use_oauth_access_type? && (access_type = param_or_nil("access_type"))
+        create_params[oauth_grants_access_type_column] = access_type
+      end
+      { "code" => create_oauth_grant(create_params) }
     end
 
     def authorize_response(params, mode)
@@ -171,6 +117,8 @@ module Rodauth
         FORM
       when "none"
         redirect(redirect_url.to_s)
+      else
+        super
       end
     end
 
@@ -195,18 +143,7 @@ module Rodauth
         oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column],
         oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column]
       }
-      create_oauth_token_from_authorization_code(oauth_grant, create_params)
-    end
-
-    def create_oauth_token_from_authorization_code(oauth_grant, create_params)
-      # revoke oauth grant
-      db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column])
-                            .update(oauth_grants_revoked_at_column => Sequel::CURRENT_TIMESTAMP)
-
-      should_generate_refresh_token = !use_oauth_access_type? ||
-                                      oauth_grant[oauth_grants_access_type_column] == "offline"
-
-      generate_oauth_token(create_params, should_generate_refresh_token)
+      create_oauth_token_from_authorization_code(oauth_grant, create_params, !use_oauth_access_type?)
     end
 
     ACCESS_TYPES = %w[offline online].freeze
@@ -230,11 +167,7 @@ module Rodauth
     def check_valid_response_type?
       response_type = param_or_nil("response_type")
 
-      response_type.nil? || response_type == "code"
-    end
-
-    def check_valid_redirect_uri?
-      oauth_application[oauth_applications_redirect_uri_column].split(" ").include?(redirect_uri)
+      response_type.nil? || response_type == "code" || response_type == "none" || super
     end
 
     def oauth_server_metadata_body(*)
