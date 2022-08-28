@@ -2,7 +2,7 @@
 
 require "test_helper"
 
-class RodauthOAuthTokenAccessTest < RodaIntegration
+class RodauthClientCredentialsGrantOAuthTokenAccessTest < RodaIntegration
   include Rack::Test::Methods
 
   def test_token_access_private_no_token
@@ -72,19 +72,7 @@ class RodauthOAuthTokenAccessTest < RodaIntegration
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 200
-    assert last_response["x-oauth-subject"] == account[:id]
-  end
-
-  # JSON
-  def test_token_access_private_invalid_scope_no_json
-    setup_application
-
-    header "Accept", "text/html"
-    set_authorization_header(oauth_token(scopes: "smthelse"))
-    # valid token, and now we're getting somewhere
-    get("/private")
-    assert last_response.status == 302
-    assert last_response.headers["Content-Type"] != "application/json"
+    assert last_response["x-oauth-subject"] == oauth_application[:id]
   end
 
   def test_token_access_private_invalid_scope_only_json
@@ -110,12 +98,16 @@ class RodauthOAuthTokenAccessTest < RodaIntegration
 
     get("/private", access_token: oauth_token[:token])
     assert last_response.status == 200
-    assert last_response["x-oauth-subject"] == account[:id]
+    assert last_response["x-oauth-subject"] == oauth_application[:id]
   end
 
   private
 
   def oauth_feature
-    :oauth_authorization_code_grant
+    :oauth_client_credentials_grant
+  end
+
+  def set_oauth_token(params = {})
+    super(params.merge(account_id: nil))
   end
 end

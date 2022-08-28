@@ -145,6 +145,7 @@ class RodaIntegration < Minitest::Test
 
       r.on "private" do
         r.get do
+          response["x-oauth-subject"] = rodauth.oauth_token_subject
           view inline: (flash["error"] || flash["notice"] || "Authorized")
         end
       end

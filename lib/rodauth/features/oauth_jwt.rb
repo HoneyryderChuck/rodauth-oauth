@@ -90,13 +90,10 @@ module Rodauth
       authorization_required unless scopes.any? { |scope| token_scopes.include?(scope) }
     end
 
-    # Overrides session_value, so that a valid authorization token also authenticates a request
-    def session_value
-      super || begin
-        return unless authorization_token
+    def oauth_token_subject
+      return unless authorization_token
 
-        authorization_token["sub"]
-      end
+      authorization_token["sub"]
     end
 
     private

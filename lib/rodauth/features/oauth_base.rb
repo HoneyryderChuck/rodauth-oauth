@@ -171,12 +171,17 @@ module Rodauth
     end
 
     # Overrides session_value, so that a valid authorization token also authenticates a request
+    # TODO: deprecate
     def session_value
-      super || begin
-        return unless authorization_token
+      super || oauth_token_subject
+    end
 
-        authorization_token[oauth_tokens_account_id_column]
-      end
+    def oauth_token_subject
+      return unless authorization_token
+
+      # TODO: fix this once tokens know which type they were generated with
+      authorization_token[oauth_tokens_account_id_column] ||
+        authorization_token[oauth_tokens_oauth_application_id_column]
     end
 
     def accepts_json?
