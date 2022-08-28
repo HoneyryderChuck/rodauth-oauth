@@ -10,8 +10,53 @@ require "omniauth/openid_connect"
 AUTHORIZATION_SERVER = ENV.fetch("AUTHORIZATION_SERVER_URI", "http://localhost:9292")
 RESOURCE_SERVER = ENV.fetch("RESOURCE_SERVER_URI", "http://localhost:9292/books")
 REDIRECT_URI = "http://localhost:9293/auth/openid_connect/callback"
-CLIENT_ID = ENV.fetch("CLIENT_ID", "CLIENT_ID")
-CLIENT_SECRET = ENV.fetch("CLIENT_SECRET", CLIENT_ID)
+
+if ENV.key?("CLIENT_ID") && ENV.key?("CLIENT_SECRET")
+  CLIENT_ID = ENV["CLIENT_ID"]
+  CLIENT_SECRET = ENV["CLIENT_SECRET"]
+else
+  # test application
+  TEST_APPLICATION_PARAMS = {
+    client_name: "Myself",
+    description: "About myself",
+    scopes: "openid email profile books.read",
+    token_endpoint_auth_method: "client_secret_basic",
+    grant_types: %w[authorization_code refresh_token],
+    response_types: %w[code],
+    redirect_uris: [REDIRECT_URI],
+    client_uri: "http://localhost:9293",
+    logo_uri: "http://localhost:9293/logo.png",
+    tos_uri: "http://localhost:9293/tos",
+    policy_uri: "http://localhost:9293/policy",
+    jwks_uri: "http://localhost:9293/jwks"
+  }.freeze
+
+  puts "registering client application...."
+  auth_server_uri = URI(AUTHORIZATION_SERVER)
+  http = Net::HTTP.new(auth_server_uri.host, auth_server_uri.port)
+  # get endpoint from metadata
+  request = Net::HTTP::Get.new("/.well-known/openid-configuration")
+  request["accept"] = "application/json"
+  response = http.request(request)
+  raise "Unexpected error on client registration, #{response.body}" unless response.code.to_i == 200
+
+  metadata = JSON.parse(response.body, symbolize_names: true)
+
+  register_url = URI(metadata[:registration_endpoint])
+  request = Net::HTTP::Post.new(register_url.request_uri)
+  request.body = JSON.dump(TEST_APPLICATION_PARAMS)
+  request["content-type"] = "application/json"
+  request["accept"] = "application/json"
+  request["authorization"] = "admin@localhost.com"
+  response = http.request(request)
+  raise "Unexpected error on client registration, #{response.body}" unless response.code.to_i == 201
+
+  fields = JSON.parse(response.body, symbolize_names: true)
+  CLIENT_ID = fields[:client_id]
+  CLIENT_SECRET = fields[:client_secret]
+end
+
+puts "client registered: #{CLIENT_ID}"
 
 OmniAuth::AuthenticityTokenProtection.default_options(key: "csrf.token", authenticity_param: "_csrf")
 OpenIDConnect.debug!
