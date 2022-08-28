@@ -41,25 +41,12 @@ module Rodauth
     end
 
     def create_oauth_grant(create_params = {})
-      create_params.merge!(
-        oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-        oauth_grants_redirect_uri_column => redirect_uri,
-        oauth_grants_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_grant_expires_in),
-        oauth_grants_scopes_column => scopes.join(oauth_scope_separator)
-      )
-
       # Access Type flow
       if use_oauth_access_type? && (access_type = param_or_nil("access_type"))
         create_params[oauth_grants_access_type_column] = access_type
       end
 
-      ds = db[oauth_grants_table]
-
-      rescue_from_uniqueness_error do
-        create_params[oauth_grants_code_column] = oauth_unique_id_generator
-        __insert_and_return__(ds, oauth_grants_id_column, create_params)
-      end
-      create_params[oauth_grants_code_column]
+      super
     end
 
     def do_authorize(response_params = {}, response_mode = param_or_nil("response_mode"))
