@@ -67,6 +67,15 @@ module Rodauth
       oauth_application[oauth_applications_redirect_uri_column].split(" ").include?(redirect_uri)
     end
 
+    def authorization_required
+      if accepts_json?
+        throw_json_response_error(authorization_required_error_status, "invalid_client")
+      else
+        set_redirect_error_flash(require_authorization_error_flash)
+        redirect(authorize_path)
+      end
+    end
+
     def do_authorize(*args); end
 
     def authorize_response(params, mode); end
