@@ -41,5 +41,5 @@
   name: OpenID Connect
   path: oidc_rdoc.html
 -
-  name: OAuth HTTP Mac
-  path: oauth_http_mac_rdoc.html
+  name: OpenID Dynamic Client Registration
+  path: oidc_dynamic_client_registration_rdoc.html
