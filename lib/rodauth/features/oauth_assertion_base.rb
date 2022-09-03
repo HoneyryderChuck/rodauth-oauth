@@ -17,7 +17,7 @@ module Rodauth
 
     private
 
-    def validate_oauth_token_params
+    def validate_token_params
       return super unless assertion_grant_type?
 
       redirect_response_error("invalid_grant") unless param_or_nil("assertion")
@@ -54,7 +54,7 @@ module Rodauth
       )
     end
 
-    def create_oauth_token(grant_type)
+    def create_token(grant_type)
       return super unless assertion_grant_type?(grant_type) && supported_grant_type?(grant_type)
 
       account = __send__(:"account_from_#{assertion_grant_type}_assertion", param("assertion"))
@@ -68,13 +68,13 @@ module Rodauth
                        @oauth_application[oauth_applications_scopes_column]
                      end
 
-      create_params = {
-        oauth_tokens_account_id_column => account[account_id_column],
-        oauth_tokens_oauth_application_id_column => @oauth_application[oauth_applications_id_column],
-        oauth_tokens_scopes_column => grant_scopes
+      grant_params = {
+        oauth_grants_account_id_column => account[account_id_column],
+        oauth_grants_oauth_application_id_column => @oauth_application[oauth_applications_id_column],
+        oauth_grants_scopes_column => grant_scopes
       }
 
-      generate_oauth_token(create_params, false)
+      generate_token(grant_params, false)
     end
 
     def assertion_grant_type?(grant_type = param("grant_type"))

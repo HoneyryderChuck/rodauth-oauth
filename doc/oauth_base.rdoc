@@ -18,6 +18,7 @@ oauth_refresh_token_protection_policy :: protection policy for the refresh token
 oauth_scope_separator :: character used to separate scopes in the db field value, white-space by default.
 oauth_response_mode :: default response mode (<tt>query</tt> by default).
 oauth_auth_methods_supported :: list of supported auth methods.
+oauth_valid_uri_schemes :: list of supported URI schemes for a client application's "redirect_uri", <tt>%w[https]</tt> by default.
 
 oauth_applications_table :: the db table where oauth applications are stored, <tt>:oauth_applications</tt> by default.
 oauth_applications_id_column :: the db column where the oauth application primary key is stored, <tt>:id</tt> by default.
@@ -41,20 +42,22 @@ oauth_applications_software_id_column :: the db column where the oauth applicati
 oauth_applications_software_version_column :: the db column where the oauth application software version is stored, <tt>:software_version</tt> by default.
 oauth_applications_token_endpoint_auth_method_column :: the db column where the oauth application supported auth method for the token endpoint is stored, <tt>:software_id</tt> by default.
 
-oauth_tokens_table :: the db table where oauth tokens are stored, <tt>:oauth_tokens</tt> by default.
-oauth_tokens_id_column :: the db column where the oauth token primary key is stored, <tt>:id</tt> by default.
-oauth_tokens_oauth_application_id_column :: the db column where the oauth token oauth application ID is stored, <tt>:oauth_application_id</tt> by default.
-oauth_tokens_oauth_token_id_column :: the db column where the oauth token's other token ID is stored, <tt>:oauth_token_id</tt> by default.
-oauth_tokens_oauth_grant_id_column :: the db column where the oauth token oauth grant ID is stored, <tt>:oauth_grant_id</tt> by default.
-oauth_tokens_account_id_column :: the db column where the oauth token account ID is stored, <tt>:account_id</tt> by default.
-oauth_tokens_scopes_column :: the db column where the oauth token scopes are stored, <tt>:scopes</tt> by default.
-oauth_tokens_token_column :: the db column where the oauth token access token is stored (when it's stored), <tt>:token</tt> by default.
-oauth_tokens_refresh_token_column :: the db column where the oauth token refresh token is stored, <tt>:refresh_token</tt> by default.
-oauth_tokens_token_hash_column :: the db column where the oauth token access token hash is stored, <tt>nil<tt> by default.
-oauth_tokens_refresh_token_hash_column :: the db column where the oauth token refresh token hash is stored, <tt>nil<tt> by default.
-oauth_tokens_expires_in_column :: the db column where the oauth token expiration time is stored, <tt>:expires_in</tt> by default.
-oauth_tokens_revoked_at_column :: the db column where the oauth token revocation time is stored, <tt>:revoked_at</tt> by default.
-oauth_tokens_unique_columns :: uniqueness index to use in ON CONFLICT queries (when supported).
+
+oauth_grants_table :: the db table where oauth grants are stored, <tt>:oauth_grants</tt> by default.
+oauth_grants_id_column :: the db column where the oauth grant primary key is stored, <tt>:id</tt> by default.
+oauth_grants_oauth_application_id_column :: the db column where the oauth grant oauth application ID is stored, <tt>:oauth_application_id</tt> by default.
+oauth_grants_account_id_column :: the db column where the oauth grant account ID is stored, <tt>:account_id</tt> by default.
+oauth_grants_code_column :: the db column where the oauth grant authorization code is stored, <tt>:code</tt> by default.
+oauth_grants_redirect_uri_column :: the db column where the oauth grant redirect URI is stored, <tt>:redirect_uri</tt> by default.
+oauth_grants_scopes_column :: the db column where the oauth grant scopes are stored, <tt>:scopes<tt> by default.
+oauth_grants_access_type_column :: the db column where the oauth grant access type is stored, <tt>:access_type<tt> by default.
+oauth_grants_expires_in_column :: the db column where the oauth grant expiration time is stored, <tt>:expires_in</tt> by default.
+oauth_grants_revoked_at_column :: the db column where the oauth grant revocation time is stored, <tt>:revoked_at</tt> by default.
+oauth_grants_token_column :: the db column where the oauth token access token is stored (when it's stored), <tt>:token</tt> by default.
+oauth_grants_refresh_token_column :: the db column where the refresh token is stored, <tt>:refresh_token</tt> by default.
+oauth_grants_token_hash_column :: the db column where the access token hash is stored, <tt>nil<tt> by default.
+oauth_grants_refresh_token_hash_column :: the db column where the refresh token hash is stored, <tt>nil<tt> by default.
+oauth_grants_unique_columns :: uniqueness index to use in ON CONFLICT queries (when supported).
 
 
 json_response_content_type :: The content type to set for json responses, <tt>application/json</tt> by default.

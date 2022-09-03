@@ -11,4 +11,4 @@ before_revoke_route :: Run arbitrary code before the revoke route.
 before_revoke :: Run arbitrary code before revoking a token.
 after_revoke :: Run arbitrary code after after revoking a token.
 
-revoke_oauth_token_notice_flash :: The flash message to display when an access token has been revoked.
+revoke_oauth_grant_notice_flash :: The flash message to display when a grant has been revoked.

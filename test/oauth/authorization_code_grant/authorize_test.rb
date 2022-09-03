@@ -209,8 +209,10 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{new_grant[:code]}",
            "was redirected instead to #{page.current_url}"
 
-    assert db[:oauth_grants].count == 2,
-           "no new grant has been created"
+    unless ENV.key?("ONLY_ONE_TOKEN")
+      assert db[:oauth_grants].count == 2,
+             "no new grant has been created"
+    end
 
     assert new_grant[:access_type] == "online"
   end

@@ -151,8 +151,7 @@ class RodauthOAuthTokenDeviceCodeTest < RodaIntegration
       use_oauth_device_code_grant_type? true
     end
     setup_application
-    grant = oauth_grant(user_code: nil, account_id: account[:id], revoked_at: Sequel::CURRENT_TIMESTAMP)
-    token = oauth_token(oauth_grant_id: grant[:id])
+    grant = oauth_grant_with_token(code: "CODE", user_code: nil, account_id: account[:id])
 
     post("/token",
          client_id: oauth_application[:client_id],
@@ -162,7 +161,7 @@ class RodauthOAuthTokenDeviceCodeTest < RodaIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    verify_access_token_response(json_body, token)
+    verify_access_token_response(json_body, grant)
   end
 
   def test_token_device_code_client_authenticated_successful
@@ -170,8 +169,7 @@ class RodauthOAuthTokenDeviceCodeTest < RodaIntegration
       use_oauth_device_code_grant_type? true
     end
     setup_application
-    grant = oauth_grant(user_code: nil, account_id: account[:id], revoked_at: Sequel::CURRENT_TIMESTAMP)
-    token = oauth_token(oauth_grant_id: grant[:id])
+    grant = oauth_grant_with_token(code: "CODE", user_code: nil, account_id: account[:id], revoked_at: Sequel::CURRENT_TIMESTAMP)
 
     header "Authorization", "Basic #{authorization_header(
       username: oauth_application[:client_id],
@@ -185,7 +183,7 @@ class RodauthOAuthTokenDeviceCodeTest < RodaIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    verify_access_token_response(json_body, token)
+    verify_access_token_response(json_body, grant)
   end
 
   private

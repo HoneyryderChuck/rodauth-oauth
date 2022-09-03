@@ -21,9 +21,9 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
     verify_response
 
-    oauth_token = verify_oauth_token
+    oauth_grant = verify_oauth_grant
 
-    payload = verify_access_token_response(json_body, oauth_token, "SECRET", "HS256")
+    payload = verify_access_token_response(json_body, oauth_grant, "SECRET", "HS256")
 
     # by default the subject type is public
     assert payload["sub"] == account[:id]
@@ -53,9 +53,9 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
     verify_response
 
-    oauth_token = verify_oauth_token
+    oauth_grant = verify_oauth_grant
 
-    payload = verify_access_token_response(json_body, oauth_token, "SECRET", "HS256")
+    payload = verify_access_token_response(json_body, oauth_grant, "SECRET", "HS256")
     # by default the subject type is public
     assert payload["sub"] != account[:id]
 
@@ -71,8 +71,8 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
     rodauth do
       oauth_jwt_key "SECRET"
       oauth_jwt_algorithm "HS256"
-      oauth_tokens_token_hash_column :token_hash
-      oauth_tokens_refresh_token_hash_column :refresh_token_hash
+      oauth_grants_token_hash_column :token_hash
+      oauth_grants_refresh_token_hash_column :refresh_token_hash
     end
     setup_application
 
@@ -85,13 +85,13 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
     verify_response
 
-    oauth_token = verify_oauth_token
+    oauth_grant = verify_oauth_grant
 
-    assert oauth_token[:refresh_token].nil?
-    assert !oauth_token[:refresh_token_hash].nil?
+    assert oauth_grant[:refresh_token].nil?
+    assert !oauth_grant[:refresh_token_hash].nil?
 
-    assert json_body["access_token"] != oauth_token[:token_hash]
-    assert json_body["refresh_token"] != oauth_token[:refresh_token_hash]
+    assert json_body["access_token"] != oauth_grant[:token_hash]
+    assert json_body["refresh_token"] != oauth_grant[:refresh_token_hash]
     assert !json_body["expires_in"].nil?
 
     header "Authorization", "Bearer #{json_body['access_token']}"
@@ -119,9 +119,9 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
     verify_response
 
-    oauth_token = verify_oauth_token
+    oauth_grant = verify_oauth_grant
 
-    verify_access_token_response(json_body, oauth_token, rsa_public, "RS256")
+    verify_access_token_response(json_body, oauth_grant, rsa_public, "RS256")
 
     # use token
     header "Authorization", "Bearer #{json_body['access_token']}"
@@ -154,9 +154,9 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
       verify_response
 
-      oauth_token = verify_oauth_token
+      oauth_grant = verify_oauth_grant
 
-      verify_access_token_response(json_body, oauth_token, ecdsa_public, "ES256")
+      verify_access_token_response(json_body, oauth_grant, ecdsa_public, "ES256")
 
       # use token
       header "Authorization", "Bearer #{json_body['access_token']}"
@@ -189,13 +189,13 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
     verify_response
 
-    oauth_token = verify_oauth_token
+    oauth_grant = verify_oauth_grant
 
     encrypted_token = json_body["access_token"]
 
     token = JWE.decrypt(encrypted_token, jwe_key)
 
-    verify_access_token_response(json_body.merge("access_token" => token), oauth_token, "SECRET", "HS256")
+    verify_access_token_response(json_body.merge("access_token" => token), oauth_grant, "SECRET", "HS256")
 
     # use token
     header "Authorization", "Bearer #{json_body['access_token']}"
@@ -225,8 +225,8 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
       verify_response
 
-      oauth_token = verify_oauth_token
-      verify_access_token_response(json_body, oauth_token, legacy_rsa_public, "RS256")
+      oauth_grant = verify_oauth_grant
+      verify_access_token_response(json_body, oauth_grant, legacy_rsa_public, "RS256")
     end
 
     # Set up new app and tokens

@@ -8,14 +8,22 @@ module Rodauth
 
     private
 
-    def create_oauth_token(grant_type)
-      return super unless grant_type == "client_credentials" && use_oauth_client_credentials_grant_type?
+    def create_token(grant_type)
+      return super unless grant_type == "client_credentials"
 
-      create_params = {
-        oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-        oauth_tokens_scopes_column => scopes.join(oauth_scope_separator)
+      grant_scopes = scopes
+
+      grant_scopes = if grant_scopes
+                       grant_scopes.join(oauth_scope_separator)
+                     else
+                       oauth_application[oauth_applications_scopes_column]
+                     end
+
+      grant_params = {
+        oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+        oauth_grants_scopes_column => grant_scopes
       }
-      generate_oauth_token(create_params, false)
+      generate_token(grant_params, false)
     end
 
     def oauth_server_metadata_body(*)

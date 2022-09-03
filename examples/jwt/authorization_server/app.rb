@@ -47,7 +47,10 @@ else
     primary_key :id, type: Integer
     foreign_key :account_id, :accounts, null: false
     foreign_key :oauth_application_id, :oauth_applications, null: false
-    String :code, null: false
+    String :type, null: false
+    String :code, null: true
+    String :token, token: true, unique: true
+    String :refresh_token, token: true, unique: true
     DateTime :expires_in, null: false
     String :redirect_uri
     DateTime :revoked_at
@@ -57,17 +60,6 @@ else
     # if using PKCE flow
     # String :code_challenge
     # String :code_challenge_method
-  end
-  DB.create_table :oauth_tokens do |_t|
-    primary_key :id, type: Integer
-    foreign_key :account_id, :accounts
-    foreign_key :oauth_grant_id, :oauth_grants
-    foreign_key :oauth_token_id, :oauth_tokens
-    foreign_key :oauth_application_id, :oauth_applications, null: false
-    String :refresh_token, token: true
-    DateTime :expires_in, null: false
-    DateTime :revoked_at
-    String :scopes, null: false
   end
 end
 
@@ -112,11 +104,9 @@ class AuthorizationServer < Roda
     oauth_application_default_scope %w[profile.read]
     oauth_valid_uri_schemes %w[http https]
 
-    oauth_jwt_key PRIV_KEY
-    oauth_jwt_public_key PUB_KEY
-    #     oauth_jwt_algorithm "ES256"
-    oauth_jwt_algorithm "RS256"
-    oauth_tokens_refresh_token_hash_column :refresh_token
+    oauth_jwt_keys("RS256" => PRIV_KEY)
+    oauth_jwt_public_keys("RS256" => PUB_KEY)
+    oauth_grants_refresh_token_hash_column :refresh_token
 
     before_register do
       email = request.env["HTTP_AUTHORIZATION"]

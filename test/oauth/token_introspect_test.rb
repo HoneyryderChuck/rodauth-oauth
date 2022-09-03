@@ -22,11 +22,11 @@ class RodauthOAuthTokenIntrospectTest < RodaIntegration
 
     header "Accept", "application/json"
 
-    token = oauth_token(expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 20))
+    grant = oauth_grant_with_token(expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 20))
 
     # valid token, and now we're getting somewhere
     post("/introspect", {
-           token: token[:token]
+           token: grant[:token]
          })
     assert last_response.status == 200
     assert json_body == { "active" => false }
@@ -40,7 +40,7 @@ class RodauthOAuthTokenIntrospectTest < RodaIntegration
 
     # valid token, and now we're getting somewhere
     post("/introspect", {
-           token: oauth_token[:refresh_token],
+           token: oauth_grant_with_token[:refresh_token],
            token_type_hint: "wups"
          })
     assert last_response.status == 400
@@ -55,11 +55,11 @@ class RodauthOAuthTokenIntrospectTest < RodaIntegration
 
     # valid token, and now we're getting somewhere
     post("/introspect", {
-           token: oauth_token[:token]
+           token: oauth_grant_with_token[:token]
          })
     assert last_response.status == 200
     assert json_body["active"] == true
-    assert json_body["scope"] == oauth_token[:scopes]
+    assert json_body["scope"] == oauth_grant_with_token[:scopes]
     assert json_body["client_id"] == oauth_application[:client_id]
     assert json_body["token_type"] == "bearer"
     assert json_body.key?("exp")
@@ -73,11 +73,11 @@ class RodauthOAuthTokenIntrospectTest < RodaIntegration
 
     # valid token, and now we're getting somewhere
     post("/introspect", {
-           token: oauth_token[:refresh_token]
+           token: oauth_grant_with_token[:refresh_token]
          })
     assert last_response.status == 200
     assert json_body["active"] == true
-    assert json_body["scope"] == oauth_token[:scopes]
+    assert json_body["scope"] == oauth_grant_with_token[:scopes]
     assert json_body["client_id"] == oauth_application[:client_id]
     assert json_body["token_type"] == "bearer"
     assert json_body.key?("exp")
@@ -91,7 +91,7 @@ class RodauthOAuthTokenIntrospectTest < RodaIntegration
 
     # valid token, and now we're getting somewhere
     post("/introspect", {
-           token: oauth_token[:refresh_token],
+           token: oauth_grant_with_token[:refresh_token],
            token_type_hint: "access_token"
          })
     assert last_response.status == 200
@@ -106,7 +106,7 @@ class RodauthOAuthTokenIntrospectTest < RodaIntegration
 
     # valid token, and now we're getting somewhere
     post("/introspect", {
-           token: oauth_token[:refresh_token],
+           token: oauth_grant_with_token[:refresh_token],
            token_type_hint: "refresh_token"
          })
     assert last_response.status == 200

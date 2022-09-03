@@ -52,13 +52,11 @@ class RodauthOAuthTokenPkceTest < RodaIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_tokens].count == 1
+    assert db[:oauth_grants].count == 1
 
-    access_token = db[:oauth_tokens].first
+    oauth_grant = db[:oauth_grants].first
 
-    verify_oauth_grant_revoked(access_token)
-
-    assert json_body["access_token"] == access_token[:token]
+    assert json_body["access_token"] == oauth_grant[:token]
     assert json_body["refresh_token"].nil?
     assert !json_body["expires_in"].nil?
   end
@@ -78,12 +76,11 @@ class RodauthOAuthTokenPkceTest < RodaIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_tokens].count == 1
+    assert db[:oauth_grants].count == 1
 
-    access_token = db[:oauth_tokens].first
+    oauth_grant = db[:oauth_grants].first
 
-    verify_oauth_grant_revoked(access_token)
-    assert json_body["access_token"] == access_token[:token]
+    assert json_body["access_token"] == oauth_grant[:token]
     assert json_body["refresh_token"].nil?
     assert !json_body["expires_in"].nil?
   end

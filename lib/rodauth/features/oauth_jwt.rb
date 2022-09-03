@@ -168,26 +168,26 @@ module Rodauth
 
     # /token
 
-    def create_oauth_token_from_token(oauth_token, update_params)
-      otoken = super
-      access_token = _generate_jwt_access_token(otoken)
-      otoken[oauth_tokens_token_column] = access_token
-      otoken
+    def create_token_from_token(_grant, update_params)
+      oauth_grant = super
+      access_token = _generate_jwt_access_token(oauth_grant)
+      oauth_grant[oauth_grants_token_column] = access_token
+      oauth_grant
     end
 
-    def generate_oauth_token(params = {}, should_generate_refresh_token = true)
-      oauth_token = super
-      access_token = _generate_jwt_access_token(oauth_token)
-      oauth_token[oauth_tokens_token_column] = access_token
-      oauth_token
+    def generate_token(_grant_params = {}, should_generate_refresh_token = true)
+      oauth_grant = super
+      access_token = _generate_jwt_access_token(oauth_grant)
+      oauth_grant[oauth_grants_token_column] = access_token
+      oauth_grant
     end
 
-    def _generate_jwt_access_token(oauth_token)
-      claims = jwt_claims(oauth_token)
+    def _generate_jwt_access_token(oauth_grant)
+      claims = jwt_claims(oauth_grant)
 
       # one of the points of using jwt is avoiding database lookups, so we put here all relevant
       # token data.
-      claims[:scope] = oauth_token[oauth_tokens_scopes_column]
+      claims[:scope] = oauth_grant[oauth_grants_scopes_column]
 
       jwt_encode(claims)
     end
@@ -196,7 +196,7 @@ module Rodauth
       # no op
     end
 
-    def jwt_claims(oauth_token)
+    def jwt_claims(oauth_grant)
       issued_at = Time.now.to_i
 
       {
@@ -211,7 +211,7 @@ module Rodauth
         # owner is involved, such as the client credentials grant, the value
         # of "sub" SHOULD correspond to an identifier the authorization
         # server uses to indicate the client application.
-        sub: jwt_subject(oauth_token),
+        sub: jwt_subject(oauth_grant),
         client_id: oauth_application[oauth_applications_client_id_column],
 
         exp: issued_at + oauth_token_expires_in,
@@ -219,7 +219,7 @@ module Rodauth
       }
     end
 
-    def jwt_subject(oauth_token)
+    def jwt_subject(oauth_grant)
       subject_type = if oauth_application
                        oauth_application[oauth_applications_subject_type_column] || oauth_jwt_subject_type
                      else
@@ -227,17 +227,17 @@ module Rodauth
                      end
       case subject_type
       when "public"
-        oauth_token[oauth_tokens_account_id_column]
+        oauth_grant[oauth_grants_account_id_column]
       when "pairwise"
-        id = oauth_token[oauth_tokens_account_id_column]
-        application_id = oauth_token[oauth_tokens_oauth_application_id_column]
+        id = oauth_grant[oauth_grants_account_id_column]
+        application_id = oauth_grant[oauth_grants_oauth_application_id_column]
         Digest::SHA256.hexdigest("#{id}#{application_id}#{oauth_jwt_subject_secret}")
       else
         raise StandardError, "unexpected subject (#{subject_type})"
       end
     end
 
-    def oauth_token_by_token(token)
+    def oauth_grant_by_token(token)
       jwt_decode(token)
     end
 
@@ -251,24 +251,24 @@ module Rodauth
       end
     end
 
-    def json_token_introspect_payload(oauth_token)
-      return { active: false } unless oauth_token
+    def json_token_introspect_payload(claims)
+      return { active: false } unless claims
 
-      return super unless oauth_token["sub"] # naive check on whether it's a jwt token
+      return super unless claims["sub"] # naive check on whether it's a jwt token
 
       {
         active: true,
-        scope: oauth_token["scope"],
-        client_id: oauth_token["client_id"],
+        scope: claims["scope"],
+        client_id: claims["client_id"],
         # username
         token_type: "access_token",
-        exp: oauth_token["exp"],
-        iat: oauth_token["iat"],
-        nbf: oauth_token["nbf"],
-        sub: oauth_token["sub"],
-        aud: oauth_token["aud"],
-        iss: oauth_token["iss"],
-        jti: oauth_token["jti"]
+        exp: claims["exp"],
+        iat: claims["iat"],
+        nbf: claims["nbf"],
+        sub: claims["sub"],
+        aud: claims["aud"],
+        iss: claims["iss"],
+        jti: claims["jti"]
       }
     end
 

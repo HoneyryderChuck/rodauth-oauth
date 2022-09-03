@@ -41,13 +41,12 @@ class RodauthOAuthResourceIndicatorsTokenAuthorizationCodeTest < RodaIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_tokens].count == 1
+    assert db[:oauth_grants].count == 1
 
-    oauth_token = db[:oauth_tokens].first
+    oauth_grant = db[:oauth_grants].first
 
-    verify_oauth_grant_revoked(oauth_token)
-    verify_access_token_response(json_body, oauth_token)
-    assert oauth_token[:resource] == "https://example.org"
+    verify_access_token_response(json_body, oauth_grant)
+    assert oauth_grant[:resource] == "https://example.org"
   end
 
   def test_token_authorization_code_one_of
@@ -68,13 +67,12 @@ class RodauthOAuthResourceIndicatorsTokenAuthorizationCodeTest < RodaIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_tokens].count == 1
+    assert db[:oauth_grants].count == 1
 
-    oauth_token = db[:oauth_tokens].first
+    oauth_grant = db[:oauth_grants].first
 
-    verify_oauth_grant_revoked(oauth_token)
-    verify_access_token_response(json_body, oauth_token)
-    assert oauth_token[:resource] == "https://example.org"
+    verify_access_token_response(json_body, oauth_grant)
+    assert oauth_grant[:resource] == "https://example.org"
   end
 
   private

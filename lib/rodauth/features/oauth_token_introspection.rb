@@ -22,23 +22,23 @@ module Rodauth
           validate_oauth_introspect_params
 
           before_introspect
-          oauth_token = case param("token_type_hint")
+          oauth_grant = case param("token_type_hint")
                         when "access_token"
-                          oauth_token_by_token(param("token"))
+                          oauth_grant_by_token(param("token"))
                         when "refresh_token"
-                          oauth_token_by_refresh_token(param("token"))
+                          oauth_grant_by_refresh_token(param("token"))
                         else
-                          oauth_token_by_token(param("token")) || oauth_token_by_refresh_token(param("token"))
+                          oauth_grant_by_token(param("token")) || oauth_grant_by_refresh_token(param("token"))
                         end
 
           if oauth_application
-            redirect_response_error("invalid_request") if oauth_token && !token_from_application?(oauth_token, oauth_application)
-          elsif oauth_token
+            redirect_response_error("invalid_request") if oauth_grant && !grant_from_application?(oauth_grant, oauth_application)
+          elsif oauth_grant
             @oauth_application = db[oauth_applications_table].where(oauth_applications_id_column =>
-              oauth_token[oauth_tokens_oauth_application_id_column]).first
+              oauth_grant[oauth_grants_oauth_application_id_column]).first
           end
 
-          json_response_success(json_token_introspect_payload(oauth_token))
+          json_response_success(json_token_introspect_payload(oauth_grant))
         end
 
         throw_json_response_error(invalid_oauth_response_status, "invalid_request")
@@ -56,16 +56,16 @@ module Rodauth
       redirect_response_error("invalid_request") unless param_or_nil("token")
     end
 
-    def json_token_introspect_payload(token)
-      return { active: false } unless token
+    def json_token_introspect_payload(oauth_grant)
+      return { active: false } unless oauth_grant
 
       {
         active: true,
-        scope: token[oauth_tokens_scopes_column],
+        scope: oauth_grant[oauth_grants_scopes_column],
         client_id: oauth_application[oauth_applications_client_id_column],
         # username
         token_type: oauth_token_type,
-        exp: token[oauth_tokens_expires_in_column].to_i
+        exp: oauth_grant[oauth_grants_expires_in_column].to_i
       }
     end
 

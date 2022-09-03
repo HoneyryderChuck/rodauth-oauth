@@ -170,8 +170,8 @@ class RodaIntegration < Minitest::Test
     click_on "Logout"
   end
 
-  def set_authorization_header(token = oauth_token)
-    header "Authorization", "Bearer #{token[:token]}"
+  def set_authorization_header(grant = oauth_grant_with_token)
+    header "Authorization", "Bearer #{grant[:token]}"
   end
 
   def around
@@ -206,21 +206,16 @@ class RodaIntegration < Minitest::Test
     assert !data["access_token"].nil?
   end
 
-  def verify_refresh_token_response(data, prev_token)
+  def verify_refresh_token_response(data, prev_grant)
     verify_token_common_response(data)
-    assert data["access_token"] != prev_token[:token]
-    assert (Time.now.to_i + data["expires_in"]) > prev_token[:expires_in].to_i
+    assert data["access_token"] != prev_grant[:token]
+    assert (Time.now.to_i + data["expires_in"]) > prev_grant[:expires_in].to_i
   end
 
-  def verify_access_token_response(data, oauth_token)
+  def verify_access_token_response(data, oauth_grant)
     verify_token_common_response(data)
-    assert data["access_token"] == oauth_token[:token]
-    assert data["refresh_token"] == oauth_token[:refresh_token]
-  end
-
-  def verify_oauth_grant_revoked(oauth_token)
-    oauth_grant = db[:oauth_grants].where(id: oauth_token[:oauth_grant_id]).first
-    assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
+    assert data["access_token"] == oauth_grant[:token]
+    assert data["refresh_token"] == oauth_grant[:refresh_token]
   end
 
   parallelize_me! if ENV.key?("PARALLEL")

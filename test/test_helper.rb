@@ -74,23 +74,16 @@ module OAuthHelpers
     db[:oauth_grants].filter(id: id).first
   end
 
-  def oauth_token(params = {})
-    @oauth_token ||= set_oauth_token(params)
+  def oauth_grant_with_token(params = {})
+    @oauth_grant_with_token ||= set_oauth_grant_with_token(params)
   end
 
-  def set_oauth_token(params = {})
-    application = params.delete(:oauth_application) || oauth_application
-    grant = params.delete(:oauth_grant) || oauth_grant
-    id = db[:oauth_tokens].insert({
-      account_id: account[:id],
-      oauth_application_id: application[:id],
-      oauth_grant_id: grant[:id],
+  def set_oauth_grant_with_token(params = {})
+    set_oauth_grant({
       token: "TOKEN",
       refresh_token: "REFRESH_TOKEN",
-      expires_in: Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: 60 * 5),
-      scopes: grant[:scopes]
+      code: nil
     }.merge(params))
-    db[:oauth_tokens].filter(id: id).first
   end
 
   def account

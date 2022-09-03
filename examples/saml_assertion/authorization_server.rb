@@ -27,13 +27,14 @@ else
     String :client_secret, null: false, unique: true
     String :scopes, null: false
   end
-  DB.create_table :oauth_tokens do |_t|
+  DB.create_table :oauth_grants do |_t|
     primary_key :id, type: Integer
     foreign_key :account_id, :accounts
-    foreign_key :oauth_token_id, :oauth_tokens
     foreign_key :oauth_application_id, :oauth_applications, null: false
-    String :token, token: true
-    String :refresh_token, token: true
+    String :type, token: true
+    String :code, null: true
+    String :token, token: true, unique: true
+    String :refresh_token, token: true, unique: true
     DateTime :expires_in, null: false
     DateTime :revoked_at
     String :scopes, null: false
@@ -81,7 +82,7 @@ class AuthorizationServer < Roda
     oauth_application_scopes %w[profile.read books.read books.write]
     oauth_application_default_scope "profile.read"
 
-    oauth_tokens_refresh_token_hash_column :refresh_token
+    oauth_grants_refresh_token_hash_column :refresh_token
   end
 
   plugin :not_found do

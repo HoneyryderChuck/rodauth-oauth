@@ -28,7 +28,17 @@ class CreateRodauthOauth < superclass
       t.foreign_key :accounts, column: :account_id
       t.integer :oauth_application_id
       t.foreign_key :oauth_applications, column: :oauth_application_id
+      t.string :type, null: false
       t.string :code, null: false
+      t.index(%i[oauth_application_id code], unique: true)
+      t.string :token, null: false, token: true, unique: true
+      # uncomment if setting oauth_grants_token_hash_column
+      # and delete the token column
+      # t.string :token_hash, token: true, unique: true
+      t.string :refresh_token, unique: true
+      # uncomment if setting oauth_grants_refresh_token_hash_column
+      # and delete the refresh_token column
+      # t.string :refresh_token_hash, token: true, unique: true
       t.datetime :expires_in, null: false
       t.string :redirect_uri
       t.datetime :revoked_at
@@ -41,24 +51,5 @@ class CreateRodauthOauth < superclass
       # t.string :code_challenge_method
       t.index(%i[oauth_application_id code], unique: true)
     end unless table_exists?(:oauth_grants)
-
-    create_table :oauth_tokens do |t|
-      t.integer :account_id
-      t.foreign_key :accounts, column: :account_id
-      t.integer :oauth_grant_id
-      t.foreign_key :oauth_grants, column: :oauth_grant_id
-      t.integer :oauth_token_id
-      t.foreign_key :oauth_tokens, column: :oauth_token_id
-      t.integer :oauth_application_id
-      t.foreign_key :oauth_applications, column: :oauth_application_id
-      t.string :token, null: false, token: true
-      t.string :refresh_token
-      t.datetime :expires_in, null: false
-      t.datetime :revoked_at
-      t.string :scopes, null: false
-      t.string :nonce
-      t.string :acr
-      t.datetime :created_at, null: false, default: -> { "CURRENT_TIMESTAMP" }
-    end unless table_exists?(:oauth_tokens)
   end
 end

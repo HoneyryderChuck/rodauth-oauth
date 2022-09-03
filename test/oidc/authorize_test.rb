@@ -135,12 +135,12 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     # submit authorization request
     click_button "Authorize"
 
-    assert db[:oauth_tokens].count == 1,
+    assert db[:oauth_grants].count == 1,
            "no token has been created"
 
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#access_token=([^&]+)&token_type=bearer&expires_in=3600/,
            "was redirected instead to #{page.current_url}"
-    verify_access_token(Regexp.last_match(1), db[:oauth_tokens].first, signing_key: jws_public_key, signing_algo: "RS256")
+    verify_access_token(Regexp.last_match(1), db[:oauth_grants].first, signing_key: jws_public_key, signing_algo: "RS256")
   end
 
   def test_oidc_authorize_post_authorize_with_id_token_response_type
@@ -163,12 +163,12 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     # submit authorization request
     click_button "Authorize"
 
-    assert db[:oauth_tokens].count == 1,
+    assert db[:oauth_grants].count == 1,
            "no token has been created"
 
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#token_type=bearer&expires_in=3600&id_token=([^&]+)/,
            "was redirected instead to #{page.current_url}"
-    verify_id_token(Regexp.last_match(1), db[:oauth_tokens].first, signing_key: jws_public_key, signing_algo: "RS256")
+    verify_id_token(Regexp.last_match(1), db[:oauth_grants].first, signing_key: jws_public_key, signing_algo: "RS256")
   end
 
   def test_oidc_authorize_post_authorize_with_none_response_type
@@ -209,15 +209,12 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     # submit authorization request
     click_button "Authorize"
 
-    assert db[:oauth_grants].count == 1,
+    assert db[:oauth_grants].count >= 1,
            "no grant has been created"
-
-    assert db[:oauth_tokens].count == 1,
-           "no token has been created"
 
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#code=([^&]+)&access_token=([^&]+)&token_type=bearer&expires_in=3600/,
            "was redirected instead to #{page.current_url}"
-    verify_access_token(Regexp.last_match(2), db[:oauth_tokens].first, signing_key: jws_public_key, signing_algo: "RS256")
+    verify_access_token(Regexp.last_match(2), db[:oauth_grants].first, signing_key: jws_public_key, signing_algo: "RS256")
   end
 
   def test_oidc_authorize_post_authorize_with_code_id_token_response_type
@@ -238,16 +235,13 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     # submit authorization request
     click_button "Authorize"
 
-    assert db[:oauth_grants].count == 1,
+    assert db[:oauth_grants].count >= 1,
            "no grant has been created"
-
-    assert db[:oauth_tokens].count == 1,
-           "no token has been created"
 
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#code=([^&]+)&token_type=bearer&expires_in=3600&id_token=([^&]+)/,
            "was redirected instead to #{page.current_url}"
 
-    verify_id_token(Regexp.last_match(2), db[:oauth_tokens].first, signing_key: jws_public_key, signing_algo: "RS256")
+    verify_id_token(Regexp.last_match(2), db[:oauth_grants].first, signing_key: jws_public_key, signing_algo: "RS256")
   end
 
   def test_oidc_authorize_post_authorize_with_id_token_token_response_type
@@ -272,8 +266,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#token_type=bearer&expires_in=3600&id_token=([^&]+)&access_token=([^&]+)/,
            "was redirected instead to #{page.current_url}"
-    verify_id_token(Regexp.last_match(1), db[:oauth_tokens].first, signing_key: jws_public_key, signing_algo: "RS256")
-    verify_access_token(Regexp.last_match(2), db[:oauth_tokens].first, signing_key: jws_public_key, signing_algo: "RS256")
+    verify_id_token(Regexp.last_match(1), db[:oauth_grants].first, signing_key: jws_public_key, signing_algo: "RS256")
+    verify_access_token(Regexp.last_match(2), db[:oauth_grants].first, signing_key: jws_public_key, signing_algo: "RS256")
   end
 
   def test_oidc_authorize_post_authorize_with_code_id_token_token_response_type
@@ -296,13 +290,13 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     # submit authorization request
     click_button "Authorize"
 
-    assert db[:oauth_grants].count == 1,
+    assert db[:oauth_grants].count >= 1,
            "no grant has been created"
 
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#code=([^&]+)&token_type=bearer&expires_in=3600&id_token=([^&]+)&access_token=([^&]+)/,
            "was redirected instead to #{page.current_url}"
-    verify_id_token(Regexp.last_match(2), db[:oauth_tokens].first, signing_key: jws_public_key, signing_algo: "RS256")
-    verify_access_token(Regexp.last_match(3), db[:oauth_tokens].first, signing_key: jws_public_key, signing_algo: "RS256")
+    verify_id_token(Regexp.last_match(2), db[:oauth_grants].first, signing_key: jws_public_key, signing_algo: "RS256")
+    verify_access_token(Regexp.last_match(3), db[:oauth_grants].first, signing_key: jws_public_key, signing_algo: "RS256")
   end
 
   def test_oidc_authorize_post_authorize_prompt_none
@@ -326,8 +320,10 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
           "prompt=none"
 
-    assert db[:oauth_grants].count == 2,
-           "no new grant has been created"
+    unless ENV.key?("ONLY_ONE_TOKEN")
+      assert db[:oauth_grants].count == 2,
+             "no new grant has been created"
+    end
 
     new_grant = db[:oauth_grants].order(:id).last
 
@@ -451,13 +447,13 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     # submit authorization request
     click_button "Authorize"
 
-    assert db[:oauth_tokens].count == 1,
+    assert db[:oauth_grants].count == 1,
            "no token has been created"
 
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#token_type=bearer&expires_in=3600&id_token=([^&]+)/,
            "was redirected instead to #{page.current_url}"
 
-    verify_id_token(Regexp.last_match(1), db[:oauth_tokens].first, signing_key: jws_rs512_public_key, signing_algo: "RS512")
+    verify_id_token(Regexp.last_match(1), db[:oauth_grants].first, signing_key: jws_rs512_public_key, signing_algo: "RS512")
   end
 
   def test_oidc_authorize_post_authorize_with_id_token_signed_encrypted_alg
@@ -491,13 +487,13 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     # submit authorization request
     click_button "Authorize"
 
-    assert db[:oauth_tokens].count == 1,
+    assert db[:oauth_grants].count == 1,
            "no token has been created"
 
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#token_type=bearer&expires_in=3600&id_token=([^&]+)/,
            "was redirected instead to #{page.current_url}"
 
-    verify_id_token(Regexp.last_match(1), db[:oauth_tokens].first, signing_key: jws_public_key, decryption_key: jwe_hs512_key,
+    verify_id_token(Regexp.last_match(1), db[:oauth_grants].first, signing_key: jws_public_key, decryption_key: jwe_hs512_key,
                                                                    signing_algo: "RS256")
   end
 
@@ -555,7 +551,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     # submit authorization request
     click_button "Authorize"
 
-    assert db[:oauth_tokens].count == 1,
+    assert db[:oauth_grants].count == 1,
            "no token has been created"
 
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#token_type=bearer&expires_in=3600&id_token=([^&]+)/,
@@ -563,7 +559,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
     verify_id_token(
       Regexp.last_match(1),
-      db[:oauth_tokens].first,
+      db[:oauth_grants].first,
       signing_key: jws_public_key,
       signing_algo: "RS256"
     ) do |claims|
@@ -643,7 +639,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#token_type=bearer&expires_in=3600&id_token=([^&]+)/,
            "was redirected instead to #{page.current_url}"
-    verify_id_token(Regexp.last_match(1), db[:oauth_tokens].first, signing_key: jws_public_key, signing_algo: "RS256")
+    verify_id_token(Regexp.last_match(1), db[:oauth_grants].first, signing_key: jws_public_key, signing_algo: "RS256")
   end
 
   begin

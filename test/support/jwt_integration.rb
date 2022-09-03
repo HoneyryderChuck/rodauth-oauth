@@ -12,17 +12,22 @@ class JWTIntegration < RodaIntegration
     :oauth_jwt
   end
 
-  def verify_oauth_token
-    assert db[:oauth_tokens].count == 1
+  def set_oauth_grant_with_token(params = {})
+    super({
+      token: nil,
+      refresh_token: "REFRESH_TOKEN",
+      code: nil
+    }.merge(params))
+  end
 
-    oauth_token = db[:oauth_tokens].first
+  def verify_oauth_grant
+    assert db[:oauth_grants].count == 1
 
-    assert oauth_token[:token].nil?
+    oauth_grant = db[:oauth_grants].first
 
-    oauth_grant = db[:oauth_grants].where(id: oauth_token[:oauth_grant_id]).first
-    assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
+    assert oauth_grant[:token].nil?
 
-    oauth_token
+    oauth_grant
   end
 
   def verify_response
@@ -30,24 +35,24 @@ class JWTIntegration < RodaIntegration
     assert last_response.headers["Content-Type"] == "application/json"
   end
 
-  def verify_access_token_response(data, oauth_token, secret, algorithm, audience: "CLIENT_ID")
+  def verify_access_token_response(data, oauth_grant, secret, algorithm, audience: "CLIENT_ID")
     verify_token_common_response(data)
 
     assert data.key?("access_token")
-    verify_access_token(data["access_token"], oauth_token, signing_key: secret, signing_algo: algorithm, audience: audience)
+    verify_access_token(data["access_token"], oauth_grant, signing_key: secret, signing_algo: algorithm, audience: audience)
   end
 
-  def verify_access_token(data, oauth_token, signing_key:, signing_algo:, audience: "CLIENT_ID")
+  def verify_access_token(data, oauth_grant, signing_key:, signing_algo:, audience: "CLIENT_ID")
     claims, headers = JWT.decode(data, signing_key, true, algorithms: [signing_algo])
     assert headers["alg"] == signing_algo
 
-    verify_jwt_claims(claims, oauth_token, audience: audience)
+    verify_jwt_claims(claims, oauth_grant, audience: audience)
     assert claims.key?("client_id")
     assert claims["client_id"] == "CLIENT_ID"
     claims
   end
 
-  def verify_jwt_claims(claims, _oauth_token, audience: "CLIENT_ID")
+  def verify_jwt_claims(claims, _oauth_grant, audience: "CLIENT_ID")
     assert claims.key?("iss")
     if respond_to?(:last_response)
       assert claims["iss"] == "http://example.org"

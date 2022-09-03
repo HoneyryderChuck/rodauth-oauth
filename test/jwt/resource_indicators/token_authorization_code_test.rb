@@ -28,9 +28,9 @@ class RodauthOauthResourceIndicatorsJWTTokenAuthorizationCodeTest < JWTIntegrati
 
     verify_response
 
-    oauth_token = verify_oauth_token
+    oauth_grant = verify_oauth_grant
 
-    verify_access_token_response(json_body, oauth_token, rsa_public, "RS256", audience: %w[https://example.com])
+    verify_access_token_response(json_body, oauth_grant, rsa_public, "RS256", audience: %w[https://example.com])
 
     # use token
     header "Authorization", "Bearer #{json_body['access_token']}"

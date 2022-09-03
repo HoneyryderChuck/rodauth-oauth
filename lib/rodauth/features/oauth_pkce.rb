@@ -47,7 +47,9 @@ module Rodauth
       super
     end
 
-    def create_oauth_token_from_authorization_code(oauth_grant, create_params, *)
+    def create_token_from_authorization_code(grant_params, *args, oauth_grant: nil)
+      oauth_grant ||= valid_locked_oauth_grant(grant_params)
+
       if use_oauth_pkce?
         if oauth_grant[oauth_grants_code_challenge_column]
           code_verifier = param_or_nil("code_verifier")
@@ -58,7 +60,7 @@ module Rodauth
         end
       end
 
-      super
+      super({ oauth_grants_id_column => oauth_grant[oauth_grants_id_column] }, *args, oauth_grant: oauth_grant)
     end
 
     def validate_pkce_challenge_params

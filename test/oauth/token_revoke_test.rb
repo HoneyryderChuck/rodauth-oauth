@@ -5,7 +5,7 @@ require "test_helper"
 class RodauthOAuthTokenRevokeTest < RodaIntegration
   include Rack::Test::Methods
 
-  def test_oauth_token_revoke_invalid_hint
+  def test_revoke_invalid_hint
     setup_application
     login
     post("/revoke", token_type_hint: "hinterz", token: "CODE")
@@ -14,7 +14,7 @@ class RodauthOAuthTokenRevokeTest < RodaIntegration
     assert json_body["error"] == "unsupported_token_type"
   end
 
-  def test_oauth_token_revoke_no_token
+  def test_revoke_no_token
     setup_application
     login
     post("/revoke", token_type_hint: "access_token", token: "CODE")
@@ -23,40 +23,40 @@ class RodauthOAuthTokenRevokeTest < RodaIntegration
     assert json_body["error"] == "invalid_request"
   end
 
-  def test_oauth_token_revoke_revoked_token
+  def test_revoke_revoked_token
     setup_application
     login
-    oauth_token = oauth_token(revoked_at: Sequel::CURRENT_TIMESTAMP)
+    oauth_grant = oauth_grant_with_token(revoked_at: Sequel::CURRENT_TIMESTAMP)
 
-    post("/revoke", token_type_hint: "access_token", token: oauth_token[:token])
+    post("/revoke", token_type_hint: "access_token", token: oauth_grant[:token])
 
     assert last_response.status == 400
     assert json_body["error"] == "invalid_request"
   end
 
-  def test_oauth_token_revoke_access_token
+  def test_revoke_access_token
     setup_application
     login
 
-    post("/revoke", token_type_hint: "access_token", token: oauth_token[:token])
+    post("/revoke", token_type_hint: "access_token", token: oauth_grant_with_token[:token])
 
     assert last_response.status == 200
-    assert db[:oauth_tokens].where(revoked_at: nil).count.zero?
+    assert db[:oauth_grants].where(revoked_at: nil).count.zero?
   end
 
-  def test_oauth_token_revoke_refresh_token
+  def test_revoke_refresh_token
     setup_application
     login
 
-    post("/revoke", token_type_hint: "access_token", token: oauth_token[:refresh_token])
+    post("/revoke", token_type_hint: "access_token", token: oauth_grant_with_token[:refresh_token])
 
     assert last_response.status == 400
     assert json_body["error"] == "invalid_request"
 
-    post("/revoke", token_type_hint: "refresh_token", token: oauth_token[:refresh_token])
+    post("/revoke", token_type_hint: "refresh_token", token: oauth_grant_with_token[:refresh_token])
 
     assert last_response.status == 200
-    assert db[:oauth_tokens].where(revoked_at: nil).count.zero?
+    assert db[:oauth_grants].where(revoked_at: nil).count.zero?
   end
 
   private

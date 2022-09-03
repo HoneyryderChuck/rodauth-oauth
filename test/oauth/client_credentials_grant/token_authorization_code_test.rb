@@ -44,11 +44,11 @@ class RodauthClientCredentialsGrantOAuthTokenAuthorizationCodeTest < RodaIntegra
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_tokens].count == 1
+    assert db[:oauth_grants].count == 1
 
-    oauth_token = db[:oauth_tokens].first
+    oauth_grant = db[:oauth_grants].first
 
-    verify_access_token_response(json_body, oauth_token)
+    verify_access_token_response(json_body, oauth_grant)
     assert !json_body.key?("refresh_token")
   end
 

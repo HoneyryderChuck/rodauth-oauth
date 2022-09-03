@@ -2,56 +2,56 @@
 
 require "test_helper"
 
-class RodauthTokensTest < RodaIntegration
-  def test_my_tokens
+class RodauthGrantsTest < RodaIntegration
+  def test_my_grants
     setup_application
     login
 
     # List empty
-    visit "/oauth-tokens"
-    assert_includes page.html, "No oauth tokens yet!"
+    visit "/oauth-grants"
+    assert_includes page.html, "No oauth grants yet!"
 
-    oauth_token
+    oauth_grant = set_oauth_grant_with_token
 
     # List as owner
-    visit "/oauth-tokens"
+    visit "/oauth-grants"
     assert_includes page.html, oauth_application[:name]
-    assert_includes page.html, oauth_token[:token]
-    assert_includes page.html, oauth_token[:refresh_token]
-    assert_includes page.html, oauth_token[:expires_in].to_s
+    assert_includes page.html, oauth_grant[:token]
+    assert_includes page.html, oauth_grant[:refresh_token]
+    assert_includes page.html, oauth_grant[:expires_in].to_s
 
     # List as non-owner
     logout
     login login: "bar@example.com", pass: "0123456789"
-    visit "/oauth-tokens"
-    assert_includes page.html, "No oauth tokens yet!"
+    visit "/oauth-grants"
+    assert_includes page.html, "No oauth grants yet!"
 
     # Revoke
     logout
     login
-    visit "/oauth-tokens"
+    visit "/oauth-grants"
     click_button "Revoke"
-    assert_equal page.find("#notice").text, "The oauth token has been revoked"
-    assert_includes page.html, "No oauth tokens yet!"
+    assert_equal page.find("#notice").text, "The oauth grant has been revoked"
+    assert_includes page.html, "No oauth grants yet!"
 
-    assert db[:oauth_tokens].where(revoked_at: nil).count.zero?
+    assert db[:oauth_grants].where(revoked_at: nil).count.zero?
   end
 
   unless ENV.key?("ONLY_ONE_TOKEN")
-    def test_oauth_tokens_pages
+    def test_oauth_grants_pages
       setup_application
       login
 
       6.times do |i|
-        set_oauth_token(token: "TOKEN#{i}", refresh_token: "REFRESH_TOKEN#{i}")
+        set_oauth_grant_with_token(token: "TOKEN#{i}", refresh_token: "REFRESH_TOKEN#{i}")
       end
 
       # List
-      visit "/oauth-tokens"
+      visit "/oauth-grants"
 
       assert_includes page.html, "TOKEN0"
 
-      visit "/oauth-tokens?per_page=5"
+      visit "/oauth-grants?per_page=5"
       assert_includes page.html, "TOKEN5"
       assert_includes page.html, "TOKEN4"
       assert_includes page.html, "TOKEN3"
@@ -80,10 +80,10 @@ class RodauthTokensTest < RodaIntegration
   private
 
   def oauth_feature
-    %i[oauth_application_management oauth_token_management]
+    %i[oauth_application_management oauth_grant_management]
   end
 
   def setup_application
-    super(&:oauth_tokens)
+    super(&:oauth_grants)
   end
 end

@@ -20,12 +20,10 @@ class RodauthOAuthOidcTokenAuthorizationCodeTest < OIDCIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_tokens].count == 1
+    assert db[:oauth_grants].count == 1
 
-    access_token = db[:oauth_tokens].first
+    oauth_grant = db[:oauth_grants].first
 
-    oauth_grant = db[:oauth_grants].where(id: access_token[:oauth_grant_id]).first
-    assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
     assert oauth_grant[:nonce] == "NONCE", "nonce should be passed to token"
   end
 

@@ -5,7 +5,7 @@ require "test_helper"
 class RodauthOauthJwtTokenRevokeTest < JWTIntegration
   include Rack::Test::Methods
 
-  def test_oauth_token_revoke_access_token
+  def test_revoke_access_token
     rodauth do
       oauth_jwt_key "SECRET"
       oauth_jwt_algorithm "HS256"
@@ -28,7 +28,7 @@ class RodauthOauthJwtTokenRevokeTest < JWTIntegration
     assert last_response.status == 400
   end
 
-  def test_oauth_token_revoke_refresh_token
+  def test_revoke_refresh_token
     rodauth do
       oauth_jwt_key "SECRET"
       oauth_jwt_algorithm "HS256"
@@ -36,15 +36,15 @@ class RodauthOauthJwtTokenRevokeTest < JWTIntegration
     setup_application
     login
 
-    post("/revoke", token_type_hint: "access_token", token: oauth_token[:refresh_token])
+    post("/revoke", token_type_hint: "access_token", token: oauth_grant_with_token[:refresh_token])
 
     assert last_response.status == 400
     assert json_body["error"] == "invalid_request"
 
-    post("/revoke", token_type_hint: "refresh_token", token: oauth_token[:refresh_token])
+    post("/revoke", token_type_hint: "refresh_token", token: oauth_grant_with_token[:refresh_token])
 
     assert last_response.status == 200
-    assert db[:oauth_tokens].where(revoked_at: nil).count.zero?
+    assert db[:oauth_grants].where(revoked_at: nil).count.zero?
   end
 
   private

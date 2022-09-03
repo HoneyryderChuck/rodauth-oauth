@@ -30,13 +30,14 @@ module Rodauth
         end
 
         if dataset.respond_to?(:supports_insert_conflict?) && dataset.supports_insert_conflict?
-          def __insert_or_update_and_return__(dataset, pkey, unique_columns, params, conds = nil, exclude_on_update = nil)
-            to_update = params.keys - unique_columns
-            to_update -= exclude_on_update if exclude_on_update
+          def __insert_or_update_and_return__(dataset, pkey, unique_columns, params, conds = nil, to_update_extra = nil)
+            to_update = Hash[(params.keys - unique_columns).map { |attribute| [attribute, Sequel[:excluded][attribute]] }]
+
+            to_update.merge!(to_update_extra) if to_update_extra
 
             dataset = dataset.insert_conflict(
               target: unique_columns,
-              update: Hash[ to_update.map { |attribute| [attribute, Sequel[:excluded][attribute]] } ],
+              update: to_update,
               update_where: conds
             )
 
@@ -51,7 +52,7 @@ module Rodauth
             ) || dataset.where(params).first
           end
         else
-          def __insert_or_update_and_return__(dataset, pkey, unique_columns, params, conds = nil, exclude_on_update = nil)
+          def __insert_or_update_and_return__(dataset, pkey, unique_columns, params, conds = nil, to_update_extra = nil)
             find_params, update_params = params.partition { |key, _| unique_columns.include?(key) }.map { |h| Hash[h] }
 
             dataset_where = dataset.where(find_params)
@@ -67,7 +68,8 @@ module Rodauth
                      end
 
             if record
-              update_params.reject! { |k, _v| exclude_on_update.include?(k) } if exclude_on_update
+              update_params.merge!(to_update_extra) if to_update_extra
+
               __update_and_return__(dataset_where, update_params)
             else
               __insert_and_return__(dataset, pkey, params)

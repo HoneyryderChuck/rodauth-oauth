@@ -71,10 +71,7 @@ module Rodauth
 
       r.get do
         if (user_code = param_or_nil("user_code"))
-          oauth_grant = db[oauth_grants_table].where(
-            oauth_grants_user_code_column => user_code,
-            oauth_grants_revoked_at_column => nil
-          ).where(Sequel[oauth_grants_expires_in_column] >= Sequel::CURRENT_TIMESTAMP).first
+          oauth_grant = valid_oauth_grant_ds(oauth_grants_user_code_column => user_code).first
 
           unless oauth_grant
             set_redirect_error_flash user_code_not_found_error_flash
@@ -97,7 +94,7 @@ module Rodauth
 
           transaction do
             before_device_verification
-            create_oauth_token("device_code")
+            create_token("device_code")
           end
         end
         set_notice_flash device_verification_notice_flash
@@ -133,7 +130,7 @@ module Rodauth
       super
     end
 
-    def create_oauth_token(grant_type)
+    def create_token(grant_type)
       if supported_grant_type?(grant_type, "urn:ietf:params:oauth:grant-type:device_code")
         throw_json_response_error(invalid_oauth_response_status, "invalid_grant_type") unless use_oauth_device_code_grant_type?
 
@@ -146,14 +143,14 @@ module Rodauth
 
         now = Time.now
 
-        if oauth_grant[oauth_grants_revoked_at_column]
-          oauth_token = db[oauth_tokens_table]
-                        .where(Sequel[oauth_tokens_table][oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
-                        .where(Sequel[oauth_tokens_table][oauth_tokens_revoked_at_column] => nil)
-                        .where(oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column])
-                        .first
+        if _grant_with_access_token?(oauth_grant)
+          db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column])
+                                .update(oauth_grants_code_column => nil)
+          return oauth_grant
+        end
 
-          throw_json_response_error(invalid_oauth_response_status, "access_denied") unless oauth_token
+        if oauth_grant[oauth_grants_revoked_at_column]
+          throw_json_response_error(invalid_oauth_response_status, "access_denied")
         elsif oauth_grant[oauth_grants_expires_in_column] < now
           throw_json_response_error(invalid_oauth_response_status, "expired_token")
         else
@@ -166,46 +163,44 @@ module Rodauth
             throw_json_response_error(invalid_oauth_response_status, "authorization_pending")
           end
         end
-        oauth_token
       elsif grant_type == "device_code"
         redirect_response_error("invalid_grant_type") unless use_oauth_device_code_grant_type?
 
         # fetch oauth grant
-        oauth_grant = db[oauth_grants_table].where(
-          oauth_grants_user_code_column => param("user_code"),
-          oauth_grants_revoked_at_column => nil
-        ).where(Sequel[oauth_grants_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
-                                            .for_update
-                                            .first
+        oauth_grant = valid_oauth_grant_ds(
+          oauth_grants_user_code_column => param("user_code")
+        ).for_update.first
 
         return unless oauth_grant
 
-        # update ownership
-        db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column])
-                              .update(
-                                oauth_grants_user_code_column => nil,
-                                oauth_grants_account_id_column => account_id
-                              )
-
-        create_params = {
-          oauth_tokens_account_id_column => account_id,
-          oauth_tokens_oauth_application_id_column => oauth_grant[oauth_grants_oauth_application_id_column],
-          oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column],
-          oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column]
-        }
-        create_oauth_token_from_authorization_code(oauth_grant, create_params)
+        create_token_from_authorization_code(
+          { oauth_grants_id_column => oauth_grant[oauth_grants_id_column] },
+          oauth_grant: oauth_grant
+        )
       else
         super
       end
     end
 
-    def validate_oauth_token_params
+    def validate_token_params
       grant_type = param_or_nil("grant_type")
 
       if grant_type == "urn:ietf:params:oauth:grant-type:device_code" && !param_or_nil("device_code")
         redirect_response_error("invalid_request")
       end
       super
+    end
+
+    def store_token(grant_params, update_params = {})
+      return super unless grant_params[oauth_grants_user_code_column]
+
+      # do not clean up device code just yet
+      update_params.delete(oauth_grants_code_column)
+
+      update_params[oauth_grants_user_code_column] = nil
+      update_params[oauth_grants_account_id_column] = account_id
+
+      super(grant_params, update_params)
     end
 
     def oauth_server_metadata_body(*)

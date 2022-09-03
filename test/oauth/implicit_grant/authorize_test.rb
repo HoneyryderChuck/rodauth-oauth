@@ -30,12 +30,12 @@ class RodauthOauthImplicitGrantAuthorizeTest < RodaIntegration
     # submit authorization request
     click_button "Authorize"
 
-    assert db[:oauth_tokens].count == 1,
+    assert db[:oauth_grants].count == 1,
            "no token has been created"
 
-    oauth_token = db[:oauth_tokens].first
+    oauth_grant = db[:oauth_grants].first
 
-    assert page.current_url == "#{oauth_application[:redirect_uri]}#access_token=#{oauth_token[:token]}&" \
+    assert page.current_url == "#{oauth_application[:redirect_uri]}#access_token=#{oauth_grant[:token]}&" \
                                "token_type=bearer&expires_in=3600&state=STATE",
            "was redirected instead to #{page.current_url}"
   end

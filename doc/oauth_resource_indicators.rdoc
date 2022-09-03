@@ -7,4 +7,3 @@ https://datatracker.ietf.org/doc/html/rfc8707
 == Auth Value Methods
 
 oauth_grants_resource_column :: the db column where the oauth grant resources are stored, <tt>:resource</tt> by default.
-oauth_tokens_resource_column :: the db column where the oauth token resources are stored, <tt>:resource</tt> by default.

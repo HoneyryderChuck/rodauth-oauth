@@ -52,7 +52,7 @@
   }
 
   <div class="form-group">
-    <h1 class="display-6">#{rodauth.oauth_tokens_scopes_label}</h1>
+    <h1 class="display-6">#{rodauth.oauth_grants_scopes_label}</h1>
 
     #{
       rodauth.scopes.map do |scope|

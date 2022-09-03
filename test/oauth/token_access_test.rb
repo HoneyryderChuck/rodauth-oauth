@@ -38,7 +38,7 @@ class RodauthOAuthTokenAccessTest < RodaIntegration
     setup_application
 
     header "Accept", "application/json"
-    set_authorization_header(oauth_token(revoked_at: Sequel::CURRENT_TIMESTAMP))
+    set_authorization_header(oauth_grant(revoked_at: Sequel::CURRENT_TIMESTAMP))
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 401
@@ -48,7 +48,7 @@ class RodauthOAuthTokenAccessTest < RodaIntegration
     setup_application
 
     header "Accept", "application/json"
-    set_authorization_header(oauth_token(expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 20)))
+    set_authorization_header(oauth_grant(expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 20)))
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 401
@@ -58,7 +58,7 @@ class RodauthOAuthTokenAccessTest < RodaIntegration
     setup_application
 
     header "Accept", "application/json"
-    set_authorization_header(oauth_token(scopes: "smthelse"))
+    set_authorization_header(oauth_grant(scopes: "smthelse"))
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 401
@@ -80,7 +80,7 @@ class RodauthOAuthTokenAccessTest < RodaIntegration
     setup_application
 
     header "Accept", "text/html"
-    set_authorization_header(oauth_token(scopes: "smthelse"))
+    set_authorization_header(oauth_grant(scopes: "smthelse"))
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 302
@@ -93,7 +93,7 @@ class RodauthOAuthTokenAccessTest < RodaIntegration
     end
     setup_application
 
-    set_authorization_header(oauth_token(scopes: "smthelse"))
+    set_authorization_header(oauth_grant(scopes: "smthelse"))
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 401
@@ -108,7 +108,7 @@ class RodauthOAuthTokenAccessTest < RodaIntegration
 
     header "Accept", "application/json"
 
-    get("/private", access_token: oauth_token[:token])
+    get("/private", access_token: oauth_grant_with_token[:token])
     assert last_response.status == 200
     assert last_response["x-oauth-subject"] == account[:id]
   end

@@ -255,9 +255,9 @@ And declare them in the plugin:
 
 ```ruby
 plugin :rodauth do
-  enable :oauth
-  oauth_tokens_token_hash_column :token_hash
-  oauth_tokens_token_hash_column :refresh_token_hash
+  enable :oauth_authorization_code_grant
+  oauth_grants_token_hash_column :token_hash
+  oauth_grants_token_hash_column :refresh_token_hash
 ```
 
 #### Client Secret

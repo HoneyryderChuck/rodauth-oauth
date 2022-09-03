@@ -32,10 +32,10 @@ class RodauthOauthJwtTokenIntrospectTest < JWTIntegration
     @json_body = nil
     verify_response
 
-    oauth_token = verify_oauth_token
+    oauth_grant = verify_oauth_grant
 
     assert json_body["active"] == true
-    assert json_body["scope"] == oauth_token[:scopes]
+    assert json_body["scope"] == oauth_grant[:scopes]
     assert json_body["client_id"] == oauth_application[:client_id]
     assert json_body["token_type"] == "access_token"
     assert json_body.key?("exp")

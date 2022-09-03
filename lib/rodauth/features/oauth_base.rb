@@ -36,17 +36,6 @@ module Rodauth
     auth_value_method :oauth_valid_uri_schemes, %w[https]
     auth_value_method :oauth_scope_separator, " "
 
-    auth_value_method :oauth_tokens_table, :oauth_tokens
-    auth_value_method :oauth_tokens_id_column, :id
-
-    %i[
-      oauth_application_id oauth_token_id oauth_grant_id account_id
-      token refresh_token scopes
-      expires_in revoked_at
-    ].each do |column|
-      auth_value_method :"oauth_tokens_#{column}_column", column
-    end
-
     # OAuth Grants
     auth_value_method :oauth_grants_table, :oauth_grants
     auth_value_method :oauth_grants_id_column, :id
@@ -54,13 +43,14 @@ module Rodauth
       account_id oauth_application_id
       redirect_uri code scopes access_type
       expires_in revoked_at
+      token refresh_token
     ].each do |column|
       auth_value_method :"oauth_grants_#{column}_column", column
     end
 
     # Oauth Token Hash
-    auth_value_method :oauth_tokens_token_hash_column, nil
-    auth_value_method :oauth_tokens_refresh_token_hash_column, nil
+    auth_value_method :oauth_grants_token_hash_column, nil
+    auth_value_method :oauth_grants_refresh_token_hash_column, nil
 
     # Access Token reuse
     auth_value_method :oauth_reuse_access_token, false
@@ -122,7 +112,7 @@ module Rodauth
       :secret_matches?,
       :authorization_server_url,
       :oauth_unique_id_generator,
-      :oauth_tokens_unique_columns,
+      :oauth_grants_unique_columns,
       :require_authorizable_account
     )
 
@@ -135,16 +125,16 @@ module Rodauth
 
       r.post do
         catch_error do
-          validate_oauth_token_params
+          validate_token_params
 
-          oauth_token = nil
+          oauth_grant = nil
 
           transaction do
             before_token
-            oauth_token = create_oauth_token(param("grant_type"))
+            oauth_grant = create_token(param("grant_type"))
           end
 
-          json_response_success(json_access_token_payload(oauth_token))
+          json_response_success(json_access_token_payload(oauth_grant))
         end
 
         throw_json_response_error(invalid_oauth_response_status, "invalid_request")
@@ -180,8 +170,8 @@ module Rodauth
       return unless authorization_token
 
       # TODO: fix this once tokens know which type they were generated with
-      authorization_token[oauth_tokens_account_id_column] ||
-        authorization_token[oauth_tokens_oauth_application_id_column]
+      authorization_token[oauth_grants_account_id_column] ||
+        authorization_token[oauth_grants_oauth_application_id_column]
     end
 
     def accepts_json?
@@ -257,7 +247,7 @@ module Rodauth
       @authorization_token = if is_authorization_server?
                                # check if token has not expired
                                # check if token has been revoked
-                               oauth_token_by_token(bearer_token)
+                               oauth_grant_by_token(bearer_token)
                              else
                                # where in resource server, NOT the authorization server.
                                payload = introspection_request("access_token", bearer_token)
@@ -274,7 +264,7 @@ module Rodauth
       scopes << oauth_application_default_scope if scopes.empty?
 
       token_scopes = if is_authorization_server?
-                       authorization_token[oauth_tokens_scopes_column].split(oauth_scope_separator)
+                       authorization_token[oauth_grants_scopes_column].split(oauth_scope_separator)
                      else
                        aux_scopes = authorization_token["scope"]
                        if aux_scopes
@@ -301,9 +291,9 @@ module Rodauth
       self.class.__send__(:include, Rodauth::OAuth::ExtendDatabase(db))
 
       # Check whether we can reutilize db entries for the same account / application pair
-      one_oauth_token_per_account = db.indexes(oauth_tokens_table).values.any? do |definition|
+      one_oauth_token_per_account = db.indexes(oauth_grants_table).values.any? do |definition|
         definition[:unique] &&
-          definition[:columns] == oauth_tokens_unique_columns
+          definition[:columns] == oauth_grants_unique_columns
       end
 
       self.class.send(:define_method, :__one_oauth_token_per_account) { one_oauth_token_per_account }
@@ -329,11 +319,11 @@ module Rodauth
     end
 
     # OAuth Token Unique/Reuse
-    def oauth_tokens_unique_columns
+    def oauth_grants_unique_columns
       [
-        oauth_tokens_oauth_application_id_column,
-        oauth_tokens_account_id_column,
-        oauth_tokens_scopes_column
+        oauth_grants_oauth_application_id_column,
+        oauth_grants_account_id_column,
+        oauth_grants_scopes_column
       ]
     end
 
@@ -397,9 +387,9 @@ module Rodauth
 
     def require_oauth_application_from_account
       ds = db[oauth_applications_table]
-           .join(oauth_tokens_table, Sequel[oauth_tokens_table][oauth_tokens_oauth_application_id_column] =>
+           .join(oauth_grants_table, Sequel[oauth_grants_table][oauth_grants_oauth_application_id_column] =>
                                      Sequel[oauth_applications_table][oauth_applications_id_column])
-           .where(oauth_token_by_token_ds(param("token")).opts.fetch(:where, true))
+           .where(oauth_grant_by_token_ds(param("token")).opts.fetch(:where, true))
            .where(Sequel[oauth_applications_table][oauth_applications_account_id_column] => account_id)
 
       @oauth_application = ds.qualify.first
@@ -425,8 +415,8 @@ module Rodauth
       Base64.urlsafe_encode64(Digest::SHA256.digest(token))
     end
 
-    def token_from_application?(oauth_token, oauth_application)
-      oauth_token[oauth_tokens_oauth_application_id_column] == oauth_application[oauth_applications_id_column]
+    def grant_from_application?(oauth_grant, oauth_application)
+      oauth_grant[oauth_grants_oauth_application_id_column] == oauth_application[oauth_applications_id_column]
     end
 
     unless method_defined?(:password_hash)
@@ -437,33 +427,45 @@ module Rodauth
       end
     end
 
-    def generate_oauth_token(params = {}, should_generate_refresh_token = true)
-      create_params = {
-        oauth_tokens_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_token_expires_in)
-      }.merge(params)
-
-      if create_params[oauth_tokens_scopes_column].is_a?(Array)
-        create_params[oauth_tokens_scopes_column] =
-          create_params[oauth_tokens_scopes_column].join(" ")
+    def generate_token(grant_params = {}, should_generate_refresh_token = true)
+      if grant_params[oauth_grants_id_column] && (oauth_reuse_access_token &&
+           (
+             if oauth_grants_token_hash_column
+               grant_params[oauth_grants_token_hash_column]
+             else
+               grant_params[oauth_grants_token_column]
+             end
+           ))
+        return grant_params
       end
 
+      # grant_params = { oauth_grants_id_column => grant_params[oauth_grants_id_column] }
+
+      update_params = {
+        oauth_grants_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_token_expires_in),
+        oauth_grants_code_column => nil
+      }
+
       rescue_from_uniqueness_error do
-        access_token = _generate_access_token(create_params)
-        refresh_token = _generate_refresh_token(create_params) if should_generate_refresh_token
-        oauth_token = _store_oauth_token(create_params)
-        oauth_token[oauth_tokens_token_column] = access_token
-        oauth_token[oauth_tokens_refresh_token_column] = refresh_token if refresh_token
-        oauth_token
+        access_token = _generate_access_token(update_params)
+        refresh_token = _generate_refresh_token(update_params) if should_generate_refresh_token
+        oauth_grant = store_token(grant_params, update_params)
+
+        return unless oauth_grant
+
+        oauth_grant[oauth_grants_token_column] = access_token
+        oauth_grant[oauth_grants_refresh_token_column] = refresh_token if refresh_token
+        oauth_grant
       end
     end
 
     def _generate_access_token(params = {})
       token = oauth_unique_id_generator
 
-      if oauth_tokens_token_hash_column
-        params[oauth_tokens_token_hash_column] = generate_token_hash(token)
+      if oauth_grants_token_hash_column
+        params[oauth_grants_token_hash_column] = generate_token_hash(token)
       else
-        params[oauth_tokens_token_column] = token
+        params[oauth_grants_token_column] = token
       end
 
       token
@@ -472,96 +474,149 @@ module Rodauth
     def _generate_refresh_token(params)
       token = oauth_unique_id_generator
 
-      if oauth_tokens_refresh_token_hash_column
-        params[oauth_tokens_refresh_token_hash_column] = generate_token_hash(token)
+      if oauth_grants_refresh_token_hash_column
+        params[oauth_grants_refresh_token_hash_column] = generate_token_hash(token)
       else
-        params[oauth_tokens_refresh_token_column] = token
+        params[oauth_grants_refresh_token_column] = token
       end
 
       token
     end
 
-    def _store_oauth_token(params = {})
-      ds = db[oauth_tokens_table]
+    def _grant_with_access_token?(oauth_grant)
+      if oauth_grants_token_hash_column
+        oauth_grant[oauth_grants_token_hash_column]
+      else
+        oauth_grant[oauth_grants_token_column]
+      end
+    end
+
+    def store_token(grant_params, update_params = {})
+      ds = db[oauth_grants_table]
 
       if __one_oauth_token_per_account
 
+        to_update_if_null = [
+          oauth_grants_token_column,
+          oauth_grants_token_hash_column,
+          oauth_grants_refresh_token_column,
+          oauth_grants_refresh_token_hash_column
+        ].compact.map do |attribute|
+          [
+            attribute,
+            (
+              if ds.respond_to?(:supports_insert_conflict?) && ds.supports_insert_conflict?
+                Sequel.function(:coalesce, Sequel[oauth_grants_table][attribute], Sequel[:excluded][attribute])
+              else
+                Sequel.function(:coalesce, Sequel[oauth_grants_table][attribute], update_params[attribute])
+              end
+            )
+          ]
+        end
+
         token = __insert_or_update_and_return__(
           ds,
-          oauth_tokens_id_column,
-          oauth_tokens_unique_columns,
-          params,
-          Sequel.expr(Sequel[oauth_tokens_table][oauth_tokens_expires_in_column]) > Sequel::CURRENT_TIMESTAMP,
-          ([oauth_tokens_token_column, oauth_tokens_refresh_token_column] if oauth_reuse_access_token)
+          oauth_grants_id_column,
+          oauth_grants_unique_columns,
+          grant_params.merge(update_params),
+          Sequel.expr(Sequel[oauth_grants_table][oauth_grants_expires_in_column]) > Sequel::CURRENT_TIMESTAMP,
+          Hash[to_update_if_null]
         )
 
         # if the previous operation didn't return a row, it means that the conditions
         # invalidated the update, and the existing token is still valid.
         token || ds.where(
-          oauth_tokens_account_id_column => params[oauth_tokens_account_id_column],
-          oauth_tokens_oauth_application_id_column => params[oauth_tokens_oauth_application_id_column]
+          oauth_grants_account_id_column => update_params[oauth_grants_account_id_column],
+          oauth_grants_oauth_application_id_column => update_params[oauth_grants_oauth_application_id_column]
         ).first
       else
+
         if oauth_reuse_access_token
-          unique_conds = Hash[oauth_tokens_unique_columns.map { |column| [column, params[column]] }]
-          valid_token = ds.where(Sequel.expr(Sequel[oauth_tokens_table][oauth_tokens_expires_in_column]) > Sequel::CURRENT_TIMESTAMP)
-                          .where(unique_conds).first
+          unique_conds = Hash[oauth_grants_unique_columns.map { |column| [column, update_params[column]] }]
+          valid_token_ds = valid_oauth_grant_ds(unique_conds)
+          if oauth_grants_token_hash_column
+            valid_token_ds.exclude(oauth_grants_token_hash_column => nil)
+          else
+            valid_token_ds.exclude(oauth_grants_token_column => nil)
+          end
+
+          valid_token = valid_token_ds.first
+
           return valid_token if valid_token
         end
-        __insert_and_return__(ds, oauth_tokens_id_column, params)
+
+        if grant_params[oauth_grants_id_column]
+          __update_and_return__(ds.where(oauth_grants_id_column => grant_params[oauth_grants_id_column]), update_params)
+        else
+          __insert_and_return__(ds, oauth_grants_id_column, grant_params.merge(update_params))
+        end
       end
     end
 
-    def oauth_token_by_token_ds(token)
-      ds = db[oauth_tokens_table]
+    def valid_locked_oauth_grant(grant_params = nil)
+      oauth_grant = valid_oauth_grant_ds(grant_params).for_update.first
 
-      ds = if oauth_tokens_token_hash_column
-             ds.where(Sequel[oauth_tokens_table][oauth_tokens_token_hash_column] => generate_token_hash(token))
-           else
-             ds.where(Sequel[oauth_tokens_table][oauth_tokens_token_column] => token)
-           end
+      redirect_response_error("invalid_grant") unless oauth_grant
 
-      ds.where(Sequel[oauth_tokens_table][oauth_tokens_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
-        .where(Sequel[oauth_tokens_table][oauth_tokens_revoked_at_column] => nil)
+      oauth_grant
     end
 
-    def oauth_token_by_token(token)
-      oauth_token_by_token_ds(token).first
+    def valid_oauth_grant_ds(grant_params = nil)
+      ds = db[oauth_grants_table]
+           .where(Sequel[oauth_grants_table][oauth_grants_revoked_at_column] => nil)
+           .where(Sequel.expr(Sequel[oauth_grants_table][oauth_grants_expires_in_column]) >= Sequel::CURRENT_TIMESTAMP)
+      ds = ds.where(grant_params) if grant_params
+
+      ds
     end
 
-    def oauth_token_by_refresh_token(token, revoked: false)
-      ds = db[oauth_tokens_table].where(oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column])
+    def oauth_grant_by_token_ds(token)
+      ds = valid_oauth_grant_ds
+
+      if oauth_grants_token_hash_column
+        ds.where(Sequel[oauth_grants_table][oauth_grants_token_hash_column] => generate_token_hash(token))
+      else
+        ds.where(Sequel[oauth_grants_table][oauth_grants_token_column] => token)
+      end
+    end
+
+    def oauth_grant_by_token(token)
+      oauth_grant_by_token_ds(token).first
+    end
+
+    def oauth_grant_by_refresh_token(token, revoked: false)
+      ds = db[oauth_grants_table].where(oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column])
       #
       # filter expired refresh tokens out.
       # an expired refresh token is a token whose access token expired for a period longer than the
       # refresh token expiration period.
       #
-      ds = ds.where(Sequel.date_add(oauth_tokens_expires_in_column, seconds: oauth_refresh_token_expires_in) >= Sequel::CURRENT_TIMESTAMP)
+      ds = ds.where(Sequel.date_add(oauth_grants_expires_in_column, seconds: oauth_refresh_token_expires_in) >= Sequel::CURRENT_TIMESTAMP)
 
-      ds = if oauth_tokens_refresh_token_hash_column
-             ds.where(oauth_tokens_refresh_token_hash_column => generate_token_hash(token))
+      ds = if oauth_grants_refresh_token_hash_column
+             ds.where(oauth_grants_refresh_token_hash_column => generate_token_hash(token))
            else
-             ds.where(oauth_tokens_refresh_token_column => token)
+             ds.where(oauth_grants_refresh_token_column => token)
            end
 
-      ds = ds.where(oauth_tokens_revoked_at_column => nil) unless revoked
+      ds = ds.where(oauth_grants_revoked_at_column => nil) unless revoked
 
       ds.first
     end
 
-    def json_access_token_payload(oauth_token)
+    def json_access_token_payload(oauth_grant)
       payload = {
-        "access_token" => oauth_token[oauth_tokens_token_column],
+        "access_token" => oauth_grant[oauth_grants_token_column],
         "token_type" => oauth_token_type,
         "expires_in" => oauth_token_expires_in
       }
-      payload["refresh_token"] = oauth_token[oauth_tokens_refresh_token_column] if oauth_token[oauth_tokens_refresh_token_column]
+      payload["refresh_token"] = oauth_grant[oauth_grants_refresh_token_column] if oauth_grant[oauth_grants_refresh_token_column]
       payload
     end
 
     # Access Tokens
 
-    def validate_oauth_token_params
+    def validate_token_params
       unless (grant_type = param_or_nil("grant_type"))
         redirect_response_error("invalid_request")
       end
@@ -569,63 +624,46 @@ module Rodauth
       redirect_response_error("invalid_request") if grant_type == "refresh_token" && !param_or_nil("refresh_token")
     end
 
-    def create_oauth_token(grant_type)
-      if supported_grant_type?(grant_type, "refresh_token")
-        # fetch potentially revoked oauth token
-        oauth_token = oauth_token_by_refresh_token(param("refresh_token"), revoked: true)
+    def create_token(grant_type)
+      redirect_response_error("invalid_request") unless supported_grant_type?(grant_type, "refresh_token")
 
-        if !oauth_token
-          redirect_response_error("invalid_grant")
-        elsif oauth_token[oauth_tokens_revoked_at_column]
-          if oauth_refresh_token_protection_policy == "rotation"
-            # https://tools.ietf.org/html/draft-ietf-oauth-v2-1-00#section-6.1
-            #
-            # If a refresh token is compromised and subsequently used by both the attacker and the legitimate
-            # client, one of them will present an invalidated refresh token, which will inform the authorization
-            # server of the breach.  The authorization server cannot determine which party submitted the invalid
-            # refresh token, but it will revoke the active refresh token.  This stops the attack at the cost of
-            # forcing the legitimate client to obtain a fresh authorization grant.
+      refresh_token = param("refresh_token")
+      # fetch potentially revoked oauth token
+      oauth_grant = oauth_grant_by_refresh_token(refresh_token, revoked: true)
 
-            db[oauth_tokens_table].where(oauth_tokens_oauth_token_id_column => oauth_token[oauth_tokens_id_column])
-                                  .update(oauth_tokens_revoked_at_column => Sequel::CURRENT_TIMESTAMP)
-          end
-          redirect_response_error("invalid_grant")
-        end
+      update_params = { oauth_grants_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_token_expires_in) }
 
-        update_params = {
-          oauth_tokens_oauth_application_id_column => oauth_token[oauth_tokens_oauth_application_id_column],
-          oauth_tokens_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_token_expires_in)
-        }
-        create_oauth_token_from_token(oauth_token, update_params)
-      else
-        redirect_response_error("invalid_request")
+      if !oauth_grant || oauth_grant[oauth_grants_revoked_at_column]
+        redirect_response_error("invalid_grant")
+      elsif oauth_refresh_token_protection_policy == "rotation"
+        # https://tools.ietf.org/html/draft-ietf-oauth-v2-1-00#section-6.1
+        #
+        # If a refresh token is compromised and subsequently used by both the attacker and the legitimate
+        # client, one of them will present an invalidated refresh token, which will inform the authorization
+        # server of the breach.  The authorization server cannot determine which party submitted the invalid
+        # refresh token, but it will revoke the active refresh token.  This stops the attack at the cost of
+        # forcing the legitimate client to obtain a fresh authorization grant.
+
+        refresh_token = _generate_refresh_token(update_params)
       end
+
+      update_params[oauth_grants_oauth_application_id_column] = oauth_grant[oauth_grants_oauth_application_id_column]
+
+      oauth_grant = create_token_from_token(oauth_grant, update_params)
+      oauth_grant[oauth_grants_refresh_token_column] = refresh_token
+      oauth_grant
     end
 
-    def create_oauth_token_from_token(oauth_token, update_params)
-      redirect_response_error("invalid_grant") unless token_from_application?(oauth_token, oauth_application)
+    def create_token_from_token(oauth_grant, update_params)
+      redirect_response_error("invalid_grant") unless grant_from_application?(oauth_grant, oauth_application)
 
       rescue_from_uniqueness_error do
-        oauth_tokens_ds = db[oauth_tokens_table].where(oauth_tokens_id_column => oauth_token[oauth_tokens_id_column])
+        oauth_grants_ds = db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column])
         access_token = _generate_access_token(update_params)
+        oauth_grant = __update_and_return__(oauth_grants_ds, update_params)
 
-        if oauth_refresh_token_protection_policy == "rotation"
-          update_params = {
-            **update_params,
-            oauth_tokens_oauth_token_id_column => oauth_token[oauth_tokens_id_column],
-            oauth_tokens_account_id_column => oauth_token[oauth_tokens_account_id_column],
-            oauth_tokens_scopes_column => oauth_token[oauth_tokens_scopes_column]
-          }
-
-          refresh_token = _generate_refresh_token(update_params)
-        else
-          refresh_token = param("refresh_token")
-        end
-        oauth_token = __update_and_return__(oauth_tokens_ds, update_params)
-
-        oauth_token[oauth_tokens_token_column] = access_token
-        oauth_token[oauth_tokens_refresh_token_column] = refresh_token
-        oauth_token
+        oauth_grant[oauth_grants_token_column] = access_token
+        oauth_grant
       end
     end
 

@@ -168,10 +168,10 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
     assert page.html.include?("The device is verified")
 
     assert db[:oauth_grants].where(user_code: grant[:user_code]).none?
-    assert db[:oauth_tokens].count == 1
-    access_token = db[:oauth_tokens].first
-    assert access_token[:oauth_grant_id] == grant[:id]
-    verify_oauth_grant_revoked(access_token)
+    assert db[:oauth_grants].count == 1
+    grant2 = db[:oauth_grants].first
+    assert grant2[:id] == grant[:id]
+    assert !grant2[:token].nil?
   end
 
   def test_authorize_post_device_complete_successful_grant
@@ -190,10 +190,10 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
     assert page.html.include?("The device is verified")
 
     assert db[:oauth_grants].where(user_code: grant[:user_code]).none?
-    assert db[:oauth_tokens].count == 1
-    access_token = db[:oauth_tokens].first
-    assert access_token[:oauth_grant_id] == grant[:id]
-    verify_oauth_grant_revoked(access_token)
+    assert db[:oauth_grants].count == 1
+    grant2 = db[:oauth_grants].first
+    assert grant2[:id] == grant[:id]
+    assert !grant2[:token].nil?
   end
 
   private

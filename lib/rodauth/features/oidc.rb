@@ -74,8 +74,8 @@ module Rodauth
 
     auth_value_method :oauth_grants_nonce_column, :nonce
     auth_value_method :oauth_grants_acr_column, :acr
-    auth_value_method :oauth_tokens_nonce_column, :nonce
-    auth_value_method :oauth_tokens_acr_column, :acr
+    auth_value_method :oauth_grants_nonce_column, :nonce
+    auth_value_method :oauth_grants_acr_column, :acr
 
     translatable_method :invalid_scope_message, "The Access Token expired"
 
@@ -103,25 +103,25 @@ module Rodauth
 
       r.on method: %i[get post] do
         catch_error do
-          oauth_token = authorization_token
+          claims = authorization_token
 
-          throw_json_response_error(authorization_required_error_status, "invalid_token") unless oauth_token
+          throw_json_response_error(authorization_required_error_status, "invalid_token") unless claims
 
-          oauth_scopes = oauth_token["scope"].split(" ")
+          oauth_scopes = claims["scope"].split(" ")
 
           throw_json_response_error(authorization_required_error_status, "invalid_token") unless oauth_scopes.include?("openid")
 
-          account = db[accounts_table].where(account_id_column => oauth_token["sub"]).first
+          account = db[accounts_table].where(account_id_column => claims["sub"]).first
 
           throw_json_response_error(authorization_required_error_status, "invalid_token") unless account
 
           oauth_scopes.delete("openid")
 
-          oidc_claims = { "sub" => oauth_token["sub"] }
+          oidc_claims = { "sub" => claims["sub"] }
 
           fill_with_account_claims(oidc_claims, account, oauth_scopes)
 
-          @oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => oauth_token["client_id"]).first
+          @oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => claims["client_id"]).first
 
           if (algo = @oauth_application && @oauth_application[oauth_applications_userinfo_signed_response_alg_column])
             params = {
@@ -165,17 +165,17 @@ module Rodauth
           # beforehand. Hence, we have to do it twice: decode-and-do-not-verify, initialize
           # the @oauth_application, and then decode-and-verify.
           #
-          oauth_token = jwt_decode(param("id_token_hint"), verify_claims: false)
-          oauth_application_id = oauth_token["client_id"]
+          claims = jwt_decode(param("id_token_hint"), verify_claims: false)
+          oauth_application_id = claims["client_id"]
 
           # check whether ID token belongs to currently logged-in user
-          redirect_response_error("invalid_request") unless oauth_token["sub"] == jwt_subject(
-            oauth_tokens_account_id_column => account_id,
-            oauth_tokens_oauth_application_id_column => oauth_application_id
+          redirect_response_error("invalid_request") unless claims["sub"] == jwt_subject(
+            oauth_grants_account_id_column => account_id,
+            oauth_grants_oauth_application_id_column => oauth_application_id
           )
 
           # When an id_token_hint parameter is present, the OP MUST validate that it was the issuer of the ID Token.
-          redirect_response_error("invalid_request") unless oauth_token && oauth_token["iss"] == issuer
+          redirect_response_error("invalid_request") unless claims && claims["iss"] == issuer
 
           # now let's logout from IdP
           transaction do
@@ -186,7 +186,7 @@ module Rodauth
 
           if (post_logout_redirect_uri = param_or_nil("post_logout_redirect_uri"))
             catch(:default_logout_redirect) do
-              oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => oauth_token["client_id"]).first
+              oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => claims["client_id"]).first
 
               throw(:default_logout_redirect) unless oauth_application
 
@@ -387,34 +387,27 @@ module Rodauth
       super
     end
 
-    def create_oauth_token_from_authorization_code(oauth_grant, create_params, *)
-      create_params[oauth_tokens_nonce_column] = oauth_grant[oauth_grants_nonce_column] if oauth_grant[oauth_grants_nonce_column]
-      create_params[oauth_tokens_acr_column] = oauth_grant[oauth_grants_acr_column] if oauth_grant[oauth_grants_acr_column]
-
-      super
+    def create_token(*)
+      oauth_grant = super
+      generate_id_token(oauth_grant)
+      oauth_grant
     end
 
-    def create_oauth_token(*)
-      oauth_token = super
-      generate_id_token(oauth_token)
-      oauth_token
-    end
-
-    def generate_id_token(oauth_token)
-      oauth_scopes = oauth_token[oauth_tokens_scopes_column].split(oauth_scope_separator)
+    def generate_id_token(oauth_grant)
+      oauth_scopes = oauth_grant[oauth_grants_scopes_column].split(oauth_scope_separator)
 
       return unless oauth_scopes.include?("openid")
 
-      id_token_claims = jwt_claims(oauth_token)
+      id_token_claims = jwt_claims(oauth_grant)
 
-      id_token_claims[:nonce] = oauth_token[oauth_tokens_nonce_column] if oauth_token[oauth_tokens_nonce_column]
+      id_token_claims[:nonce] = oauth_grant[oauth_grants_nonce_column] if oauth_grant[oauth_grants_nonce_column]
 
-      id_token_claims[:acr] = oauth_token[oauth_tokens_acr_column] if oauth_token[oauth_tokens_acr_column]
+      id_token_claims[:acr] = oauth_grant[oauth_grants_acr_column] if oauth_grant[oauth_grants_acr_column]
 
       # Time when the End-User authentication occurred.
       id_token_claims[:auth_time] = last_account_login_at.to_i
 
-      account = db[accounts_table].where(account_id_column => oauth_token[oauth_tokens_account_id_column]).first
+      account = db[accounts_table].where(account_id_column => oauth_grant[oauth_grants_account_id_column]).first
 
       # this should never happen!
       # a newly minted oauth token from a grant should have been assigned to an account
@@ -430,7 +423,7 @@ module Rodauth
         encryption_method: oauth_application[oauth_applications_id_token_encrypted_response_enc_column]
       }.compact
 
-      oauth_token[:id_token] = jwt_encode(id_token_claims, **params)
+      oauth_grant[:id_token] = jwt_encode(id_token_claims, **params)
     end
 
     # aka fill_with_standard_claims
@@ -507,9 +500,9 @@ module Rodauth
       end
     end
 
-    def json_access_token_payload(oauth_token)
+    def json_access_token_payload(oauth_grant)
       payload = super
-      payload["id_token"] = oauth_token[:id_token] if oauth_token[:id_token]
+      payload["id_token"] = oauth_grant[:id_token] if oauth_grant[:id_token]
       payload
     end
 
@@ -549,20 +542,20 @@ module Rodauth
     end
 
     def _do_authorize_id_token
-      create_params = {
-        oauth_tokens_account_id_column => account_id,
-        oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-        oauth_tokens_scopes_column => scopes
+      grant_params = {
+        oauth_grants_account_id_column => account_id,
+        oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+        oauth_grants_scopes_column => scopes.join(" ")
       }
       if (nonce = param_or_nil("nonce"))
-        create_params[oauth_grants_nonce_column] = nonce
+        grant_params[oauth_grants_nonce_column] = nonce
       end
       if (acr = param_or_nil("acr"))
-        create_params[oauth_grants_acr_column] = acr
+        grant_params[oauth_grants_acr_column] = acr
       end
-      oauth_token = generate_oauth_token(create_params, false)
-      generate_id_token(oauth_token)
-      params = json_access_token_payload(oauth_token)
+      oauth_grant = generate_token(grant_params, false)
+      generate_id_token(oauth_grant)
+      params = json_access_token_payload(oauth_grant)
       params.delete("access_token")
       params
     end

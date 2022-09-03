@@ -1,0 +1,20 @@
+= Documentation for OAuth Token Management feature
+
+The +oauth_grant_management+ feature provides OAuth Token Management interfaces, so users are able to view and revoke their oauth grants.
+
+== Auth Value Methods
+
+oauth_grants_route :: the route for accessing oauth grants, defaults to +oauth-grants+.
+oauth_grants_path :: returns URL path for oauth grants.
+oauth_grant_path ::  returns URL path for an oauth grant.
+oauth_grants_id_pattern :: pattern matcher to retrieve the oauth token ID from the URL, <tt>Integer</tt> by default (must respond to "match").
+oauth_grants_page_title :: Title for the client OAuth grants page.
+oauth_grants_view :: The HTML of the Oauth grants dashboard for the logged in account.
+oauth_grants_per_page :: max number of oauth grants to list in the routes listing oauth grants.
+
+oauth_grants_expires_in_label :: Label for the oauth token expires in property.
+oauth_grants_refresh_token_label :: Label for the oauth token refresh token.
+oauth_grants_revoked_at_label :: Label for the oauth token revocation date.
+oauth_grants_token_label :: Label for the oauth token.
+
+oauth_grant_revoke_button :: Label for the grant revoke button.

@@ -8,6 +8,9 @@
   name: OAuth Implicit Grant
   path: oauth_implicit_grant_rdoc.html
 -
+  name: OAuth Client Credentials Grant
+  path: oauth_client_credentials_grant_rdoc.html
+-
   name: OAuth Device Grant
   path: oauth_device_grant_rdoc.html
 -
@@ -20,16 +23,25 @@
   name: OAuth Token Introspection
   path: oauth_token_introspection_rdoc.html
 -
+  name: OAuth Resource Indicators
+  path: oauth_resource_indicators_rdoc.html
+-
+  name: OAuth Dynamic Client Registration
+  path: oauth_dynamic_client_registration_rdoc.html
+-
   name: OAuth Application Management Dashboard
   path: oauth_application_management_rdoc.html
 -
-  name: OAuth Token Management Dashboard
-  path: oauth_token_management_rdoc.html
+  name: OAuth Grant Management Dashboard
+  path: oauth_grant_management_rdoc.html
 -
   name: Oauth JWT
   path: oauth_jwt_rdoc.html
 -
-  name: OAuth Assertion Base
+  name: Oauth JWT-Secured Authorization Request (JAR)
+  path: oauth_jwt_secured_authorization_request_rdoc.html
+-
+  name: OAuth Assertion Framework
   path: oauth_assertion_base_rdoc.html
 -
   name: OAuth SAML 2.0 Bearer Assertion

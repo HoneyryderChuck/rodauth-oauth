@@ -26,14 +26,14 @@ module Rodauth
     end
 
     def _do_authorize_token
-      create_params = {
-        oauth_tokens_account_id_column => account_id,
-        oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-        oauth_tokens_scopes_column => scopes
+      grant_params = {
+        oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+        oauth_grants_scopes_column => scopes,
+        oauth_grants_account_id_column => account_id
       }
-      oauth_token = generate_oauth_token(create_params, false)
+      oauth_grant = generate_token(grant_params, false)
 
-      json_access_token_payload(oauth_token)
+      json_access_token_payload(oauth_grant)
     end
 
     def authorize_response(params, mode)

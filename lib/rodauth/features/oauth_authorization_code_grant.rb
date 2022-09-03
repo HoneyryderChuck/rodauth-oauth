@@ -18,7 +18,7 @@ module Rodauth
       try_approval_prompt if use_oauth_access_type? && request.get?
     end
 
-    def validate_oauth_token_params
+    def validate_token_params
       redirect_response_error("invalid_request") if param_or_nil("grant_type") == "authorization_code" && !param_or_nil("code")
       super
     end
@@ -109,28 +109,16 @@ module Rodauth
       end
     end
 
-    def create_oauth_token(grant_type)
+    def create_token(grant_type)
       return super unless supported_grant_type?(grant_type, "authorization_code")
 
-      # fetch oauth grant
-      oauth_grant = db[oauth_grants_table].where(
+      grant_params = {
         oauth_grants_code_column => param("code"),
         oauth_grants_redirect_uri_column => param("redirect_uri"),
-        oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-        oauth_grants_revoked_at_column => nil
-      ).where(Sequel[oauth_grants_expires_in_column] >= Sequel::CURRENT_TIMESTAMP)
-                                          .for_update
-                                          .first
-
-      redirect_response_error("invalid_grant") unless oauth_grant
-
-      create_params = {
-        oauth_tokens_account_id_column => oauth_grant[oauth_grants_account_id_column],
-        oauth_tokens_oauth_application_id_column => oauth_grant[oauth_grants_oauth_application_id_column],
-        oauth_tokens_oauth_grant_id_column => oauth_grant[oauth_grants_id_column],
-        oauth_tokens_scopes_column => oauth_grant[oauth_grants_scopes_column]
+        oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column]
       }
-      create_oauth_token_from_authorization_code(oauth_grant, create_params, !use_oauth_access_type?)
+
+      create_token_from_authorization_code(grant_params, !use_oauth_access_type?)
     end
 
     ACCESS_TYPES = %w[offline online].freeze

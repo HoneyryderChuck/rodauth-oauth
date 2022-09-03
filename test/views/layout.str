@@ -17,8 +17,8 @@ else
 end
 }
 #{
-  if rodauth.features.include?(:oauth_token_management)
-  %Q{<a class="p-2 text-dark" href="#{rodauth.oauth_tokens_path}">Tokens</a>}
+  if rodauth.features.include?(:oauth_grant_management)
+  %Q{<a class="p-2 text-dark" href="#{rodauth.oauth_grants_path}">Tokens</a>}
   end
 }
 #{

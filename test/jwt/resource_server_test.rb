@@ -128,16 +128,16 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
   private
 
   def generate_access_token(priv_key, alg, params = {})
-    exp = oauth_token[:expires_in]
-    exp = Time.parse(oauth_token[:expires_in]) unless exp.is_a?(Time)
+    exp = oauth_grant[:expires_in]
+    exp = Time.parse(oauth_grant[:expires_in]) unless exp.is_a?(Time)
     params = {
-      sub: oauth_token[:account_id],
+      sub: oauth_grant[:account_id],
       iss: "https://auth-server", # issuer
       iat: Time.now.to_i, # issued at
       client_id: oauth_application[:client_id],
       exp: exp.to_i,
       aud: "resource-server",
-      scope: oauth_token[:scopes]
+      scope: oauth_grant[:scopes]
     }.merge(params)
 
     headers = {}

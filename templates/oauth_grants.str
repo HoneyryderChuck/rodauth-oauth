@@ -1,0 +1,50 @@
+<div id="oauth-grants">
+  #{
+    if @oauth_grants.count.zero?
+      "<p>No oauth grants yet!</p>"
+    else
+      <<-HTML
+        <table class="table">
+          <thead>
+            <tr>
+            <th scope="col">#{rodauth.oauth_applications_name_label}</th>
+              <th scope="col">#{rodauth.oauth_grants_token_label}</th>
+              <th scope="col">#{rodauth.oauth_grants_refresh_token_label}</th>
+              <th scope="col">#{rodauth.oauth_grants_expires_in_label}</th>
+              <th scope="col">#{rodauth.oauth_grants_scopes_label}</th>
+              <th scope="col"><span class="badge badge-pill badge-dark">#{@oauth_grants.count}</span>
+            </tr>
+          </thead>
+          <tbody>
+            #{
+              @oauth_grants.map do |oauth_grant|
+                <<-HTML
+                  <tr>
+                    <td>#{oauth_grant[rodauth.oauth_applications_name_column]}</td>
+                    <td><code class="token">#{oauth_grant[rodauth.oauth_grants_token_column]}</code></td>
+                    <td><code class="token">#{oauth_grant[rodauth.oauth_grants_refresh_token_column]}</code></td>
+                    <td>#{oauth_grant[rodauth.oauth_grants_expires_in_column]}</td>
+                    <td>#{oauth_grant[rodauth.oauth_grants_scopes_column]}</td>
+                    <td>
+                      #{
+                        if !oauth_grant[rodauth.oauth_grants_token_hash_column]
+                          <<-HTML
+                            <form method="post" action="#{rodauth.oauth_grant_path(oauth_grant[rodauth.oauth_grants_id_column])}" class="form-horizontal" role="form" id="grant-revoke-form">
+                              #{csrf_tag(rodauth.oauth_grant_path(oauth_grant[rodauth.oauth_grants_id_column])) if respond_to?(:csrf_tag)}
+                              #{rodauth.button(rodauth.oauth_grant_revoke_button)}
+                            </form>
+                          HTML
+                        end
+                      }
+                    </td>
+                  </tr>
+                HTML
+              end.join
+            }
+          </tbody>
+        </table>
+        #{rodauth.oauth_management_pagination_links(@oauth_grants)}
+      HTML
+    end
+  }
+</div>

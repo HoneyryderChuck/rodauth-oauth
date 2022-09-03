@@ -203,7 +203,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
 
     verify_response
 
-    verify_oauth_token
+    verify_oauth_grant
     json_body["access_token"]
   end
 end

@@ -13,7 +13,7 @@ module Rodauth
     view "oauth_applications", "Oauth Applications", "oauth_applications"
     view "oauth_application", "Oauth Application", "oauth_application"
     view "new_oauth_application", "New Oauth Application", "new_oauth_application"
-    view "oauth_application_oauth_tokens", "Oauth Application Tokens", "oauth_application_oauth_tokens"
+    view "oauth_application_oauth_grants", "Oauth Application Grants", "oauth_application_oauth_grants"
 
     # Application
     APPLICATION_REQUIRED_PARAMS = %w[name scopes homepage_url redirect_uri client_secret].freeze
@@ -42,13 +42,13 @@ module Rodauth
     translatable_method :oauth_applications_client_secret_label, "Client Secret"
     translatable_method :oauth_applications_client_id_label, "Client ID"
     button "Register", "oauth_application"
-    button "Revoke", "oauth_token_revoke"
+    button "Revoke", "oauth_grant_revoke"
 
-    auth_value_method :oauth_applications_oauth_tokens_path, "oauth-tokens"
+    auth_value_method :oauth_applications_oauth_grants_path, "oauth-grants"
     auth_value_method :oauth_applications_route, "oauth-applications"
     auth_value_method :oauth_applications_per_page, 20
     auth_value_method :oauth_applications_id_pattern, Integer
-    auth_value_method :oauth_tokens_per_page, 20
+    auth_value_method :oauth_grants_per_page, 20
 
     translatable_method :invalid_url_message, "Invalid URL"
     translatable_method :null_error_message, "is not filled"
@@ -92,15 +92,15 @@ module Rodauth
             end
           end
 
-          request.on(oauth_applications_oauth_tokens_path) do
+          request.on(oauth_applications_oauth_grants_path) do
             page = Integer(param_or_nil("page") || 1)
-            per_page = per_page_param(oauth_tokens_per_page)
-            oauth_tokens = db[oauth_tokens_table]
-                           .where(oauth_tokens_oauth_application_id_column => id)
-                           .order(Sequel.desc(oauth_tokens_id_column))
-            scope.instance_variable_set(:@oauth_tokens, oauth_tokens.paginate(page, per_page))
+            per_page = per_page_param(oauth_grants_per_page)
+            oauth_grants = db[oauth_grants_table]
+                           .where(oauth_grants_oauth_application_id_column => id)
+                           .order(Sequel.desc(oauth_grants_id_column))
+            scope.instance_variable_set(:@oauth_grants, oauth_grants.paginate(page, per_page))
             request.get do
-              oauth_application_oauth_tokens_view
+              oauth_application_oauth_grants_view
             end
           end
         end

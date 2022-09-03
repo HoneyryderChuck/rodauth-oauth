@@ -23,7 +23,6 @@ module Rodauth::OAuth::Rails
 
         template "app/models/oauth_application.rb"
         template "app/models/oauth_grant.rb"
-        template "app/models/oauth_token.rb"
       end
 
       private

@@ -32,7 +32,10 @@ else
     primary_key :id, type: Integer
     foreign_key :account_id, :accounts, null: true
     foreign_key :oauth_application_id, :oauth_applications, null: false
-    String :code, null: false
+    String :type, null: false
+    String :code, null: true
+    String :token, token: true, unique: true
+    String :refresh_token, token: true, unique: true
     DateTime :expires_in, null: false
     String :redirect_uri
     DateTime :revoked_at
@@ -41,18 +44,6 @@ else
     String :access_type, null: false, default: "offline"
     String :user_code, null: true, unique: true
     Time :last_polled_at
-  end
-  DB.create_table :oauth_tokens do |_t|
-    primary_key :id, type: Integer
-    foreign_key :account_id, :accounts
-    foreign_key :oauth_grant_id, :oauth_grants
-    foreign_key :oauth_token_id, :oauth_tokens
-    foreign_key :oauth_application_id, :oauth_applications, null: false
-    String :token, token: true
-    String :refresh_token, token: true
-    DateTime :expires_in, null: false
-    DateTime :revoked_at
-    String :scopes, null: false
   end
 end
 
@@ -112,9 +103,7 @@ class AuthorizationServer < Roda
     oauth_application_default_scope "profile.read"
     oauth_valid_uri_schemes %w[http https]
 
-    oauth_tokens_refresh_token_hash_column :refresh_token
-
-    use_oauth_device_code_grant_type? true
+    oauth_grants_refresh_token_hash_column :refresh_token
   end
 
   plugin :not_found do
