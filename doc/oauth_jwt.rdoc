@@ -8,7 +8,7 @@ https://datatracker.ietf.org/doc/html/rfc9068
 
 oauth_jwt_subject_type :: JWT subject claim type, <tt>"public"</tt> by default.
 oauth_jwt_subject_secret :: hashing secret to use when subject claim type is "pairwise", <tt>nil</tt> by default.
-oauth_jwt_token_issuer :: JWT issuer claim, <tt>nil</tt> by default.
+oauth_jwt_issuer :: JWT issuer claim, <tt>nil</tt> by default.
 oauth_jwt_audience :: JWT audience claim, <tt>nil</tt> by default.
 oauth_applications_jwt_public_key_label :: Form label for the oauth application client application public key.
 oauth_application_jwt_public_key_param :: Form param for the oauth application client application public key.
@@ -33,8 +33,8 @@ oauth_jwt_jwe_copyright :: JWE copyright parameter, <tt>nil</tt> by default.
 oauth_jwt_legacy_algorithm :: legacy JWT signing algorithm, to be exposed via JWKs uri during key rotation.
 oauth_jwt_legacy_public_key :: legacy JWT public key, to be exposed via JWKs uri during key rotation.
 
-request_uri_not_supported_message :: error description for the "request_uri" OAuth error code, <tt>"request uri is unsupported"</tt> by default.
-invalid_request_object_message :: error description for the "invalid_request" OAuth error code, <tt>"request object is invalid"</tt> by default.
+oauth_request_uri_not_supported_message :: error description for the "request_uri" OAuth error code, <tt>"request uri is unsupported"</tt> by default.
+oauth_invalid_request_object_message :: error description for the "invalid_request" OAuth error code, <tt>"request object is invalid"</tt> by default.
 
 jwks_route :: the route for the jwks, defaults to +jwks+.
 

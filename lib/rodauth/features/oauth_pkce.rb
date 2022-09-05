@@ -16,10 +16,10 @@ module Rodauth
     auth_value_method :oauth_grants_code_challenge_column, :code_challenge
     auth_value_method :oauth_grants_code_challenge_method_column, :code_challenge_method
 
-    auth_value_method :code_challenge_required_error_code, "invalid_request"
-    translatable_method :code_challenge_required_message, "code challenge required"
-    auth_value_method :unsupported_transform_algorithm_error_code, "invalid_request"
-    translatable_method :unsupported_transform_algorithm_message, "transform algorithm not supported"
+    auth_value_method :oauth_code_challenge_required_error_code, "invalid_request"
+    translatable_method :oauth_code_challenge_required_message, "code challenge required"
+    auth_value_method :oauth_unsupported_transform_algorithm_error_code, "invalid_request"
+    translatable_method :oauth_unsupported_transform_algorithm_message, "transform algorithm not supported"
 
     private
 

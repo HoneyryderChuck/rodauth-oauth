@@ -14,7 +14,7 @@ module Rodauth
     auth_value_method :oauth_jwt_subject_type, "public" # fallback subject type: public, pairwise
     auth_value_method :oauth_jwt_subject_secret, nil # salt for pairwise generation
 
-    auth_value_method :oauth_jwt_token_issuer, nil
+    auth_value_method :oauth_jwt_issuer, nil
 
     auth_value_method :oauth_applications_subject_type_column, :subject_type
     auth_value_method :oauth_applications_jwt_public_key_column, :jwt_public_key
@@ -47,8 +47,8 @@ module Rodauth
     auth_value_method :oauth_jwt_jwe_copyright, nil
     auth_value_method :oauth_jwt_audience, nil
 
-    translatable_method :request_uri_not_supported_message, "request uri is unsupported"
-    translatable_method :invalid_request_object_message, "request object is invalid"
+    translatable_method :oauth_request_uri_not_supported_message, "request uri is unsupported"
+    translatable_method :oauth_invalid_request_object_message, "request object is invalid"
 
     auth_value_methods(
       :jwt_encode,
@@ -84,7 +84,7 @@ module Rodauth
     private
 
     def issuer
-      @issuer ||= oauth_jwt_token_issuer || authorization_server_url
+      @issuer ||= oauth_jwt_issuer || authorization_server_url
     end
 
     def authorization_token

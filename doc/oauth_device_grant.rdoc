@@ -14,10 +14,10 @@ generate_user_code :: function which generates random user codes;
 oauth_grants_user_code_column :: (default: :user_code) the column name where the user code is stored;
 oauth_grants_last_polled_at_column :: (default: :last_polled_at) the column name where the timestamp from the last polling attempt for a verified grant via /token was made;
 
-expired_token_message :: human-readable error message correspondent to the "expired_token" error code;
-access_denied_message :: human-readable error message correspondent to the "access_denied" error code;
-authorization_pending_message :: human-readable error message correspondent to the "authorization_pending" error code;
-slow_down_message :: human-readable error message correspondent to the "slow_down" error code;
+oauth_expired_token_message :: human-readable error message correspondent to the "expired_token" error code;
+oauth_access_denied_message :: human-readable error message correspondent to the "access_denied" error code;
+oauth_authorization_pending_message :: human-readable error message correspondent to the "authorization_pending" error code;
+oauth_slow_down_message :: human-readable error message correspondent to the "slow_down" error code;
 
 device_authorization_route :: the route for device authorization, defaults to +device-authorization+ (device code grant).
 before_device_authorization_route :: Run arbitrary code before the device authorization route.

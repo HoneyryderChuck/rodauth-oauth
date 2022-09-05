@@ -87,3 +87,8 @@ The following auth config methods were renamed (rename them if you're redefining
 * `oauth_applications_jws_jwk_column` (replaced by `oauth_applications_jwks_column`)
 * `oauth_applications_jws_jwk_label` (replaced by `oauth_applications_jwks_label`)
 * `oauth_application_jws_jwk_param` (replaced by `oauth_applications_jwks_param`)
+* all config methods terminated in `"_error_status"` are now prefixed by `"oauth_"`
+* all config methods terminated in `"_message"` are now prefixed by `"oauth_`
+* all config methods terminated in `"_error_code`` are now prefixed by `"oauth"`
+* `unique_error_message` config method was removed (not in use)
+* `oauth_jwt_token_issuer` renamed to `oauth_jwt_issuer`

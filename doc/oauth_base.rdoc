@@ -62,20 +62,19 @@ oauth_grants_unique_columns :: uniqueness index to use in ON CONFLICT queries (w
 
 json_response_content_type :: The content type to set for json responses, <tt>application/json</tt> by default.
 json_request_regexp :: The regexp to retrieve a valid json content type.
-authorization_required_error_status :: HTTP status code used for authorization errors, <tt>401</tt> by default.
-invalid_oauth_response_status :: HTTP status code used for invalid responses, <tt>400</tt> by default.
-already_in_use_response_status :: HTTP status code used for already in use responses, <tt>409</tt> by default.
+oauth_authorization_required_error_status :: HTTP status code used for authorization errors, <tt>401</tt> by default.
+oauth_invalid_response_status :: HTTP status code used for invalid responses, <tt>400</tt> by default.
+oauth_already_in_use_response_status :: HTTP status code used for already in use responses, <tt>409</tt> by default.
 only_json? :: whether the application responds only with json.
 
-invalid_client_message :: error description for the "invalid_client" OAuth error code, <tt>"Invalid client"</tt> by default.
-invalid_grant_type_message :: error description for the "invalid_grant_type" OAuth error code, <tt>"Invalid grant type"</tt> by default.
-invalid_grant_type_error_code :: oauth error code for using invalid grants, <tt>"unsupported_grant_type"</tt> by default.
-invalid_grant_message :: error description for the "invalid_grant" OAuth error code, <tt>"Invalid grant"</tt> by default.
-invalid_scope_message :: error description for the "invalid_scope" OAuth error code, <tt>"Invalid scope"</tt> by default.
-unsupported_token_type_message :: error description for the "unsupported_token_type" OAuth error code, <tt>"Invalid token type hint"</tt> by default.
-unique_error_message :: error description for the "unique_error" OAuth error code, <tt>"is already in use"</tt> by default.
-already_in_use_error_code :: oauth error code for when a token is already in use, <tt>"invalid_request"</tt> by default.
-already_in_use_message :: error description for the "already_in_use" OAuth error code.
+oauth_invalid_client_message :: error description for the "invalid_client" OAuth error code, <tt>"Invalid client"</tt> by default.
+oauth_invalid_grant_type_message :: error description for the "invalid_grant_type" OAuth error code, <tt>"Invalid grant type"</tt> by default.
+oauth_invalid_grant_type_error_code :: oauth error code for using invalid grants, <tt>"unsupported_grant_type"</tt> by default.
+oauth_invalid_grant_message :: error description for the "invalid_grant" OAuth error code, <tt>"Invalid grant"</tt> by default.
+oauth_invalid_scope_message :: error description for the "invalid_scope" OAuth error code, <tt>"Invalid scope"</tt> by default.
+oauth_unsupported_token_type_message :: error description for the "unsupported_token_type" OAuth error code, <tt>"Invalid token type hint"</tt> by default.
+oauth_already_in_use_error_code :: oauth error code for when a token is already in use, <tt>"invalid_request"</tt> by default.
+oauth_already_in_use_message :: error description for the "already_in_use" OAuth error code.
 
 oauth_metadata_service_documentation :: OAuth service documentation URL, <tt>nil</tt> by default.
 oauth_metadata_ui_locales_supported :: UI locales supported in the OAuth journey, <tt>nil</tt> by default.

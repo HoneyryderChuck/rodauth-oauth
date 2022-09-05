@@ -41,7 +41,7 @@ module Rodauth
           json_response_success(json_token_introspect_payload(oauth_grant))
         end
 
-        throw_json_response_error(invalid_oauth_response_status, "invalid_request")
+        throw_json_response_error(oauth_invalid_response_status, "invalid_request")
       end
     end
 

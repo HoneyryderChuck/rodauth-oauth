@@ -69,7 +69,7 @@ module Rodauth
 
     def authorization_required
       if accepts_json?
-        throw_json_response_error(authorization_required_error_status, "invalid_client")
+        throw_json_response_error(oauth_authorization_required_error_status, "invalid_client")
       else
         set_redirect_error_flash(require_authorization_error_flash)
         redirect(authorize_path)

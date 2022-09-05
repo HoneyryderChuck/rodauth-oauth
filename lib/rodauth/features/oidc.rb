@@ -77,7 +77,7 @@ module Rodauth
     auth_value_method :oauth_grants_nonce_column, :nonce
     auth_value_method :oauth_grants_acr_column, :acr
 
-    translatable_method :invalid_scope_message, "The Access Token expired"
+    translatable_method :oauth_invalid_scope_message, "The Access Token expired"
 
     auth_value_method :webfinger_relation, "http://openid.net/specs/connect/1.0/issuer"
 
@@ -105,15 +105,15 @@ module Rodauth
         catch_error do
           claims = authorization_token
 
-          throw_json_response_error(authorization_required_error_status, "invalid_token") unless claims
+          throw_json_response_error(oauth_authorization_required_error_status, "invalid_token") unless claims
 
           oauth_scopes = claims["scope"].split(" ")
 
-          throw_json_response_error(authorization_required_error_status, "invalid_token") unless oauth_scopes.include?("openid")
+          throw_json_response_error(oauth_authorization_required_error_status, "invalid_token") unless oauth_scopes.include?("openid")
 
           account = db[accounts_table].where(account_id_column => claims["sub"]).first
 
-          throw_json_response_error(authorization_required_error_status, "invalid_token") unless account
+          throw_json_response_error(oauth_authorization_required_error_status, "invalid_token") unless account
 
           oauth_scopes.delete("openid")
 
@@ -141,7 +141,7 @@ module Rodauth
           end
         end
 
-        throw_json_response_error(authorization_required_error_status, "invalid_token")
+        throw_json_response_error(oauth_authorization_required_error_status, "invalid_token")
       end
     end
 

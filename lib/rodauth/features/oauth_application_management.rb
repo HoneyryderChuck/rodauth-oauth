@@ -170,7 +170,7 @@ module Rodauth
         elsif key == oauth_application_scopes_param
 
           value.each do |scope|
-            set_field_error(key, invalid_scope_message) unless oauth_application_scopes.include?(scope)
+            set_field_error(key, oauth_invalid_scope_message) unless oauth_application_scopes.include?(scope)
           end
         end
       end

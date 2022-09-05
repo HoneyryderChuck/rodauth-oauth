@@ -18,7 +18,7 @@ oauth_applications_userinfo_encrypted_response_alg_column :: db column where to 
 oauth_applications_userinfo_encrypted_response_enc_column :: db column where to store the encryption method used for the userinfo response payload for the oauth application, <tt>:userinfo_encrypted_response_enc</tt> by default.
 oauth_applications_userinfo_signed_response_alg_column :: db column where to store the signing algorithm used for the userinfo response payload for the oauth application, <tt>:userinfo_signed_response_alg</tt> by default.
 
-invalid_scope_message :: overwrites the default to <tt>"The Access Token expired"</tt>
+oauth_invalid_scope_message :: overwrites the default to <tt>"The Access Token expired"</tt>
 webfinger_relation :: webfinger openid relation filter, <tt>"http://openid.net/specs/connect/1.0/issuer"</tt> by default.
 
 userinfo_route :: the route for the userinfo action, defaults to +userinfo+.

@@ -155,7 +155,7 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
 
     resource_server.plugin :rodauth do
       enable :oauth_jwt
-      oauth_jwt_token_issuer auth_url
+      oauth_jwt_issuer auth_url
       oauth_jwt_audience "resource-server"
       is_authorization_server? false
       authorization_server_url auth_url

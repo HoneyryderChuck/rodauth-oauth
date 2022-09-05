@@ -76,7 +76,7 @@ module Rodauth
           if value.is_a?(Array)
             value = value.each do |grant_type|
               unless metadata[:grant_types_supported].include?(grant_type)
-                register_throw_json_response_error("invalid_client_metadata", register_invalid_grant_type_message(grant_type))
+                register_throw_json_response_error("invalid_client_metadata", register_oauth_invalid_grant_type_message(grant_type))
               end
             end.join(" ")
           else
@@ -203,7 +203,7 @@ module Rodauth
     end
 
     def register_throw_json_response_error(code, message)
-      throw_json_response_error(invalid_oauth_response_status, code, message)
+      throw_json_response_error(oauth_invalid_response_status, code, message)
     end
 
     def register_required_param_message(key)
@@ -230,7 +230,7 @@ module Rodauth
       "The given scopes (#{scopes}) are not allowed by this server."
     end
 
-    def register_invalid_grant_type_message(grant_type)
+    def register_oauth_invalid_grant_type_message(grant_type)
       "The grant type #{grant_type} is not allowed by this server."
     end
 

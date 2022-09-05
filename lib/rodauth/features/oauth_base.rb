@@ -70,9 +70,9 @@ module Rodauth
       auth_value_method :"oauth_applications_#{column}_column", column
     end
 
-    auth_value_method :authorization_required_error_status, 401
-    auth_value_method :invalid_oauth_response_status, 400
-    auth_value_method :already_in_use_response_status, 409
+    auth_value_method :oauth_authorization_required_error_status, 401
+    auth_value_method :oauth_invalid_response_status, 400
+    auth_value_method :oauth_already_in_use_response_status, 409
 
     # Feature options
     auth_value_method :oauth_application_default_scope, SCOPES.first
@@ -80,16 +80,15 @@ module Rodauth
     auth_value_method :oauth_token_type, "bearer"
     auth_value_method :oauth_refresh_token_protection_policy, "none" # can be: none, sender_constrained, rotation
 
-    translatable_method :invalid_client_message, "Invalid client"
-    translatable_method :invalid_grant_type_message, "Invalid grant type"
-    translatable_method :invalid_grant_message, "Invalid grant"
-    translatable_method :invalid_scope_message, "Invalid scope"
-    translatable_method :unsupported_token_type_message, "Invalid token type hint"
+    translatable_method :oauth_invalid_client_message, "Invalid client"
+    translatable_method :oauth_invalid_grant_type_message, "Invalid grant type"
+    translatable_method :oauth_invalid_grant_message, "Invalid grant"
+    translatable_method :oauth_invalid_scope_message, "Invalid scope"
+    translatable_method :oauth_unsupported_token_type_message, "Invalid token type hint"
 
-    translatable_method :unique_error_message, "is already in use"
-    translatable_method :already_in_use_message, "error generating unique token"
-    auth_value_method :already_in_use_error_code, "invalid_request"
-    auth_value_method :invalid_grant_type_error_code, "unsupported_grant_type"
+    translatable_method :oauth_already_in_use_message, "error generating unique token"
+    auth_value_method :oauth_already_in_use_error_code, "invalid_request"
+    auth_value_method :oauth_invalid_grant_type_error_code, "unsupported_grant_type"
 
     # Resource Server params
     # Only required to use if the plugin is to be used in a resource server
@@ -137,7 +136,7 @@ module Rodauth
           json_response_success(json_access_token_payload(oauth_grant))
         end
 
-        throw_json_response_error(invalid_oauth_response_status, "invalid_request")
+        throw_json_response_error(oauth_invalid_response_status, "invalid_request")
       end
     end
 
@@ -698,10 +697,10 @@ module Rodauth
 
     def redirect_response_error(error_code, redirect_url = redirect_uri || request.referer || default_redirect)
       if accepts_json?
-        status_code = if respond_to?(:"#{error_code}_response_status")
-                        send(:"#{error_code}_response_status")
+        status_code = if respond_to?(:"oauth_#{error_code}_response_status")
+                        send(:"oauth_#{error_code}_response_status")
                       else
-                        invalid_oauth_response_status
+                        oauth_invalid_response_status
                       end
 
         throw_json_response_error(status_code, error_code)
@@ -709,14 +708,14 @@ module Rodauth
         redirect_url = URI.parse(redirect_url)
         query_params = []
 
-        query_params << if respond_to?(:"#{error_code}_error_code")
-                          "error=#{send(:"#{error_code}_error_code")}"
+        query_params << if respond_to?(:"oauth_#{error_code}_error_code")
+                          "error=#{send(:"oauth_#{error_code}_error_code")}"
                         else
                           "error=#{error_code}"
                         end
 
-        if respond_to?(:"#{error_code}_message")
-          message = send(:"#{error_code}_message")
+        if respond_to?(:"oauth_#{error_code}_message")
+          message = send(:"oauth_#{error_code}_message")
           query_params << ["error_description=#{CGI.escape(message)}"]
         end
 
@@ -743,13 +742,13 @@ module Rodauth
 
     def throw_json_response_error(status, error_code, message = nil)
       set_response_error_status(status)
-      code = if respond_to?(:"#{error_code}_error_code")
-               send(:"#{error_code}_error_code")
+      code = if respond_to?(:"oauth_#{error_code}_error_code")
+               send(:"oauth_#{error_code}_error_code")
              else
                error_code
              end
       payload = { "error" => code }
-      payload["error_description"] = message || (send(:"#{error_code}_message") if respond_to?(:"#{error_code}_message"))
+      payload["error_description"] = message || (send(:"oauth_#{error_code}_message") if respond_to?(:"oauth_#{error_code}_message"))
       json_payload = _json_response_body(payload)
       response["Content-Type"] ||= json_response_content_type
       response["WWW-Authenticate"] = oauth_token_type.upcase if status == 401
@@ -774,7 +773,7 @@ module Rodauth
     end
 
     def authorization_required
-      throw_json_response_error(authorization_required_error_status, "invalid_client")
+      throw_json_response_error(oauth_authorization_required_error_status, "invalid_client")
     end
 
     def check_valid_scopes?

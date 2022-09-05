@@ -21,10 +21,10 @@ module Rodauth
     auth_value_method :oauth_grants_user_code_column, :user_code
     auth_value_method :oauth_grants_last_polled_at_column, :last_polled_at
 
-    translatable_method :expired_token_message, "the device code has expired"
-    translatable_method :access_denied_message, "the authorization request has been denied"
-    translatable_method :authorization_pending_message, "the authorization request is still pending"
-    translatable_method :slow_down_message, "authorization request is still pending but poll interval should be increased"
+    translatable_method :oauth_expired_token_message, "the device code has expired"
+    translatable_method :oauth_access_denied_message, "the authorization request has been denied"
+    translatable_method :oauth_authorization_pending_message, "the authorization request is still pending"
+    translatable_method :oauth_slow_down_message, "authorization request is still pending but poll interval should be increased"
 
     auth_value_method :oauth_device_code_grant_polling_interval, 5 # seconds
     auth_value_method :oauth_device_code_grant_user_code_size, 8 # characters
@@ -88,7 +88,7 @@ module Rodauth
       r.post do
         catch_error do
           unless param_or_nil("user_code")
-            set_redirect_error_flash invalid_grant_message
+            set_redirect_error_flash oauth_invalid_grant_message
             redirect device_path
           end
 
@@ -132,14 +132,14 @@ module Rodauth
 
     def create_token(grant_type)
       if supported_grant_type?(grant_type, "urn:ietf:params:oauth:grant-type:device_code")
-        throw_json_response_error(invalid_oauth_response_status, "invalid_grant_type") unless use_oauth_device_code_grant_type?
+        throw_json_response_error(oauth_invalid_response_status, "invalid_grant_type") unless use_oauth_device_code_grant_type?
 
         oauth_grant = db[oauth_grants_table].where(
           oauth_grants_code_column => param("device_code"),
           oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column]
         ).for_update.first
 
-        throw_json_response_error(invalid_oauth_response_status, "invalid_grant") unless oauth_grant
+        throw_json_response_error(oauth_invalid_response_status, "invalid_grant") unless oauth_grant
 
         now = Time.now
 
@@ -150,17 +150,17 @@ module Rodauth
         end
 
         if oauth_grant[oauth_grants_revoked_at_column]
-          throw_json_response_error(invalid_oauth_response_status, "access_denied")
+          throw_json_response_error(oauth_invalid_response_status, "access_denied")
         elsif oauth_grant[oauth_grants_expires_in_column] < now
-          throw_json_response_error(invalid_oauth_response_status, "expired_token")
+          throw_json_response_error(oauth_invalid_response_status, "expired_token")
         else
           last_polled_at = oauth_grant[oauth_grants_last_polled_at_column]
           if last_polled_at && convert_timestamp(last_polled_at) + oauth_device_code_grant_polling_interval > now
-            throw_json_response_error(invalid_oauth_response_status, "slow_down")
+            throw_json_response_error(oauth_invalid_response_status, "slow_down")
           else
             db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column])
                                   .update(oauth_grants_last_polled_at_column => Sequel::CURRENT_TIMESTAMP)
-            throw_json_response_error(invalid_oauth_response_status, "authorization_pending")
+            throw_json_response_error(oauth_invalid_response_status, "authorization_pending")
           end
         end
       elsif grant_type == "device_code"
