@@ -77,3 +77,13 @@ UPDATE "oauth_grants"
 ```
 
 And now you can deploy the app with v1 installed (after you've done the required changes).
+
+## renamed options
+
+The following auth config methods were renamed (rename them if you're redefining them):
+
+* `description_param` (replaced by `oauth_applications_description_param`)
+* `client_id_param` (replaced by `oauth_applications_client_id_param`)
+* `oauth_applications_jws_jwk_column` (replaced by `oauth_applications_jwks_column`)
+* `oauth_applications_jws_jwk_label` (replaced by `oauth_applications_jwks_label`)
+* `oauth_application_jws_jwk_param` (replaced by `oauth_applications_jwks_param`)
