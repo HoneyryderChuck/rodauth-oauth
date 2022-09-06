@@ -20,7 +20,12 @@ module Rodauth
       if json_request? || param_or_nil("request") # signed request
         resources = Array(resources)
       else
-        query = request.form_data? ? request.body.read : request.query_string
+        query = if request.form_data?
+                  request.body.rewind
+                  request.body.read
+                else
+                  request.query_string
+                end
         # resource query param does not conform to rack parsing rules
         resources = URI.decode_www_form(query).each_with_object([]) do |(k, v), memo|
           memo << v if k == "resource"
