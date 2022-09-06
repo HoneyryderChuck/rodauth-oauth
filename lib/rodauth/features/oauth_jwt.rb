@@ -68,8 +68,6 @@ module Rodauth
     def require_oauth_authorization(*scopes)
       authorization_required unless authorization_token
 
-      scopes << oauth_application_default_scope if scopes.empty?
-
       token_scopes = authorization_token["scope"].split(" ")
 
       authorization_required unless scopes.any? { |scope| token_scopes.include?(scope) }

@@ -99,6 +99,7 @@ class RodauthOAuthOIDCLogoutTest < OIDCIntegration
 
   def generate_id_token(application = oauth_application)
     visit "/authorize?client_id=#{application[:client_id]}&scope=openid&response_type=code+id_token"
+    check "openid"
     click_button "Authorize"
     token_url = URI(page.current_url)
     params = Hash[token_url.fragment.split("&").map { |p| p.split("=") }]

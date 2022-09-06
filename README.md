@@ -82,7 +82,6 @@ This tutorial assumes you already read the documentation and know how to set up 
 plugin :rodauth do
   # enable it in the plugin
   enable :login, :oauth
-  oauth_application_default_scope %w[profile.read]
   oauth_application_scopes %w[profile.read profile.write]
 end
 
@@ -124,7 +123,6 @@ For OpenID, it's very similar to the example above:
 plugin :rodauth do
   # enable it in the plugin
   enable :login, :oidc
-  oauth_application_default_scope %w[openid]
   oauth_application_scopes %w[openid email profile]
 end
 ```
@@ -197,7 +195,6 @@ You can then enable this feature in `lib/rodauth_app.rb` and set up any options 
 # lib/roudauth_app.rb
 enable :oauth
 # OAuth
-oauth_application_default_scope "profile.read"
 oauth_application_scopes %w[profile.read profile.write books.read books.write]
 ```
 

@@ -210,12 +210,12 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     verify_access_token_response(json_body, oauth_grant)
 
     # second go at it
-    scopes = CGI.escape(oauth_application[:scopes])
     login
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=#{scopes}"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=#{CGI.escape(oauth_application[:scopes])}"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
 
+    check "user.read"
     check "user.write"
     # submit authorization request
     click_button "Authorize"

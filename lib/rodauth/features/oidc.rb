@@ -62,7 +62,6 @@ module Rodauth
 
     depends :account_expiration, :oauth_jwt
 
-    auth_value_method :oauth_application_default_scope, "openid"
     auth_value_method :oauth_application_scopes, %w[openid]
 
     auth_value_method :oauth_applications_id_token_signed_response_alg_column, :id_token_signed_response_alg

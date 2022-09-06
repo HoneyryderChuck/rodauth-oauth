@@ -169,7 +169,7 @@ module Rodauth
     def do_register(return_params = request.params.dup)
       # set defaults
       create_params = @oauth_application_params
-      create_params[oauth_applications_scopes_column] ||= return_params["scopes"] = oauth_application_default_scope.join(" ")
+      create_params[oauth_applications_scopes_column] ||= return_params["scopes"] = oauth_application_scopes.join(" ")
       create_params[oauth_applications_token_endpoint_auth_method_column] ||= begin
         return_params["token_endpoint_auth_method"] = "client_secret_basic"
         "client_secret_basic"

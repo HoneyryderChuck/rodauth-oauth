@@ -75,7 +75,6 @@ module Rodauth
     auth_value_method :oauth_already_in_use_response_status, 409
 
     # Feature options
-    auth_value_method :oauth_application_default_scope, SCOPES.first
     auth_value_method :oauth_application_scopes, SCOPES
     auth_value_method :oauth_token_type, "bearer"
     auth_value_method :oauth_refresh_token_protection_policy, "none" # can be: none, sender_constrained, rotation
@@ -195,8 +194,6 @@ module Rodauth
         scope
       when String
         scope.split(" ")
-      when nil
-        Array(oauth_application_default_scope)
       end
     end
 
@@ -259,8 +256,6 @@ module Rodauth
 
     def require_oauth_authorization(*scopes)
       authorization_required unless authorization_token
-
-      scopes << oauth_application_default_scope if scopes.empty?
 
       token_scopes = if is_authorization_server?
                        authorization_token[oauth_grants_scopes_column].split(oauth_scope_separator)

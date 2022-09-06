@@ -25,12 +25,10 @@
   <div class="form-group">
     <h1 class="display-6"><%= rodauth.oauth_grants_scopes_label %></h1>
 
-    <% rodauth.scopes.each do |scope| %>
-      <% is_default = scope == rodauth.oauth_application_default_scope %>
+    <% rodauth.authorize_scopes.each do |scope| %>
       <div class="form-check">
-        <%= check_box_tag "scope[]", scope, is_default, disabled: is_default, id: scope, class: "form-check-input" %>
+        <%= check_box_tag "scope[]", scope, id: scope, class: "form-check-input" %>
         <%= label_tag scope, scope, class: "form-check-label" %>
-        <%= hidden_field_tag "scope[]", scope if is_default %>
       </div>
     <% end %>
     <%= hidden_field_tag :client_id, params[:client_id] %>

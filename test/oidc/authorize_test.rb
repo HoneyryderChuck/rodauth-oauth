@@ -89,6 +89,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     visit "/authorize?client_id=#{oauth_application[:client_id]}&nonce=NONCE"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    check "openid"
 
     # submit authorization request
     click_button "Authorize"
@@ -131,6 +132,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=token"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    check "openid"
 
     # submit authorization request
     click_button "Authorize"
@@ -159,6 +161,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=id_token"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    check "openid"
 
     # submit authorization request
     click_button "Authorize"
@@ -179,6 +182,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=none"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    check "openid"
 
     # submit authorization request
     click_button "Authorize"
@@ -205,6 +209,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code+token"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    check "openid"
 
     # submit authorization request
     click_button "Authorize"
@@ -231,6 +236,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code+id_token"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    check "openid"
 
     # submit authorization request
     click_button "Authorize"
@@ -260,6 +266,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=id_token+token"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    check "openid"
 
     # submit authorization request
     click_button "Authorize"
@@ -286,6 +293,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code+id_token+token"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    check "openid"
 
     # submit authorization request
     click_button "Authorize"
@@ -345,6 +353,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
            "was redirected instead to #{page.current_url}"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    check "openid"
     # submit authorization request
     click_button "Authorize"
 
@@ -383,6 +392,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
              "was redirected instead to #{page.current_url}"
       assert page.current_path == "/authorize",
              "was redirected instead to #{page.current_path}"
+      check "openid"
       # submit authorization request
       click_button "Authorize"
 
@@ -407,6 +417,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
            "was redirected instead to #{page.current_url}"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    check "openid"
     # submit authorization request
     click_button "Authorize"
 
@@ -443,6 +454,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     visit "/authorize?client_id=#{application[:client_id]}&scope=openid&response_type=id_token"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    check "openid"
 
     # submit authorization request
     click_button "Authorize"
@@ -483,6 +495,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     visit "/authorize?client_id=#{application[:client_id]}&scope=openid&response_type=id_token"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    check "openid"
 
     # submit authorization request
     click_button "Authorize"
@@ -546,6 +559,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
           "claims_locales=pt en&response_type=id_token"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    check "openid"
 
     check "name"
     # submit authorization request
@@ -634,6 +648,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    check "openid"
     # submit authorization request
     click_button "Authorize"
 

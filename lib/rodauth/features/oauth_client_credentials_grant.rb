@@ -19,6 +19,14 @@ module Rodauth
                        oauth_application[oauth_applications_scopes_column]
                      end
 
+      grant_scopes = scopes
+
+      grant_scopes = if grant_scopes
+                       grant_scopes.join(oauth_scope_separator)
+                     else
+                       oauth_application[oauth_applications_scopes_column]
+                     end
+
       grant_params = {
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
         oauth_grants_scopes_column => grant_scopes

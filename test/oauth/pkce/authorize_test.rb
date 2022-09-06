@@ -14,6 +14,7 @@ class RodauthOauthPkceAuthorizeTest < RodaIntegration
 
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    check "user.read"
 
     # submit authorization request
     click_button "Authorize"
@@ -43,6 +44,7 @@ class RodauthOauthPkceAuthorizeTest < RodaIntegration
 
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    check "user.read"
 
     # submit authorization request
     click_button "Authorize"

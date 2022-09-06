@@ -196,11 +196,9 @@ module Rodauth
         oauth_applications_client_secret_column => \
           secret_hash(oauth_application_params[oauth_application_client_secret_param])
 
-      create_params[oauth_applications_scopes_column] = if create_params[oauth_applications_scopes_column]
-                                                          create_params[oauth_applications_scopes_column].join(oauth_scope_separator)
-                                                        else
-                                                          oauth_application_default_scope
-                                                        end
+      if create_params[oauth_applications_scopes_column]
+        create_params[oauth_applications_scopes_column] = create_params[oauth_applications_scopes_column].join(oauth_scope_separator)
+      end
 
       rescue_from_uniqueness_error do
         create_params[oauth_applications_client_id_column] = oauth_unique_id_generator

@@ -125,7 +125,6 @@ class RodaIntegration < Minitest::Test
       enable :login, :logout, :http_basic_auth, *features
       title_instance_variable :@page_title
       login_return_to_requested_location? true
-      oauth_application_default_scope scopes.first
       oauth_application_scopes scopes
     end
     roda do |r|
@@ -141,7 +140,7 @@ class RodaIntegration < Minitest::Test
       end
 
       yield(rodauth) if block_given?
-      rodauth.require_oauth_authorization
+      rodauth.require_oauth_authorization(*scopes)
 
       r.on "private" do
         r.get do

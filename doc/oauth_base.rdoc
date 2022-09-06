@@ -8,7 +8,6 @@ It alternatively can set up a resource server.
 
 == Auth Value Methods
 
-oauth_application_default_scope :: the scope that client applications will want, <tt>"profile.read"</tt> by default.
 oauth_application_scopes :: default scopes to assign to a client application, <tt>["profile.read"]</tt> by default.
 oauth_token_type :: type of the generated access token, <tt>"bearer"</tt> by default.
 oauth_grant_expires_in :: The number of seconds an oauth grant is valid after creation, <tt>5 minutes</tt> by default.

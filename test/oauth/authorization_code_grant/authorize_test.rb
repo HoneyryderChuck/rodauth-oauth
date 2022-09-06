@@ -82,6 +82,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
 
+    check "user.read"
     # submit authorization request
     click_button "Authorize"
 
@@ -100,6 +101,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    check "user.read"
 
     # submit authorization request
     click_button "Authorize"
@@ -126,6 +128,8 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
 
+    check "user.read"
+
     # submit authorization request
     click_button "Authorize"
 
@@ -147,6 +151,8 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&access_type=online"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+
+    check "user.read"
 
     # submit authorization request
     click_button "Authorize"
@@ -226,6 +232,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
 
+    check "user.read"
     # submit authorization request
     click_button "Authorize"
 
@@ -258,6 +265,8 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
 
+    check "user.read"
+
     # submit authorization request
     click_button "Authorize"
 
@@ -283,6 +292,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
 
+    check "user.read"
     # submit authorization request
     click_button "Authorize"
 

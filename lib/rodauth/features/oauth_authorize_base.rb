@@ -49,6 +49,12 @@ module Rodauth
       end
     end
 
+    def authorize_scopes
+      scopes || begin
+        oauth_application[oauth_applications_scopes_column].split(oauth_scope_separator)
+      end
+    end
+
     private
 
     def validate_authorize_params
@@ -56,7 +62,7 @@ module Rodauth
 
       redirect_response_error("invalid_request") unless check_valid_response_type?
 
-      redirect_response_error("invalid_scope") unless check_valid_scopes?
+      redirect_response_error("invalid_scope") if (request.post? || param_or_nil("scope")) && !check_valid_scopes?
     end
 
     def check_valid_response_type?

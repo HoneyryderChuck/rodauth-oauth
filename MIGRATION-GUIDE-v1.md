@@ -92,3 +92,7 @@ The following auth config methods were renamed (rename them if you're redefining
 * all config methods terminated in `"_error_code`` are now prefixed by `"oauth"`
 * `unique_error_message` config method was removed (not in use)
 * `oauth_jwt_token_issuer` renamed to `oauth_jwt_issuer`
+
+## `oauth_application_default_scope` was removed
+
+If you were using it to pre-fill scopes in the Authorization form, or the New OAuth Application form, you'll have to do it yourself.

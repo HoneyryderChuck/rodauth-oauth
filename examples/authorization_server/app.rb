@@ -92,7 +92,6 @@ class AuthorizationServer < Roda
     title_instance_variable :@page_title
 
     oauth_application_scopes %w[profile.read books.read books.write]
-    oauth_application_default_scope "profile.read"
     oauth_valid_uri_schemes %w[http https]
 
     oauth_grants_refresh_token_hash_column :refresh_token
