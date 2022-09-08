@@ -4,7 +4,7 @@ require "test_helper"
 
 class RodauthApplicationGrantsTest < RodaIntegration
   def test_application_grants
-    setup_application
+    setup_application(&:oauth_applications)
     login
     # List
     visit "/oauth-applications/#{oauth_application[:id]}/oauth-grants"
@@ -43,9 +43,5 @@ class RodauthApplicationGrantsTest < RodaIntegration
 
   def oauth_feature
     %i[oauth_application_management oauth_grant_management]
-  end
-
-  def setup_application
-    super(&:oauth_applications)
   end
 end

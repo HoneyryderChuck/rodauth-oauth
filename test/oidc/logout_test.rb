@@ -7,10 +7,9 @@ class RodauthOAuthOIDCLogoutTest < OIDCIntegration
 
   def test_oidc_rp_initiated_logout_disabled
     rodauth do
-      use_oauth_implicit_grant_type? true
       use_rp_initiated_logout? false
     end
-    setup_application
+    setup_application(:oauth_implicit_grant)
     login
 
     id_token = generate_id_token
@@ -21,12 +20,11 @@ class RodauthOAuthOIDCLogoutTest < OIDCIntegration
 
   def test_oidc_rp_initiated_logout
     rodauth do
-      use_oauth_implicit_grant_type? true
       use_rp_initiated_logout? true
     end
     client_application = oauth_application(post_logout_redirect_uri: "https://example.com/logout")
 
-    setup_application
+    setup_application(:oauth_implicit_grant)
     login
 
     id_token = generate_id_token(client_application)
@@ -38,12 +36,11 @@ class RodauthOAuthOIDCLogoutTest < OIDCIntegration
 
   def test_oidc_rp_initiated_logout_from_post_logout_param
     rodauth do
-      use_oauth_implicit_grant_type? true
       use_rp_initiated_logout? true
     end
     client_application = oauth_application(post_logout_redirect_uri: "https://example.com/logout")
 
-    setup_application
+    setup_application(:oauth_implicit_grant)
     login
 
     id_token = generate_id_token(client_application)
@@ -55,12 +52,11 @@ class RodauthOAuthOIDCLogoutTest < OIDCIntegration
 
   def test_oidc_rp_initiated_logout_from_post_logout_param_multiple_urls
     rodauth do
-      use_oauth_implicit_grant_type? true
       use_rp_initiated_logout? true
     end
     client_application = oauth_application(post_logout_redirect_uri: "https://example.com/logout https://example.com/callback")
 
-    setup_application
+    setup_application(:oauth_implicit_grant)
     login
 
     id_token = generate_id_token(client_application)
@@ -72,12 +68,11 @@ class RodauthOAuthOIDCLogoutTest < OIDCIntegration
 
   def test_oidc_rp_initiated_logout_with_state
     rodauth do
-      use_oauth_implicit_grant_type? true
       use_rp_initiated_logout? true
     end
     client_application = oauth_application(post_logout_redirect_uri: "https://example.com/logout")
 
-    setup_application
+    setup_application(:oauth_implicit_grant)
     login
 
     id_token = generate_id_token(client_application)
@@ -89,7 +84,7 @@ class RodauthOAuthOIDCLogoutTest < OIDCIntegration
 
   private
 
-  def setup_application
+  def setup_application(*)
     rodauth do
       oauth_jwt_key OpenSSL::PKey::RSA.generate(2048)
       oauth_jwt_algorithm "RS256"

@@ -73,7 +73,7 @@ class RodauthOAuthTokenRevokeTest < RodaIntegration
     :oauth_token_revocation
   end
 
-  def setup_application
+  def setup_application(*)
     super
     header "Accept", "application/json"
   end

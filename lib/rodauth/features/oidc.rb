@@ -60,7 +60,7 @@ module Rodauth
       id_token_signing_alg_values_supported
     ].freeze
 
-    depends :account_expiration, :oauth_jwt
+    depends :account_expiration, :oauth_authorization_code_grant, :oauth_jwt
 
     auth_value_method :oauth_application_scopes, %w[openid]
 
@@ -509,29 +509,35 @@ module Rodauth
 
     def check_valid_response_type?
       case param_or_nil("response_type")
-      when "none", "id_token",
-           "code token", "code id_token", "id_token token", "code id_token token" # multiple
+      when "none", "id_token", "code id_token" # multiple
         true
+      when "code token", "id_token token", "code id_token token"
+        supports_token_response_type?
       else
         super
       end
     end
 
-    def do_authorize(response_params = {}, response_mode = param_or_nil("response_mode"))
-      return super unless use_oauth_implicit_grant_type?
+    def supports_token_response_type?
+      features.include?(:oauth_implicit_grant)
+    end
 
+    def do_authorize(response_params = {}, response_mode = param_or_nil("response_mode"))
       case param("response_type")
       when "id_token"
         response_params.replace(_do_authorize_id_token)
       when "code token"
-        redirect_response_error("invalid_request") unless use_oauth_implicit_grant_type?
+        redirect_response_error("invalid_request") unless supports_token_response_type?
 
         response_params.replace(_do_authorize_code.merge(_do_authorize_token))
       when "code id_token"
         response_params.replace(_do_authorize_code.merge(_do_authorize_id_token))
       when "id_token token"
+        redirect_response_error("invalid_request") unless supports_token_response_type?
+
         response_params.replace(_do_authorize_id_token.merge(_do_authorize_token))
       when "code id_token token"
+        redirect_response_error("invalid_request") unless supports_token_response_type?
 
         response_params.replace(_do_authorize_code.merge(_do_authorize_id_token).merge(_do_authorize_token))
       end

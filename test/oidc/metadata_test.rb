@@ -8,11 +8,10 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
 
   def test_oidc_openid_configuration
     rodauth do
-      use_oauth_implicit_grant_type? true
       oauth_application_scopes %w[openid email]
       oauth_jwt_algorithm "RS256"
     end
-    setup_application
+    setup_application(:oauth_implicit_grant)
     get("/.well-known/openid-configuration")
 
     assert last_response.status == 200
@@ -23,7 +22,6 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
     assert json_body["token_endpoint"] == "http://example.org/token"
     assert json_body["userinfo_endpoint"] == "http://example.org/userinfo"
     assert json_body["jwks_uri"] == "http://example.org/jwks"
-    assert json_body["registration_endpoint"] == "http://example.org/oauth-applications"
     assert json_body["scopes_supported"] == %w[openid email]
     assert json_body["response_types_supported"] == [
       "code", "token", "none", "id_token", "code token",
@@ -100,12 +98,12 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
 
   private
 
-  def setup_application
+  def setup_application(*args)
     rodauth do
       last_account_login_at do
         Time.now - 60
       end
     end
-    super(&:openid_configuration)
+    super(*args, &:openid_configuration)
   end
 end

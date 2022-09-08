@@ -10,7 +10,7 @@ class RodauthOauthJwtTokenRevokeTest < JWTIntegration
       oauth_jwt_key "SECRET"
       oauth_jwt_algorithm "HS256"
     end
-    setup_application
+    setup_application(:oauth_token_revocation)
     login
 
     # generate jwt
@@ -33,7 +33,7 @@ class RodauthOauthJwtTokenRevokeTest < JWTIntegration
       oauth_jwt_key "SECRET"
       oauth_jwt_algorithm "HS256"
     end
-    setup_application
+    setup_application(:oauth_token_revocation)
     login
 
     post("/revoke", token_type_hint: "access_token", token: oauth_grant_with_token[:refresh_token])
@@ -57,7 +57,7 @@ class RodauthOauthJwtTokenRevokeTest < JWTIntegration
     )}"
   end
 
-  def setup_application
+  def setup_application(*)
     super
     header "Accept", "application/json"
   end

@@ -81,7 +81,7 @@ class RodauthOAuthResourceIndicatorsTokenAuthorizationCodeTest < RodaIntegration
     %i[oauth_authorization_code_grant oauth_resource_indicators]
   end
 
-  def setup_application
+  def setup_application(*)
     super
     header "Accept", "application/json"
   end

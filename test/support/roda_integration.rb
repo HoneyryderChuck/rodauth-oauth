@@ -114,11 +114,11 @@ class RodaIntegration < Minitest::Test
   end
 
   def oauth_feature
-    :oauth
+    :oauth_authorization_code_grant
   end
 
   def setup_application(*features)
-    features.concat(Array(oauth_feature))
+    features = Array(oauth_feature) + features
     scopes = test_scopes
     rodauth do
       db DB

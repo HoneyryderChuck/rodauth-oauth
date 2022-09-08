@@ -4,20 +4,10 @@ module Rodauth
   Feature.define(:oauth_client_credentials_grant, :OauthClientCredentialsGrant) do
     depends :oauth_base
 
-    auth_value_method :use_oauth_client_credentials_grant_type?, false
-
     private
 
     def create_token(grant_type)
       return super unless grant_type == "client_credentials"
-
-      grant_scopes = scopes
-
-      grant_scopes = if grant_scopes
-                       grant_scopes.join(oauth_scope_separator)
-                     else
-                       oauth_application[oauth_applications_scopes_column]
-                     end
 
       grant_scopes = scopes
 
@@ -36,14 +26,8 @@ module Rodauth
 
     def oauth_server_metadata_body(*)
       super.tap do |data|
-        data[:grant_types_supported] << "client_credentials" if use_oauth_client_credentials_grant_type?
+        data[:grant_types_supported] << "client_credentials"
       end
-    end
-
-    def check_valid_response_type?
-      return true if use_oauth_implicit_grant_type? && param_or_nil("response_type") == "token"
-
-      super
     end
   end
 end

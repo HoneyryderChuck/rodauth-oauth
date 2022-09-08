@@ -33,7 +33,7 @@ class RodauthOauthJWTTokenJwtBearerTest < JWTIntegration
       oauth_jwt_key "SECRET"
       oauth_jwt_algorithm "HS256"
     end
-    setup_application
+    setup_application(:oauth_authorization_code_grant)
 
     post("/token",
          client_assertion_type: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
@@ -83,7 +83,7 @@ class RodauthOauthJWTTokenJwtBearerTest < JWTIntegration
     JWT.encode(claims, signing_key, algo, headers)
   end
 
-  def setup_application
+  def setup_application(*)
     super
     header "Accept", "application/json"
   end

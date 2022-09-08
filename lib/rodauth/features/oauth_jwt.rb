@@ -5,7 +5,7 @@ require "rodauth/oauth/ttl_store"
 
 module Rodauth
   Feature.define(:oauth_jwt, :OauthJwt) do
-    depends :oauth
+    depends :oauth_base
 
     JWKS = OAuth::TtlStore.new
 

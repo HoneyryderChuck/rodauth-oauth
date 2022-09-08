@@ -38,7 +38,7 @@ class RodauthOauthOidcWebfingerTest < OIDCIntegration
 
   private
 
-  def setup_application
-    super(&:webfinger)
+  def setup_application(*args)
+    super(*args, &:webfinger)
   end
 end

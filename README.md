@@ -16,7 +16,7 @@ This gem implements the following RFCs and features of OAuth:
   * `oauth_authorization_code_grant` - [Authorization code grant](https://tools.ietf.org/html/rfc6749#section-1.3);
   * `oauth_implicit_grant` - [Implicit grant (off by default)](https://tools.ietf.org/html/rfc6749#section-4.2);
   * `oauth_client_credentials_grant` - [Client credentials grant (off by default)](https://tools.ietf.org/html/rfc6749#section-4.4);
-  * `oauth_device_grant` - [Device code grant (off by default)](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-device-flow-15);
+  * `oauth_device_code_grant` - [Device code grant (off by default)](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-device-flow-15);
   * `oauth_token_revocation` - [Token revocation](https://tools.ietf.org/html/rfc7009);
   * `oauth_token_introspection` - [Token introspection](https://tools.ietf.org/html/rfc7662);
   * [Authorization Server Metadata](https://tools.ietf.org/html/rfc8414);

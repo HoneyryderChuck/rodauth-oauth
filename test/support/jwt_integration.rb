@@ -9,7 +9,7 @@ class JWTIntegration < RodaIntegration
   private
 
   def oauth_feature
-    :oauth_jwt
+    %i[oauth_authorization_code_grant oauth_jwt]
   end
 
   def set_oauth_grant_with_token(params = {})

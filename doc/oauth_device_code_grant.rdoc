@@ -1,12 +1,11 @@
 = Documentation for OAuth Device Grant feature
 
-The +oauth_device_grant+ feature implements the OAuth 2.0 Device Authorization Grant.
+The +oauth_device_code_grant+ feature implements the OAuth 2.0 Device Authorization Grant.
 
 https://datatracker.ietf.org/doc/html/rfc8628
 
 == Auth Value Methods
 
-use_oauth_device_code_grant_type? :: Whether device code grant flow can be used, <tt>false</tt> by default.
 oauth_device_code_grant_polling_interval :: (default: 5) number of seconds client have to wait until nxt poll attempt;
 oauth_device_code_grant_user_code_size :: (default: 8) size of generated user codes;
 generate_user_code :: function which generates random user codes;

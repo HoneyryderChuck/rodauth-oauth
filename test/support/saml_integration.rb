@@ -38,15 +38,15 @@ class SAMLIntegration < RodaIntegration
     ))
   end
 
-  def setup_application
-    feature = oauth_feature
+  def setup_application(*features)
+    features << oauth_feature
     scopes = test_scopes
 
     testdb = db
 
     rodauth do
       db testdb
-      enable :login, :oauth_authorization_code_grant, feature
+      enable :login, :oauth_authorization_code_grant, *features
       login_return_to_requested_location? true
       oauth_application_scopes scopes
     end

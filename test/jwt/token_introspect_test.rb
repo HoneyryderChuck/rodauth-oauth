@@ -10,7 +10,7 @@ class RodauthOauthJwtTokenIntrospectTest < JWTIntegration
       oauth_jwt_key "SECRET"
       oauth_jwt_algorithm "HS256"
     end
-    setup_application
+    setup_application(:oauth_token_introspection)
     login
 
     # generate jwt
@@ -52,7 +52,11 @@ class RodauthOauthJwtTokenIntrospectTest < JWTIntegration
 
   private
 
-  def setup_application
+  def oauth_feature
+    %i[oauth_authorization_code_grant oauth_token_introspection oauth_jwt]
+  end
+
+  def setup_application(*)
     super
     header "Accept", "application/json"
   end

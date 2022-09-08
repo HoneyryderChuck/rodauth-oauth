@@ -176,7 +176,7 @@ class RodauthOAuthJWTRefreshTokenTest < JWTIntegration
 
   private
 
-  def setup_application
+  def setup_application(*)
     rodauth do
       oauth_jwt_key "SECRET"
       oauth_jwt_algorithm "HS256"

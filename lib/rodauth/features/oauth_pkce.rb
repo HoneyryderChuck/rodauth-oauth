@@ -8,8 +8,6 @@ module Rodauth
 
     depends :oauth_authorization_code_grant
 
-    auth_value_method :use_oauth_pkce?, true
-
     auth_value_method :oauth_require_pkce, false
     auth_value_method :oauth_pkce_challenge_method, "S256"
 
@@ -24,20 +22,20 @@ module Rodauth
     private
 
     def authorized_oauth_application?(oauth_application, client_secret, _)
-      return true if use_oauth_pkce? && param_or_nil("code_verifier")
+      return true if param_or_nil("code_verifier")
 
       super
     end
 
     def validate_authorize_params
-      validate_pkce_challenge_params if use_oauth_pkce?
+      validate_pkce_challenge_params
 
       super
     end
 
     def create_oauth_grant(create_params = {})
       # PKCE flow
-      if use_oauth_pkce? && (code_challenge = param_or_nil("code_challenge"))
+      if (code_challenge = param_or_nil("code_challenge"))
         code_challenge_method = param_or_nil("code_challenge_method")
 
         create_params[oauth_grants_code_challenge_column] = code_challenge
@@ -50,14 +48,12 @@ module Rodauth
     def create_token_from_authorization_code(grant_params, *args, oauth_grant: nil)
       oauth_grant ||= valid_locked_oauth_grant(grant_params)
 
-      if use_oauth_pkce?
-        if oauth_grant[oauth_grants_code_challenge_column]
-          code_verifier = param_or_nil("code_verifier")
+      if oauth_grant[oauth_grants_code_challenge_column]
+        code_verifier = param_or_nil("code_verifier")
 
-          redirect_response_error("invalid_request") unless code_verifier && check_valid_grant_challenge?(oauth_grant, code_verifier)
-        elsif oauth_require_pkce
-          redirect_response_error("code_challenge_required")
-        end
+        redirect_response_error("invalid_request") unless code_verifier && check_valid_grant_challenge?(oauth_grant, code_verifier)
+      elsif oauth_require_pkce
+        redirect_response_error("code_challenge_required")
       end
 
       super({ oauth_grants_id_column => oauth_grant[oauth_grants_id_column] }, *args, oauth_grant: oauth_grant)
@@ -93,7 +89,7 @@ module Rodauth
 
     def oauth_server_metadata_body(*)
       super.tap do |data|
-        data[:code_challenge_methods_supported] = oauth_pkce_challenge_method if use_oauth_pkce?
+        data[:code_challenge_methods_supported] = oauth_pkce_challenge_method
       end
     end
   end

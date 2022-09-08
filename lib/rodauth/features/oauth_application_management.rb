@@ -205,11 +205,5 @@ module Rodauth
         db[oauth_applications_table].insert(create_params)
       end
     end
-
-    def oauth_server_metadata_body(*)
-      super.tap do |data|
-        data[:registration_endpoint] = oauth_applications_url
-      end
-    end
   end
 end

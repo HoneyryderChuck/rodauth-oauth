@@ -9,9 +9,8 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
     rodauth do
       enable :oidc_dynamic_client_registration
       oauth_application_scopes %w[read write]
-      use_oauth_implicit_grant_type? true
     end
-    setup_application
+    setup_application(:oauth_implicit_grant)
     header "Accept", "application/json"
 
     post("/register", valid_registration_params.merge(
@@ -72,9 +71,8 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
       enable :oidc_dynamic_client_registration
       oauth_valid_uri_schemes %w[http https]
       oauth_application_scopes %w[read write]
-      use_oauth_implicit_grant_type? true
     end
-    setup_application
+    setup_application(:oauth_implicit_grant)
     header "Accept", "application/json"
 
     post("/register", valid_registration_params.merge(

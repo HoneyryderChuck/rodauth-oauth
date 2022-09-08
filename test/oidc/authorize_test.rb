@@ -122,9 +122,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
       oauth_jwt_key jws_key
       oauth_jwt_public_key jws_public_key
       oauth_jwt_algorithm "RS256"
-      use_oauth_implicit_grant_type? true
     end
-    setup_application
+    setup_application(:oauth_implicit_grant)
 
     login
 
@@ -152,9 +151,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
       oauth_jwt_key jws_key
       oauth_jwt_public_key jws_public_key
       oauth_jwt_algorithm "RS256"
-      use_oauth_implicit_grant_type? true
     end
-    setup_application
+    setup_application(:oauth_implicit_grant)
     login
 
     # show the authorization form
@@ -200,9 +198,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
       oauth_jwt_key jws_key
       oauth_jwt_public_key jws_public_key
       oauth_jwt_algorithm "RS256"
-      use_oauth_implicit_grant_type? true
     end
-    setup_application
+    setup_application(:oauth_implicit_grant)
     login
 
     # show the authorization form
@@ -227,9 +224,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     jws_public_key = jws_key.public_key
     rodauth do
       oauth_jwt_key jws_key
-      use_oauth_implicit_grant_type? true
     end
-    setup_application
+    setup_application(:oauth_implicit_grant)
     login
 
     # show the authorization form
@@ -257,9 +253,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
       oauth_jwt_key jws_key
       oauth_jwt_public_key jws_public_key
       oauth_jwt_algorithm "RS256"
-      use_oauth_implicit_grant_type? true
     end
-    setup_application
+    setup_application(:oauth_implicit_grant)
     login
 
     # show the authorization form
@@ -284,9 +279,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
       oauth_jwt_key jws_key
       oauth_jwt_public_key jws_public_key
       oauth_jwt_algorithm "RS256"
-      use_oauth_implicit_grant_type? true
     end
-    setup_application
+    setup_application(:oauth_implicit_grant)
     login
 
     # show the authorization form
@@ -443,9 +437,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     rodauth do
       oauth_jwt_keys { { "RS256" => jws_rs256_key, "RS512" => jws_rs512_key } }
       oauth_jwt_algorithm "RS256"
-      use_oauth_implicit_grant_type? true
     end
-    setup_application
+    setup_application(:oauth_implicit_grant)
     login
 
     application = oauth_application(id_token_signed_response_alg: "RS512")
@@ -476,9 +469,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     rodauth do
       oauth_jwt_key jws_key
       oauth_jwt_algorithm "RS256"
-      use_oauth_implicit_grant_type? true
     end
-    setup_application
+    setup_application(:oauth_implicit_grant)
     login
 
     application = oauth_application(
@@ -540,7 +532,6 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     rodauth do
       oauth_jwt_key jws_key
       oauth_jwt_algorithm "RS256"
-      use_oauth_implicit_grant_type? true
       get_additional_param do |account, claim, locale|
         case claim
         when :name
@@ -550,7 +541,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
         end
       end
     end
-    setup_application
+    setup_application(:oauth_implicit_grant)
     login
 
     oauth_application(scopes: "openid name")
@@ -617,9 +608,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
       oauth_jwt_public_key jws_public_key
       enable :otp
       two_factor_auth_return_to_requested_location? true
-      use_oauth_implicit_grant_type? true
     end
-    setup_application
+    setup_application(:oauth_implicit_grant)
     login
 
     # Set OTP
@@ -665,10 +655,9 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
       rodauth do
         enable :webauthn_login
         two_factor_auth_return_to_requested_location? true
-        use_oauth_implicit_grant_type? true
         hmac_secret "12345678"
       end
-      setup_application
+      setup_application(:oauth_implicit_grant)
 
       webauthn_client = WebAuthn::FakeClient.new("http://www.example.com")
       visit "/login"

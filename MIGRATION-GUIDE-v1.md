@@ -96,3 +96,30 @@ The following auth config methods were renamed (rename them if you're redefining
 ## `oauth_application_default_scope` was removed
 
 If you were using it to pre-fill scopes in the Authorization form, or the New OAuth Application form, you'll have to do it yourself.
+
+## `oauth_device_grant` feature becomes `oauth_device_code_grant`
+
+In case you were using it directly, you should rename it.
+
+## `use_oauth_*_grant` options were removed
+
+One of the main changes in v1.0.0 is that one should enable the features one needs, explicitly. So when you used to have:
+
+```ruby
+rodauth do
+  enable :oauth
+end
+```
+
+you should now load the grants you use:
+
+
+```ruby
+rodauth do
+  enable :oauth_authorization_code_grant, :oauth_pkce, :oauth_credentials_grant, :oauth_token_introspection
+  # or
+  enable :oidc, :oauth_implicit_grant
+end
+```
+
+Now that the features are explicitly enable, there's is no more use for config methods for unsetting them, such as `use_oauth_implicit_grant_type?` or `use_oauth_pkce?`.

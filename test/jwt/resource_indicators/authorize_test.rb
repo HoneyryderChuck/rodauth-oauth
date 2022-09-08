@@ -32,7 +32,7 @@ class RodauthOauthResourceIndicatorsJwtAuthorizeTest < JWTIntegration
 
   private
 
-  def setup_application
+  def setup_application(*)
     rodauth do
       enable :oauth_resource_indicators
     end

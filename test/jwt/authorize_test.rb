@@ -179,7 +179,7 @@ class RodauthOauthJwtAuthorizeTest < JWTIntegration
 
   private
 
-  def setup_application
+  def setup_application(*)
     rodauth do
       oauth_jwt_algorithm "RS256"
       oauth_applications_jwks_column :jwks

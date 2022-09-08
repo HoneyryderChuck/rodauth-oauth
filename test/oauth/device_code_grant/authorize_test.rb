@@ -5,21 +5,8 @@ require "test_helper"
 class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
   include Rack::Test::Methods
 
-  def test_authorize_post_authorize_no_device_grant
-    setup_application
-
-    header "Accept", "application/json"
-
-    post("/device-authorization")
-
-    assert last_response.status == 404
-  end
-
   def test_authorize_post_authorize_with_device_grant_and_client_id
-    rodauth do
-      use_oauth_device_code_grant_type? true
-    end
-    setup_application
+    setup_application(:oauth_device_code_grant)
 
     header "Accept", "application/json"
 
@@ -47,10 +34,7 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
   end
 
   def test_authorize_post_authorize_with_device_grant
-    rodauth do
-      use_oauth_device_code_grant_type? true
-    end
-    setup_application
+    setup_application(:oauth_device_code_grant)
 
     header "Accept", "application/json"
     header "Authorization", "Basic #{authorization_header(
@@ -79,26 +63,14 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
     }
   end
 
-  def test_authorize_post_device_not_device_grant_supported
-    setup_application
-    visit "/device"
-    assert page.status_code == 404
-  end
-
   def test_authorize_post_device_not_logged_in
-    rodauth do
-      use_oauth_device_code_grant_type? true
-    end
-    setup_application
+    setup_application(:oauth_device_code_grant)
     visit "/device"
     assert page.html.include?("Please login to continue")
   end
 
   def test_authorize_post_device_unexisting_grant
-    rodauth do
-      use_oauth_device_code_grant_type? true
-    end
-    setup_application
+    setup_application(:oauth_device_code_grant)
     login
     visit "/device"
     assert page.html.include?("Insert the user code from the device you'd like to authorize.")
@@ -110,10 +82,7 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
   end
 
   def test_authorize_post_device_revoked_grant
-    rodauth do
-      use_oauth_device_code_grant_type? true
-    end
-    setup_application
+    setup_application(:oauth_device_code_grant)
     login
 
     grant = oauth_grant(code: "CODE", user_code: "USERCODE", revoked_at: Sequel::CURRENT_TIMESTAMP)
@@ -128,10 +97,7 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
   end
 
   def test_authorize_post_device_expired_grant
-    rodauth do
-      use_oauth_device_code_grant_type? true
-    end
-    setup_application
+    setup_application(:oauth_device_code_grant)
     login
 
     grant = oauth_grant(code: "CODE", user_code: "USERCODE", expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 60))
@@ -146,10 +112,7 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
   end
 
   def test_authorize_post_device_successful_grant
-    rodauth do
-      use_oauth_device_code_grant_type? true
-    end
-    setup_application
+    setup_application(:oauth_device_code_grant)
     login
 
     grant = oauth_grant(code: "CODE", user_code: "USERCODE")
@@ -169,16 +132,12 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
 
     assert db[:oauth_grants].where(user_code: grant[:user_code]).none?
     assert db[:oauth_grants].count == 1
-    grant2 = db[:oauth_grants].first
-    assert grant2[:id] == grant[:id]
-    assert !grant2[:token].nil?
+    updated_grant = db[:oauth_grants].first
+    assert updated_grant[:id] == grant[:id]
   end
 
   def test_authorize_post_device_complete_successful_grant
-    rodauth do
-      use_oauth_device_code_grant_type? true
-    end
-    setup_application
+    setup_application(:oauth_device_code_grant)
     login
 
     grant = oauth_grant(code: "CODE", user_code: "USERCODE")
@@ -191,14 +150,7 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
 
     assert db[:oauth_grants].where(user_code: grant[:user_code]).none?
     assert db[:oauth_grants].count == 1
-    grant2 = db[:oauth_grants].first
-    assert grant2[:id] == grant[:id]
-    assert !grant2[:token].nil?
-  end
-
-  private
-
-  def oauth_feature
-    :oauth_device_grant
+    updated_grant = db[:oauth_grants].first
+    assert updated_grant[:id] == grant[:id]
   end
 end

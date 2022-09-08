@@ -1,10 +1,8 @@
 # frozen_string_literal: true
 
 module Rodauth
-  Feature.define(:oauth_device_grant, :OauthDeviceGrant) do
+  Feature.define(:oauth_device_code_grant, :OauthDeviceCodeGrant) do
     depends :oauth_authorize_base
-
-    auth_value_method :use_oauth_device_code_grant_type?, false
 
     before "device_authorization"
     before "device_verification"
@@ -39,7 +37,7 @@ module Rodauth
 
     # /device-authorization
     route(:device_authorization) do |r|
-      next unless is_authorization_server? && use_oauth_device_code_grant_type?
+      next unless is_authorization_server?
 
       before_device_authorization_route
 
@@ -64,7 +62,7 @@ module Rodauth
 
     # /device
     route(:device) do |r|
-      next unless is_authorization_server? && use_oauth_device_code_grant_type?
+      next unless is_authorization_server?
 
       before_device_route
       require_authorizable_account
@@ -125,14 +123,13 @@ module Rodauth
       # skip if using device grant
       #
       # requests may be performed by devices with no knowledge of client secret.
-      return true if !client_secret && use_oauth_device_code_grant_type?
+      return true unless client_secret
 
       super
     end
 
     def create_token(grant_type)
       if supported_grant_type?(grant_type, "urn:ietf:params:oauth:grant-type:device_code")
-        throw_json_response_error(oauth_invalid_response_status, "invalid_grant_type") unless use_oauth_device_code_grant_type?
 
         oauth_grant = db[oauth_grants_table].where(
           oauth_grants_code_column => param("device_code"),
@@ -164,7 +161,6 @@ module Rodauth
           end
         end
       elsif grant_type == "device_code"
-        redirect_response_error("invalid_grant_type") unless use_oauth_device_code_grant_type?
 
         # fetch oauth grant
         oauth_grant = valid_oauth_grant_ds(
@@ -205,10 +201,8 @@ module Rodauth
 
     def oauth_server_metadata_body(*)
       super.tap do |data|
-        if use_oauth_device_code_grant_type?
-          data[:grant_types_supported] << "urn:ietf:params:oauth:grant-type:device_code"
-          data[:device_authorization_endpoint] = device_authorization_url
-        end
+        data[:grant_types_supported] << "urn:ietf:params:oauth:grant-type:device_code"
+        data[:device_authorization_endpoint] = device_authorization_url
       end
     end
   end

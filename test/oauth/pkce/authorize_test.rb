@@ -4,7 +4,7 @@ require "test_helper"
 
 class RodauthOauthPkceAuthorizeTest < RodaIntegration
   def test_authorize_post_authorize_with_pkce
-    setup_application
+    setup_application(:oauth_pkce)
 
     login
 
@@ -31,9 +31,6 @@ class RodauthOauthPkceAuthorizeTest < RodaIntegration
   end
 
   def test_authorize_post_authorize_with_pkce_disabled
-    rodauth do
-      use_oauth_pkce? false
-    end
     setup_application
 
     login
@@ -64,7 +61,7 @@ class RodauthOauthPkceAuthorizeTest < RodaIntegration
     rodauth do
       oauth_require_pkce true
     end
-    setup_application
+    setup_application(:oauth_pkce)
 
     login
 
@@ -73,11 +70,5 @@ class RodauthOauthPkceAuthorizeTest < RodaIntegration
 
     assert page.current_url.include?("?error=invalid_request"),
            "code challenge required"
-  end
-
-  private
-
-  def oauth_feature
-    :oauth_pkce
   end
 end
