@@ -31,9 +31,8 @@ class RodauthOauthJwtAuthorizeTest < JWTIntegration
     rsa_private = OpenSSL::PKey::RSA.generate(2048)
     rsa_public = rsa_private.public_key
     rodauth do
-      oauth_jwt_key rsa_private
-      oauth_jwt_public_key rsa_public
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => rsa_private)
+      oauth_jwt_public_keys("RS256" => rsa_public)
     end
 
     signed_request = generate_signed_request(oauth_application)
@@ -119,9 +118,7 @@ class RodauthOauthJwtAuthorizeTest < JWTIntegration
 
     rodauth do
       oauth_jwt_audience "Example"
-      oauth_jwt_jwe_key jwe_key
-      oauth_jwt_jwe_algorithm "RSA-OAEP"
-      oauth_jwt_jwe_encryption_method "A128CBC-HS256"
+      oauth_jwt_jwe_keys(%w[RSA-OAEP A128CBC-HS256] => jwe_key)
     end
     setup_application
     login
@@ -181,7 +178,6 @@ class RodauthOauthJwtAuthorizeTest < JWTIntegration
 
   def setup_application(*)
     rodauth do
-      oauth_jwt_algorithm "RS256"
       oauth_applications_jwks_column :jwks
     end
     super

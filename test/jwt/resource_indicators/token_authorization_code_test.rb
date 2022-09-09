@@ -10,9 +10,8 @@ class RodauthOauthResourceIndicatorsJWTTokenAuthorizationCodeTest < JWTIntegrati
     rsa_public = rsa_private.public_key
     rodauth do
       enable :oauth_resource_indicators
-      oauth_jwt_key rsa_private
-      oauth_jwt_public_key rsa_public
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => rsa_private)
+      oauth_jwt_public_keys("RS256" => rsa_public)
     end
     setup_application
 

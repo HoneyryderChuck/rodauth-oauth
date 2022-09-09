@@ -114,27 +114,23 @@ module Rodauth
         return_params["application_type"] = "web"
         "web"
       end
-      create_params[oauth_applications_id_token_signed_response_alg_column] ||= begin
-        return_params["id_token_signed_response_alg"] = oauth_jwt_algorithm
-        oauth_jwt_algorithm
-      end
+      create_params[oauth_applications_id_token_signed_response_alg_column] ||= return_params["id_token_signed_response_alg"] =
+        oauth_jwt_keys.first
+
       if create_params.key?(oauth_applications_id_token_encrypted_response_alg_column)
-        create_params[oauth_applications_id_token_encrypted_response_enc_column] ||= begin
-          return_params["id_token_encrypted_response_enc"] = "A128CBC-HS256"
+        create_params[oauth_applications_id_token_encrypted_response_enc_column] ||= return_params["id_token_encrypted_response_enc"] =
           "A128CBC-HS256"
-        end
+
       end
       if create_params.key?(oauth_applications_userinfo_encrypted_response_alg_column)
-        create_params[oauth_applications_userinfo_encrypted_response_enc_column] ||= begin
-          return_params["userinfo_encrypted_response_enc"] = "A128CBC-HS256"
+        create_params[oauth_applications_userinfo_encrypted_response_enc_column] ||= return_params["userinfo_encrypted_response_enc"] =
           "A128CBC-HS256"
-        end
+
       end
       if create_params.key?(oauth_applications_request_object_encryption_alg_column)
-        create_params[oauth_applications_request_object_encryption_enc_column] ||= begin
-          return_params["request_object_encryption_enc"] = "A128CBC-HS256"
+        create_params[oauth_applications_request_object_encryption_enc_column] ||= return_params["request_object_encryption_enc"] =
           "A128CBC-HS256"
-        end
+
       end
 
       super(return_params)

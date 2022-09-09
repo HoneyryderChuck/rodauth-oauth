@@ -7,9 +7,10 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
   include TestSchemas::Methods
 
   def test_oidc_openid_configuration
+    rsa_private = OpenSSL::PKey::RSA.generate(2048)
     rodauth do
       oauth_application_scopes %w[openid email]
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => rsa_private)
     end
     setup_application(:oauth_implicit_grant)
     get("/.well-known/openid-configuration")
@@ -58,9 +59,10 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
   end
 
   def test_filters_out_invalid_fields
+    rsa_private = OpenSSL::PKey::RSA.generate(2048)
     rodauth do
+      oauth_jwt_keys("RS256" => rsa_private)
       oauth_application_scopes %w[openid email]
-      oauth_jwt_algorithm "RS256"
     end
     setup_application
     get("/.well-known/openid-configuration")

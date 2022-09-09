@@ -93,9 +93,25 @@ The following auth config methods were renamed (rename them if you're redefining
 * `unique_error_message` config method was removed (not in use)
 * `oauth_jwt_token_issuer` renamed to `oauth_jwt_issuer`
 
-## `oauth_application_default_scope` was removed
+## Removed options
 
-If you were using it to pre-fill scopes in the Authorization form, or the New OAuth Application form, you'll have to do it yourself.
+### Base options
+
+* `oauth_application_default_scope`: if you were using it to pre-fill scopes in the Authorization form, or the New OAuth Application form, you'll have to do it yourself.
+
+### JWT options
+
+* `oauth_jwt_key`: can be replaced by using it as the value in `oauth_jwt_keys` (```oauth_jwt_keys("RS256" => [privkey])```);
+* `oauth_jwt_algorithm`: can be replaced by using it as the key in `oauth_jwt_keys` (```oauth_jwt_keys("RS256" => [privkey])```);
+* `oauth_jwt_public_key`:  can be replaced by using it as the value in `oauth_jwt_public_keys` (```oauth_jwt_public_keys("RS256" => [pubkey])```);
+* `oauth_jwe_key`: can be replaced by using it as the value in `oauth_jwe_keys` (```oauth_jwe_keys((%w[RSA-OAEP A128CBC-HS256] => [privkey])```);
+* `oauth_jwt_jwe_algorithm`: can be replaced by using it as the first element in the key tuple in `oauth_jwe_keys` (```oauth_jwe_keys(%w[RSA-OAEP A128CBC-HS256] => [privkey])```);
+* `oauth_jwt_jwe_encryption_method`: can be replaced by using it as the second element in the key tuple in `oauth_jwe_keys` (```oauth_jwe_keys(%w[RSA-OAEP A128CBC-HS256] => [privkey])```);
+* `oauth_jwe_public_key`:  can be replaced by using it as the value in `oauth_jwe_public_keys` (```oauth_jwt_public_keys(%w[RSA-OAEP A128CBC-HS256] => [pubkey])```);
+* `oauth_jwt_legacy_algorithm`: can be replaced by adding it as a key to `oauth_jwt_public_keys`;
+* `oauth_jwt_legacy_public_key`: can be replaced by adding it to the value set of `oauth_jwt_public_keys`, after the current key (```oauth_jwt_public_keys("RS256" => [pubkey, legacy_pubkey])```);
+
+#### `oauth_jwt_key`
 
 ## `oauth_device_grant` feature becomes `oauth_device_code_grant`
 

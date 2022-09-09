@@ -28,9 +28,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     rsa_private = OpenSSL::PKey::RSA.generate(2048)
     rsa_public = rsa_private.public_key
     rodauth do
-      oauth_jwt_key rsa_private
-      oauth_jwt_public_key rsa_public
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => rsa_private)
+      oauth_jwt_public_keys("RS256" => rsa_public)
     end
 
     signed_request = generate_signed_request(oauth_application)
@@ -64,9 +63,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     jws_public_key = jws_key.public_key
 
     rodauth do
-      oauth_jwt_jwe_key jwe_key
-      oauth_jwt_jwe_algorithm "RSA-OAEP"
-      oauth_jwt_jwe_encryption_method "A128CBC-HS256"
+      oauth_jwt_jwe_keys(%w[RSA-OAEP A128CBC-HS256] => jwe_key)
     end
     setup_application
     login
@@ -119,9 +116,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     jws_key = OpenSSL::PKey::RSA.generate(2048)
     jws_public_key = jws_key.public_key
     rodauth do
-      oauth_jwt_key jws_key
-      oauth_jwt_public_key jws_public_key
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => jws_key)
+      oauth_jwt_public_keys("RS256" => jws_public_key)
     end
     setup_application(:oauth_implicit_grant)
 
@@ -148,9 +144,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     jws_key = OpenSSL::PKey::RSA.generate(2048)
     jws_public_key = jws_key.public_key
     rodauth do
-      oauth_jwt_key jws_key
-      oauth_jwt_public_key jws_public_key
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => jws_key)
+      oauth_jwt_public_keys("RS256" => jws_public_key)
     end
     setup_application(:oauth_implicit_grant)
     login
@@ -195,9 +190,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     jws_key = OpenSSL::PKey::RSA.generate(2048)
     jws_public_key = jws_key.public_key
     rodauth do
-      oauth_jwt_key jws_key
-      oauth_jwt_public_key jws_public_key
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => jws_key)
+      oauth_jwt_public_keys("RS256" => jws_public_key)
     end
     setup_application(:oauth_implicit_grant)
     login
@@ -223,7 +217,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     jws_key = OpenSSL::PKey::RSA.generate(2048)
     jws_public_key = jws_key.public_key
     rodauth do
-      oauth_jwt_key jws_key
+      oauth_jwt_keys("RS256" => jws_key)
     end
     setup_application(:oauth_implicit_grant)
     login
@@ -250,9 +244,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     jws_key = OpenSSL::PKey::RSA.generate(2048)
     jws_public_key = jws_key.public_key
     rodauth do
-      oauth_jwt_key jws_key
-      oauth_jwt_public_key jws_public_key
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => jws_key)
+      oauth_jwt_public_keys("RS256" => jws_public_key)
     end
     setup_application(:oauth_implicit_grant)
     login
@@ -276,9 +269,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     jws_key = OpenSSL::PKey::RSA.generate(2048)
     jws_public_key = jws_key.public_key
     rodauth do
-      oauth_jwt_key jws_key
-      oauth_jwt_public_key jws_public_key
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => jws_key)
+      oauth_jwt_public_keys("RS256" => jws_public_key)
     end
     setup_application(:oauth_implicit_grant)
     login
@@ -435,8 +427,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     jws_rs512_key = OpenSSL::PKey::RSA.generate(2048)
     jws_rs512_public_key = jws_rs512_key.public_key
     rodauth do
-      oauth_jwt_keys { { "RS256" => jws_rs256_key, "RS512" => jws_rs512_key } }
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => jws_rs256_key, "RS512" => jws_rs512_key)
     end
     setup_application(:oauth_implicit_grant)
     login
@@ -467,8 +458,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     jws_key = OpenSSL::PKey::RSA.generate(2048)
     jws_public_key = jws_key.public_key
     rodauth do
-      oauth_jwt_key jws_key
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => jws_key)
     end
     setup_application(:oauth_implicit_grant)
     login
@@ -530,8 +520,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     jws_key = OpenSSL::PKey::RSA.generate(2048)
     jws_public_key = jws_key.public_key
     rodauth do
-      oauth_jwt_key jws_key
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => jws_key)
       get_additional_param do |account, claim, locale|
         case claim
         when :name
@@ -604,8 +593,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     jws_key = OpenSSL::PKey::RSA.generate(2048)
     jws_public_key = jws_key.public_key
     rodauth do
-      oauth_jwt_key jws_key
-      oauth_jwt_public_key jws_public_key
+      oauth_jwt_keys("RS256" => jws_key)
+      oauth_jwt_public_keys("RS256" => jws_public_key)
       enable :otp
       two_factor_auth_return_to_requested_location? true
     end
@@ -699,8 +688,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
   def setup_application(*)
     rodauth do
-      oauth_jwt_key OpenSSL::PKey::RSA.generate(2048)
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => OpenSSL::PKey::RSA.generate(2048))
       oauth_applications_jwks_column :jwks
     end
     super

@@ -417,7 +417,10 @@ module Rodauth
 
       params = {
         jwks: oauth_application_jwks,
-        signing_algorithm: oauth_application[oauth_applications_id_token_signed_response_alg_column] || oauth_jwt_algorithm,
+        signing_algorithm: (
+          oauth_application[oauth_applications_id_token_signed_response_alg_column] ||
+          oauth_jwt_keys.keys.first
+        ),
         encryption_algorithm: oauth_application[oauth_applications_id_token_encrypted_response_alg_column],
         encryption_method: oauth_application[oauth_applications_id_token_encrypted_response_enc_column]
       }.compact
@@ -602,6 +605,8 @@ module Rodauth
         response_types_supported += ["none", "id_token", "code token", "code id_token", "id_token token", "code id_token token"]
       end
 
+      alg_values, enc_values = oauth_jwt_jwe_keys.keys.transpose
+
       metadata.merge(
         userinfo_endpoint: userinfo_url,
         end_session_endpoint: (oidc_logout_url if use_rp_initiated_logout?),
@@ -609,8 +614,8 @@ module Rodauth
         subject_types_supported: [oauth_jwt_subject_type],
 
         id_token_signing_alg_values_supported: metadata[:token_endpoint_auth_signing_alg_values_supported],
-        id_token_encryption_alg_values_supported: [oauth_jwt_jwe_algorithm].compact,
-        id_token_encryption_enc_values_supported: [oauth_jwt_jwe_encryption_method].compact,
+        id_token_encryption_alg_values_supported: Array(alg_values),
+        id_token_encryption_enc_values_supported: Array(enc_values),
 
         userinfo_signing_alg_values_supported: [],
         userinfo_encryption_alg_values_supported: [],

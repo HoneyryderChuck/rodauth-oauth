@@ -7,8 +7,7 @@ class RodauthOauthJWTTokenJwtBearerTest < JWTIntegration
 
   def test_oauth_jwt_bearer_as_authorization_grant
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_keys("HS256" => "SECRET")
     end
     setup_application
 
@@ -30,8 +29,7 @@ class RodauthOauthJWTTokenJwtBearerTest < JWTIntegration
 
   def test_oauth_jwt_bearer_as_client_authentication_behalf_of_itself
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_keys("HS256" => "SECRET")
     end
     setup_application(:oauth_authorization_code_grant)
 

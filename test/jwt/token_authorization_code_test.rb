@@ -7,8 +7,7 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
   def test_oauth_jwt_authorization_code_hmac_sha256
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_keys("HS256" => "SECRET")
     end
     setup_application
 
@@ -38,8 +37,7 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
   def test_oauth_jwt_authorization_code_hmac_sha256_subject_pairwise
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_keys("HS256" => "SECRET")
       oauth_jwt_subject_type "pairwise"
     end
     setup_application
@@ -69,8 +67,7 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
   def test_token_authorization_code_hmac_sha256_hash_columns
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_keys("HS256" => "SECRET")
       oauth_grants_token_hash_column :token_hash
       oauth_grants_refresh_token_hash_column :refresh_token_hash
     end
@@ -104,9 +101,8 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
     rsa_private = OpenSSL::PKey::RSA.generate 2048
     rsa_public = rsa_private.public_key
     rodauth do
-      oauth_jwt_key rsa_private
-      oauth_jwt_public_key rsa_public
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => rsa_private)
+      oauth_jwt_public_keys("RS256" => rsa_public)
     end
     setup_application
 
@@ -139,9 +135,8 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
       ecdsa_public.private_key = nil
 
       rodauth do
-        oauth_jwt_key ecdsa_key
-        oauth_jwt_public_key ecdsa_public
-        oauth_jwt_algorithm "ES256"
+        oauth_jwt_keys("ES256" => ecdsa_key)
+        oauth_jwt_public_keys("ES256" => ecdsa_public)
       end
       setup_application
 
@@ -171,12 +166,9 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
     jwe_key = OpenSSL::PKey::RSA.new(2048)
 
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
-      oauth_jwt_jwe_keys { { %w[RSA-OAEP A128CBC-HS256] => jwe_key } }
-      oauth_jwt_jwe_public_key jwe_key.public_key
-      oauth_jwt_jwe_algorithm "RSA-OAEP"
-      oauth_jwt_jwe_encryption_method "A128CBC-HS256"
+      oauth_jwt_keys("HS256" => "SECRET")
+      oauth_jwt_jwe_keys(%w[RSA-OAEP A128CBC-HS256] => jwe_key)
+      oauth_jwt_jwe_public_keys(%w[RSA-OAEP A128CBC-HS256] => jwe_key.public_key)
     end
     setup_application
 
@@ -234,7 +226,7 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
     # Resource server
     @rodauth_blocks.clear
     rodauth do
-      oauth_jwt_keys { { "RS256" => legacy_rsa_public } }
+      oauth_jwt_keys("RS256" => legacy_rsa_public)
     end
     setup_application
 
@@ -254,8 +246,7 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
   def setup_application(*)
     super
     rodauth do
-      oauth_jwt_key OpenSSL::PKey::RSA.new(2048)
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_keys("HS256" => OpenSSL::PKey::RSA.new(2048))
     end
     header "Accept", "application/json"
   end

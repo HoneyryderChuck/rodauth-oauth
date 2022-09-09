@@ -9,8 +9,7 @@ class RodauthOauthJwtServerMetadataTest < JWTIntegration
     jws_rs256_key = OpenSSL::PKey::RSA.generate(2048)
     jws_rs512_key = OpenSSL::PKey::RSA.generate(2048)
     rodauth do
-      oauth_jwt_keys { { "RS256" => jws_rs256_key, "RS512" => jws_rs512_key } }
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => jws_rs256_key, "RS512" => jws_rs512_key)
     end
     setup_application(&:oauth_server_metadata)
     get("/.well-known/oauth-authorization-server")

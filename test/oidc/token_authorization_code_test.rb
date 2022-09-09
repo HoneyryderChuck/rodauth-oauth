@@ -31,8 +31,7 @@ class RodauthOAuthOidcTokenAuthorizationCodeTest < OIDCIntegration
 
   def setup_application(*)
     rodauth do
-      oauth_jwt_key OpenSSL::PKey::RSA.generate(2048)
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => OpenSSL::PKey::RSA.generate(2048))
     end
     super
     header "Accept", "application/json"

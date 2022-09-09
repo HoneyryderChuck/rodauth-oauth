@@ -6,9 +6,6 @@ class RodauthOauthJwtJwksUriTest < JWTIntegration
   include Rack::Test::Methods
 
   def test_oauth_jwt_jwks_no_key
-    rodauth do
-      oauth_jwt_algorithm "RS256"
-    end
     setup_application
     get("/jwks")
 
@@ -21,9 +18,8 @@ class RodauthOauthJwtJwksUriTest < JWTIntegration
     pub_key = priv_key.public_key
 
     rodauth do
-      oauth_jwt_key priv_key
-      oauth_jwt_public_key pub_key
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => priv_key)
+      oauth_jwt_public_keys("RS256" => pub_key)
     end
     setup_application
     get("/jwks")
@@ -43,13 +39,10 @@ class RodauthOauthJwtJwksUriTest < JWTIntegration
     jwe_pub_key = jwe_key.public_key
 
     rodauth do
-      oauth_jwt_key priv_key
-      oauth_jwt_public_key pub_key
-      oauth_jwt_algorithm "RS256"
-      oauth_jwt_jwe_key jwe_key
-      oauth_jwt_jwe_public_key jwe_pub_key
-      oauth_jwt_jwe_algorithm "RSA-OAEP"
-      oauth_jwt_jwe_encryption_method "A128CBC-HS256"
+      oauth_jwt_keys("RS256" => priv_key)
+      oauth_jwt_public_keys("RS256" => pub_key)
+      oauth_jwt_jwe_keys(%w[RSA-OAEP A128CBC-HS256] => jwe_key)
+      oauth_jwt_jwe_public_keys(%w[RSA-OAEP A128CBC-HS256] => jwe_pub_key)
     end
     setup_application
     get("/jwks")

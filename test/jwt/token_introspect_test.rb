@@ -7,8 +7,7 @@ class RodauthOauthJwtTokenIntrospectTest < JWTIntegration
 
   def test_oauth_introspect_access_token
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_keys("HS256" => "SECRET")
     end
     setup_application(:oauth_token_introspection)
     login

@@ -88,8 +88,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
     jws_rs512_key = OpenSSL::PKey::RSA.generate(2048)
     jws_rs512_public_key = jws_rs512_key.public_key
     rodauth do
-      oauth_jwt_keys { { "RS256" => jws_rs256_key, "RS512" => jws_rs512_key } }
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => jws_rs256_key, "RS512" => jws_rs512_key)
     end
     setup_application
     oauth_application(userinfo_signed_response_alg: "RS512")
@@ -121,8 +120,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
     jws_public_key = jws_key.public_key
 
     rodauth do
-      oauth_jwt_key jws_key
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => jws_key)
     end
     setup_application
     oauth_application(
@@ -161,8 +159,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
 
   def setup_application(*)
     rodauth do
-      oauth_jwt_key OpenSSL::PKey::RSA.generate(2048)
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => OpenSSL::PKey::RSA.generate(2048))
       get_oidc_param do |account, claim|
         case claim
         when :email_verified
