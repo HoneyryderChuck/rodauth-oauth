@@ -78,15 +78,18 @@ module Rodauth
         unless oauth_jwt_jwe_encryption_methods_supported.include?(value)
           register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("userinfo_encrypted_response_enc"))
         end
-      elsif (value = @oauth_application_params[oauth_applications_request_object_signing_alg_column])
+      elsif defined?(oauth_applications_request_object_signing_alg_column) &&
+            (value = @oauth_application_params[oauth_applications_request_object_signing_alg_column])
         unless oauth_jwt_algorithms_supported.include?(value)
           register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("request_object_signing_alg"))
         end
-      elsif (value = @oauth_application_params[oauth_applications_request_object_encryption_alg_column])
+      elsif defined?(oauth_applications_request_object_encryption_alg_column) &&
+            (value = @oauth_application_params[oauth_applications_request_object_encryption_alg_column])
         unless oauth_jwt_jwe_algorithms_supported.include?(value)
           register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("request_object_encryption_alg"))
         end
-      elsif (value = @oauth_application_params[oauth_applications_request_object_encryption_enc_column])
+      elsif defined?(oauth_applications_request_object_encryption_enc_column) &&
+            (value = @oauth_application_params[oauth_applications_request_object_encryption_enc_column])
         unless oauth_jwt_jwe_encryption_methods_supported.include?(value)
           register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("request_object_encryption_enc"))
         end
@@ -127,7 +130,8 @@ module Rodauth
           "A128CBC-HS256"
 
       end
-      if create_params.key?(oauth_applications_request_object_encryption_alg_column)
+      if defined?(oauth_applications_request_object_encryption_alg_column) &&
+         create_params.key?(oauth_applications_request_object_encryption_alg_column)
         create_params[oauth_applications_request_object_encryption_enc_column] ||= return_params["request_object_encryption_enc"] =
           "A128CBC-HS256"
 

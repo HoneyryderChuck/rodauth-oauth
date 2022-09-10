@@ -34,7 +34,7 @@ class RodauthOauthResourceIndicatorsJwtAuthorizeTest < JWTIntegration
 
   def setup_application(*)
     rodauth do
-      enable :oauth_resource_indicators
+      enable :oauth_jwt_secured_authorization_request, :oauth_resource_indicators
     end
     super
   end

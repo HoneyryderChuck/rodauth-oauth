@@ -3,7 +3,7 @@
 require "test_helper"
 require "webmock/minitest"
 
-class RodauthOauthJwtAuthorizeTest < JWTIntegration
+class RodauthOauthJwtSecuredAuthorizationRequestAuthorizeTest < JWTIntegration
   include WebMock::API
 
   def test_jwt_authorize_with_request_uri
@@ -177,5 +177,9 @@ class RodauthOauthJwtAuthorizeTest < JWTIntegration
       oauth_applications_jwks_column :jwks
     end
     super
+  end
+
+  def oauth_feature
+    %i[oauth_authorization_code_grant oauth_jwt_secured_authorization_request]
   end
 end

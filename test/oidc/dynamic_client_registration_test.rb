@@ -201,7 +201,7 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
 
   def test_oidc_client_registration_request_object
     rodauth do
-      enable :oidc_dynamic_client_registration
+      enable :oauth_jwt_secured_authorization_request, :oidc_dynamic_client_registration
       oauth_application_scopes %w[read write]
     end
     setup_application

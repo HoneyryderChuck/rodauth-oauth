@@ -151,3 +151,11 @@ To maintain legacy behaviour, you can return them in the function body.
 + oauth_jwt_audience { legacy_aud }
 + oauth_jwt_issuer { legacy_iss }
 ```
+
+## JAR (Secured authorization request) segregated in its plugin
+
+It was previously being loaded in the `:oauth_jwt` plugin by default. If you require this funtionality, enable the plugin:
+
+```ruby
+enable :oauth_jwt_secured_authorization_request
+```
