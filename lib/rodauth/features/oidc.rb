@@ -174,7 +174,7 @@ module Rodauth
           )
 
           # When an id_token_hint parameter is present, the OP MUST validate that it was the issuer of the ID Token.
-          redirect_response_error("invalid_request") unless claims && claims["iss"] == issuer
+          redirect_response_error("invalid_request") unless claims && claims["iss"] == oauth_jwt_issuer
 
           # now let's logout from IdP
           transaction do

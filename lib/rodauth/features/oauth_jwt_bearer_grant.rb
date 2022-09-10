@@ -44,10 +44,7 @@ module Rodauth
     end
 
     def jwt_assertion(assertion)
-      claims = jwt_decode(assertion, verify_iss: false, verify_aud: false)
-      return unless verify_aud(token_url, claims["aud"])
-
-      claims
+      jwt_decode(assertion, verify_iss: false)
     end
 
     def oauth_server_metadata_body(*)

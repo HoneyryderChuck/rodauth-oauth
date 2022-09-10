@@ -56,17 +56,35 @@ module Rodauth
       redirect_response_error("invalid_request") unless param_or_nil("token")
     end
 
-    def json_token_introspect_payload(oauth_grant)
-      return { active: false } unless oauth_grant
+    def json_token_introspect_payload(grant_or_claims)
+      return { active: false } unless grant_or_claims
 
-      {
-        active: true,
-        scope: oauth_grant[oauth_grants_scopes_column],
-        client_id: oauth_application[oauth_applications_client_id_column],
-        # username
-        token_type: oauth_token_type,
-        exp: oauth_grant[oauth_grants_expires_in_column].to_i
-      }
+      if grant_or_claims["sub"]
+        # JWT
+        {
+          active: true,
+          scope: grant_or_claims["scope"],
+          client_id: grant_or_claims["client_id"],
+          # username
+          token_type: "access_token",
+          exp: grant_or_claims["exp"],
+          iat: grant_or_claims["iat"],
+          nbf: grant_or_claims["nbf"],
+          sub: grant_or_claims["sub"],
+          aud: grant_or_claims["aud"],
+          iss: grant_or_claims["iss"],
+          jti: grant_or_claims["jti"]
+        }
+      else
+        {
+          active: true,
+          scope: grant_or_claims[oauth_grants_scopes_column],
+          client_id: oauth_application[oauth_applications_client_id_column],
+          # username
+          token_type: oauth_token_type,
+          exp: grant_or_claims[oauth_grants_expires_in_column].to_i
+        }
+      end
     end
 
     def check_csrf?

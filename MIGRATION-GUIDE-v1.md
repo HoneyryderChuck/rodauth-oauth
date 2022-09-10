@@ -139,3 +139,15 @@ end
 ```
 
 Now that the features are explicitly enable, there's is no more use for config methods for unsetting them, such as `use_oauth_implicit_grant_type?` or `use_oauth_pkce?`.
+
+
+## `oauth_jwt_audience` and `oauth_jwt_issuer` repurposed as functions
+
+To maintain legacy behaviour, you can return them in the function body.
+
+```diff
+- oauth_jwt_audience legacy_aud
+- oauth_jwt_issuer legacy_iss
++ oauth_jwt_audience { legacy_aud }
++ oauth_jwt_issuer { legacy_iss }
+```

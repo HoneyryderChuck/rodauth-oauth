@@ -148,6 +148,16 @@ module Rodauth
 
         super.merge(aud: resource_indicators)
       end
+
+      def jwt_decode(token, verify_aud: true, **args)
+        claims = super(token, verify_aud: false, **args)
+
+        return claims unless verify_aud
+
+        return unless claims["aud"] && claims["aud"].one? { |aud| request.url.starts_with?(aud) }
+
+        claims
+      end
     end
 
     def self.included(rodauth)

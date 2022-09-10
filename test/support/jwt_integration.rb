@@ -35,14 +35,14 @@ class JWTIntegration < RodaIntegration
     assert last_response.headers["Content-Type"] == "application/json"
   end
 
-  def verify_access_token_response(data, oauth_grant, secret, algorithm, audience: "CLIENT_ID")
+  def verify_access_token_response(data, oauth_grant, secret, algorithm, audience: "#{example_origin}/token")
     verify_token_common_response(data)
 
     assert data.key?("access_token")
     verify_access_token(data["access_token"], oauth_grant, signing_key: secret, signing_algo: algorithm, audience: audience)
   end
 
-  def verify_access_token(data, oauth_grant, signing_key:, signing_algo:, audience: "CLIENT_ID")
+  def verify_access_token(data, oauth_grant, signing_key:, signing_algo:, audience: "#{example_origin}/token")
     claims, headers = JWT.decode(data, signing_key, true, algorithms: [signing_algo])
     assert headers["alg"] == signing_algo
 
@@ -52,13 +52,9 @@ class JWTIntegration < RodaIntegration
     claims
   end
 
-  def verify_jwt_claims(claims, _oauth_grant, audience: "CLIENT_ID")
+  def verify_jwt_claims(claims, _oauth_grant, audience: "#{example_origin}/token")
     assert claims.key?("iss")
-    if respond_to?(:last_response)
-      assert claims["iss"] == "http://example.org"
-    else
-      assert claims["iss"] == "http://www.example.com"
-    end
+    assert claims["iss"] == example_origin
     assert claims.key?("sub")
     assert claims.key?("aud")
     assert claims["aud"] == audience
@@ -103,5 +99,13 @@ class JWTIntegration < RodaIntegration
     end
 
     token
+  end
+
+  def example_origin
+    if respond_to?(:last_response)
+      "http://example.org"
+    else
+      "http://www.example.com"
+    end
   end
 end

@@ -8,8 +8,8 @@ https://datatracker.ietf.org/doc/html/rfc9068
 
 oauth_jwt_subject_type :: JWT subject claim type, <tt>"public"</tt> by default.
 oauth_jwt_subject_secret :: hashing secret to use when subject claim type is "pairwise", <tt>nil</tt> by default.
-oauth_jwt_issuer :: JWT issuer claim, <tt>nil</tt> by default.
-oauth_jwt_audience :: JWT audience claim, <tt>nil</tt> by default.
+oauth_jwt_issuer :: JWT issuer claim, returns the authorization server url by default.
+oauth_jwt_audience :: JWT audience claim, returns the authorization server token url by default.
 oauth_applications_jwt_public_key_label :: Form label for the oauth application client application public key.
 oauth_application_jwt_public_key_param :: Form param for the oauth application client application public key.
 oauth_application_jwks_param :: Form param for the oauth application client application JSON Web Keys.

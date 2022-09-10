@@ -117,7 +117,6 @@ class RodauthOauthJwtAuthorizeTest < JWTIntegration
     jws_public_key = jws_key.public_key
 
     rodauth do
-      oauth_jwt_audience "Example"
       oauth_jwt_jwe_keys(%w[RSA-OAEP A128CBC-HS256] => jwe_key)
     end
     setup_application
@@ -139,9 +138,6 @@ class RodauthOauthJwtAuthorizeTest < JWTIntegration
     jws_key = OpenSSL::PKey::RSA.generate(2048)
     jws_public_key = jws_key.public_key
 
-    rodauth do
-      oauth_jwt_audience "Example"
-    end
     setup_application
     login
 

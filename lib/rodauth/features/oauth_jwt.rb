@@ -14,8 +14,6 @@ module Rodauth
     auth_value_method :oauth_jwt_subject_type, "public" # fallback subject type: public, pairwise
     auth_value_method :oauth_jwt_subject_secret, nil # salt for pairwise generation
 
-    auth_value_method :oauth_jwt_issuer, nil
-
     auth_value_method :oauth_applications_subject_type_column, :subject_type
     auth_value_method :oauth_applications_jwt_public_key_column, :jwt_public_key
     auth_value_method :oauth_applications_request_object_signing_alg_column, :request_object_signing_alg
@@ -34,7 +32,6 @@ module Rodauth
     auth_value_method :oauth_jwt_jwe_public_keys, {}
 
     auth_value_method :oauth_jwt_jwe_copyright, nil
-    auth_value_method :oauth_jwt_audience, nil
 
     translatable_method :oauth_request_uri_not_supported_message, "request uri is unsupported"
     translatable_method :oauth_invalid_request_object_message, "request object is invalid"
@@ -43,7 +40,9 @@ module Rodauth
       :jwt_encode,
       :jwt_decode,
       :jwks_set,
-      :generate_jti
+      :generate_jti,
+      :oauth_jwt_issuer,
+      :oauth_jwt_audience
     )
 
     route(:jwks) do |r|
@@ -70,8 +69,27 @@ module Rodauth
 
     private
 
-    def issuer
-      @issuer ||= oauth_jwt_issuer || authorization_server_url
+    def oauth_jwt_issuer
+      # The JWT MUST contain an "iss" (issuer) claim that contains a
+      # unique identifier for the entity that issued the JWT.
+      @oauth_jwt_issuer ||= authorization_server_url
+    end
+
+    def oauth_jwt_audience
+      # The JWT MUST contain an "aud" (audience) claim containing a
+      # value that identifies the authorization server as an intended
+      # audience.  The token endpoint URL of the authorization server
+      # MAY be used as a value for an "aud" element to identify the
+      # authorization server as an intended audience of the JWT.
+      @oauth_jwt_audience ||= if is_authorization_server?
+                                token_url
+                              else
+                                metadata = authorization_server_metadata
+
+                                return unless metadata
+
+                                metadata[:token_endpoint]
+                              end
     end
 
     def authorization_token
@@ -86,9 +104,7 @@ module Rodauth
 
         return unless jwt_token
 
-        return if jwt_token["iss"] != issuer ||
-                  (oauth_jwt_audience && jwt_token["aud"] != oauth_jwt_audience) ||
-                  !jwt_token["sub"]
+        return unless jwt_token["sub"]
 
         jwt_token
       end
@@ -116,7 +132,7 @@ module Rodauth
         jws_encryption_method: oauth_application[oauth_applications_request_object_encryption_enc_column]
       }.compact
 
-      claims = jwt_decode(request_object, jwks: jwks, verify_jti: false, **request_sig_enc_opts)
+      claims = jwt_decode(request_object, jwks: jwks, verify_jti: false, verify_aud: false, **request_sig_enc_opts)
 
       redirect_response_error("invalid_request_object") unless claims
 
@@ -129,7 +145,7 @@ module Rodauth
       claims.delete("iss")
       audience = claims.delete("aud")
 
-      redirect_response_error("invalid_request_object") if audience && audience != issuer
+      redirect_response_error("invalid_request_object") if audience && audience != oauth_jwt_issuer
 
       claims.each do |k, v|
         request.params[k.to_s] = v
@@ -172,7 +188,7 @@ module Rodauth
       issued_at = Time.now.to_i
 
       {
-        iss: issuer, # issuer
+        iss: oauth_jwt_issuer, # issuer
         iat: issued_at, # issued at
         #
         # sub  REQUIRED - as defined in section 4.1.2 of [RFC7519].  In case of
@@ -187,7 +203,7 @@ module Rodauth
         client_id: oauth_application[oauth_applications_client_id_column],
 
         exp: issued_at + oauth_token_expires_in,
-        aud: (oauth_jwt_audience || oauth_application[oauth_applications_client_id_column])
+        aud: oauth_jwt_audience
       }
     end
 
@@ -199,7 +215,7 @@ module Rodauth
                      end
       case subject_type
       when "public"
-        oauth_grant[oauth_grants_account_id_column]
+        oauth_grant[oauth_grants_account_id_column] || oauth_grant[oauth_grants_oauth_application_id_column]
       when "pairwise"
         id = oauth_grant[oauth_grants_account_id_column]
         application_id = oauth_grant[oauth_grants_oauth_application_id_column]
@@ -221,27 +237,6 @@ module Rodauth
       else
         Array(grant_or_claims["aud"]).include?(oauth_application[oauth_applications_client_id_column])
       end
-    end
-
-    def json_token_introspect_payload(claims)
-      return { active: false } unless claims
-
-      return super unless claims["sub"] # naive check on whether it's a jwt token
-
-      {
-        active: true,
-        scope: claims["scope"],
-        client_id: claims["client_id"],
-        # username
-        token_type: "access_token",
-        exp: claims["exp"],
-        iat: claims["iat"],
-        nbf: claims["nbf"],
-        sub: claims["sub"],
-        aud: claims["aud"],
-        iss: claims["iss"],
-        jti: claims["jti"]
-      }
     end
 
     def oauth_server_metadata_body(path = nil)
@@ -426,7 +421,7 @@ module Rodauth
         verify_claims: true,
         verify_jti: true,
         verify_iss: true,
-        verify_aud: false,
+        verify_aud: true,
         **
       )
         jws_key = jws_key.first if jws_key.is_a?(Array)
@@ -459,8 +454,8 @@ module Rodauth
             (!claims[:exp] || Time.at(claims[:exp]) < now) &&
             (claims[:nbf] && Time.at(claims[:nbf]) < now) &&
             (claims[:iat] && Time.at(claims[:iat]) < now) &&
-            (verify_iss && claims[:iss] != issuer) &&
-            (verify_aud && !verify_aud(claims[:aud], claims[:client_id])) &&
+            (verify_iss && claims[:iss] != oauth_jwt_issuer) &&
+            (verify_aud && !verify_aud(claims[:aud], oauth_jwt_audience)) &&
             (verify_jti && !verify_jti(claims[:jti], claims))
           )
           return
@@ -580,7 +575,7 @@ module Rodauth
         verify_claims: true,
         verify_jti: true,
         verify_iss: true,
-        verify_aud: false
+        verify_aud: true
       )
         jws_key = jws_key.first if jws_key.is_a?(Array)
 
@@ -596,9 +591,10 @@ module Rodauth
         verify_claims_params = if verify_claims
                                  {
                                    verify_iss: verify_iss,
-                                   iss: issuer,
+                                   iss: oauth_jwt_issuer,
                                    # can't use stock aud verification, as it's dependent on the client application id
-                                   verify_aud: false,
+                                   verify_aud: verify_aud,
+                                   aud: oauth_jwt_audience,
                                    verify_jti: (verify_jti ? method(:verify_jti) : false),
                                    verify_iat: true
                                  }
@@ -607,21 +603,17 @@ module Rodauth
                                end
 
         # decode jwt
-        claims = if is_authorization_server?
-                   if jwks
-                     algorithms = jws_algorithm ? [jws_algorithm] : jwks.select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
-                     JWT.decode(token, nil, true, algorithms: algorithms, jwks: { keys: jwks }, **verify_claims_params).first
-                   elsif jws_key
-                     JWT.decode(token, jws_key, true, algorithms: [jws_algorithm], **verify_claims_params).first
-                   end
-                 elsif (jwks = auth_server_jwks_set)
-                   algorithms = jwks[:keys].select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
-                   JWT.decode(token, nil, true, jwks: jwks, algorithms: algorithms, **verify_claims_params).first
-                 end
-
-        return if verify_claims && verify_aud && !verify_aud(claims["aud"], claims["client_id"])
-
-        claims
+        if is_authorization_server?
+          if jwks
+            algorithms = jws_algorithm ? [jws_algorithm] : jwks.select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
+            JWT.decode(token, nil, true, algorithms: algorithms, jwks: { keys: jwks }, **verify_claims_params).first
+          elsif jws_key
+            JWT.decode(token, jws_key, true, algorithms: [jws_algorithm], **verify_claims_params).first
+          end
+        elsif (jwks = auth_server_jwks_set)
+          algorithms = jwks[:keys].select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
+          JWT.decode(token, nil, true, jwks: jwks, algorithms: algorithms, **verify_claims_params).first
+        end
       rescue JWT::DecodeError, JWT::JWKError
         nil
       end
