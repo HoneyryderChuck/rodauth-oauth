@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "rodauth/oauth/http_extensions"
+
 module Rodauth
   Feature.define(:oauth_token_introspection, :OauthTokenIntrospection) do
     depends :oauth_base
@@ -99,18 +101,10 @@ module Rodauth
     private
 
     def introspection_request(token_type_hint, token)
-      auth_url = URI(authorization_server_url)
-      http = Net::HTTP.new(auth_url.host, auth_url.port)
-      http.use_ssl = auth_url.scheme == "https"
+      introspect_url = URI("#{authorization_server_url}#{introspect_path}")
 
-      request = Net::HTTP::Post.new(auth_url.path + introspect_path)
-      request["content-type"] = "application/x-www-form-urlencoded"
-      request["accept"] = json_response_content_type
-      request.set_form_data({ "token_type_hint" => token_type_hint, "token" => token })
-
-      before_introspection_request(request)
-      response = http.request(request)
-      authorization_required unless response.code.to_i == 200
+      response = http_request(introspect_url, { "token_type_hint" => token_type_hint, "token" => token },
+                              &method(:before_introspection_request))
 
       JSON.parse(response.body)
     end

@@ -1,13 +1,11 @@
 # frozen_string_literal: true
 
 require "rodauth/oauth/version"
-require "rodauth/oauth/ttl_store"
+require "rodauth/oauth/http_extensions"
 
 module Rodauth
   Feature.define(:oauth_jwt, :OauthJwt) do
     depends :oauth_base
-
-    JWKS = OAuth::TtlStore.new
 
     # Recommended to have hmac_secret as well
 
@@ -227,29 +225,7 @@ module Rodauth
 
       jwks_uri = URI(jwks_uri)
 
-      jwks = JWKS[jwks_uri]
-
-      return jwks if jwks
-
-      JWKS.set(jwks_uri) do
-        http = Net::HTTP.new(jwks_uri.host, jwks_uri.port)
-        http.use_ssl = jwks_uri.scheme == "https"
-
-        request = Net::HTTP::Get.new(jwks_uri.request_uri)
-        request["accept"] = json_response_content_type
-        response = http.request(request)
-        authorization_required unless response.code.to_i == 200
-
-        # time-to-live
-        ttl = if response.key?("cache-control")
-                cache_control = response["cache-control"]
-                cache_control[/max-age=(\d+)/, 1].to_i
-              elsif response.key?("expires")
-                Time.parse(response["expires"]).to_i - Time.now.to_i
-              end
-
-        [JSON.parse(response.body, symbolize_names: true), ttl]
-      end
+      http_request_with_cache(jwks_uri)
     end
 
     def generate_jti(payload)
@@ -283,29 +259,7 @@ module Rodauth
 
       jwks_uri = URI(jwks_uri)
 
-      jwks = JWKS[jwks_uri]
-
-      return jwks if jwks
-
-      JWKS.set(jwks_uri) do
-        http = Net::HTTP.new(jwks_uri.host, jwks_uri.port)
-        http.use_ssl = jwks_uri.scheme == "https"
-
-        request = Net::HTTP::Get.new(jwks_uri.request_uri)
-        request["accept"] = json_response_content_type
-        response = http.request(request)
-        return unless response.code.to_i == 200
-
-        # time-to-live
-        ttl = if response.key?("cache-control")
-                cache_control = response["cache-control"]
-                cache_control[/max-age=(\d+)/, 1].to_i
-              elsif response.key?("expires")
-                Time.parse(response["expires"]).to_i - Time.now.to_i
-              end
-
-        [JSON.parse(response.body, symbolize_names: true), ttl]
-      end
+      http_request_with_cache(jwks_uri)
     end
 
     if defined?(JSON::JWT)

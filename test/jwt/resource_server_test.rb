@@ -152,11 +152,22 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
 
   def setup_application(auth_url = "https://auth-server")
     resource_server = Class.new(Roda)
+    resource_server.plugin :common_logger if ENV.key?("RODAUTH_DEBUG")
 
     resource_server.plugin :rodauth do
       enable :oauth_jwt
       is_authorization_server? false
       authorization_server_url auth_url
+
+      http_request_cache do
+        obj = Object.new
+        obj.define_singleton_method(:[]) { |*|; } # rubocop:disable Lint/EmptyBlock
+        obj.define_singleton_method(:set) do |*, &blk|
+          body, _ttl = blk.call
+          body
+        end
+        obj
+      end
     end
 
     resource_server.route do |r|

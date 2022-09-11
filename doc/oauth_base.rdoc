@@ -99,4 +99,7 @@ require_authorizable_account :: requires the account to be logged in by default 
 require_authorization_error_flash :: The flash error to display when authorization is required.
 revoke_unauthorized_account_error_flash :: The flash error to display when an unauthorized account tries to revoke a token.
 
-oauth_cancel_button :: button label which cancels the device verification;
+oauth_cancel_button :: button label which cancels the device verification.
+
+http_request :: performs a GET http request to the given URL (or a POST with url-encoded body, if form data is passed)
+http_request_cache :: store where http requests get cached according to the HTTP cache rules.

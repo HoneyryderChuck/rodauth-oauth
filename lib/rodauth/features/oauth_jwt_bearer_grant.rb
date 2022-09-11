@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "rodauth/oauth/version"
-require "rodauth/oauth/ttl_store"
 
 module Rodauth
   Feature.define(:oauth_jwt_bearer_grant, :OauthJwtBearerGrant) do
