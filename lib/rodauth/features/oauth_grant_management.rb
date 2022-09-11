@@ -1,11 +1,7 @@
 # frozen_string_literal: true
 
-require "rodauth/oauth/refinements"
-
 module Rodauth
   Feature.define(:oauth_grant_management, :OauthTokenManagement) do
-    using RegexpExtensions
-
     depends :oauth_management_base, :oauth_token_revocation
 
     view "oauth_grants", "My Oauth Gramts", "oauth_grants"

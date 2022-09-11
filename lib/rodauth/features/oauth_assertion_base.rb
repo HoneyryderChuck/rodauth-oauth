@@ -1,11 +1,7 @@
 # frozen_string_literal: true
 
-require "rodauth/oauth/refinements"
-
 module Rodauth
   Feature.define(:oauth_assertion_base, :OauthAssertionBase) do
-    using PrefixExtensions
-
     depends :oauth_base
 
     auth_value_methods(

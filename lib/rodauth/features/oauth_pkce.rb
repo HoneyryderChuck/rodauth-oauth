@@ -1,11 +1,7 @@
 # frozen_string_literal: true
 
-require "rodauth/oauth/refinements"
-
 module Rodauth
   Feature.define(:oauth_pkce, :OauthPkce) do
-    using PrefixExtensions
-
     depends :oauth_authorization_code_grant
 
     auth_value_method :oauth_require_pkce, false

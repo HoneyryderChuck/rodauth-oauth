@@ -109,38 +109,6 @@ truffleruby:
   artifacts:
     paths:
       - "coverage/"
-ruby23:
-  <<: *test_services
-  before_script:
-    - *install_deps
-    - *before_script
-    - *prepare_dbs
-  image: "ruby:2.3"
-  script:
-    - *test
-  artifacts:
-    paths:
-      - "coverage/"
-  parallel:
-    matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails52, Gemfile-rails51, Gemfile-rails50]
-ruby24:
-  <<: *test_services
-  before_script:
-    - *install_deps
-    - *before_script
-    - *prepare_dbs
-  image: "ruby:2.4"
-  only:
-    - master
-  script:
-    - *test
-  artifacts:
-    paths:
-      - "coverage/"
-  parallel:
-    matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails52, Gemfile-rails51]
 ruby25:
   <<: *test_services
   before_script:
@@ -148,8 +116,6 @@ ruby25:
     - *before_script
     - *prepare_dbs
   image: "ruby:2.5"
-  only:
-    - master
   script:
     - *test
   artifacts:
@@ -255,7 +221,7 @@ coverage:
   dependencies:
     - jruby
     - truffleruby
-    - ruby23
+    - ruby25
     - ruby27
     - ruby32
   image: "ruby:3.2-rc"

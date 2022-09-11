@@ -11,15 +11,10 @@ gem "bcrypt"
 gem "rack_csrf"
 
 # frameworks
-if RUBY_VERSION < "2.5"
-  gem "capybara", "~> 3.15.0"
-  gem "json-jwt", "~> 1.12.0"
-elsif RUBY_VERSION < "2.6"
+if RUBY_VERSION < "2.6"
   gem "capybara", "~> 3.35.0"
-  gem "json-jwt"
 else
   gem "capybara"
-  gem "json-jwt"
 end
 
 gem "roda"
@@ -30,12 +25,13 @@ gem "tzinfo-data"
 gem "jwe"
 
 # direct dependencies
-gem "jwt", "~> 2.2.2"
+gem "json-jwt"
+gem "jwt"
 gem "rodauth", ">= 2.0.0"
 gem "sequel"
 
 # Demo-only
-gem "omniauth_openid_connect"
+gem "omniauth_openid_connect" if RUBY_VERSION >= "2.7.0"
 
 # Tests/Debug
 gem "json-schema"
@@ -51,31 +47,16 @@ gem "ruby-saml"
 gem "saml_idp"
 gem "xmlenc"
 
-if RUBY_VERSION < "2.4"
-  gem "rubocop", "~> 0.81.0"
-  gem "simplecov", "< 0.18.0"
-elsif RUBY_VERSION < "2.5"
-  gem "rodauth-select-account", "~> 0.0.2"
-  gem "rubocop", "~> 1.12.0"
-  gem "rubocop-performance", "~> 1.10.2"
-  gem "simplecov", "~> 0.18.0"
-else
-  gem "rodauth-select-account", "~> 0.0.2"
-  gem "rubocop"
-  gem "rubocop-performance"
-  gem "simplecov"
-end
+gem "rodauth-select-account", "~> 0.0.2"
+gem "rubocop"
+gem "rubocop-performance"
+gem "simplecov"
 
 gem "pry"
 platform :mri, :truffleruby do
-  if RUBY_VERSION < "2.5"
-    gem "byebug", "~> 11.0.1"
-    gem "pry-byebug", "~> 3.7.0"
-  else
-    gem "pry-byebug"
-    gem "webauthn"
-  end
+  gem "pry-byebug"
   gem "sqlite3"
+  gem "webauthn"
 
   gem "mysql2"
   gem "pg"

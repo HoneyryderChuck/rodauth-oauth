@@ -281,7 +281,7 @@ Default translations shipping with `rodauth-oauth` can be found [in this directo
 
 ## Ruby support policy
 
-The minimum Ruby version required to run `rodauth-oauth` is 2.3 . Besides that, it should support all rubies that rodauth and roda support, including JRuby and truffleruby.
+The minimum Ruby version required to run `rodauth-oauth` is 2.5 . Besides that, it should support all rubies that rodauth and roda support, including JRuby and truffleruby.
 
 ### Rails
 

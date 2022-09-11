@@ -8,10 +8,6 @@ og_gemfile.gsub!("\"pg\"", %("pg", "~> 0.18"))
 eval og_gemfile
 
 # frameworks
-if RUBY_VERSION < "2.5"
-  gem "sprockets", "< 4"
-end
-
 gem "rails", "~> 5.1.0"
 
 gem "rodauth-rails"

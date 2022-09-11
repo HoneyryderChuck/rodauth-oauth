@@ -6,12 +6,10 @@ require "securerandom"
 require "rodauth/version"
 require "rodauth/oauth/version"
 require "rodauth/oauth/database_extensions"
-require "rodauth/oauth/refinements"
 require "rodauth/oauth/http_extensions"
 
 module Rodauth
   Feature.define(:oauth_base, :OauthBase) do
-    using RegexpExtensions
     include OAuth::HTTPExtensions
 
     auth_value_methods(:http_request)

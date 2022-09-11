@@ -29,7 +29,7 @@ namespace :coverage do
   end
 end
 
-CI_TASKS = RUBY_VERSION < "2.5" ? %i[test] : %i[test rubocop]
+CI_TASKS = %i[test rubocop]
 
 task "test:ci": CI_TASKS
 

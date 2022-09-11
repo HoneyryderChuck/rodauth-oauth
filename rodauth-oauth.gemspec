@@ -12,7 +12,7 @@ Gem::Specification.new do |spec|
   spec.summary       = "Implementation of the OAuth 2.0 protocol on top of rodauth."
   spec.description   = "Implementation of the OAuth 2.0 protocol on top of rodauth."
   spec.homepage      = "https://gitlab.com/honeyryderchuck/rodauth-oauth"
-  # spec.required_ruby_version = Gem::Requirement.new(">= 2.3.0")
+  spec.required_ruby_version = Gem::Requirement.new(">= 2.5.0")
 
   spec.metadata = {
     "homepage_uri" => "https://honeyryderchuck.gitlab.io/rodauth-oauth/",

@@ -4,6 +4,10 @@ This guide is to share a few helpful tips to migrate a production app using `rod
 
 **Most important tip**: Make sure you're running v0.10.3 before you try to migrate to v1!
 
+## Minimum ruby version: 2.5
+
+Make sure you're at least running ruby 2.5 before considering migrating.
+
 ## The Oauth Token Resource was removed
 
 The access and refresh tokens are now stored in the `oauth_grants` table, and the `oauth_tokens` table is no longer necessary.
