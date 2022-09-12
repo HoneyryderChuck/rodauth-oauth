@@ -1,0 +1,26 @@
+= Documentation for OAuth JWT Base feature
+
+The +oauth_jwt_base+ feature provides functions for dealing with JWT (signing, encryption, encoding/decoding).
+
+== Value Methods
+
+oauth_jwt_subject_type :: JWT subject claim type, <tt>"public"</tt> by default.
+oauth_jwt_subject_secret :: hashing secret to use when subject claim type is "pairwise", <tt>nil</tt> by default.
+oauth_jwt_issuer :: JWT issuer claim, returns the authorization server url by default.
+oauth_jwt_audience :: JWT audience claim, returns the authorization server token url by default.
+oauth_applications_jwt_public_key_label :: Form label for the oauth application client application public key.
+oauth_application_jwt_public_key_param :: Form param for the oauth application client application public key.
+oauth_application_jwks_param :: Form param for the oauth application client application JSON Web Keys.
+oauth_applications_jwt_public_key_column :: db column where to store an oauth application's publid key, used for verifying JWT tokens, <tt>:jwt_public_key</tt> by default.
+oauth_applications_subject_type_column :: db column where to store the type of subject claim used for the oauth application, <tt>:subject_type</tt> by default.
+oauth_jwt_keys :: collection of the auth server signing keys indexed by algo (**must** include <tt>oauth_jwt_key</tt> unless nil).
+oauth_jwt_public_keys :: collection of the auth server public signing keys, which will be exposed in the JWKs endpoint.
+oauth_jwt_jwe_keys :: collection of the auth server encryption keys indexed by algo/method tuple (**must** include <tt>oauth_jwe_key</tt> unless nil).
+oauth_jwt_jwe_public_keys :: collection of the auth server public encryption keys, which will be exposed in the JWKs endpoint.
+oauth_jwt_jwe_copyright :: copyright line to add in case JWT tokens are JWE-encrypted, <tt>nil</tt> by default (`ruby-jwe` only).
+
+== Auth methods
+
+jwt_encode :: encodes a given JWT token.
+jwt_decode :: decodes a given JWT token.
+generate_jti :: generates a unique jti claimm.

@@ -163,3 +163,11 @@ It was previously being loaded in the `:oauth_jwt` plugin by default. If you req
 ```ruby
 enable :oauth_jwt_secured_authorization_request
 ```
+
+## `oauth_jwt_jwks` plugin
+
+JWKs URI endpoint has been moved to its plugin. If you require this functionality, make sure you enable it:
+
+```ruby
+enable :oauth_jwt, :oauth_jwt_jwks
+```

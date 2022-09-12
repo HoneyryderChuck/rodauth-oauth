@@ -2,7 +2,7 @@
 
 module Rodauth
   Feature.define(:oauth_jwt_secured_authorization_request, :OauthJwtSecuredAuthorizationRequest) do
-    depends :oauth_authorize_base, :oauth_jwt
+    depends :oauth_authorize_base, :oauth_jwt_base
 
     auth_value_method :oauth_applications_request_object_signing_alg_column, :request_object_signing_alg
     auth_value_method :oauth_applications_request_object_encryption_alg_column, :request_object_encryption_alg

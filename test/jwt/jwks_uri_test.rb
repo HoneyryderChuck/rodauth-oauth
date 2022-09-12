@@ -58,4 +58,10 @@ class RodauthOauthJwtJwksUriTest < JWTIntegration
     assert json_body["keys"][1]["kty"] == "RSA"
     assert json_body["keys"][1].key?("kid")
   end
+
+  private
+
+  def oauth_feature
+    :oauth_jwt_jwks
+  end
 end

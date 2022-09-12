@@ -60,7 +60,7 @@ module Rodauth
       id_token_signing_alg_values_supported
     ].freeze
 
-    depends :account_expiration, :oauth_authorization_code_grant, :oauth_jwt
+    depends :account_expiration, :oauth_jwt, :oauth_jwt_jwks, :oauth_authorization_code_grant
 
     auth_value_method :oauth_application_scopes, %w[openid]
 
@@ -646,6 +646,20 @@ module Rodauth
       response["Access-Control-Max-Age"] = "3600"
       response.status = 200
       return_response
+    end
+
+    def jwt_response_success(jwt, cache = false)
+      response.status = 200
+      response["Content-Type"] ||= "application/jwt"
+      if cache
+        # defaulting to 1-day for everyone, for now at least
+        max_age = 60 * 60 * 24
+        response["Cache-Control"] = "private, max-age=#{max_age}"
+      else
+        response["Cache-Control"] = "no-store"
+        response["Pragma"] = "no-cache"
+      end
+      return_response(jwt)
     end
   end
 end

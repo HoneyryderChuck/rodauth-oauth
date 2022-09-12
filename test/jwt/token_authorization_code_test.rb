@@ -5,6 +5,28 @@ require "test_helper"
 class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
   include Rack::Test::Methods
 
+  def test_oauth_jwt_not_jwt_access_token
+    rodauth do
+      oauth_jwt_keys("HS256" => "SECRET")
+      oauth_jwt_access_tokens false
+    end
+    setup_application
+
+    post("/token",
+         client_id: oauth_application[:client_id],
+         client_secret: "CLIENT_SECRET",
+         grant_type: "authorization_code",
+         code: oauth_grant[:code],
+         redirect_uri: oauth_grant[:redirect_uri])
+
+    verify_response
+
+    assert db[:oauth_grants].count == 1
+    grant = db[:oauth_grants].first
+
+    assert json_body["token"] = grant[:token]
+  end
+
   def test_oauth_jwt_authorization_code_hmac_sha256
     rodauth do
       oauth_jwt_keys("HS256" => "SECRET")

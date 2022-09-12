@@ -55,10 +55,15 @@ module Rodauth
     end
 
     def validate_oauth_revoke_params(token_hint_types = %w[access_token refresh_token].freeze)
-      # check if valid token hint type
-      if param_or_nil("token_type_hint") && !token_hint_types.include?(param("token_type_hint"))
-        redirect_response_error("unsupported_token_type")
+      token_hint = param_or_nil("token_type_hint")
+
+      if features.include?(:oauth_jwt) && oauth_jwt_access_tokens && (!token_hint || token_hint == "access_token")
+        # JWT access tokens can't be revoked
+        throw(:rodauth_error)
       end
+
+      # check if valid token hint type
+      redirect_response_error("unsupported_token_type") if token_hint && !token_hint_types.include?(token_hint)
 
       redirect_response_error("invalid_request") unless param_or_nil("token")
     end

@@ -38,6 +38,9 @@
   name: Oauth JWT
   path: oauth_jwt_rdoc.html
 -
+  name: Oauth JWKs URI
+  path: oauth_jwt_jwks_rdoc.html
+-
   name: Oauth JWT-Secured Authorization Request (JAR)
   path: oauth_jwt_secured_authorization_request_rdoc.html
 -

@@ -23,15 +23,21 @@ module Rodauth
         catch_error do
           validate_oauth_introspect_params
 
+          token_type_hint = param_or_nil("token_type_hint")
+
           before_introspect
-          oauth_grant = case param("token_type_hint")
-                        when "access_token"
-                          oauth_grant_by_token(param("token"))
+          oauth_grant = case token_type_hint
+                        when "access_token", nil
+                          if features.include?(:oauth_jwt) && oauth_jwt_access_tokens
+                            jwt_decode(param("token"))
+                          else
+                            oauth_grant_by_token(param("token"))
+                          end
                         when "refresh_token"
                           oauth_grant_by_refresh_token(param("token"))
-                        else
-                          oauth_grant_by_token(param("token")) || oauth_grant_by_refresh_token(param("token"))
                         end
+
+          oauth_grant ||= oauth_grant_by_refresh_token(param("token")) if token_type_hint.nil?
 
           if oauth_application
             redirect_response_error("invalid_request") if oauth_grant && !grant_from_application?(oauth_grant, oauth_application)
