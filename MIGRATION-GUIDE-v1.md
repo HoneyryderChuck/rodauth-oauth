@@ -171,3 +171,24 @@ JWKs URI endpoint has been moved to its plugin. If you require this functionalit
 ```ruby
 enable :oauth_jwt, :oauth_jwt_jwks
 ```
+
+## routing functions renamed
+
+Previously, loading well-known routes, the oauth server metadata, or oauth application/tokens (now grants) management dashboard implied calling a function on roda to load those routes. These have been renamed:
+
+```diff
+plugin :rodauth do
+  enable :oidc, :oauth_application_management, :oauth_grant_management
+end
+
+roda do |r|
+-  rodauth.oauth_applications
+-  rodauth.oauth_grants
+-  rodauth.openid_configuration
+-  rodauth.webfinger
++  rodauth.load_oauth_application_management_routes
++  rodauth.load_oauth_grant_management_routes
++  rodauth.load_openid_configuration_route
++  rodauth.load_webfinger_route
+end
+```

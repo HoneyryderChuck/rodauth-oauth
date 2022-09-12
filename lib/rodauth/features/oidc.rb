@@ -215,17 +215,19 @@ module Rodauth
       end
     end
 
-    def openid_configuration(alt_issuer = nil)
+    def load_openid_configuration_route(alt_issuer = nil)
       request.on(".well-known/openid-configuration") do
         allow_cors(request)
 
-        request.get do
-          json_response_success(openid_configuration_body(alt_issuer), cache: true)
+        request.is do
+          request.get do
+            json_response_success(openid_configuration_body(alt_issuer), cache: true)
+          end
         end
       end
     end
 
-    def webfinger
+    def load_webfinger_route
       request.on(".well-known/webfinger") do
         request.get do
           resource = param_or_nil("resource")

@@ -114,6 +114,6 @@ class RodauthOauthServerMetadataTest < RodaIntegration
   private
 
   def setup_application(*args)
-    super(*args, &:oauth_server_metadata)
+    super(*args, &:load_oauth_server_metadata_route)
   end
 end

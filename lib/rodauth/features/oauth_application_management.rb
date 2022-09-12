@@ -63,7 +63,7 @@ module Rodauth
     end
 
     # /oauth-applications routes
-    def oauth_applications
+    def load_oauth_application_management_routes
       request.on(oauth_applications_route) do
         require_account
 
@@ -93,37 +93,41 @@ module Rodauth
                            .where(oauth_grants_oauth_application_id_column => id)
                            .order(Sequel.desc(oauth_grants_id_column))
             scope.instance_variable_set(:@oauth_grants, oauth_grants.paginate(page, per_page))
-            request.get do
-              oauth_application_oauth_grants_view
+            request.is do
+              request.get do
+                oauth_application_oauth_grants_view
+              end
             end
           end
         end
 
-        request.get do
-          page = Integer(param_or_nil("page") || 1)
-          per_page = per_page_param(oauth_applications_per_page)
-          scope.instance_variable_set(:@oauth_applications, db[oauth_applications_table]
-            .where(oauth_applications_account_id_column => account_id)
-            .order(Sequel.desc(oauth_applications_id_column))
-            .paginate(page, per_page))
+        request.is do
+          request.get do
+            page = Integer(param_or_nil("page") || 1)
+            per_page = per_page_param(oauth_applications_per_page)
+            scope.instance_variable_set(:@oauth_applications, db[oauth_applications_table]
+              .where(oauth_applications_account_id_column => account_id)
+              .order(Sequel.desc(oauth_applications_id_column))
+              .paginate(page, per_page))
 
-          oauth_applications_view
-        end
-
-        request.post do
-          catch_error do
-            validate_oauth_application_params
-
-            transaction do
-              before_create_oauth_application
-              id = create_oauth_application
-              after_create_oauth_application
-              set_notice_flash create_oauth_application_notice_flash
-              redirect "#{request.path}/#{id}"
-            end
+            oauth_applications_view
           end
-          set_error_flash create_oauth_application_error_flash
-          new_oauth_application_view
+
+          request.post do
+            catch_error do
+              validate_oauth_application_params
+
+              transaction do
+                before_create_oauth_application
+                id = create_oauth_application
+                after_create_oauth_application
+                set_notice_flash create_oauth_application_notice_flash
+                redirect "#{request.path}/#{id}"
+              end
+            end
+            set_error_flash create_oauth_application_error_flash
+            new_oauth_application_view
+          end
         end
       end
     end

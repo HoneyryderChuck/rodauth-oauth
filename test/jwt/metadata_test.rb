@@ -11,7 +11,7 @@ class RodauthOauthJwtServerMetadataTest < JWTIntegration
     rodauth do
       oauth_jwt_keys("RS256" => jws_rs256_key, "RS512" => jws_rs512_key)
     end
-    setup_application(&:oauth_server_metadata)
+    setup_application(&:load_oauth_server_metadata_route)
     get("/.well-known/oauth-authorization-server")
 
     assert last_response.status == 200

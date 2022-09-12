@@ -113,9 +113,9 @@ class AuthorizationServer < Roda
   route do |r|
     r.assets
     r.rodauth
-    rodauth.oauth_applications
-    rodauth.oauth_grants
-    rodauth.oauth_server_metadata
+    rodauth.load_oauth_application_management_routes
+    rodauth.load_oauth_grant_management_routes
+    rodauth.load_oauth_server_metadata_route
 
     r.root do
       view inline: <<~HTML

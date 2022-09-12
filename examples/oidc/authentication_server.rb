@@ -135,9 +135,9 @@ class AuthenticationServer < Roda
   route do |r|
     r.assets
     r.rodauth
-    rodauth.oauth_applications
-    rodauth.openid_configuration
-    rodauth.webfinger
+    rodauth.load_oauth_application_management_routes
+    rodauth.load_openid_configuration_route
+    rodauth.load_webfinger_route
 
     r.root do
       view inline: <<~HTML

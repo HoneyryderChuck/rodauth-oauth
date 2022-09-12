@@ -106,6 +106,6 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
         Time.now - 60
       end
     end
-    super(*args, &:openid_configuration)
+    super(*args, &:load_openid_configuration_route)
   end
 end
