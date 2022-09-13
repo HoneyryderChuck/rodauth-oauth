@@ -45,7 +45,10 @@ module Rodauth
         user_code = generate_user_code
         device_code = transaction do
           before_device_authorization
-          create_oauth_grant(oauth_grants_user_code_column => user_code)
+          create_oauth_grant(
+            oauth_grants_type_column => "device_code",
+            oauth_grants_user_code_column => user_code
+          )
         end
 
         json_response_success \
@@ -128,6 +131,7 @@ module Rodauth
       if supported_grant_type?(grant_type, "urn:ietf:params:oauth:grant-type:device_code")
 
         oauth_grant = db[oauth_grants_table].where(
+          oauth_grants_type_column => "device_code",
           oauth_grants_code_column => param("device_code"),
           oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column]
         ).for_update.first

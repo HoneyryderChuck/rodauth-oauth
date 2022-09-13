@@ -17,6 +17,7 @@ pt:
     device_search_page_title: "Pesquisa de dispositivo"
     oauth_management_pagination_previous_button: "Anterior"
     oauth_management_pagination_next_button: "Próxima"
+    oauth_grants_type_label: "Tipo de concessão"
     oauth_grants_scopes_label: "Escopos"
     oauth_grants_token_label: "Token"
     oauth_grants_refresh_token_label: "Refresh Token"

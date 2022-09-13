@@ -6,6 +6,7 @@
   <table class="table">
     <thead>
       <tr>
+        <th scope="col"><=% rodauth.oauth_grants_type_label %></th>
         <th scope="col"><=% rodauth.oauth_grants_token_label %></th>
         <th scope="col"><=% rodauth.oauth_grants_refresh_token_label %></th>
         <th scope="col"><=% rodauth.oauth_grants_expires_in_label %></th>
@@ -17,6 +18,7 @@
     <tbody>
       <% oauth_grants.each do |oauth_grant| %>
         <tr>
+          <td><%= oauth_grant[rodauth.oauth_grants_type_column] %></td>
           <td><code class="token"><%= oauth_grant[rodauth.oauth_grants_token_column] %></code></td>
           <td><code class="token"><%= oauth_grant[rodauth.oauth_grants_refresh_token_column] %></code></td>
           <td><%= oauth_grant[rodauth.oauth_grants_expires_in_column] %></td>

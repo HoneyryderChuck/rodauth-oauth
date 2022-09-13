@@ -153,4 +153,10 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
     updated_grant = db[:oauth_grants].first
     assert updated_grant[:id] == grant[:id]
   end
+
+  private
+
+  def default_grant_type
+    "device_code"
+  end
 end

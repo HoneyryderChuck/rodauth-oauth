@@ -4,9 +4,9 @@ Sequel.migration do
   up do
     create_table :oauth_grants do |_t|
       primary_key :id, type: Integer
-      foreign_key :account_id, :accounts # , null: false unless device code grant
+      foreign_key :account_id, :accounts # , null: false unless client credentials, or device code grant
       foreign_key :oauth_application_id, :oauth_applications, null: false
-      # String :type, null: false
+      String :type, null: true
 
       String :code, null: true
       index %i[oauth_application_id code], unique: true

@@ -73,6 +73,10 @@ class SAMLIntegration < RodaIntegration
     :oauth_saml_bearer_grant
   end
 
+  def default_grant_type
+    "saml2-bearer"
+  end
+
   def saml_assertion(principal)
     ENV["ruby-saml/testing"] = "true"
     auth_request = OneLogin::RubySaml::Authrequest.new

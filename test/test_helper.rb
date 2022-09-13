@@ -66,6 +66,7 @@ module OAuthHelpers
     id = db[:oauth_grants].insert({
       oauth_application_id: application[:id],
       account_id: account[:id],
+      type: default_grant_type,
       code: "CODE",
       expires_in: Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: 60 * 5),
       redirect_uri: application[:redirect_uri],

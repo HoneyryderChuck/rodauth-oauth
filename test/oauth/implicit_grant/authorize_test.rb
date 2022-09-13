@@ -32,4 +32,8 @@ class RodauthOauthImplicitGrantAuthorizeTest < RodaIntegration
   def oauth_feature
     :oauth_implicit_grant
   end
+
+  def default_grant_type
+    "implicit"
+  end
 end

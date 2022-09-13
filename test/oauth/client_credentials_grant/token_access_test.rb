@@ -107,6 +107,10 @@ class RodauthClientCredentialsGrantOAuthTokenAccessTest < RodaIntegration
     :oauth_client_credentials_grant
   end
 
+  def default_grant_type
+    "client_credentials"
+  end
+
   def set_oauth_grant_with_token(params = {})
     super(params.merge(account_id: nil))
   end

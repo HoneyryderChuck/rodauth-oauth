@@ -10,7 +10,7 @@ module Rodauth
 
     auth_value_method :oauth_grants_path, "oauth-grants"
 
-    %w[token refresh_token expires_in revoked_at].each do |param|
+    %w[type token refresh_token expires_in revoked_at].each do |param|
       translatable_method :"oauth_grants_#{param}_label", param.gsub("_", " ").capitalize
     end
 

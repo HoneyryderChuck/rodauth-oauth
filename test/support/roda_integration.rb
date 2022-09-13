@@ -117,6 +117,10 @@ class RodaIntegration < Minitest::Test
     :oauth_authorization_code_grant
   end
 
+  def default_grant_type
+    "authorization_code"
+  end
+
   def setup_application(*features)
     features = Array(oauth_feature) + features
     scopes = test_scopes

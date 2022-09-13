@@ -65,6 +65,7 @@ module Rodauth
                      end
 
       grant_params = {
+        oauth_grants_type_column => grant_type,
         oauth_grants_account_id_column => account[account_id_column],
         oauth_grants_oauth_application_id_column => @oauth_application[oauth_applications_id_column],
         oauth_grants_scopes_column => grant_scopes

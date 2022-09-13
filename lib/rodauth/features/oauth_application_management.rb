@@ -2,7 +2,7 @@
 
 module Rodauth
   Feature.define(:oauth_application_management, :OauthApplicationManagement) do
-    depends :oauth_management_base
+    depends :oauth_management_base, :oauth_token_revocation
 
     before "create_oauth_application"
     after "create_oauth_application"
@@ -35,6 +35,11 @@ module Rodauth
     translatable_method :oauth_applications_redirect_uri_label, "Redirect URI"
     translatable_method :oauth_applications_client_secret_label, "Client Secret"
     translatable_method :oauth_applications_client_id_label, "Client ID"
+
+    %w[type token refresh_token expires_in revoked_at].each do |param|
+      translatable_method :"oauth_grants_#{param}_label", param.gsub("_", " ").capitalize
+    end
+
     button "Register", "oauth_application"
     button "Revoke", "oauth_grant_revoke"
 

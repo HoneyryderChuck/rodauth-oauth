@@ -41,7 +41,7 @@ module Rodauth
     auth_value_method :oauth_grants_table, :oauth_grants
     auth_value_method :oauth_grants_id_column, :id
     %i[
-      account_id oauth_application_id
+      account_id oauth_application_id type
       redirect_uri code scopes access_type
       expires_in revoked_at
       token refresh_token

@@ -169,4 +169,8 @@ class RodauthOAuthTokenDeviceCodeTest < RodaIntegration
     super
     header "Accept", "application/json"
   end
+
+  def default_grant_type
+    "device_code"
+  end
 end

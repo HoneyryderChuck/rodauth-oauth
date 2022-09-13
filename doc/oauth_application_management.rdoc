@@ -38,6 +38,12 @@ oauth_applications_jwks_uri_label :: Form label for the oauth application URI wh
 oauth_applications_policy_uri_label :: Form label for the oauth application Policy URI.
 oauth_applications_tos_uri_label :: Form label for the oauth application Terms of Service URI.
 
+oauth_grants_expires_in_label :: Label for the oauth grant expires in property.
+oauth_grants_revoked_at_label :: Label for the oauth grant revocation date.
+oauth_grants_refresh_token_label :: Label for the oauth grant refresh token.
+oauth_grants_token_label :: Label for the oauth grant.
+oauth_grants_type_label :: Label for the oauth grant type.
+
 oauth_application_button :: Label of OAuth application form button.
 oauth_grant_revoke_button :: Label for the grant revoke button.
 

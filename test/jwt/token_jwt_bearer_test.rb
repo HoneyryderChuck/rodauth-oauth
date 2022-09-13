@@ -33,14 +33,16 @@ class RodauthOauthJWTTokenJwtBearerTest < JWTIntegration
     end
     setup_application(:oauth_authorization_code_grant)
 
+    grant = set_oauth_grant(type: "authorization_code")
+
     post("/token",
          client_assertion_type: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
          client_assertion: jwt_assertion(oauth_application[:client_id], "HS256", "SECRET"),
          client_id: oauth_application[:client_id],
          client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",
-         code: oauth_grant[:code],
-         redirect_uri: oauth_grant[:redirect_uri])
+         code: grant[:code],
+         redirect_uri: grant[:redirect_uri])
 
     verify_response
 
@@ -58,6 +60,10 @@ class RodauthOauthJWTTokenJwtBearerTest < JWTIntegration
 
   def oauth_feature
     :oauth_jwt_bearer_grant
+  end
+
+  def default_grant_type
+    "jwt-bearer"
   end
 
   def jwt_assertion(principal, algo, signing_key, extra_claims = {})
