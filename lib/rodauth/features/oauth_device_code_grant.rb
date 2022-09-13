@@ -36,9 +36,7 @@ module Rodauth
     )
 
     # /device-authorization
-    route(:device_authorization) do |r|
-      next unless is_authorization_server?
-
+    auth_server_route(:device_authorization) do |r|
       before_device_authorization_route
 
       r.post do
@@ -61,9 +59,7 @@ module Rodauth
     end
 
     # /device
-    route(:device) do |r|
-      next unless is_authorization_server?
-
+    auth_server_route(:device) do |r|
       before_device_route
       require_authorizable_account
 

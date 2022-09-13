@@ -192,3 +192,16 @@ roda do |r|
 +  rodauth.load_webfinger_route
 end
 ```
+
+## resource server mode via `oauth_resource_server` plugin
+
+You should now be able to set a resource server just using this plugin, instead of the combination of config tweaks previously suggested.
+
+```diff
+plugin :rodauth do
+-  enable :oauth
+-  is_authorization_server? false
+  enable :oauth_resource_server
+  authorization_server_url "https://external-auth-server"
+end
+```

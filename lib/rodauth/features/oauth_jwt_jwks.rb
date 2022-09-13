@@ -9,8 +9,8 @@ module Rodauth
 
     auth_value_methods(:jwks_set)
 
-    route(:jwks) do |r|
-      next unless is_authorization_server?
+    auth_server_route(:jwks) do |r|
+      before_jwks_route
 
       r.get do
         json_response_success({ keys: jwks_set }, true)

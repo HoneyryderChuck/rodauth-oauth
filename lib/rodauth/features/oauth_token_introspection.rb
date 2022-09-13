@@ -13,9 +13,7 @@ module Rodauth
     )
 
     # /introspect
-    route(:introspect) do |r|
-      next unless is_authorization_server?
-
+    auth_server_route(:introspect) do |r|
       before_introspect_route
       require_oauth_application
 

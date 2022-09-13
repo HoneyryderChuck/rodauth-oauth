@@ -13,9 +13,8 @@ class ResourceServer < Roda
   plugin :common_logger
 
   plugin :rodauth, json: true do
-    enable :oauth
+    enable :oauth_resource_server
     use_date_arithmetic? false
-    is_authorization_server? false
     authorization_server_url AUTHORIZATION_SERVER
   end
 

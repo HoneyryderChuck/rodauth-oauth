@@ -155,8 +155,7 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
     resource_server.plugin :common_logger if ENV.key?("RODAUTH_DEBUG")
 
     resource_server.plugin :rodauth do
-      enable :oauth_jwt
-      is_authorization_server? false
+      enable :oauth_resource_server, :oauth_jwt
       authorization_server_url auth_url
 
       http_request_cache do

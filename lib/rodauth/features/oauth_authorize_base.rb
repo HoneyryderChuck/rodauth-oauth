@@ -18,9 +18,7 @@ module Rodauth
     translatable_method :oauth_applications_policy_uri_label, "Policy URL"
 
     # /authorize
-    route(:authorize) do |r|
-      next unless is_authorization_server?
-
+    auth_server_route(:authorize) do |r|
       before_authorize_route
       require_authorizable_account
 

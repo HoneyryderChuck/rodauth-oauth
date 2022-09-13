@@ -67,7 +67,7 @@ task :check_method_doc do
     meths = File.binread(f).split("\n").grep(/\A(\w+[!?]?(\([^\)]+\))?) :: /).map { |line| line.split(/( :: |\()/, 2)[0] }.sort
     docs[File.basename(f).sub(/\.rdoc\z/, "")] = meths unless meths.empty?
   end
-  require "rodauth"
+  require "rodauth/oauth"
   docs.each do |f, doc_meths|
     require "./lib/rodauth/features/#{f}"
     feature = Rodauth::FEATURES[f.to_sym]

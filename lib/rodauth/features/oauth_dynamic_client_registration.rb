@@ -11,9 +11,7 @@ module Rodauth
     PROTECTED_APPLICATION_ATTRIBUTES = %i[account_id client_id].freeze
 
     # /register
-    route(:register) do |r|
-      next unless is_authorization_server?
-
+    auth_server_route(:register) do |r|
       before_register_route
 
       validate_client_registration_params

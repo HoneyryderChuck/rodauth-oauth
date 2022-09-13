@@ -36,9 +36,10 @@ module Rodauth
     def require_oauth_authorization(*)
       super
 
-      return unless authorization_token[oauth_grants_resource_column]
+      # done so to support token-in-grant-db, jwt, and resource-server mode
+      token_indicators = authorization_token[oauth_grants_resource_column] || authorization_token["resource"]
 
-      token_indicators = authorization_token[oauth_grants_resource_column]
+      return unless token_indicators
 
       token_indicators = token_indicators.split(" ") if token_indicators.is_a?(String)
 

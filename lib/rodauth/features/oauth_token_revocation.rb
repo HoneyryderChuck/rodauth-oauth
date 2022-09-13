@@ -10,9 +10,7 @@ module Rodauth
     notice_flash "The oauth grant has been revoked", "revoke_oauth_grant"
 
     # /revoke
-    route(:revoke) do |r|
-      next unless is_authorization_server?
-
+    auth_server_route(:revoke) do |r|
       before_revoke_route
 
       if logged_in?

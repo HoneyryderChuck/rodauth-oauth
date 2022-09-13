@@ -97,9 +97,7 @@ module Rodauth
     )
 
     # /userinfo
-    route(:userinfo) do |r|
-      next unless is_authorization_server?
-
+    auth_server_route(:userinfo) do |r|
       r.on method: %i[get post] do
         catch_error do
           claims = authorization_token
@@ -145,7 +143,7 @@ module Rodauth
     end
 
     # /oidc-logout
-    route(:oidc_logout) do |r|
+    auth_server_route(:oidc_logout) do |r|
       next unless use_rp_initiated_logout?
 
       before_oidc_logout_route

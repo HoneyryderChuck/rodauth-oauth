@@ -75,8 +75,7 @@ class RodauthOAuthResourceIndicatorsResourceServerTest < RodaIntegration
   def setup_application(auth_url = "https://auth-server")
     resource_server = Class.new(Roda)
     resource_server.plugin :rodauth do
-      enable :oauth_token_introspection, :oauth_resource_indicators
-      is_authorization_server? false
+      enable :oauth_resource_server, :oauth_resource_indicators
       authorization_server_url auth_url
     end
     resource_server.route do |r|

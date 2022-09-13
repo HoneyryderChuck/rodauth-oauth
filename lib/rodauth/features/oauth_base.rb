@@ -90,8 +90,6 @@ module Rodauth
     auth_value_method :oauth_already_in_use_error_code, "invalid_request"
     auth_value_method :oauth_invalid_grant_type_error_code, "unsupported_grant_type"
 
-    # Resource Server params
-    # Only required to use if the plugin is to be used in a resource server
     auth_value_method :is_authorization_server?, true
 
     auth_value_methods(:only_json?)
@@ -116,9 +114,7 @@ module Rodauth
     )
 
     # /token
-    route(:token) do |r|
-      next unless is_authorization_server?
-
+    auth_server_route(:token) do |r|
       before_token_route
       require_oauth_application
 
@@ -239,33 +235,13 @@ module Rodauth
 
       return unless bearer_token
 
-      @authorization_token = if is_authorization_server?
-                               # check if token has not expired
-                               # check if token has been revoked
-                               oauth_grant_by_token(bearer_token)
-                             else
-                               # where in resource server, NOT the authorization server.
-                               payload = introspection_request("access_token", bearer_token)
-
-                               return unless payload["active"]
-
-                               payload
-                             end
+      @authorization_token = oauth_grant_by_token(bearer_token)
     end
 
     def require_oauth_authorization(*scopes)
       authorization_required unless authorization_token
 
-      token_scopes = if is_authorization_server?
-                       authorization_token[oauth_grants_scopes_column].split(oauth_scope_separator)
-                     else
-                       aux_scopes = authorization_token["scope"]
-                       if aux_scopes
-                         aux_scopes.split(oauth_scope_separator)
-                       else
-                         []
-                       end
-                     end
+      token_scopes = authorization_token[oauth_grants_scopes_column].split(oauth_scope_separator)
 
       authorization_required unless scopes.any? { |scope| token_scopes.include?(scope) }
     end
@@ -276,6 +252,8 @@ module Rodauth
 
     def post_configure
       super
+
+      i18n_register(File.expand_path(File.join(__dir__, "..", "..", "..", "locales"))) if features.include?(:i18n)
 
       # all of the extensions below involve DB changes. Resource server mode doesn't use
       # database functions for OAuth though.
@@ -290,8 +268,6 @@ module Rodauth
       end
 
       self.class.send(:define_method, :__one_oauth_token_per_account) { one_oauth_token_per_account }
-
-      i18n_register(File.expand_path(File.join(__dir__, "..", "..", "..", "locales"))) if features.include?(:i18n)
     end
 
     private

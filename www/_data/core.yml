@@ -2,6 +2,9 @@
   name: OAuth Base
   path: oauth_base_rdoc.html
 -
+  name: OAuth Resource Server
+  path: oauth_resource_server_rdoc.html
+-
   name: OAuth Authorization Code Grant
   path: oauth_authorization_code_grant_rdoc.html
 -
