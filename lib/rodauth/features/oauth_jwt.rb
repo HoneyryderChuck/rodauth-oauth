@@ -241,6 +241,16 @@ module Rodauth
       jwt_decode(token)
     end
 
+    def token_from_application?(grant_or_claims, oauth_application)
+      return super if grant_or_claims[oauth_tokens_id_column]
+
+      if grant_or_claims["client_id"]
+        grant_or_claims["client_id"] == oauth_application[oauth_applications_client_id_column]
+      else
+        Array(grant_or_claims["aud"]).include?(oauth_application[oauth_applications_client_id_column])
+      end
+    end
+
     def json_token_introspect_payload(oauth_token)
       return { active: false } unless oauth_token
 

@@ -74,7 +74,9 @@ module Rodauth
       oauth_token = if param("token_type_hint") == "refresh_token"
                       oauth_token_by_refresh_token(token)
                     else
-                      oauth_token_by_token(token)
+                      oauth_token_by_token_ds(token).where(
+                        oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column]
+                      ).first
                     end
 
       redirect_response_error("invalid_request") unless oauth_token

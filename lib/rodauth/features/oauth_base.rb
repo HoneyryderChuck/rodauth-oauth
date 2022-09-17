@@ -530,7 +530,7 @@ module Rodauth
     end
 
     def oauth_token_by_refresh_token(token, revoked: false)
-      ds = db[oauth_tokens_table]
+      ds = db[oauth_tokens_table].where(oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column])
       #
       # filter expired refresh tokens out.
       # an expired refresh token is a token whose access token expired for a period longer than the
