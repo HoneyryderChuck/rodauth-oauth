@@ -35,24 +35,24 @@ class JWTIntegration < RodaIntegration
     assert last_response.headers["Content-Type"] == "application/json"
   end
 
-  def verify_access_token_response(data, oauth_grant, secret, algorithm, audience: "#{example_origin}/token")
+  def verify_access_token_response(data, oauth_grant, secret, algorithm, audience: "CLIENT_ID")
     verify_token_common_response(data)
 
     assert data.key?("access_token")
     verify_access_token(data["access_token"], oauth_grant, signing_key: secret, signing_algo: algorithm, audience: audience)
   end
 
-  def verify_access_token(data, oauth_grant, signing_key:, signing_algo:, audience: "#{example_origin}/token")
+  def verify_access_token(data, oauth_grant, signing_key:, signing_algo:, audience: "CLIENT_ID")
     claims, headers = JWT.decode(data, signing_key, true, algorithms: [signing_algo])
     assert headers["alg"] == signing_algo
 
-    verify_jwt_claims(claims, oauth_grant, audience: audience)
     assert claims.key?("client_id")
     assert claims["client_id"] == "CLIENT_ID"
+    verify_jwt_claims(claims, oauth_grant, audience: audience)
     claims
   end
 
-  def verify_jwt_claims(claims, _oauth_grant, audience: "#{example_origin}/token")
+  def verify_jwt_claims(claims, _oauth_grant, audience: claims["client_id"])
     assert claims.key?("iss")
     assert claims["iss"] == example_origin
     assert claims.key?("sub")

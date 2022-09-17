@@ -136,7 +136,7 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
       iat: Time.now.to_i, # issued at
       client_id: oauth_application[:client_id],
       exp: exp.to_i,
-      aud: "resource-server",
+      aud: oauth_application[:client_id],
       scope: oauth_grant[:scopes]
     }.merge(params)
 

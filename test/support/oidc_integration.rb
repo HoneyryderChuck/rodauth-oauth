@@ -38,6 +38,7 @@ class OIDCIntegration < JWTIntegration
     assert headers["alg"] == signing_algo
     verify_id_token_claims(claims, oauth_grant)
     yield claims if block_given?
+    claims
   end
 
   def verify_id_token_claims(claims, oauth_grant)

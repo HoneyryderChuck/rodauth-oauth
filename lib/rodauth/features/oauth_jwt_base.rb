@@ -51,7 +51,7 @@ module Rodauth
       # MAY be used as a value for an "aud" element to identify the
       # authorization server as an intended audience of the JWT.
       @oauth_jwt_audience ||= if is_authorization_server?
-                                token_url
+                                oauth_application[oauth_applications_client_id_column]
                               else
                                 metadata = authorization_server_metadata
 
@@ -260,7 +260,7 @@ module Rodauth
             (claims[:nbf] && Time.at(claims[:nbf]) < now) &&
             (claims[:iat] && Time.at(claims[:iat]) < now) &&
             (verify_iss && claims[:iss] != oauth_jwt_issuer) &&
-            (verify_aud && !verify_aud(claims[:aud], oauth_jwt_audience)) &&
+            (verify_aud && !verify_aud(claims[:aud], claims[:client_id])) &&
             (verify_jti && !verify_jti(claims[:jti], claims))
           )
           return
@@ -378,8 +378,7 @@ module Rodauth
                                    verify_iss: verify_iss,
                                    iss: oauth_jwt_issuer,
                                    # can't use stock aud verification, as it's dependent on the client application id
-                                   verify_aud: verify_aud,
-                                   aud: oauth_jwt_audience,
+                                   verify_aud: false,
                                    verify_jti: (verify_jti ? method(:verify_jti) : false),
                                    verify_iat: true
                                  }
@@ -388,17 +387,21 @@ module Rodauth
                                end
 
         # decode jwt
-        if is_authorization_server?
-          if jwks
-            algorithms = jws_algorithm ? [jws_algorithm] : jwks.select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
-            JWT.decode(token, nil, true, algorithms: algorithms, jwks: { keys: jwks }, **verify_claims_params).first
-          elsif jws_key
-            JWT.decode(token, jws_key, true, algorithms: [jws_algorithm], **verify_claims_params).first
-          end
-        elsif (jwks = auth_server_jwks_set)
-          algorithms = jwks[:keys].select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
-          JWT.decode(token, nil, true, jwks: jwks, algorithms: algorithms, **verify_claims_params).first
-        end
+        claims = if is_authorization_server?
+                   if jwks
+                     algorithms = jws_algorithm ? [jws_algorithm] : jwks.select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
+                     JWT.decode(token, nil, true, algorithms: algorithms, jwks: { keys: jwks }, **verify_claims_params).first
+                   elsif jws_key
+                     JWT.decode(token, jws_key, true, algorithms: [jws_algorithm], **verify_claims_params).first
+                   end
+                 elsif (jwks = auth_server_jwks_set)
+                   algorithms = jwks[:keys].select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
+                   JWT.decode(token, nil, true, jwks: jwks, algorithms: algorithms, **verify_claims_params).first
+                 end
+
+        return if verify_claims && verify_aud && !verify_aud(claims["aud"], claims["client_id"])
+
+        claims
       rescue JWT::DecodeError, JWT::JWKError
         nil
       end
