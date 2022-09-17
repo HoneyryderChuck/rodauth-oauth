@@ -9,7 +9,8 @@ module Rodauth
     before "introspect"
 
     auth_value_methods(
-      :before_introspection_request
+      :before_introspection_request,
+      :resource_owner_identifier
     )
 
     # /introspect
@@ -37,11 +38,8 @@ module Rodauth
 
           oauth_grant ||= oauth_grant_by_refresh_token(param("token")) if token_type_hint.nil?
 
-          if oauth_application
-            redirect_response_error("invalid_request") if oauth_grant && !grant_from_application?(oauth_grant, oauth_application)
-          elsif oauth_grant
-            @oauth_application = db[oauth_applications_table].where(oauth_applications_id_column =>
-              oauth_grant[oauth_grants_oauth_application_id_column]).first
+          if oauth_application && (oauth_grant && !grant_from_application?(oauth_grant, oauth_application))
+            redirect_response_error("invalid_request")
           end
 
           json_response_success(json_token_introspect_payload(oauth_grant))
@@ -71,7 +69,7 @@ module Rodauth
           active: true,
           scope: grant_or_claims["scope"],
           client_id: grant_or_claims["client_id"],
-          # username
+          username: resource_owner_identifier(grant_or_claims),
           token_type: "access_token",
           exp: grant_or_claims["exp"],
           iat: grant_or_claims["iat"],
@@ -86,7 +84,7 @@ module Rodauth
           active: true,
           scope: grant_or_claims[oauth_grants_scopes_column],
           client_id: oauth_application[oauth_applications_client_id_column],
-          # username
+          username: resource_owner_identifier(grant_or_claims),
           token_type: oauth_token_type,
           exp: grant_or_claims[oauth_grants_expires_in_column].to_i
         }
@@ -119,6 +117,25 @@ module Rodauth
       super.tap do |data|
         data[:introspection_endpoint] = introspect_url
         data[:introspection_endpoint_auth_methods_supported] = %w[client_secret_basic]
+      end
+    end
+
+    def resource_owner_identifier(grant_or_claims)
+      if (account_id = grant_or_claims[oauth_grants_account_id_column])
+        account_ds(account_id).select(login_column).first[login_column]
+      elsif (app_id = grant_or_claims[oauth_grants_oauth_application_id_column])
+        db[oauth_applications_table].where(oauth_applications_id_column => app_id)
+                                    .select(oauth_applications_name_column)
+                                    .first[oauth_applications_name_column]
+      elsif (subject = grant_or_claims["sub"])
+        # JWT
+        if subject == grant_or_claims["client_id"]
+          db[oauth_applications_table].where(oauth_applications_client_id_column => subject)
+                                      .select(oauth_applications_name_column)
+                                      .first[oauth_applications_name_column]
+        else
+          account_ds(subject).select(login_column).first[login_column]
+        end
       end
     end
   end

@@ -22,6 +22,7 @@ class RodauthOAuthResourceIndicatorsTokenIntrospectTest < RodaIntegration
          })
     assert last_response.status == 200
     assert json_body["active"] == true
+    assert json_body["username"] == account[:email]
     assert json_body["scope"] == oauth_grant[:scopes]
     assert json_body["client_id"] == oauth_application[:client_id]
     assert json_body["token_type"] == "bearer"
