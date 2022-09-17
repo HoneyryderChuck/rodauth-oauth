@@ -18,7 +18,7 @@ module Rodauth
 
     def accepts_json?: () -> boolish
 
-    def scopes: () -> Array[String] 
+    def scopes: () -> Array[String]
 
     def redirect_uri: () -> String?
 
@@ -113,7 +113,7 @@ module Rodauth
 
     def json_response_success: (String body, ?bool cache) -> void
 
-    def throw_json_response_error: (Integer status, String error_code) -> void 
+    def throw_json_response_error: (Integer status, String error_code) -> void
 
     def authorization_required: () -> void
 
@@ -129,7 +129,7 @@ module Rodauth
 
     def check_valid_response_type?: () -> bool
 
-    def validate_pkce_challenge_params: () -> void 
+    def validate_pkce_challenge_params: () -> void
 
     def check_valid_grant_challenge?: (db_record grant, String verifier) -> untyped
 

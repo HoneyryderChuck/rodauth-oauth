@@ -35,4 +35,12 @@ class RodauthOAuthResourceIndicatorsTokenIntrospectTest < RodaIntegration
   def oauth_feature
     %i[oauth_token_introspection oauth_resource_indicators]
   end
+
+  # overriding to implement the client/secret basic authorization
+  def login
+    header "Authorization", "Basic #{authorization_header(
+      username: oauth_application[:client_id],
+      password: 'CLIENT_SECRET'
+    )}"
+  end
 end

@@ -15,6 +15,7 @@ module Rodauth
       next unless is_authorization_server?
 
       before_introspect_route
+      require_oauth_application
 
       r.post do
         catch_error do
