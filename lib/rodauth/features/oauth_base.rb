@@ -162,9 +162,10 @@ module Rodauth
     def oauth_token_subject
       return unless authorization_token
 
-      # TODO: fix this once tokens know which type they were generated with
       authorization_token[oauth_grants_account_id_column] ||
-        authorization_token[oauth_grants_oauth_application_id_column]
+        db[oauth_applications_table].where(
+          oauth_applications_id_column => authorization_token[oauth_grants_oauth_application_id_column]
+        ).select_map(oauth_applications_client_id_column).first
     end
 
     def accepts_json?

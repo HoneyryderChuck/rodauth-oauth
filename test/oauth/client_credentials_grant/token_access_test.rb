@@ -72,7 +72,7 @@ class RodauthClientCredentialsGrantOAuthTokenAccessTest < RodaIntegration
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 200
-    assert last_response["x-oauth-subject"] == oauth_application[:id]
+    assert last_response["x-oauth-subject"] == oauth_application[:client_id]
   end
 
   def test_token_access_private_invalid_scope_only_json
@@ -98,7 +98,8 @@ class RodauthClientCredentialsGrantOAuthTokenAccessTest < RodaIntegration
 
     get("/private", access_token: oauth_grant_with_token[:token])
     assert last_response.status == 200
-    assert last_response["x-oauth-subject"] == oauth_application[:id]
+
+    assert last_response["x-oauth-subject"] == oauth_application[:client_id]
   end
 
   private

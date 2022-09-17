@@ -205,3 +205,7 @@ plugin :rodauth do
   authorization_server_url "https://external-auth-server"
 end
 ```
+
+## `oauth_token_subject` returns client id for client-application tokens
+
+Previously, if a token from a client credentials grant would be used, calling `oauth_token_subject` would return the oauth application primary key. It now returns the application client id.
