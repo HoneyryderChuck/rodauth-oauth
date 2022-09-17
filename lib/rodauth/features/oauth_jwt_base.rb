@@ -7,12 +7,6 @@ module Rodauth
   Feature.define(:oauth_jwt_base, :OauthJwtBase) do
     depends :oauth_base
 
-    # Recommended to have hmac_secret as well
-
-    auth_value_method :oauth_jwt_subject_type, "public" # fallback subject type: public, pairwise
-    auth_value_method :oauth_jwt_subject_secret, nil # salt for pairwise generation
-
-    auth_value_method :oauth_applications_subject_type_column, :subject_type
     auth_value_method :oauth_applications_jwt_public_key_column, :jwt_public_key
 
     translatable_method :oauth_applications_jwt_public_key_label, "Public key"
@@ -71,22 +65,8 @@ module Rodauth
       end
     end
 
-    def jwt_subject(oauth_grant)
-      subject_type = if oauth_application
-                       oauth_application[oauth_applications_subject_type_column] || oauth_jwt_subject_type
-                     else
-                       oauth_jwt_subject_type
-                     end
-      case subject_type
-      when "public"
-        oauth_grant[oauth_grants_account_id_column] || oauth_grant[oauth_grants_oauth_application_id_column]
-      when "pairwise"
-        id = oauth_grant[oauth_grants_account_id_column]
-        application_id = oauth_grant[oauth_grants_oauth_application_id_column]
-        Digest::SHA256.hexdigest("#{id}#{application_id}#{oauth_jwt_subject_secret}")
-      else
-        raise StandardError, "unexpected subject (#{subject_type})"
-      end
+    def jwt_subject(oauth_grant, client_application = oauth_application)
+      oauth_grant[oauth_grants_account_id_column] || client_application[oauth_applications_client_id_column]
     end
 
     def oauth_server_metadata_body(path = nil)

@@ -193,7 +193,7 @@ roda do |r|
 end
 ```
 
-## resource server mode via `oauth_resource_server` plugin
+## resource server mode via `oauth_resource_server` feature
 
 You should now be able to set a resource server just using this plugin, instead of the combination of config tweaks previously suggested.
 
@@ -209,3 +209,7 @@ end
 ## `oauth_token_subject` returns client id for client-application tokens
 
 Previously, if a token from a client credentials grant would be used, calling `oauth_token_subject` would return the oauth application primary key. It now returns the application client id.
+
+## `oauth_jwt_subject*` family of options moved to `oidc` feature
+
+Previously, they were in the `oauth_jwt` feature; however, they're not specced for use in general purpose JWT Access Tokens, but rather in OIDC ID tokens.

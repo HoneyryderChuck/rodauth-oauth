@@ -64,17 +64,21 @@ module Rodauth
 
     auth_value_method :oauth_application_scopes, %w[openid]
 
-    auth_value_method :oauth_applications_id_token_signed_response_alg_column, :id_token_signed_response_alg
-    auth_value_method :oauth_applications_id_token_encrypted_response_alg_column, :id_token_encrypted_response_alg
-    auth_value_method :oauth_applications_id_token_encrypted_response_enc_column, :id_token_encrypted_response_enc
-    auth_value_method :oauth_applications_userinfo_signed_response_alg_column, :userinfo_signed_response_alg
-    auth_value_method :oauth_applications_userinfo_encrypted_response_alg_column, :userinfo_encrypted_response_alg
-    auth_value_method :oauth_applications_userinfo_encrypted_response_enc_column, :userinfo_encrypted_response_enc
+    %i[
+      subject_type
+      id_token_signed_response_alg id_token_encrypted_response_alg id_token_encrypted_response_enc
+      userinfo_signed_response_alg userinfo_encrypted_response_alg userinfo_encrypted_response_enc
+    ].each do |column|
+      auth_value_method :"oauth_applications_#{column}_column", column
+    end
 
     auth_value_method :oauth_grants_nonce_column, :nonce
     auth_value_method :oauth_grants_acr_column, :acr
     auth_value_method :oauth_grants_nonce_column, :nonce
     auth_value_method :oauth_grants_acr_column, :acr
+
+    auth_value_method :oauth_jwt_subject_type, "public" # fallback subject type: public, pairwise
+    auth_value_method :oauth_jwt_subject_secret, nil # salt for pairwise generation
 
     translatable_method :oauth_invalid_scope_message, "The Access Token expired"
 
@@ -163,12 +167,16 @@ module Rodauth
           # the @oauth_application, and then decode-and-verify.
           #
           claims = jwt_decode(param("id_token_hint"), verify_claims: false)
-          oauth_application_id = claims["client_id"]
+          oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => claims["client_id"]).first
+          oauth_grant = db[oauth_grants_table]
+                        .where(
+                          oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+                          oauth_grants_account_id_column => account_id
+                        ).first
 
           # check whether ID token belongs to currently logged-in user
-          redirect_response_error("invalid_request") unless claims["sub"] == jwt_subject(
-            oauth_grants_account_id_column => account_id,
-            oauth_grants_oauth_application_id_column => oauth_application_id
+          redirect_response_error("invalid_request") unless oauth_grant && claims["sub"] == jwt_subject(
+            oauth_grant, oauth_application
           )
 
           # When an id_token_hint parameter is present, the OP MUST validate that it was the issuer of the ID Token.
@@ -292,6 +300,37 @@ module Rodauth
       try_prompt
       super
       try_acr_values
+    end
+
+    def jwt_subject(oauth_grant, client_application = oauth_application)
+      subject_type = client_application[oauth_applications_subject_type_column] || oauth_jwt_subject_type
+
+      case subject_type
+      when "public"
+        super
+      when "pairwise"
+        identifier_uri = client_application[oauth_applications_sector_identifier_uri_column]
+
+        unless identifier_uri
+          identifier_uri = client_application[oauth_applications_redirect_uri_column]
+          identifier_uri = identifier_uri.split(" ")
+          # If the Client has not provided a value for sector_identifier_uri in Dynamic Client Registration
+          # [OpenID.Registration], the Sector Identifier used for pairwise identifier calculation is the host
+          # component of the registered redirect_uri. If there are multiple hostnames in the registered redirect_uris,
+          # the Client MUST register a sector_identifier_uri.
+          if identifier_uri.size > 1
+            # return error message
+          end
+          identifier_uri = identifier_uri.first
+        end
+
+        identifier_uri = URI(identifier_uri).host
+
+        account_id = oauth_grant[oauth_grants_account_id_column]
+        Digest::SHA256.hexdigest("#{identifier_uri}#{account_id}#{oauth_jwt_subject_secret}")
+      else
+        raise StandardError, "unexpected subject (#{subject_type})"
+      end
     end
 
     # this executes before checking for a logged in account
@@ -611,7 +650,7 @@ module Rodauth
         userinfo_endpoint: userinfo_url,
         end_session_endpoint: (oidc_logout_url if use_rp_initiated_logout?),
         response_types_supported: response_types_supported,
-        subject_types_supported: [oauth_jwt_subject_type],
+        subject_types_supported: %w[public pairwise],
 
         id_token_signing_alg_values_supported: metadata[:token_endpoint_auth_signing_alg_values_supported],
         id_token_encryption_alg_values_supported: Array(alg_values),

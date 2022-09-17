@@ -9,8 +9,6 @@ module Rodauth
 
     auth_value_method :oauth_jwt_access_tokens, true
 
-    # Recommended to have hmac_secret as well
-
     def require_oauth_authorization(*scopes)
       return super unless oauth_jwt_access_tokens
 
