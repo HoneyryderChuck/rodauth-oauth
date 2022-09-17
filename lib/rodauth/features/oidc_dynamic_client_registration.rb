@@ -43,11 +43,41 @@ module Rodauth
         else
           register_throw_json_response_error("invalid_client_metadata", register_invalid_application_type_message(type))
         end
-      elsif (value = @oauth_application_params[oauth_applications_subject_type_column])
+      end
+
+      if (value = @oauth_application_params[oauth_applications_sector_identifier_uri_column])
+        uri = URI(value)
+
+        unless uri.scheme == "https" || uri.host == "localhost"
+          register_throw_json_response_error("invalid_redirect_uri", register_invalid_uri_message(uri))
+        end
+      end
+
+      if (value = @oauth_application_params[oauth_applications_subject_type_column])
         unless %w[pairwise public].include?(value)
           register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("subject_type"))
         end
-      elsif (value = @oauth_application_params[oauth_applications_id_token_signed_response_alg_column])
+
+        if value == "pairwise"
+          sector_identifier_uri = @oauth_application_params[oauth_applications_sector_identifier_uri_column]
+
+          if sector_identifier_uri
+            response = http_request(sector_identifier_uri)
+            unless response.code.to_i == 200
+              register_throw_json_response_error("invalid_client_metadata",
+                                                 register_invalid_param_message("sector_identifier_uri"))
+            end
+            uris = JSON.parse(response.body)
+
+            if uris != @oauth_application_params[oauth_applications_redirect_uri_column].split(" ")
+              register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("sector_identifier_uri"))
+            end
+
+          end
+        end
+      end
+
+      if (value = @oauth_application_params[oauth_applications_id_token_signed_response_alg_column])
         if value == "none"
           # The value none MUST NOT be used as the ID Token alg value unless the Client uses only Response Types
           # that return no ID Token from the Authorization Endpoint
@@ -58,41 +88,49 @@ module Rodauth
         elsif !oauth_jwt_algorithms_supported.include?(value)
           register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("id_token_signed_response_alg"))
         end
-      elsif (value = @oauth_application_params[oauth_applications_id_token_encrypted_response_alg_column])
-        unless oauth_jwt_jwe_algorithms_supported.include?(value)
-          register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("id_token_encrypted_response_alg"))
-        end
-      elsif (value = @oauth_application_params[oauth_applications_id_token_encrypted_response_enc_column])
-        unless oauth_jwt_jwe_encryption_methods_supported.include?(value)
-          register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("id_token_encrypted_response_enc"))
-        end
-      elsif (value = @oauth_application_params[oauth_applications_userinfo_signed_response_alg_column])
-        unless oauth_jwt_algorithms_supported.include?(value)
-          register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("userinfo_signed_response_alg"))
-        end
-      elsif (value = @oauth_application_params[oauth_applications_userinfo_encrypted_response_alg_column])
-        unless oauth_jwt_jwe_algorithms_supported.include?(value)
-          register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("userinfo_encrypted_response_alg"))
-        end
-      elsif (value = @oauth_application_params[oauth_applications_userinfo_encrypted_response_enc_column])
-        unless oauth_jwt_jwe_encryption_methods_supported.include?(value)
-          register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("userinfo_encrypted_response_enc"))
-        end
-      elsif defined?(oauth_applications_request_object_signing_alg_column) &&
-            (value = @oauth_application_params[oauth_applications_request_object_signing_alg_column])
-        unless oauth_jwt_algorithms_supported.include?(value)
-          register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("request_object_signing_alg"))
-        end
-      elsif defined?(oauth_applications_request_object_encryption_alg_column) &&
-            (value = @oauth_application_params[oauth_applications_request_object_encryption_alg_column])
-        unless oauth_jwt_jwe_algorithms_supported.include?(value)
-          register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("request_object_encryption_alg"))
-        end
-      elsif defined?(oauth_applications_request_object_encryption_enc_column) &&
-            (value = @oauth_application_params[oauth_applications_request_object_encryption_enc_column])
-        unless oauth_jwt_jwe_encryption_methods_supported.include?(value)
-          register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("request_object_encryption_enc"))
-        end
+      end
+
+      if (value = @oauth_application_params[oauth_applications_id_token_encrypted_response_alg_column]) &&
+         !oauth_jwt_jwe_algorithms_supported.include?(value)
+        register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("id_token_encrypted_response_alg"))
+      end
+
+      if (value = @oauth_application_params[oauth_applications_id_token_encrypted_response_enc_column]) &&
+         !oauth_jwt_jwe_encryption_methods_supported.include?(value)
+        register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("id_token_encrypted_response_enc"))
+      end
+
+      if (value = @oauth_application_params[oauth_applications_userinfo_signed_response_alg_column]) &&
+         !oauth_jwt_algorithms_supported.include?(value)
+        register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("userinfo_signed_response_alg"))
+      end
+
+      if (value = @oauth_application_params[oauth_applications_userinfo_encrypted_response_alg_column]) &&
+         !oauth_jwt_jwe_algorithms_supported.include?(value)
+        register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("userinfo_encrypted_response_alg"))
+      end
+
+      if (value = @oauth_application_params[oauth_applications_userinfo_encrypted_response_enc_column]) &&
+         !oauth_jwt_jwe_encryption_methods_supported.include?(value)
+        register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("userinfo_encrypted_response_enc"))
+      end
+
+      if defined?(oauth_applications_request_object_signing_alg_column) &&
+         (value = @oauth_application_params[oauth_applications_request_object_signing_alg_column]) &&
+         !oauth_jwt_algorithms_supported.include?(value)
+        register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("request_object_signing_alg"))
+      end
+
+      if defined?(oauth_applications_request_object_encryption_alg_column) &&
+         (value = @oauth_application_params[oauth_applications_request_object_encryption_alg_column]) &&
+         !oauth_jwt_jwe_algorithms_supported.include?(value)
+        register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("request_object_encryption_alg"))
+      end
+
+      if defined?(oauth_applications_request_object_encryption_enc_column) &&
+         (value = @oauth_application_params[oauth_applications_request_object_encryption_enc_column]) &&
+         !oauth_jwt_jwe_encryption_methods_supported.include?(value)
+        register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("request_object_encryption_enc"))
       end
     end
 

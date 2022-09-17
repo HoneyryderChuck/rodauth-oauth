@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "webmock/minitest"
 
 class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
   include Rack::Test::Methods
+  include WebMock::API
 
   def test_oidc_client_registration_response_type_id_token
     rodauth do
@@ -127,6 +129,28 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
                         "subject_type" => "public"
                       ))
 
+    assert last_response.status == 201
+
+    redirect_uris = %w[https://foobar.com/callback https://foobar.com/callback2]
+
+    stub_request(:get, "https://fail.example.net/file_of_redirect_uris.json")
+      .to_return(body: JSON.dump(%w[https://google.com]))
+
+    post("/register", valid_registration_params.merge(
+                        "redirect_uris" => redirect_uris,
+                        "subject_type" => "pairwise",
+                        "sector_identifier_uri" => "https://fail.example.net/file_of_redirect_uris.json"
+                      ))
+    assert last_response.status == 400
+
+    stub_request(:get, "https://succ.example.net/file_of_redirect_uris.json")
+      .to_return(body: JSON.dump(redirect_uris))
+
+    post("/register", valid_registration_params.merge(
+                        "redirect_uris" => redirect_uris,
+                        "subject_type" => "pairwise",
+                        "sector_identifier_uri" => "https://succ.example.net/file_of_redirect_uris.json"
+                      ))
     assert last_response.status == 201
   end
 

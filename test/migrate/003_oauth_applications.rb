@@ -27,6 +27,7 @@ Sequel.migration do
       String :software_id, null: true
       String :software_version, null: true
       # oidc extra params
+      String :sector_identifier_uri, null: true
       String :application_type, null: true
       String :subject_type, null: true
       String :id_token_signed_response_alg, null: true
