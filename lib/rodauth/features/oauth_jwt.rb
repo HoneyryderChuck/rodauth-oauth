@@ -27,6 +27,20 @@ module Rodauth
       authorization_token["sub"]
     end
 
+    def current_oauth_account
+      subject = oauth_token_subject
+
+      return if subject == authorization_token["client_id"]
+
+      account_ds(subject).first
+    end
+
+    def current_oauth_application
+      db[oauth_applications_table].where(
+        oauth_applications_client_id_column => authorization_token["client_id"]
+      ).first
+    end
+
     private
 
     def authorization_token
@@ -39,13 +53,15 @@ module Rodauth
 
         return unless bearer_token
 
-        jwt_token = jwt_decode(bearer_token)
+        jwt_claims = jwt_decode(bearer_token)
 
-        return unless jwt_token
+        return unless jwt_claims
 
-        return unless jwt_token["sub"]
+        return unless jwt_claims["sub"]
 
-        jwt_token
+        return unless jwt_claims["aud"]
+
+        jwt_claims
       end
     end
 

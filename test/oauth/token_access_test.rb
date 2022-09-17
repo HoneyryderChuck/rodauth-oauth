@@ -73,6 +73,8 @@ class RodauthOAuthTokenAccessTest < RodaIntegration
     get("/private")
     assert last_response.status == 200
     assert last_response["x-oauth-subject"] == account[:id]
+    assert last_response["x-oauth-current-account"] == account[:id]
+    assert last_response["x-oauth-current-application"] == "CLIENT_ID"
   end
 
   # JSON

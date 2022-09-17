@@ -168,6 +168,20 @@ module Rodauth
         ).select_map(oauth_applications_client_id_column).first
     end
 
+    def current_oauth_account
+      account_id = authorization_token[oauth_grants_account_id_column]
+
+      return unless account_id
+
+      account_ds(account_id).first
+    end
+
+    def current_oauth_application
+      db[oauth_applications_table].where(
+        oauth_applications_id_column => authorization_token[oauth_grants_oauth_application_id_column]
+      ).first
+    end
+
     def accepts_json?
       return true if only_json?
 

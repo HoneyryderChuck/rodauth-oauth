@@ -110,6 +110,7 @@ route do |r|
   r.is "books" do
     rodauth.require_oauth_authorization("books.read", "books.research")
     r.get do
+      @books = Book.where(user_id: rodauth.current_oauth_account[:id]).all
       # ...
     end
   end
@@ -144,8 +145,8 @@ plugin :rodauth do
   # enable it in the plugin
   enable :login, :oauth
   # ...
-  oauth_grants_table "access_grants"
-  oauth_grants_code_column "authorization_code"
+  oauth_grants_table :access_grants
+  oauth_grants_code_column :authorization_code
 end
 ```
 

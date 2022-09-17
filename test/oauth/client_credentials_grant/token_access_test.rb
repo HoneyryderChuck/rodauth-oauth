@@ -73,6 +73,8 @@ class RodauthClientCredentialsGrantOAuthTokenAccessTest < RodaIntegration
     get("/private")
     assert last_response.status == 200
     assert last_response["x-oauth-subject"] == oauth_application[:client_id]
+    assert last_response["x-oauth-current-account"].nil?
+    assert last_response["x-oauth-current-application"] == oauth_application[:client_id]
   end
 
   def test_token_access_private_invalid_scope_only_json
@@ -100,6 +102,8 @@ class RodauthClientCredentialsGrantOAuthTokenAccessTest < RodaIntegration
     assert last_response.status == 200
 
     assert last_response["x-oauth-subject"] == oauth_application[:client_id]
+    assert last_response["x-oauth-current-account"].nil?
+    assert last_response["x-oauth-current-application"] == oauth_application[:client_id]
   end
 
   private
