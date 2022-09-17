@@ -81,7 +81,7 @@ This tutorial assumes you already read the documentation and know how to set up 
 ```ruby
 plugin :rodauth do
   # enable it in the plugin
-  enable :login, :oauth
+  enable :login, :oauth_authorization_code_grant
   oauth_application_scopes %w[profile.read profile.write]
 end
 
@@ -143,7 +143,7 @@ You can change column names or even use existing tables, however, be aware that 
 ```ruby
 plugin :rodauth do
   # enable it in the plugin
-  enable :login, :oauth
+  enable :login, :oauth_authorization_code_grant
   # ...
   oauth_grants_table :access_grants
   oauth_grants_code_column :authorization_code
@@ -194,7 +194,7 @@ You can then enable this feature in `lib/rodauth_app.rb` and set up any options 
 
 ```ruby
 # lib/roudauth_app.rb
-enable :oauth
+enable :oauth_authorization_code_grant
 # OAuth
 oauth_application_scopes %w[profile.read profile.write books.read books.write]
 ```
@@ -266,7 +266,7 @@ However, this extension is optional, and you might want to generate the secrets 
 
 ```ruby
 plugin :rodauth do
-  enable :oauth
+  enable :oauth_authorization_code_grant
   secret_matches? ->(application, secret){ application[:client_secret] == secret }
 end
 ```

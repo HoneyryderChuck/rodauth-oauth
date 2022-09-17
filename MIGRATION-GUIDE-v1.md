@@ -213,3 +213,17 @@ Previously, if a token from a client credentials grant would be used, calling `o
 ## `oauth_jwt_subject*` family of options moved to `oidc` feature
 
 Previously, they were in the `oauth_jwt` feature; however, they're not specced for use in general purpose JWT Access Tokens, but rather in OIDC ID tokens.
+
+## `oauth` feature removed
+
+The `oauth` plugin, which is how this gem started, was a giant "god" feature, which has been gradually broken down into sub-features, each implementing an RFC or specific feature, and building on top of each other. In its last state, it was just loading all those sub-features, for backwards-compatibility; and when you need to turn off a particular feature, you'd have to set a `use_oauth_implicit_grant_type?` type of config to `false`.
+
+That is now over, and you'll need to explicitly load all features you need yourself.
+
+```diff
+plugin :rodauth
+-  enable :oauth
+-  use_oauth_implicit_grant_type? false
++  enable :oauth_authorization_code_grant, :oauth_client_credentials_grant
+end
+```
