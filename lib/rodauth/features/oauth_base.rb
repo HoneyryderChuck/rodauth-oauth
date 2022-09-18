@@ -568,7 +568,7 @@ module Rodauth
       oauth_grant_by_token_ds(token).first
     end
 
-    def oauth_grant_by_refresh_token(token, revoked: false)
+    def oauth_grant_by_refresh_token_ds(token, revoked: false)
       ds = db[oauth_grants_table].where(oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column])
       #
       # filter expired refresh tokens out.
@@ -585,7 +585,11 @@ module Rodauth
 
       ds = ds.where(oauth_grants_revoked_at_column => nil) unless revoked
 
-      ds.first
+      ds
+    end
+
+    def oauth_grant_by_refresh_token(token, **kwargs)
+      oauth_grant_by_refresh_token_ds(token, **kwargs).first
     end
 
     def json_access_token_payload(oauth_grant)
@@ -613,7 +617,7 @@ module Rodauth
 
       refresh_token = param("refresh_token")
       # fetch potentially revoked oauth token
-      oauth_grant = oauth_grant_by_refresh_token(refresh_token, revoked: true)
+      oauth_grant = oauth_grant_by_refresh_token_ds(refresh_token, revoked: true).for_update.first
 
       update_params = { oauth_grants_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_token_expires_in) }
 
