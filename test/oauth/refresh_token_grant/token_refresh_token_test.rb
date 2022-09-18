@@ -86,6 +86,21 @@ class RodauthOAuthRefreshTokenTest < RodaIntegration
     assert json_body["error_description"] == "Invalid grant"
   end
 
+  def test_token_refresh_token_some_other_application
+    setup_application
+
+    other_application = set_oauth_application(client_id: "OTHER_ID")
+
+    post("/token",
+         client_id: other_application[:client_id],
+         client_secret: "CLIENT_SECRET",
+         grant_type: "refresh_token",
+         refresh_token: oauth_grant_with_token[:refresh_token])
+
+    assert last_response.status == 400
+    assert json_body["error"] == "invalid_grant"
+  end
+
   def test_token_refresh_token_successful
     setup_application
 

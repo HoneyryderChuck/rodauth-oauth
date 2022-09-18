@@ -106,6 +106,22 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     assert json_body["error"] == "invalid_request"
   end
 
+  def test_token_authorization_code_some_other_application
+    setup_application
+
+    other_application = set_oauth_application(client_id: "OTHER_ID")
+
+    post("/token",
+         client_id: other_application[:client_id],
+         client_secret: "CLIENT_SECRET",
+         grant_type: "authorization_code",
+         code: oauth_grant[:code],
+         redirect_uri: oauth_grant[:redirect_uri])
+
+    assert last_response.status == 400
+    assert json_body["error"] == "invalid_grant"
+  end
+
   def test_token_authorization_code_successful
     setup_application
 
