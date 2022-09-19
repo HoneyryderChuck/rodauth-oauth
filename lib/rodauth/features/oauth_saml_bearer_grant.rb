@@ -22,6 +22,10 @@ module Rodauth
       :account_from_saml2_bearer_assertion
     )
 
+    def oauth_grant_types_supported
+      super | %w[urn:ietf:params:oauth:grant-type:saml2-bearer]
+    end
+
     private
 
     def require_oauth_application_from_saml2_bearer_assertion_issuer(assertion)
@@ -94,7 +98,6 @@ module Rodauth
 
     def oauth_server_metadata_body(*)
       super.tap do |data|
-        data[:grant_types_supported] << "urn:ietf:params:oauth:grant-type:saml2-bearer"
         data[:token_endpoint_auth_methods_supported] << "urn:ietf:params:oauth:client-assertion-type:saml2-bearer"
       end
     end

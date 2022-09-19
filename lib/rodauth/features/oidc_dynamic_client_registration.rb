@@ -8,10 +8,6 @@ module Rodauth
 
     private
 
-    def registration_metadata
-      openid_configuration_body
-    end
-
     def validate_client_registration_params
       super
 

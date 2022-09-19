@@ -4,18 +4,28 @@ module Rodauth
   Feature.define(:oauth_implicit_grant, :OauthImplicitGrant) do
     depends :oauth_authorize_base
 
-    private
-
-    def check_valid_response_type?
-      response_type = param_or_nil("response_type")
-
-      response_type.nil? || response_type == "token" || super
+    def oauth_grant_types_supported
+      super | %w[implicit]
     end
 
+    def oauth_response_types_supported
+      super | %w[token]
+    end
+
+    def oauth_response_modes_supported
+      super | %w[fragment]
+    end
+
+    private
+
     def do_authorize(response_params = {}, response_mode = param_or_nil("response_mode"))
-      return super unless param("response_type") == "token"
+      response_type = param("response_type")
+      return super unless response_type == "token" && supported_response_type?(response_type)
 
       response_mode ||= "fragment"
+
+      redirect_response_error("invalid_request") unless supported_response_mode?(response_mode)
+
       response_params.replace(_do_authorize_token)
 
       response_params["state"] = param("state") if param_or_nil("state")
@@ -43,14 +53,6 @@ module Rodauth
       params << redirect_url.query if redirect_url.query
       redirect_url.fragment = params.join("&")
       redirect(redirect_url.to_s)
-    end
-
-    def oauth_server_metadata_body(*)
-      super.tap do |data|
-        data[:response_types_supported] << "token"
-        data[:response_modes_supported] << "fragment"
-        data[:grant_types_supported] << "implicit"
-      end
     end
 
     def check_valid_response_type?

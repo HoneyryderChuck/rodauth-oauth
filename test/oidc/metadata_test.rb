@@ -25,8 +25,9 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
     assert json_body["jwks_uri"] == "http://example.org/jwks"
     assert json_body["scopes_supported"] == %w[openid email]
     assert json_body["response_types_supported"] == [
-      "code", "token", "none", "id_token", "code token",
+      "code", "id_token", "token", "none",
       "code id_token",
+      "code token",
       "id_token token",
       "code id_token token"
     ]

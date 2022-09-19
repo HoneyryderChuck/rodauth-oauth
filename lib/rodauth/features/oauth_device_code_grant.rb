@@ -108,6 +108,10 @@ module Rodauth
       end
     end
 
+    def oauth_grant_types_supported
+      super | %w[urn:ietf:params:oauth:grant-type:device_code]
+    end
+
     private
 
     def generate_user_code
@@ -199,7 +203,6 @@ module Rodauth
 
     def oauth_server_metadata_body(*)
       super.tap do |data|
-        data[:grant_types_supported] << "urn:ietf:params:oauth:grant-type:device_code"
         data[:device_authorization_endpoint] = device_authorization_url
       end
     end

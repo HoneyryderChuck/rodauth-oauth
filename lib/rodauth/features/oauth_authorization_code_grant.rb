@@ -6,6 +6,18 @@ module Rodauth
 
     auth_value_method :use_oauth_access_type?, true
 
+    def oauth_grant_types_supported
+      super | %w[authorization_code]
+    end
+
+    def oauth_response_types_supported
+      super | %w[code]
+    end
+
+    def oauth_response_modes_supported
+      super | %w[query form_post]
+    end
+
     private
 
     def validate_authorize_params
@@ -50,16 +62,20 @@ module Rodauth
     end
 
     def do_authorize(response_params = {}, response_mode = param_or_nil("response_mode"))
-      case param("response_type")
+      response_mode ||= oauth_response_mode
 
-      when "code"
+      redirect_response_error("invalid_request") unless response_mode.nil? || supported_response_mode?(response_mode)
+
+      response_type = param_or_nil("response_type")
+
+      redirect_response_error("invalid_request") unless response_type.nil? || supported_response_type?(response_type)
+
+      case response_type
+      when "code", nil
         response_mode ||= "query"
         response_params.replace(_do_authorize_code)
       when "none"
         response_mode ||= "none"
-      when "", nil
-        response_mode ||= oauth_response_mode
-        response_params.replace(_do_authorize_code)
       else
         return super if response_params.empty?
       end
@@ -152,12 +168,6 @@ module Rodauth
     def oauth_server_metadata_body(*)
       super.tap do |data|
         data[:authorization_endpoint] = authorize_url
-        data[:response_types_supported] << "code"
-
-        data[:response_modes_supported] << "query"
-        data[:response_modes_supported] << "form_post"
-
-        data[:grant_types_supported] << "authorization_code"
       end
     end
   end

@@ -8,7 +8,7 @@ module Rodauth
 
     auth_value_method :oauth_client_registration_required_params, %w[redirect_uris client_name client_uri]
 
-    PROTECTED_APPLICATION_ATTRIBUTES = %i[account_id client_id].freeze
+    PROTECTED_APPLICATION_ATTRIBUTES = %w[account_id client_id].freeze
 
     # /register
     auth_server_route(:register) do |r|
@@ -41,17 +41,12 @@ module Rodauth
 
     private
 
-    def registration_metadata
-      oauth_server_metadata_body
-    end
-
     def validate_client_registration_params
       oauth_client_registration_required_params.each do |required_param|
         unless request.params.key?(required_param)
           register_throw_json_response_error("invalid_client_metadata", register_required_param_message(required_param))
         end
       end
-      metadata = registration_metadata
 
       @oauth_application_params = request.params.each_with_object({}) do |(key, value), params|
         case key
@@ -73,19 +68,19 @@ module Rodauth
         when "grant_types"
           if value.is_a?(Array)
             value = value.each do |grant_type|
-              unless metadata[:grant_types_supported].include?(grant_type)
+              unless oauth_grant_types_supported.include?(grant_type)
                 register_throw_json_response_error("invalid_client_metadata", register_oauth_invalid_grant_type_message(grant_type))
               end
             end.join(" ")
           else
-            set_field_error(key, invalid_client_metadata_message)
+            register_throw_json_response_error("invalid_client_metadata", register_invalid_client_metadata_message(key, value))
           end
           key = oauth_applications_grant_types_column
         when "response_types"
           if value.is_a?(Array)
-            grant_types = request.params["grant_types"] || metadata[:grant_types_supported]
+            grant_types = request.params["grant_types"] || oauth_grant_types_supported
             value = value.each do |response_type|
-              unless metadata[:response_types_supported].include?(response_type)
+              unless oauth_response_types_supported.include?(response_type)
                 register_throw_json_response_error("invalid_client_metadata",
                                                    register_invalid_response_type_message(response_type))
               end
@@ -93,7 +88,7 @@ module Rodauth
               validate_client_registration_response_type(response_type, grant_types)
             end.join(" ")
           else
-            set_field_error(key, invalid_client_metadata_message)
+            register_throw_json_response_error("invalid_client_metadata", register_invalid_client_metadata_message(key, value))
           end
           key = oauth_applications_response_types_column
           # verify if in range and match grant type
@@ -131,10 +126,10 @@ module Rodauth
           key = oauth_applications_name_column
         else
           if respond_to?(:"oauth_applications_#{key}_column")
-            property = :"oauth_applications_#{key}_column"
-            if PROTECTED_APPLICATION_ATTRIBUTES.include?(property)
+            if PROTECTED_APPLICATION_ATTRIBUTES.include?(key)
               register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(key))
             end
+            property = :"oauth_applications_#{key}_column"
             key = __send__(property)
           elsif !db[oauth_applications_table].columns.include?(key.to_sym)
             register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(key))
@@ -210,6 +205,10 @@ module Rodauth
 
     def register_invalid_param_message(key)
       "The param '#{key}' is not supported by this server."
+    end
+
+    def register_invalid_client_metadata_message(key, value)
+      "The value '#{value}' is not supported by this server for param '#{key}'."
     end
 
     def register_invalid_contacts_message(contacts)

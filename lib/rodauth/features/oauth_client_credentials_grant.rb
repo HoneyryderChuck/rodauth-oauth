@@ -4,6 +4,10 @@ module Rodauth
   Feature.define(:oauth_client_credentials_grant, :OauthClientCredentialsGrant) do
     depends :oauth_base
 
+    def oauth_grant_types_supported
+      super | %w[client_credentials]
+    end
+
     private
 
     def create_token(grant_type)
@@ -24,12 +28,6 @@ module Rodauth
         oauth_grants_scopes_column => grant_scopes
       }
       generate_token(grant_params, false)
-    end
-
-    def oauth_server_metadata_body(*)
-      super.tap do |data|
-        data[:grant_types_supported] << "client_credentials"
-      end
     end
   end
 end

@@ -95,6 +95,8 @@ class RodauthOAuthOIDCLogoutTest < OIDCIntegration
     visit "/authorize?client_id=#{application[:client_id]}&scope=openid&response_type=code+id_token"
     check "openid"
     click_button "Authorize"
+    assert page.current_url.start_with?("https://example.com/callback"),
+           "was redirected instead to #{page.current_url}"
     token_url = URI(page.current_url)
     params = Hash[token_url.fragment.split("&").map { |p| p.split("=") }]
     params["id_token"]

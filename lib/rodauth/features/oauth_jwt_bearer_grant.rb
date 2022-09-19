@@ -16,6 +16,10 @@ module Rodauth
       super | %w[client_secret_jwt private_key_jwt urn:ietf:params:oauth:client-assertion-type:jwt-bearer]
     end
 
+    def oauth_grant_types_supported
+      super | %w[urn:ietf:params:oauth:grant-type:jwt-bearer]
+    end
+
     private
 
     def require_oauth_application_from_jwt_bearer_assertion_issuer(assertion)
@@ -75,12 +79,6 @@ module Rodauth
       return unless verify_aud(request.url, claims["aud"])
 
       claims
-    end
-
-    def oauth_server_metadata_body(*)
-      super.tap do |data|
-        data[:grant_types_supported] << "urn:ietf:params:oauth:grant-type:jwt-bearer"
-      end
     end
   end
 end

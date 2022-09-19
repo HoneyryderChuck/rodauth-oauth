@@ -93,6 +93,9 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
   end
 
   def test_oidc_authorize_post_authorize_with_none_response_type
+    rodauth do
+      oauth_response_types_supported %w[none]
+    end
     setup_application
     login
 

@@ -17,6 +17,9 @@ oauth_refresh_token_protection_policy :: protection policy for the refresh token
 oauth_scope_separator :: character used to separate scopes in the db field value, white-space by default.
 oauth_response_mode :: default response mode (<tt>query</tt> by default).
 oauth_token_endpoint_auth_methods_supported :: list of supported auth methods for the token endpoint (contains "client_secret_basic" and "client_secret_post" by default).
+oauth_grant_types_supported :: list of supported grant types.
+oauth_response_types_supported :: list of supported response types.
+oauth_response_modes_supported :: list of supported response modes.
 oauth_valid_uri_schemes :: list of supported URI schemes for a client application's "redirect_uri", <tt>%w[https]</tt> by default.
 
 oauth_applications_table :: the db table where oauth applications are stored, <tt>:oauth_applications</tt> by default.
@@ -32,6 +35,7 @@ oauth_applications_homepage_url_column :: the db column where the oauth applicat
 oauth_applications_contacts_column :: the db column where the oauth application contacts are stored, <tt>:contacts</tt> by default.
 oauth_applications_grant_types_column :: the db column where the oauth application supported grant types are stored, <tt>:grant_types</tt> by default.
 oauth_applications_response_types_column :: the db column where the oauth application supported response types are stored, <tt>:response_types</tt> by default.
+oauth_applications_response_modes_column :: the db column where the oauth application supported response modes are stored, <tt>:response_modes</tt> by default.
 oauth_applications_jwks_column :: the db column where the oauth application JSON Web Keys are stored, <tt>:jwks</tt> by default.
 oauth_applications_jwks_uri_column :: the db column where the oauth application JSON Web Keys URI is stored, <tt>:jwks_uri</tt> by default.
 oauth_applications_logo_uri_column :: the db column where the oauth application logo URL is stored, <tt>:logo_uri</tt> by default.

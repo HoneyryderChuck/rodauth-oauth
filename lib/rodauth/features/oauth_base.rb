@@ -33,6 +33,9 @@ module Rodauth
 
     auth_value_method :oauth_response_mode, "query"
     auth_value_method :oauth_token_endpoint_auth_methods_supported, %w[client_secret_basic client_secret_post]
+    auth_value_method :oauth_grant_types_supported, %w[refresh_token]
+    auth_value_method :oauth_response_types_supported, []
+    auth_value_method :oauth_response_modes_supported, []
 
     auth_value_method :oauth_valid_uri_schemes, %w[https]
     auth_value_method :oauth_scope_separator, " "
@@ -64,7 +67,7 @@ module Rodauth
       name description scopes
       client_id client_secret
       homepage_url redirect_uri
-      token_endpoint_auth_method grant_types response_types
+      token_endpoint_auth_method grant_types response_types response_modes
       logo_uri tos_uri policy_uri jwks jwks_uri
       contacts software_id software_version
     ].each do |column|
@@ -668,11 +671,39 @@ module Rodauth
     def supported_grant_type?(grant_type, expected_grant_type = grant_type)
       return false unless grant_type == expected_grant_type
 
-      return true unless (grant_types_supported = oauth_application[oauth_applications_grant_types_column])
-
-      grant_types_supported = grant_types_supported.split(/ +/)
+      grant_types_supported = if oauth_application[oauth_applications_grant_types_column]
+                                oauth_application[oauth_applications_grant_types_column].split(/ +/)
+                              else
+                                oauth_grant_types_supported
+                              end
 
       grant_types_supported.include?(grant_type)
+    end
+
+    def supported_response_type?(response_type, expected_response_type = response_type)
+      return false unless response_type == expected_response_type
+
+      response_types_supported = if oauth_application[oauth_applications_grant_types_column]
+                                   oauth_application[oauth_applications_response_types_column].split(/ +/)
+                                 else
+                                   oauth_response_types_supported
+                                 end
+
+      response_types = response_type.split(/ +/)
+
+      (response_types - response_types_supported).empty?
+    end
+
+    def supported_response_mode?(response_mode, expected_response_mode = response_mode)
+      return false unless response_mode == expected_response_mode
+
+      response_modes_supported = if oauth_application[oauth_applications_response_modes_column]
+                                   oauth_application[oauth_applications_response_modes_column].split(/ +/)
+                                 else
+                                   oauth_response_modes_supported
+                                 end
+
+      response_modes_supported.include?(response_mode)
     end
 
     def oauth_server_metadata_body(path = nil)
@@ -683,9 +714,9 @@ module Rodauth
         issuer: issuer,
         token_endpoint: token_url,
         scopes_supported: oauth_application_scopes,
-        response_types_supported: [],
-        response_modes_supported: [],
-        grant_types_supported: %w[refresh_token],
+        response_types_supported: oauth_response_types_supported,
+        response_modes_supported: oauth_response_modes_supported,
+        grant_types_supported: oauth_grant_types_supported,
         token_endpoint_auth_methods_supported: oauth_token_endpoint_auth_methods_supported,
         service_documentation: oauth_metadata_service_documentation,
         ui_locales_supported: oauth_metadata_ui_locales_supported,

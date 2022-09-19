@@ -241,7 +241,8 @@ module Rodauth
       end
 
       def jwt_decode_no_key(token)
-        JSON::JWT.decode(token)
+        jws = JSON::JWT.decode(token, :skip_verification)
+        [jws.to_h, jws.header]
       end
     elsif defined?(JWT)
       # ruby-jwt

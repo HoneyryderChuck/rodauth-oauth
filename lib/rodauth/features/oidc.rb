@@ -650,8 +650,10 @@ module Rodauth
 
       response_types_supported = metadata[:response_types_supported]
 
+      response_types_supported |= %w[none]
+      response_types_supported |= ["code id_token"] if metadata[:grant_types_supported].include?("authorization_code")
       if metadata[:grant_types_supported].include?("implicit")
-        response_types_supported += ["none", "id_token", "code token", "code id_token", "id_token token", "code id_token token"]
+        response_types_supported |= ["code token", "id_token token", "code id_token token"]
       end
 
       alg_values, enc_values = oauth_jwt_jwe_keys.keys.transpose
