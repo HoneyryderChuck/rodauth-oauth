@@ -10,7 +10,6 @@
   #{
     if rodauth.features.include?(:oauth_jwt)
       <<-HTML
-        #{rodauth.render('jwt_public_key_field')}
         #{rodauth.render('jwks_field')}
       HTML
     end

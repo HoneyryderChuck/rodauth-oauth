@@ -7,10 +7,6 @@ module Rodauth
   Feature.define(:oauth_jwt_base, :OauthJwtBase) do
     depends :oauth_base
 
-    auth_value_method :oauth_applications_jwt_public_key_column, :jwt_public_key
-
-    translatable_method :oauth_applications_jwt_public_key_label, "Public key"
-
     auth_value_method :oauth_application_jwt_public_key_param, "jwt_public_key"
     auth_value_method :oauth_application_jwks_param, "jwks"
 
@@ -77,20 +73,12 @@ module Rodauth
     end
 
     def _jwt_key
-      @_jwt_key ||= if oauth_application
-
-                      if (jwks = oauth_application_jwks)
-                        jwks = JSON.parse(jwks, symbolize_names: true) if jwks && jwks.is_a?(String)
-                        jwks
-                      else
-                        oauth_application[oauth_applications_jwt_public_key_column]
-                      end
-                    end
+      @_jwt_key ||= (oauth_application_jwks(oauth_application) if oauth_application)
     end
 
     def _jwt_public_key
       @_jwt_public_key ||= if oauth_application
-                             jwks || oauth_application[oauth_applications_jwt_public_key_column]
+                             oauth_application_jwks(oauth_application)
                            else
                              _jwt_key
                            end
