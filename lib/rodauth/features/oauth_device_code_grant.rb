@@ -118,13 +118,11 @@ module Rodauth
                   .rjust(user_code_size, "0")
     end
 
-    def authorized_oauth_application?(oauth_application, client_secret, _)
-      # skip if using device grant
-      #
-      # requests may be performed by devices with no knowledge of client secret.
-      return true unless client_secret
+    # TODO: think about removing this and recommend PKCE
+    def supports_auth_method?(oauth_application, auth_method)
+      return super unless auth_method == "none"
 
-      super
+      request.path == device_authorization_path || request.params.key?("device_code") || super
     end
 
     def create_token(grant_type)

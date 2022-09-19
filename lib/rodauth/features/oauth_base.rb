@@ -32,7 +32,7 @@ module Rodauth
     auth_value_method :oauth_unique_id_generation_retries, 3
 
     auth_value_method :oauth_response_mode, "query"
-    auth_value_method :oauth_auth_methods_supported, %w[client_secret_basic client_secret_post]
+    auth_value_method :oauth_token_endpoint_auth_methods_supported, %w[client_secret_basic client_secret_post]
 
     auth_value_method :oauth_valid_uri_schemes, %w[https]
     auth_value_method :oauth_scope_separator, " "
@@ -327,42 +327,52 @@ module Rodauth
     # parse client id and secret
     #
     def require_oauth_application
-      # get client credentials
-      auth_method = nil
-      client_id = client_secret = nil
-
-      if (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v[/\A *Basic (.*)\Z/, 1]))
-        # client_secret_basic
-        client_id, client_secret = Base64.decode64(token).split(/:/, 2)
-        auth_method = "client_secret_basic"
-      else
-        # client_secret_post
-        client_id = param_or_nil("client_id")
-        client_secret = param_or_nil("client_secret")
-        auth_method = "client_secret_post" if client_secret
-      end
-
-      authorization_required unless client_id
-
-      @oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => client_id).first
-
-      authorization_required unless @oauth_application
-
-      authorization_required unless authorized_oauth_application?(@oauth_application, client_secret, auth_method)
+      @oauth_application = if (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v[/\A *Basic (.*)\Z/, 1]))
+                             # client_secret_basic
+                             require_oauth_application_from_client_secret_basic(token)
+                           elsif (client_id = param_or_nil("client_id"))
+                             if (client_secret = param_or_nil("client_secret"))
+                               # client_secret_post
+                               require_oauth_application_from_client_secret_post(client_id, client_secret)
+                             else
+                               # none
+                               require_oauth_application_from_none(client_id)
+                             end
+                           else
+                             authorization_required
+                           end
     end
 
-    def authorized_oauth_application?(oauth_application, client_secret, auth_method)
+    def require_oauth_application_from_client_secret_basic(token)
+      client_id, client_secret = Base64.decode64(token).split(/:/, 2)
+      authorization_required unless client_id
+      oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => client_id).first
+      authorization_required unless supports_auth_method?(oauth_application,
+                                                          "client_secret_basic") && secret_matches?(oauth_application, client_secret)
+      oauth_application
+    end
+
+    def require_oauth_application_from_client_secret_post(client_id, client_secret)
+      oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => client_id).first
+      authorization_required unless supports_auth_method?(oauth_application,
+                                                          "client_secret_post") && secret_matches?(oauth_application, client_secret)
+      oauth_application
+    end
+
+    def require_oauth_application_from_none(client_id)
+      oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => client_id).first
+      authorization_required unless supports_auth_method?(oauth_application, "none")
+      oauth_application
+    end
+
+    def supports_auth_method?(oauth_application, auth_method)
       supported_auth_methods = if oauth_application[oauth_applications_token_endpoint_auth_method_column]
                                  oauth_application[oauth_applications_token_endpoint_auth_method_column].split(/ +/)
                                else
-                                 oauth_auth_methods_supported
+                                 oauth_token_endpoint_auth_methods_supported
                                end
 
-      if auth_method
-        supported_auth_methods.include?(auth_method) && secret_matches?(oauth_application, client_secret)
-      else
-        supported_auth_methods.include?("none")
-      end
+      supported_auth_methods.include?(auth_method)
     end
 
     def no_auth_oauth_application?(_oauth_application)
@@ -676,7 +686,7 @@ module Rodauth
         response_types_supported: [],
         response_modes_supported: [],
         grant_types_supported: %w[refresh_token],
-        token_endpoint_auth_methods_supported: oauth_auth_methods_supported,
+        token_endpoint_auth_methods_supported: oauth_token_endpoint_auth_methods_supported,
         service_documentation: oauth_metadata_service_documentation,
         ui_locales_supported: oauth_metadata_ui_locales_supported,
         op_policy_uri: oauth_metadata_op_policy_uri,

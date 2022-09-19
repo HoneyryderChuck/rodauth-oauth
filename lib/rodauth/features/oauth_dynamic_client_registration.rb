@@ -65,7 +65,7 @@ module Rodauth
           end
           key = oauth_applications_redirect_uri_column
         when "token_endpoint_auth_method"
-          unless oauth_auth_methods_supported.include?(value)
+          unless oauth_token_endpoint_auth_methods_supported.include?(value)
             register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(key))
           end
           # verify if in range

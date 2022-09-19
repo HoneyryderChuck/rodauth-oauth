@@ -23,7 +23,7 @@ module Rodauth
 
       return super unless request_object && oauth_application
 
-      if (jwks = oauth_application_jwks)
+      if (jwks = oauth_application_jwks(oauth_application))
         jwks = JSON.parse(jwks, symbolize_names: true) if jwks.is_a?(String)
       else
         redirect_response_error("invalid_request_object")

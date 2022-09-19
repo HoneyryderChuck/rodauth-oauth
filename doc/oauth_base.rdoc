@@ -16,7 +16,7 @@ oauth_refresh_token_expires_in :: The number of seconds a refresh token is valid
 oauth_refresh_token_protection_policy :: protection policy for the refresh token (<tt>none</tt> by default).
 oauth_scope_separator :: character used to separate scopes in the db field value, white-space by default.
 oauth_response_mode :: default response mode (<tt>query</tt> by default).
-oauth_auth_methods_supported :: list of supported auth methods.
+oauth_token_endpoint_auth_methods_supported :: list of supported auth methods for the token endpoint (contains "client_secret_basic" and "client_secret_post" by default).
 oauth_valid_uri_schemes :: list of supported URI schemes for a client application's "redirect_uri", <tt>%w[https]</tt> by default.
 
 oauth_applications_table :: the db table where oauth applications are stored, <tt>:oauth_applications</tt> by default.

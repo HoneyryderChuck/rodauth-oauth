@@ -21,6 +21,7 @@ module Rodauth
     auth_value_methods(
       :jwt_encode,
       :jwt_decode,
+      :jwt_decode_no_key,
       :generate_jti,
       :oauth_jwt_issuer,
       :oauth_jwt_audience
@@ -114,7 +115,7 @@ module Rodauth
       expected_aud == aud
     end
 
-    def oauth_application_jwks
+    def oauth_application_jwks(oauth_application)
       jwks = oauth_application[oauth_applications_jwks_column]
 
       if jwks
@@ -237,6 +238,10 @@ module Rodauth
         claims
       rescue JSON::JWT::Exception
         nil
+      end
+
+      def jwt_decode_no_key(token)
+        JSON::JWT.decode(token)
       end
     elsif defined?(JWT)
       # ruby-jwt
@@ -400,6 +405,10 @@ module Rodauth
 
         alias_method :jwt_decode_without_jwe, :jwt_decode
         alias_method :jwt_decode, :jwt_decode_with_jwe
+      end
+
+      def jwt_decode_no_key(token)
+        JWT.decode(token, nil, false)
       end
     else
       # :nocov:

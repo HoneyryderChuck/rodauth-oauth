@@ -17,10 +17,10 @@ module Rodauth
 
     private
 
-    def authorized_oauth_application?(oauth_application, client_secret, _)
-      return true if param_or_nil("code_verifier")
+    def supports_auth_method?(oauth_application, auth_method)
+      return super unless auth_method == "none"
 
-      super
+      request.params.key?("code_verifier") || super
     end
 
     def validate_authorize_params

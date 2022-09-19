@@ -25,19 +25,16 @@ module Rodauth
       elsif client_assertion_type?
         @oauth_application = __send__(:"require_oauth_application_from_#{client_assertion_type}_assertion_subject",
                                       param("client_assertion"))
+
+        if (client_id = param_or_nil("client_id")) &&
+           client_id != @oauth_application[oauth_applications_client_id_column]
+          # If present, the value of the
+          # "client_id" parameter MUST identify the same client as is
+          # identified by the client assertion.
+          redirect_response_error("invalid_grant")
+        end
       else
-        return super
-      end
-
-      redirect_response_error("invalid_grant") unless @oauth_application
-
-      if client_assertion_type? &&
-         (client_id = param_or_nil("client_id")) &&
-         client_id != @oauth_application[oauth_applications_client_id_column]
-        # If present, the value of the
-        # "client_id" parameter MUST identify the same client as is
-        # identified by the client assertion.
-        redirect_response_error("invalid_grant")
+        super
       end
     end
 
@@ -58,7 +55,7 @@ module Rodauth
       redirect_response_error("invalid_grant") unless account
 
       grant_scopes = if param_or_nil("scope")
-                       redirect_response_error("invalid_grant") unless check_valid_scopes?
+                       redirect_response_error("invalid_scope") unless check_valid_scopes?
                        scopes
                      else
                        @oauth_application[oauth_applications_scopes_column]

@@ -126,7 +126,7 @@ module Rodauth
 
           if (algo = @oauth_application && @oauth_application[oauth_applications_userinfo_signed_response_alg_column])
             params = {
-              jwks: oauth_application_jwks,
+              jwks: oauth_application_jwks(@oauth_application),
               encryption_algorithm: @oauth_application[oauth_applications_userinfo_encrypted_response_alg_column],
               encryption_method: @oauth_application[oauth_applications_userinfo_encrypted_response_enc_column]
             }.compact
@@ -465,7 +465,7 @@ module Rodauth
       fill_with_account_claims(id_token_claims, account, oauth_scopes)
 
       params = {
-        jwks: oauth_application_jwks,
+        jwks: oauth_application_jwks(oauth_application),
         signing_algorithm: (
           oauth_application[oauth_applications_id_token_signed_response_alg_column] ||
           oauth_jwt_keys.keys.first
