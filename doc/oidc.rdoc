@@ -18,7 +18,6 @@ oauth_applications_userinfo_encrypted_response_enc_column :: db column where to 
 oauth_applications_userinfo_signed_response_alg_column :: db column where to store the signing algorithm used for the userinfo response payload for the oauth application, <tt>:userinfo_signed_response_alg</tt> by default.
 
 oauth_invalid_scope_message :: overwrites the default to <tt>"The Access Token expired"</tt>
-webfinger_relation :: webfinger openid relation filter, <tt>"http://openid.net/specs/connect/1.0/issuer"</tt> by default.
 
 userinfo_route :: the route for the userinfo action, defaults to +userinfo+.
 oidc_logout_route :: the route which user uses to logout.
@@ -35,7 +34,7 @@ oauth_prompt_login_interval :: prompt cookie lifetime.
 require_acr_value_phr :: called before authorization request if "phr" in acr values, will request 2-factor authentication if any such `rodauth` feature is loaded.
 require_acr_value_phrh :: called before authorization request if "phrh" in acr values, will request webauthn authentication if `webauthn` feature from rodauth is loaded.
 require_acr_value :: called before authorization request with each acr value, does nothing by default.
-
+json_webfinger_payload :: returns the JSON payload from the webfinger response.
 
 before_userinfo_route :: Run arbitrary code before the userinfo route.
 before_oidc_logout_route :: Run code before OIDC RP-initiated logging out route.

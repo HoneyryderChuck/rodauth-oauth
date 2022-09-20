@@ -82,8 +82,6 @@ module Rodauth
 
     translatable_method :oauth_invalid_scope_message, "The Access Token expired"
 
-    auth_value_method :webfinger_relation, "http://openid.net/specs/connect/1.0/issuer"
-
     auth_value_method :oauth_prompt_login_cookie_key, "_rodauth_oauth_prompt_login"
     auth_value_method :oauth_prompt_login_cookie_options, {}.freeze
     auth_value_method :oauth_prompt_login_interval, 5 * 60 * 60 # 5 minutes
@@ -97,7 +95,8 @@ module Rodauth
       :get_additional_param,
       :require_acr_value_phr,
       :require_acr_value_phrh,
-      :require_acr_value
+      :require_acr_value,
+      :json_webfinger_payload
     )
 
     # /userinfo
@@ -243,14 +242,7 @@ module Rodauth
           response.status = 200
           response["Content-Type"] ||= "application/jrd+json"
 
-          json_payload = JSON.dump({
-                                     subject: resource,
-                                     links: [{
-                                       rel: webfinger_relation,
-                                       href: authorization_server_url
-                                     }]
-                                   })
-          return_response(json_payload)
+          return_response(json_webfinger_payload)
         end
       end
     end
@@ -627,6 +619,18 @@ module Rodauth
       return if check_valid_uri?(redirect_uri)
 
       redirect_response_error("invalid_request")
+    end
+
+    # Webfinger
+
+    def json_webfinger_payload
+      JSON.dump({
+                  subject: param("resource"),
+                  links: [{
+                    rel: "http://openid.net/specs/connect/1.0/issuer",
+                    href: authorization_server_url
+                  }]
+                })
     end
 
     # Metadata

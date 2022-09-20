@@ -22,7 +22,7 @@ module Rodauth
 
       r.post do
         catch_error do
-          validate_oauth_revoke_params
+          validate_revoke_params
 
           oauth_grant = nil
           transaction do
@@ -52,7 +52,7 @@ module Rodauth
       end
     end
 
-    def validate_oauth_revoke_params(token_hint_types = %w[access_token refresh_token].freeze)
+    def validate_revoke_params(token_hint_types = %w[access_token refresh_token].freeze)
       token_hint = param_or_nil("token_type_hint")
 
       if features.include?(:oauth_jwt) && oauth_jwt_access_tokens && (!token_hint || token_hint == "access_token")
