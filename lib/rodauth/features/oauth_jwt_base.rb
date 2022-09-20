@@ -135,7 +135,7 @@ module Rodauth
     if defined?(JSON::JWT)
       # json-jwt
 
-      auth_value_method :oauth_jwt_algorithms_supported, %w[
+      auth_value_method :oauth_jwt_jws_algorithms_supported, %w[
         HS256 HS384 HS512
         RS256 RS384 RS512
         PS256 PS384 PS512
@@ -248,7 +248,7 @@ module Rodauth
       # ruby-jwt
       require "rodauth/oauth/jwe_extensions" if defined?(JWE)
 
-      auth_value_method :oauth_jwt_algorithms_supported, %w[
+      auth_value_method :oauth_jwt_jws_algorithms_supported, %w[
         HS256 HS384 HS512 HS512256
         RS256 RS384 RS512
         ED25519
@@ -256,17 +256,22 @@ module Rodauth
         PS256 PS384 PS512
       ]
 
-      auth_value_methods(
-        :oauth_jwt_jwe_algorithms_supported,
-        :oauth_jwt_jwe_encryption_methods_supported
-      )
+      if defined?(JWE)
+        auth_value_methods(
+          :oauth_jwt_jwe_algorithms_supported,
+          :oauth_jwt_jwe_encryption_methods_supported
+        )
 
-      def oauth_jwt_jwe_algorithms_supported
-        JWE::VALID_ALG
-      end
+        def oauth_jwt_jwe_algorithms_supported
+          JWE::VALID_ALG
+        end
 
-      def oauth_jwt_jwe_encryption_methods_supported
-        JWE::VALID_ENC
+        def oauth_jwt_jwe_encryption_methods_supported
+          JWE::VALID_ENC
+        end
+      else
+        auth_value_method :oauth_jwt_jwe_algorithms_supported, []
+        auth_value_method :oauth_jwt_jwe_encryption_methods_supported, []
       end
 
       def jwk_export(key)

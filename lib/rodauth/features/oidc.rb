@@ -668,13 +668,13 @@ module Rodauth
         id_token_encryption_alg_values_supported: Array(alg_values),
         id_token_encryption_enc_values_supported: Array(enc_values),
 
-        userinfo_signing_alg_values_supported: [],
-        userinfo_encryption_alg_values_supported: [],
-        userinfo_encryption_enc_values_supported: [],
+        userinfo_signing_alg_values_supported: oauth_jwt_jws_algorithms_supported,
+        userinfo_encryption_alg_values_supported: oauth_jwt_jwe_algorithms_supported,
+        userinfo_encryption_enc_values_supported: oauth_jwt_jwe_encryption_methods_supported,
 
-        request_object_signing_alg_values_supported: [],
-        request_object_encryption_alg_values_supported: [],
-        request_object_encryption_enc_values_supported: [],
+        request_object_signing_alg_values_supported: oauth_jwt_jws_algorithms_supported,
+        request_object_encryption_alg_values_supported: oauth_jwt_jwe_algorithms_supported,
+        request_object_encryption_enc_values_supported: oauth_jwt_jwe_encryption_methods_supported,
 
         # These Claim Types are described in Section 5.6 of OpenID Connect Core 1.0 [OpenID.Core].
         # Values defined by this specification are normal, aggregated, and distributed.

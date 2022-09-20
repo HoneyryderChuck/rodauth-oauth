@@ -81,7 +81,7 @@ module Rodauth
           if response_types && response_types.include?("id_token")
             register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("id_token_signed_response_alg"))
           end
-        elsif !oauth_jwt_algorithms_supported.include?(value)
+        elsif !oauth_jwt_jws_algorithms_supported.include?(value)
           register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("id_token_signed_response_alg"))
         end
       end
@@ -97,7 +97,7 @@ module Rodauth
       end
 
       if (value = @oauth_application_params[oauth_applications_userinfo_signed_response_alg_column]) &&
-         !oauth_jwt_algorithms_supported.include?(value)
+         !oauth_jwt_jws_algorithms_supported.include?(value)
         register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("userinfo_signed_response_alg"))
       end
 
@@ -113,7 +113,7 @@ module Rodauth
 
       if defined?(oauth_applications_request_object_signing_alg_column) &&
          (value = @oauth_application_params[oauth_applications_request_object_signing_alg_column]) &&
-         !oauth_jwt_algorithms_supported.include?(value)
+         !oauth_jwt_jws_algorithms_supported.include?(value)
         register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message("request_object_signing_alg"))
       end
 
