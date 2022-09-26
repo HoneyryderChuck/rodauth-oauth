@@ -121,10 +121,6 @@ module Rodauth
             </body>
           </html>
         FORM
-      when "none"
-        redirect(redirect_url.to_s)
-      else
-        super
       end
     end
 

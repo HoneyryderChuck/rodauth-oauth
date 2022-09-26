@@ -32,7 +32,7 @@ module Rodauth
     def create_oauth_grant(create_params = {})
       # PKCE flow
       if (code_challenge = param_or_nil("code_challenge"))
-        code_challenge_method = param_or_nil("code_challenge_method")
+        code_challenge_method = param_or_nil("code_challenge_method") || oauth_pkce_challenge_method
 
         create_params[oauth_grants_code_challenge_column] = code_challenge
         create_params[oauth_grants_code_challenge_method_column] = code_challenge_method

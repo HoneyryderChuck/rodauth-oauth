@@ -11,7 +11,7 @@ module Rodauth
     private
 
     def create_token(grant_type)
-      return super unless grant_type == "client_credentials"
+      return super unless supported_grant_type?(grant_type, "client_credentials")
 
       grant_scopes = scopes
 

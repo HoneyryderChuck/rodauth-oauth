@@ -378,10 +378,6 @@ module Rodauth
       supported_auth_methods.include?(auth_method)
     end
 
-    def no_auth_oauth_application?(_oauth_application)
-      supported_auth_methods.include?("none")
-    end
-
     def require_oauth_application_from_account
       ds = db[oauth_applications_table]
            .join(oauth_grants_table, Sequel[oauth_grants_table][oauth_grants_oauth_application_id_column] =>

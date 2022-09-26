@@ -42,6 +42,29 @@ class RodauthOauthJWTTokenJwtBearerTest < JWTIntegration
     assert last_response.status == 200
   end
 
+  def test_oauth_jwt_bearer_as_authorization_grant_with_scope
+    rodauth do
+      oauth_jwt_keys("HS256" => "SECRET")
+    end
+    setup_application
+
+    post("/token",
+         grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+         scope: "user.read",
+         assertion: jwt_assertion(account[:email], "HS256", "SECRET"))
+
+    verify_response
+
+    jwt_token = json_body["access_token"]
+
+    # use token
+    header "Authorization", "Bearer #{jwt_token}"
+
+    # valid token, and now we're getting somewhere
+    get("/private")
+    assert last_response.status == 200
+  end
+
   def test_oauth_jwt_bearer_as_client_secret_jwt_not_supported_by_application
     setup_application(:oauth_authorization_code_grant)
 
@@ -74,6 +97,25 @@ class RodauthOauthJWTTokenJwtBearerTest < JWTIntegration
 
     assert last_response.status == 400
     assert json_body["error"] == "invalid_grant"
+  end
+
+  def test_oauth_jwt_bearer_as_client_secret_jwt_none_alg
+    rodauth do
+      oauth_jwt_keys("none" => nil)
+    end
+    setup_application(:oauth_authorization_code_grant)
+
+    oauth_application = set_oauth_application(client_id: "ID2", client_secret: "SECRET", token_endpoint_auth_method: "client_secret_jwt")
+    grant = set_oauth_grant(type: "authorization_code", oauth_application_id: oauth_application[:id])
+
+    post("/token",
+         client_assertion_type: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+         client_assertion: jwt_assertion(oauth_application[:client_id], "none"),
+         grant_type: "authorization_code",
+         code: grant[:code],
+         redirect_uri: grant[:redirect_uri])
+
+    verify_response(401)
   end
 
   def test_oauth_jwt_bearer_as_client_secret_jwt
@@ -190,7 +232,7 @@ class RodauthOauthJWTTokenJwtBearerTest < JWTIntegration
     "jwt-bearer"
   end
 
-  def jwt_assertion(principal, algo, signing_key, extra_claims = {})
+  def jwt_assertion(principal, algo, signing_key = nil, extra_claims = {})
     claims = {
       iss: oauth_application[:client_id],
       aud: "http://example.org/token",
@@ -202,10 +244,12 @@ class RodauthOauthJWTTokenJwtBearerTest < JWTIntegration
 
     headers = {}
 
-    jwk = JWT::JWK.new(signing_key)
-    headers[:kid] = jwk.kid
+    if signing_key
+      jwk = JWT::JWK.new(signing_key)
+      headers[:kid] = jwk.kid
 
-    signing_key = jwk.keypair
+      signing_key = jwk.keypair
+    end
 
     JWT.encode(claims, signing_key, algo, headers)
   end

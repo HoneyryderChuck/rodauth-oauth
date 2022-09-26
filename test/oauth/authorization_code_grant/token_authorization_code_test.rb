@@ -205,7 +205,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     assert last_response.status == 200
   end
 
-  def test_token_authorization_code_reuse_token_successful
+  def test_token_authorization_code_reuse_token
     rodauth do
       oauth_reuse_access_token true
     end
@@ -293,6 +293,67 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 200
+  end
+
+  def test_token_authorization_code_hash_columns_reuse_token
+    rodauth do
+      oauth_reuse_access_token true
+      oauth_grants_token_hash_column :token_hash
+      oauth_grants_refresh_token_hash_column :refresh_token_hash
+    end
+    setup_application
+
+    post("/token",
+         client_id: oauth_application[:client_id],
+         client_secret: "CLIENT_SECRET",
+         grant_type: "authorization_code",
+         code: oauth_grant[:code],
+         redirect_uri: oauth_grant[:redirect_uri])
+
+    assert last_response.status == 200
+    assert last_response.headers["Content-Type"] == "application/json"
+
+    assert db[:oauth_grants].count == 1
+    oauth_grant = db[:oauth_grants].first
+    assert oauth_grant[:token].nil?
+    assert !oauth_grant[:token_hash].nil?
+    assert oauth_grant[:refresh_token].nil?
+    assert !oauth_grant[:refresh_token_hash].nil?
+
+    assert json_body["access_token"] != oauth_grant[:token_hash]
+    assert json_body["refresh_token"] != oauth_grant[:refresh_token_hash]
+    assert !json_body["expires_in"].nil?
+
+    # second go at it
+    login
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=#{CGI.escape(oauth_application[:scopes])}"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+
+    check "user.read"
+    check "user.write"
+    # submit authorization request
+    click_button "Authorize"
+    assert page.current_url.start_with?("#{oauth_application[:redirect_uri]}?code="),
+           "was redirected instead to #{page.current_url}"
+
+    grant_code = page.current_url[/code=(.+)/, 1]
+
+    post("/token",
+         client_id: oauth_application[:client_id],
+         client_secret: "CLIENT_SECRET",
+         grant_type: "authorization_code",
+         code: grant_code,
+         redirect_uri: oauth_grant[:redirect_uri])
+
+    assert last_response.status == 200
+    assert last_response.headers["Content-Type"] == "application/json"
+
+    assert db[:oauth_grants].count == 1
+    oauth_grant2 = db[:oauth_grants].first
+
+    assert oauth_grant[:id] == oauth_grant2[:id]
+    assert oauth_grant[:token] == oauth_grant2[:token]
   end
 
   def test_token_authorization_code_online_successful

@@ -85,7 +85,7 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
     setup_application(:oauth_device_code_grant)
     login
 
-    grant = oauth_grant(code: "CODE", user_code: "USERCODE", revoked_at: Sequel::CURRENT_TIMESTAMP)
+    grant = set_oauth_grant(code: "CODE", user_code: "USERCODE", revoked_at: Sequel::CURRENT_TIMESTAMP)
 
     visit "/device"
     assert page.html.include?("Insert the user code from the device you'd like to authorize.")
@@ -100,7 +100,7 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
     setup_application(:oauth_device_code_grant)
     login
 
-    grant = oauth_grant(code: "CODE", user_code: "USERCODE", expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 60))
+    grant = set_oauth_grant(code: "CODE", user_code: "USERCODE", expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 60))
 
     visit "/device"
     assert page.html.include?("Insert the user code from the device you'd like to authorize.")
@@ -111,11 +111,32 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
     assert page.html.include?("No device to authorize with the given user code")
   end
 
+  def test_authorize_post_device_no_user_code
+    setup_application(:oauth_device_code_grant)
+    login
+
+    grant = set_oauth_grant(code: "CODE", user_code: "USERCODE")
+
+    visit "/device"
+    assert page.html.include?("Insert the user code from the device you'd like to authorize.")
+
+    assert_field("User code")
+    fill_in "User code", with: grant[:user_code]
+    click_button "Search"
+    assert page.html.include?("The device with user code #{grant[:user_code]} would like to access your data.")
+
+    # field is hidden
+    first('input[name="user_code"]', visible: false).set("")
+    click_button "Verify"
+
+    assert page.html.include?("Invalid grant")
+  end
+
   def test_authorize_post_device_successful_grant
     setup_application(:oauth_device_code_grant)
     login
 
-    grant = oauth_grant(code: "CODE", user_code: "USERCODE")
+    grant = set_oauth_grant(code: "CODE", user_code: "USERCODE")
 
     visit "/device"
     assert page.html.include?("Insert the user code from the device you'd like to authorize.")
@@ -140,7 +161,7 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
     setup_application(:oauth_device_code_grant)
     login
 
-    grant = oauth_grant(code: "CODE", user_code: "USERCODE")
+    grant = set_oauth_grant(code: "CODE", user_code: "USERCODE")
 
     visit "/device?user_code=#{grant[:user_code]}"
     assert page.html.include?("The device with user code #{grant[:user_code]} would like to access your data.")

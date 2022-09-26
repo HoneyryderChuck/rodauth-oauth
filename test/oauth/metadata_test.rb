@@ -81,6 +81,20 @@ class RodauthOauthServerMetadataTest < RodaIntegration
     assert json_body["grant_types_supported"] == %w[refresh_token authorization_code implicit]
   end
 
+  def test_oauth_server_metadata_with_client_credentials_grant
+    rodauth do
+      oauth_application_scopes %w[read write]
+    end
+    setup_application(:oauth_client_credentials_grant)
+    get("/.well-known/oauth-authorization-server")
+
+    assert last_response.status == 200
+    assert json_body["scopes_supported"] == %w[read write]
+    assert json_body["response_types_supported"] == %w[code]
+    assert json_body["response_modes_supported"] == %w[query form_post]
+    assert json_body["grant_types_supported"] == %w[refresh_token authorization_code client_credentials]
+  end
+
   def test_oauth_server_metadata_with_device_code_grant
     setup_application(:oauth_device_code_grant)
     get("/.well-known/oauth-authorization-server")

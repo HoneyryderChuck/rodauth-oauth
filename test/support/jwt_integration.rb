@@ -30,8 +30,8 @@ class JWTIntegration < RodaIntegration
     oauth_grant
   end
 
-  def verify_response
-    assert last_response.status == 200
+  def verify_response(status = 200)
+    assert last_response.status == status
     assert last_response.headers["Content-Type"] == "application/json"
   end
 

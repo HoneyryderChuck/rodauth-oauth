@@ -84,7 +84,7 @@ module Rodauth
 
       r.post do
         catch_error do
-          unless param_or_nil("user_code")
+          unless (user_code = param_or_nil("user_code")) && !user_code.empty?
             set_redirect_error_flash oauth_invalid_grant_message
             redirect device_path
           end

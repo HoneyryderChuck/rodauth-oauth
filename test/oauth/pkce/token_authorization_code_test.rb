@@ -37,7 +37,23 @@ class RodauthOAuthTokenPkceTest < RodaIntegration
     assert json_body["error"] == "invalid_request"
   end
 
-  def test_token_authorization_code_pkce_with_code_verifier
+  def test_token_authorization_code_pkce_unsupported_algorithm
+    setup_application
+
+    pkce_grant = oauth_grant(access_type: "online", code_challenge_method: "S384", code_challenge: PKCE_CHALLENGE)
+
+    post("/token",
+         client_id: oauth_application[:client_id],
+         grant_type: "authorization_code",
+         code: pkce_grant[:code],
+         redirect_uri: pkce_grant[:redirect_uri],
+         code_verifier: PKCE_VERIFIER)
+
+    assert last_response.status == 400
+    assert json_body["error"] == "invalid_request"
+  end
+
+  def test_token_authorization_code_pkce_with_code_sha256_verifier
     setup_application
 
     pkce_grant = oauth_grant(access_type: "online", code_challenge_method: "S256", code_challenge: PKCE_CHALLENGE)

@@ -4,7 +4,7 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 if ENV.key?("CI")
   require "simplecov"
-  commands = [RUBY_ENGINE, RUBY_VERSION, ENV["DATABASE_URL"][%r{(\w+):(//|:)}, 1], ENV["JWT_LIB"], ENV["BUNDLE_GEMFILE"]].compact
+  commands = [RUBY_ENGINE, RUBY_VERSION, ENV.fetch("DATABASE_URL", "")[%r{(\w+):(//|:)}, 1], ENV["JWT_LIB"], ENV["BUNDLE_GEMFILE"]].compact
   SimpleCov.command_name commands.join("-")
   SimpleCov.coverage_dir "coverage/#{RUBY_ENGINE}-#{RUBY_VERSION}"
 end
@@ -23,11 +23,11 @@ require "rodauth/oauth"
 require "rodauth/version"
 require "bcrypt"
 
-PKCE_VERIFIER = "VERIFIER"
-PKCE_CHALLENGE = "a1Y-Z7sHPycP84FUZMgqhDyqVo6DdP5EUEXrLaTUge0" # using S256
-
 module OAuthHelpers
   attr_reader :app
+
+  PKCE_VERIFIER = "VERIFIER"
+  PKCE_CHALLENGE = "a1Y-Z7sHPycP84FUZMgqhDyqVo6DdP5EUEXrLaTUge0" # using S256
 
   private
 

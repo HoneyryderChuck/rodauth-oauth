@@ -39,6 +39,19 @@ class RodauthOAuthTokenDeviceCodeTest < RodaIntegration
     assert json_body["error"] == "invalid_request"
   end
 
+  def test_token_device_code_grant_type_no_code
+    setup_application
+    header "Authorization", "Basic #{authorization_header(
+      username: oauth_application[:client_id],
+      password: 'CLIENT_SECRET'
+    )}"
+    post("/token",
+         grant_type: "urn:ietf:params:oauth:grant-type:device_code")
+
+    assert last_response.status == 400
+    assert json_body["error"] == "invalid_request"
+  end
+
   def test_token_device_code_no_grant
     setup_application
     header "Authorization", "Basic #{authorization_header(
@@ -143,6 +156,18 @@ class RodauthOAuthTokenDeviceCodeTest < RodaIntegration
     assert json_body["error"] == "access_denied"
   end
 
+  def test_token_device_code_no_device_code
+    setup_application(:oauth_device_code_grant)
+
+    post("/token",
+         client_id: oauth_application[:client_id],
+         grant_type: "urn:ietf:params:oauth:grant-type:device_code")
+
+    assert last_response.status == 400
+    assert last_response.headers["Content-Type"] == "application/json"
+    assert json_body["error"] == "invalid_request"
+  end
+
   def test_token_device_code_successful
     setup_application(:oauth_device_code_grant)
     grant = oauth_grant_with_token(code: "CODE", user_code: nil, account_id: account[:id])
@@ -180,6 +205,9 @@ class RodauthOAuthTokenDeviceCodeTest < RodaIntegration
   private
 
   def setup_application(*)
+    rodauth do
+      oauth_token_endpoint_auth_methods_supported %w[client_secret_basic none]
+    end
     super
     header "Accept", "application/json"
   end
