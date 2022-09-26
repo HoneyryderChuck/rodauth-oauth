@@ -52,16 +52,13 @@ module Rodauth
     translatable_method :invalid_url_message, "Invalid URL"
     translatable_method :null_error_message, "is not filled"
 
-    def oauth_applications_path(opts = {})
-      route_path(oauth_applications_route, opts)
-    end
-
-    def oauth_applications_url(opts = {})
-      route_url(oauth_applications_route, opts)
-    end
     auth_value_methods(
       :oauth_application_path
     )
+
+    def oauth_applications_path(opts = {})
+      route_path(oauth_applications_route, opts)
+    end
 
     def oauth_application_path(id)
       "#{oauth_applications_path}/#{id}"
@@ -70,6 +67,7 @@ module Rodauth
     # /oauth-applications routes
     def load_oauth_application_management_routes
       request.on(oauth_applications_route) do
+        check_csrf if check_csrf?
         require_account
 
         request.get "new" do
@@ -134,15 +132,6 @@ module Rodauth
             new_oauth_application_view
           end
         end
-      end
-    end
-
-    def check_csrf?
-      case request.path
-      when oauth_applications_path
-        only_json? ? false : super
-      else
-        super
       end
     end
 

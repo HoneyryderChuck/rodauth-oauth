@@ -26,16 +26,13 @@ module Rodauth
       route_path(oauth_grants_route, opts)
     end
 
-    def oauth_grants_url(opts = {})
-      route_url(oauth_grants_route, opts)
-    end
-
     def oauth_grant_path(id)
       "#{oauth_grants_path}/#{id}"
     end
 
     def load_oauth_grant_management_routes
       request.on(oauth_grants_route) do
+        check_csrf if check_csrf?
         require_account
 
         request.post(oauth_grants_id_pattern) do |id|
@@ -64,15 +61,6 @@ module Rodauth
             oauth_grants_view
           end
         end
-      end
-    end
-
-    def check_csrf?
-      case request.path
-      when oauth_grants_path
-        only_json? ? false : super
-      else
-        super
       end
     end
   end

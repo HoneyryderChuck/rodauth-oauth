@@ -6,7 +6,7 @@
     else
       "<ul class=\"list-group\">" +
         @oauth_applications.map do |application|
-          "<li class=\"list-group-item\"><a href=\"/oauth-applications/#{application[:id]}\">#{application[:name]}</a></li>"
+          "<li class=\"list-group-item\"><a href=\"#{rodauth.oauth_application_path(application[rodauth.oauth_applications_id_column])}\">#{application[:name]}</a></li>"
         end.join +
       "</ul>"
     end
