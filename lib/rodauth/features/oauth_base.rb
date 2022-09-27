@@ -27,7 +27,7 @@ module Rodauth
     auth_value_method :json_response_content_type, "application/json"
 
     auth_value_method :oauth_grant_expires_in, 60 * 5 # 5 minutes
-    auth_value_method :oauth_token_expires_in, 60 * 60 # 60 minutes
+    auth_value_method :oauth_access_token_expires_in, 60 * 60 # 60 minutes
     auth_value_method :oauth_refresh_token_expires_in, 60 * 60 * 24 * 360 # 1 year
     auth_value_method :oauth_unique_id_generation_retries, 3
 
@@ -435,7 +435,7 @@ module Rodauth
       # grant_params = { oauth_grants_id_column => grant_params[oauth_grants_id_column] }
 
       update_params = {
-        oauth_grants_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_token_expires_in),
+        oauth_grants_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_access_token_expires_in),
         oauth_grants_code_column => nil
       }
 
@@ -584,7 +584,8 @@ module Rodauth
       # an expired refresh token is a token whose access token expired for a period longer than the
       # refresh token expiration period.
       #
-      ds = ds.where(Sequel.date_add(oauth_grants_expires_in_column, seconds: oauth_refresh_token_expires_in) >= Sequel::CURRENT_TIMESTAMP)
+      ds = ds.where(Sequel.date_add(oauth_grants_expires_in_column,
+                                    seconds: (oauth_refresh_token_expires_in - oauth_access_token_expires_in)) >= Sequel::CURRENT_TIMESTAMP)
 
       ds = if oauth_grants_refresh_token_hash_column
              ds.where(oauth_grants_refresh_token_hash_column => generate_token_hash(token))
@@ -605,7 +606,7 @@ module Rodauth
       payload = {
         "access_token" => oauth_grant[oauth_grants_token_column],
         "token_type" => oauth_token_type,
-        "expires_in" => oauth_token_expires_in
+        "expires_in" => oauth_access_token_expires_in
       }
       payload["refresh_token"] = oauth_grant[oauth_grants_refresh_token_column] if oauth_grant[oauth_grants_refresh_token_column]
       payload
@@ -628,7 +629,8 @@ module Rodauth
       # fetch potentially revoked oauth token
       oauth_grant = oauth_grant_by_refresh_token_ds(refresh_token, revoked: true).for_update.first
 
-      update_params = { oauth_grants_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_token_expires_in) }
+      update_params = { oauth_grants_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP,
+                                                                          seconds: oauth_access_token_expires_in) }
 
       if !oauth_grant || oauth_grant[oauth_grants_revoked_at_column]
         redirect_response_error("invalid_grant")

@@ -118,7 +118,7 @@ module Rodauth
         sub: jwt_subject(oauth_grant),
         client_id: oauth_application[oauth_applications_client_id_column],
 
-        exp: issued_at + oauth_token_expires_in,
+        exp: issued_at + oauth_access_token_expires_in,
         aud: oauth_jwt_audience
       }
     end

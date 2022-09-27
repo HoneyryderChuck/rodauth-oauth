@@ -98,6 +98,7 @@ The following auth config methods were renamed (rename them if you're redefining
 * `oauth_jwt_token_issuer` renamed to `oauth_jwt_issuer`
 * `oauth_auth_methods_supported` renamed to `oauth_token_endpoint_auth_methods_supported`
 * `oauth_jwt_algorithms_supported` renamed to `oauth_jwt_jws_algorithms_supported`
+* `oauth_token_expires_in` renamed to `oauth_access_token_expires_in`
 
 ## Removed options
 
