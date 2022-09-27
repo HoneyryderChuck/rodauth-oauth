@@ -96,6 +96,8 @@ The following auth config methods were renamed (rename them if you're redefining
 * all config methods terminated in `"_error_code`` are now prefixed by `"oauth"`
 * `unique_error_message` config method was removed (not in use)
 * `oauth_jwt_token_issuer` renamed to `oauth_jwt_issuer`
+* `oauth_auth_methods_supported` renamed to `oauth_token_endpoint_auth_methods_supported`
+* `oauth_jwt_algorithms_supported` renamed to `oauth_jwt_jws_algorithms_supported`
 
 ## Removed options
 
@@ -227,3 +229,19 @@ plugin :rodauth
 +  enable :oauth_authorization_code_grant, :oauth_client_credentials_grant
 end
 ```
+
+## `require_oauth_application` will not support "none" strategy by default
+
+Unless explicitly set in oauth application config, or `oauth_token_endpoint_auth_methods_supported` config.
+
+## `jwt_bearer_grant` feature exposes `client_secret_jwt` and `private_key_jwt` as token endpoint auth methods
+
+While the latter is a new feature, the former was already implemented, but not declared.
+
+## Webfinger options
+
+`webfinger_relation` has been removed. If you were overriding it, you can override `json_webfinger_payload` to backport this behaviour.
+
+## PKCE is strict by default
+
+This was a security improvement. However, if you were relying on, set `oauth_require_pkce` to `false`.

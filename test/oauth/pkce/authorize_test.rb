@@ -58,9 +58,6 @@ class RodauthOauthPkceAuthorizeTest < RodaIntegration
   end
 
   def test_authorize_post_authorize_with_forced_pkce_no_challenge
-    rodauth do
-      oauth_require_pkce true
-    end
     setup_application(:oauth_pkce)
 
     login
@@ -70,5 +67,20 @@ class RodauthOauthPkceAuthorizeTest < RodaIntegration
 
     assert page.current_url.include?("?error=invalid_request"),
            "code challenge required"
+  end
+
+  def test_authorize_post_authorize_with_unrequired_pkce
+    rodauth do
+      oauth_require_pkce false
+    end
+    setup_application(:oauth_pkce)
+
+    login
+
+    # show the authorization form
+    visit "/authorize?client_id=#{oauth_application[:client_id]}"
+
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
   end
 end

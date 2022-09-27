@@ -6,7 +6,7 @@ https://tools.ietf.org/html/rfc7636
 
 == Auth Value Methods
 
-oauth_require_pkce :: Enforces usage of PKCE, <tt>false</tt> by default.
+oauth_require_pkce :: Enforces usage of PKCE, <tt>true</tt> by default.
 oauth_pkce_challenge_method :: challenge method used in PKCE flow, <tt>S256</tt> by default.
 oauth_grants_code_challenge_column :: the db column where the oauth grant PKCE code challenge is stored, <tt>:code_challenge</tt> by default.
 oauth_grants_code_challenge_method_column :: the db column where the oauth grant PKCE code challenge method is stored, <tt>:code_challenge_method</tt> by default.

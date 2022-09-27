@@ -4,7 +4,7 @@ module Rodauth
   Feature.define(:oauth_pkce, :OauthPkce) do
     depends :oauth_authorization_code_grant
 
-    auth_value_method :oauth_require_pkce, false
+    auth_value_method :oauth_require_pkce, true
     auth_value_method :oauth_pkce_challenge_method, "S256"
 
     auth_value_method :oauth_grants_code_challenge_column, :code_challenge
