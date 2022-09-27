@@ -89,6 +89,7 @@ class RodauthOAuthJWTRefreshTokenTest < JWTIntegration
 
   def test_token_refresh_token_hash_columns_successful
     rodauth do
+      oauth_refresh_token_protection_policy "none"
       oauth_grants_refresh_token_hash_column :refresh_token_hash
     end
     setup_application

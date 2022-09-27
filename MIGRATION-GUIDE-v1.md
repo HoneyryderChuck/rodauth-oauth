@@ -245,3 +245,7 @@ While the latter is a new feature, the former was already implemented, but not d
 ## PKCE is strict by default
 
 This was a security improvement. However, if you were relying on, set `oauth_require_pkce` to `false`.
+
+## refresh token policy set to "rotation" by default
+
+This was a security improvement. However, if you were relying on, set `oauth_refresh_token_protection_policy` to `"none"`.

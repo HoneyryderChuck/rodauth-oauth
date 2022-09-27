@@ -52,6 +52,9 @@ class RodauthOAuthOIDCRefreshTokenTest < OIDCIntegration
   end
 
   def test_token_refresh_token_successful
+    rodauth do
+      oauth_refresh_token_protection_policy "none"
+    end
     setup_application
 
     oauth_grant = set_oauth_grant_with_token
@@ -70,6 +73,7 @@ class RodauthOAuthOIDCRefreshTokenTest < OIDCIntegration
 
   def test_token_refresh_token_hash_columns_successful
     rodauth do
+      oauth_refresh_token_protection_policy "none"
       oauth_grants_refresh_token_hash_column :refresh_token_hash
     end
     setup_application

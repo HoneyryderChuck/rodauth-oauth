@@ -81,7 +81,7 @@ module Rodauth
     # Feature options
     auth_value_method :oauth_application_scopes, SCOPES
     auth_value_method :oauth_token_type, "bearer"
-    auth_value_method :oauth_refresh_token_protection_policy, "none" # can be: none, sender_constrained, rotation
+    auth_value_method :oauth_refresh_token_protection_policy, "rotation" # can be: none, sender_constrained, rotation
 
     translatable_method :oauth_invalid_client_message, "Invalid client"
     translatable_method :oauth_invalid_grant_type_message, "Invalid grant type"

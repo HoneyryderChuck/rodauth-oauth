@@ -13,7 +13,7 @@ oauth_token_type :: type of the generated access token, <tt>"bearer"</tt> by def
 oauth_grant_expires_in :: The number of seconds an oauth grant is valid after creation, <tt>5 minutes</tt> by default.
 oauth_token_expires_in :: The number of seconds an oauth token is valid after creation, <tt>5 minutes</tt> by default.
 oauth_refresh_token_expires_in :: The number of seconds a refresh token is valid after creation, <tt>1 year</tt> by default.
-oauth_refresh_token_protection_policy :: protection policy for the refresh token (<tt>none</tt> by default).
+oauth_refresh_token_protection_policy :: protection policy for the refresh token (<tt>rotation</tt> by default).
 oauth_scope_separator :: character used to separate scopes in the db field value, white-space by default.
 oauth_response_mode :: default response mode (<tt>query</tt> by default).
 oauth_token_endpoint_auth_methods_supported :: list of supported auth methods for the token endpoint (contains "client_secret_basic" and "client_secret_post" by default).
