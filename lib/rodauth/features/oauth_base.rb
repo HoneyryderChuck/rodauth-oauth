@@ -156,12 +156,6 @@ module Rodauth
       end
     end
 
-    # Overrides session_value, so that a valid authorization token also authenticates a request
-    # TODO: deprecate
-    def session_value
-      super || oauth_token_subject
-    end
-
     def oauth_token_subject
       return unless authorization_token
 
