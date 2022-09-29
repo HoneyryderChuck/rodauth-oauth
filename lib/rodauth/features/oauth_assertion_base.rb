@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "rodauth/oauth"
+
 module Rodauth
   Feature.define(:oauth_assertion_base, :OauthAssertionBase) do
     depends :oauth_base

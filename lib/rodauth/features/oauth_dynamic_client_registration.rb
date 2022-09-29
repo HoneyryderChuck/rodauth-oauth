@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "rodauth/oauth"
+
 module Rodauth
   Feature.define(:oauth_dynamic_client_registration, :OauthDynamicClientRegistration) do
     depends :oauth_base

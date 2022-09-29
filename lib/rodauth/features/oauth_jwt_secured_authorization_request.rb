@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "rodauth/oauth"
+
 module Rodauth
   Feature.define(:oauth_jwt_secured_authorization_request, :OauthJwtSecuredAuthorizationRequest) do
     depends :oauth_authorize_base, :oauth_jwt_base

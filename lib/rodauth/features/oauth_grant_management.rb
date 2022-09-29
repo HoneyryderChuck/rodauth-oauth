@@ -1,10 +1,12 @@
 # frozen_string_literal: true
 
+require "rodauth/oauth"
+
 module Rodauth
   Feature.define(:oauth_grant_management, :OauthTokenManagement) do
     depends :oauth_management_base, :oauth_token_revocation
 
-    view "oauth_grants", "My Oauth Gramts", "oauth_grants"
+    view "oauth_grants", "My Oauth Grants", "oauth_grants"
 
     button "Revoke", "oauth_grant_revoke"
 
@@ -13,6 +15,7 @@ module Rodauth
     %w[type token refresh_token expires_in revoked_at].each do |param|
       translatable_method :"oauth_grants_#{param}_label", param.gsub("_", " ").capitalize
     end
+    translatable_method :oauth_no_grants_text, "No oauth grants yet!"
 
     auth_value_method :oauth_grants_route, "oauth-grants"
     auth_value_method :oauth_grants_id_pattern, Integer

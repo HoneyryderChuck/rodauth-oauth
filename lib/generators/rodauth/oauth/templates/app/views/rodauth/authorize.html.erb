@@ -2,7 +2,7 @@
   <% if rodauth.oauth_application[rodauth.oauth_applications_logo_uri_column] %>
     <%= image_tag rodauth.oauth_application[rodauth.oauth_applications_logo_uri_column] %>
   <% end %>
-  <p class="lead">The application <%= link_to rodauth.oauth_application[rodauth.oauth_applications_name_column],  rodauth.oauth_application[rodauth.oauth_applications_homepage_url_column] %> would like to access your data.</p>
+  <p class="lead"><%= rodauth.authorize_page_lead(name: link_to(rodauth.oauth_application[rodauth.oauth_applications_name_column],  rodauth.oauth_application[rodauth.oauth_applications_homepage_url_column])) %></p>
 
   <div class="list-group">
     <% if rodauth.oauth_application[rodauth.oauth_applications_tos_uri_column] %>

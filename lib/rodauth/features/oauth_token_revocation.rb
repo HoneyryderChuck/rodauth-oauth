@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "rodauth/oauth"
+
 module Rodauth
   Feature.define(:oauth_token_revocation, :OauthTokenRevocation) do
     depends :oauth_base

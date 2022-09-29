@@ -1,7 +1,7 @@
 <% oauth_grants = rodauth.scope.instance_variable_get(:@oauth_grants) %>
 <% grants_count = oauth_grants.count %>
 <% if grants_count.zero? %>
-  <p>No oauth tokens yet!</p>
+  <p><%= rodauth.oauth_no_grants_text %></p>
 <% else %>
   <table class="table">
     <thead>

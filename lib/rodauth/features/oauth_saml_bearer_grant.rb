@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "onelogin/ruby-saml"
+require "rodauth/oauth"
 
 module Rodauth
   Feature.define(:oauth_saml_bearer_grant, :OauthSamlBearerGrant) do

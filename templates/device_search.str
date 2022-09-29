@@ -1,5 +1,5 @@
 <form method="get" action="#{rodauth.device_path}" class="form-horizontal" role="form" id="device-search-form">
-  <p class="lead">Insert the user code from the device you'd like to authorize.</p>
+  <p class="lead">#{rodauth.oauth_device_search_page_lead}</p>
 
   <div class="form-group">
     <label for="user_code">#{rodauth.oauth_grant_user_code_label}</label>

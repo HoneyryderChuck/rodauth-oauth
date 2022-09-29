@@ -4,13 +4,15 @@ require "time"
 require "base64"
 require "securerandom"
 require "rodauth/version"
-require "rodauth/oauth/version"
+require "rodauth/oauth"
 require "rodauth/oauth/database_extensions"
 require "rodauth/oauth/http_extensions"
 
 module Rodauth
   Feature.define(:oauth_base, :OauthBase) do
     include OAuth::HTTPExtensions
+
+    EMPTY_HASH = {}.freeze
 
     auth_value_methods(:http_request)
     auth_value_methods(:http_request_cache)
@@ -260,6 +262,15 @@ module Rodauth
 
     def use_date_arithmetic?
       true
+    end
+
+    # override
+    def translate(key, default, args = EMPTY_HASH)
+      return i18n_translate(key, default, **args) if features.include?(:i18n)
+      # do not attempt to translate by default
+      return default if args.nil?
+
+      default % args
     end
 
     def post_configure

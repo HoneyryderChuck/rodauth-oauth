@@ -20,10 +20,16 @@ module Rodauth
         alias_method :"#{handle_meth}_not_for_auth_server", handle_meth
         alias_method handle_meth, :"#{handle_meth}_for_auth_server"
       end
+
+      # override
+      def translatable_method(meth, value)
+        define_method(meth) { |*args| translate(meth, value, *args) }
+        auth_value_methods(meth)
+      end
     end
   end
 
-  Feature.include OAuth::FeatureExtensions
+  Feature.prepend OAuth::FeatureExtensions
 end
 
 require "rodauth/oauth/railtie" if defined?(Rails)

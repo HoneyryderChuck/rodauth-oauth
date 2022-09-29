@@ -1,7 +1,7 @@
 <div id="oauth-grants">
   #{
     if @oauth_grants.count.zero?
-      "<p>No oauth grants yet!</p>"
+      "<p>#{rodauth.oauth_no_grants_text}</p>"
     else
       <<-HTML
         <table class="table">

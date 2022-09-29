@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "rodauth/oauth"
+
 module Rodauth
   Feature.define(:oauth_resource_server, :OauthResourceServer) do
     depends :oauth_token_introspection

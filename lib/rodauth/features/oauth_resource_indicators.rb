@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-require "rodauth/oauth/version"
+require "rodauth/oauth"
 
 module Rodauth
   Feature.define(:oauth_resource_indicators, :OauthResourceIndicators) do

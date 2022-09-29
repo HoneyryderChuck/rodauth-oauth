@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "rodauth/oauth"
+
 module Rodauth
   Feature.define(:oauth_implicit_grant, :OauthImplicitGrant) do
     depends :oauth_authorize_base

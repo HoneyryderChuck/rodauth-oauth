@@ -8,10 +8,14 @@
     end
   }
   <p class="lead">
-    The application
-    <a target="_blank" href="#{h(rodauth.oauth_application[rodauth.oauth_applications_homepage_url_column])}">
-      #{h(rodauth.oauth_application[rodauth.oauth_applications_name_column])}
-    </a> would like to access your data.
+  #{
+    rodauth.authorize_page_lead(name: <<-LINK
+      <a target="_blank" href="#{h(rodauth.oauth_application[rodauth.oauth_applications_homepage_url_column])}">
+        #{h(rodauth.oauth_application[rodauth.oauth_applications_name_column])}
+      </a>
+    LINK
+    )
+  }
   </p>
   <div class="list-group">
   #{
@@ -66,7 +70,6 @@
     }
 
     <input type="hidden" name="client_id" value="#{rodauth.param("client_id")}"/>
-
     #{"<input type=\"hidden\" name=\"access_type\" value=\"#{rodauth.param("access_type")}\"/>" if rodauth.param_or_nil("access_type")}
     #{"<input type=\"hidden\" name=\"response_type\" value=\"#{rodauth.param("response_type")}\"/>" if rodauth.param_or_nil("response_type")}
     #{"<input type=\"hidden\" name=\"response_mode\" value=\"#{rodauth.param("response_mode")}\"/>" if rodauth.param_or_nil("response_mode")}
@@ -88,6 +91,8 @@
   </div>
   <p class="text-center">
     <input type="submit" class="btn btn-outline-primary" value="#{h(rodauth.oauth_authorize_button)}"/>
-    <a href="#{rodauth.redirect_uri}?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request#{ "&state=#{rodauth.param("state")}" if rodauth.param_or_nil("state")}" class="btn btn-outline-danger">#{rodauth.oauth_cancel_button}</a>
+    <a href="#{rodauth.redirect_uri}?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request#{ "&state=#{rodauth.param("state")}" if rodauth.param_or_nil("state")}" class="btn btn-outline-danger">
+      #{rodauth.oauth_cancel_button}
+    </a>
   </p>
 </form>

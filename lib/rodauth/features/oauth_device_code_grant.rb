@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "rodauth/oauth"
+
 module Rodauth
   Feature.define(:oauth_device_code_grant, :OauthDeviceCodeGrant) do
     depends :oauth_authorize_base
@@ -19,6 +21,8 @@ module Rodauth
     auth_value_method :oauth_grants_user_code_column, :user_code
     auth_value_method :oauth_grants_last_polled_at_column, :last_polled_at
 
+    translatable_method :oauth_device_search_page_lead, "Insert the user code from the device you'd like to authorize."
+    translatable_method :oauth_device_verification_page_lead, "The device with user code %<user_code>s would like to access your data."
     translatable_method :oauth_expired_token_message, "the device code has expired"
     translatable_method :oauth_access_denied_message, "the authorization request has been denied"
     translatable_method :oauth_authorization_pending_message, "the authorization request is still pending"

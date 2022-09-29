@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "rodauth/oauth"
+
 module Rodauth
   Feature.define(:oauth_application_management, :OauthApplicationManagement) do
     depends :oauth_management_base, :oauth_token_revocation
@@ -51,6 +53,9 @@ module Rodauth
 
     translatable_method :invalid_url_message, "Invalid URL"
     translatable_method :null_error_message, "is not filled"
+
+    translatable_method :oauth_no_applications_text, "No oauth applications yet!"
+    translatable_method :oauth_no_grants_text, "No oauth grants yet!"
 
     auth_value_methods(
       :oauth_application_path

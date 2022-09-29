@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "rodauth/oauth"
+
 module Rodauth
   Feature.define(:oidc, :Oidc) do
     # https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims

@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "rodauth/oauth"
+
 module Rodauth
   Feature.define(:oauth_pkce, :OauthPkce) do
     depends :oauth_authorization_code_grant

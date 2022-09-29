@@ -2,7 +2,7 @@
   <a class="btn btn-outline-primary" href="/oauth-applications/new">#{rodauth.new_oauth_application_page_title}</a>
   #{
     if @oauth_applications.count.zero?
-      "<p>No oauth applications yet!</p>"
+      "<p>#{rodauth.oauth_no_applications_text}</p>"
     else
       "<ul class=\"list-group\">" +
         @oauth_applications.map do |application|

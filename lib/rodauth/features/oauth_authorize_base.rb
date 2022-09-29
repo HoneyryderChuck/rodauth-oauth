@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "rodauth/oauth"
+
 module Rodauth
   Feature.define(:oauth_authorize_base, :OauthAuthorizeBase) do
     depends :oauth_base
@@ -12,6 +14,7 @@ module Rodauth
     button "Authorize", "oauth_authorize"
     button "Back to Client Application", "oauth_authorize_post"
 
+    translatable_method :authorize_page_lead, "The application %<name>s would like to access your data"
     translatable_method :oauth_grants_scopes_label, "Scopes"
     translatable_method :oauth_applications_contacts_label, "Contacts"
     translatable_method :oauth_applications_tos_uri_label, "Terms of service URL"
