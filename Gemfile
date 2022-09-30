@@ -17,7 +17,12 @@ else
   gem "capybara"
 end
 
+gem "rack"
 gem "roda"
+if RUBY_VERSION >= "2.4.0"
+  gem "rack-session"
+  gem "rackup"
+end
 gem "tilt"
 gem "tzinfo-data"
 

@@ -5,6 +5,7 @@ require "net/http"
 require "securerandom"
 require "roda"
 require "roda/session_middleware"
+require "rack/session"
 require "omniauth/openid_connect"
 
 AUTHORIZATION_SERVER = ENV.fetch("AUTHORIZATION_SERVER_URI", "http://localhost:9292")
