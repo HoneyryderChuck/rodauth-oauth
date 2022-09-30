@@ -162,16 +162,20 @@ module Rodauth
     end
 
     def do_register(return_params = request.params.dup)
+      applications_ds = db[oauth_applications_table]
+      application_columns = applications_ds.columns
+
       # set defaults
       create_params = @oauth_application_params
       create_params[oauth_applications_scopes_column] ||= return_params["scopes"] = oauth_application_scopes.join(" ")
-      create_params[oauth_applications_token_endpoint_auth_method_column] ||= begin
-        return_params["token_endpoint_auth_method"] = "client_secret_basic"
-        "client_secret_basic"
-      end
-      create_params[oauth_applications_grant_types_column] ||= begin
-        return_params["grant_types"] = %w[authorization_code]
+      if create_params[oauth_applications_grant_types_column] ||= begin
+        return_params["grant_types"] = %w[authorization_code] # rubocop:disable Lint/AssignmentInCondition
         "authorization_code"
+      end
+        create_params[oauth_applications_token_endpoint_auth_method_column] ||= begin
+          return_params["token_endpoint_auth_method"] = "client_secret_basic"
+          "client_secret_basic"
+        end
       end
       create_params[oauth_applications_response_types_column] ||= begin
         return_params["response_types"] = %w[code]
@@ -190,8 +194,10 @@ module Rodauth
           create_params[oauth_applications_client_secret_column] = secret_hash(client_secret)
           return_params["client_secret"] = client_secret
           return_params["client_secret_expires_at"] = 0
+
+          create_params.delete_if { |k, _| !application_columns.include?(k) }
         end
-        db[oauth_applications_table].insert(create_params)
+        applications_ds.insert(create_params)
       end
 
       return_params

@@ -154,7 +154,7 @@ module Rodauth
         "web"
       end
       create_params[oauth_applications_id_token_signed_response_alg_column] ||= return_params["id_token_signed_response_alg"] =
-        oauth_jwt_keys.first
+        oauth_jwt_keys.keys.first
 
       if create_params.key?(oauth_applications_id_token_encrypted_response_alg_column)
         create_params[oauth_applications_id_token_encrypted_response_enc_column] ||= return_params["id_token_encrypted_response_enc"] =
