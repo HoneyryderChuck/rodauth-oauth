@@ -10,7 +10,6 @@ module Rodauth
     before "introspect"
 
     auth_value_methods(
-      :before_introspection_request,
       :resource_owner_identifier
     )
 
@@ -102,17 +101,6 @@ module Rodauth
     end
 
     private
-
-    def introspection_request(token_type_hint, token)
-      introspect_url = URI("#{authorization_server_url}#{introspect_path}")
-
-      response = http_request(introspect_url, { "token_type_hint" => token_type_hint, "token" => token },
-                              &method(:before_introspection_request))
-
-      JSON.parse(response.body)
-    end
-
-    def before_introspection_request(request); end
 
     def oauth_server_metadata_body(*)
       super.tap do |data|

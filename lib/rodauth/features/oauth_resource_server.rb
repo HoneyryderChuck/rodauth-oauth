@@ -8,6 +8,10 @@ module Rodauth
 
     auth_value_method :is_authorization_server?, false
 
+    auth_value_methods(
+      :before_introspection_request
+    )
+
     def authorization_token
       return @authorization_token if defined?(@authorization_token)
 
@@ -37,5 +41,19 @@ module Rodauth
 
       authorization_required unless scopes.any? { |scope| token_scopes.include?(scope) }
     end
+
+    private
+
+    def introspection_request(token_type_hint, token)
+      introspect_url = URI("#{authorization_server_url}#{introspect_path}")
+
+      response = http_request(introspect_url, { "token_type_hint" => token_type_hint, "token" => token }) do |request|
+        before_introspection_request(request)
+      end
+
+      JSON.parse(response.body)
+    end
+
+    def before_introspection_request(request); end
   end
 end
