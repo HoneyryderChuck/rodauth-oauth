@@ -19,6 +19,13 @@ else
     String :name
     String :ph, null: false
   end
+  # Used by the account expiration feature
+  DB.create_table(:account_activity_times) do
+    foreign_key :id, :accounts, primary_key: true, type: :Bignum
+    DateTime :last_activity_at, null: false
+    DateTime :last_login_at, null: false
+    DateTime :expired_at
+  end
   DB.create_table(:oauth_applications) do
     primary_key :id, type: Integer
     foreign_key :account_id, :accounts, null: false
@@ -102,7 +109,7 @@ class AuthenticationServer < Roda
 
   plugin :rodauth, json: true do
     db DB
-    enable :login, :logout, :create_account, :oidc
+    enable :login, :logout, :create_account, :oidc, :oidc_dynamic_client_registration
     login_return_to_requested_location? true
     account_password_hash_column :ph
     title_instance_variable :@page_title
@@ -114,6 +121,14 @@ class AuthenticationServer < Roda
     oauth_jwt_keys("RS256" => PRIV_KEY)
     oauth_jwt_public_keys("RS256" => PUB_KEY)
     oauth_grants_refresh_token_hash_column :refresh_token
+
+    before_register do
+      email = request.env["HTTP_AUTHORIZATION"]
+      authorization_required unless email
+      account = _account_from_login(email)
+      authorization_required unless account
+      @oauth_application_params[:account_id] = account[:id]
+    end
 
     get_oidc_param do |account, param|
       case param
@@ -135,7 +150,6 @@ class AuthenticationServer < Roda
   route do |r|
     r.assets
     r.rodauth
-    rodauth.load_oauth_application_management_routes
     rodauth.load_openid_configuration_route
     rodauth.load_webfinger_route
 

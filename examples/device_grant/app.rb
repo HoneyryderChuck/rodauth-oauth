@@ -114,7 +114,6 @@ class AuthorizationServer < Roda
   route do |r|
     r.assets
     r.rodauth
-    rodauth.oauth_applications
 
     r.root do
       @application = TEST_APPLICATION

@@ -12,13 +12,13 @@ require "jwt"
 AUTHORIZATION_SERVER = ENV.fetch("AUTHORIZATION_SERVER_URI", "http://localhost:9292")
 
 # PUB_KEY = OpenSSL::PKey::EC.new(File.read(File.join(__dir__, "..", "ecpubkey.pem")))
-PUB_KEY = OpenSSL::PKey::RSA.new(File.read(File.join(__dir__, "..", "rsapubkey.pem")))
+# PUB_KEY = OpenSSL::PKey::RSA.new(File.read(File.join(__dir__, "..", "rsapubkey.pem")))
 
 class ResourceServer < Roda
   plugin :common_logger
 
   plugin :rodauth, json: true do
-    enable :oauth_resource_server, :oauth_jwt
+    enable :oauth_jwt, :oauth_resource_server
     authorization_server_url AUTHORIZATION_SERVER
     use_date_arithmetic? false
   end
