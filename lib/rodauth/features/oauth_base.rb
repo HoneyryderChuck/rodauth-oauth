@@ -187,13 +187,12 @@ module Rodauth
       (accept = request.env["HTTP_ACCEPT"]) && accept =~ json_request_regexp
     end
 
-    unless method_defined?(:json_request?)
-      # copied from the jwt feature
-      def json_request?
-        return @json_request if defined?(@json_request)
+    # copied from the jwt feature
+    def json_request?
+      return super if features.include?(:jsonn)
+      return @json_request if defined?(@json_request)
 
-        @json_request = request.content_type =~ json_request_regexp
-      end
+      @json_request = request.content_type =~ json_request_regexp
     end
 
     def scopes
@@ -417,12 +416,10 @@ module Rodauth
       oauth_grant[oauth_grants_oauth_application_id_column] == oauth_application[oauth_applications_id_column]
     end
 
-    unless method_defined?(:password_hash)
-      # From login_requirements_base feature
+    def password_hash(password)
+      return super if features.include?(:login_password_requirements_base)
 
-      def password_hash(password)
-        BCrypt::Password.create(password, cost: BCrypt::Engine::DEFAULT_COST)
-      end
+      BCrypt::Password.create(password, cost: BCrypt::Engine::DEFAULT_COST)
     end
 
     def generate_token(grant_params = {}, should_generate_refresh_token = true)
@@ -788,13 +785,13 @@ module Rodauth
       return_response(json_payload)
     end
 
-    unless method_defined?(:_json_response_body)
-      def _json_response_body(hash)
-        if request.respond_to?(:convert_to_json)
-          request.send(:convert_to_json, hash)
-        else
-          JSON.dump(hash)
-        end
+    def _json_response_body(hash)
+      return super if features.include?(:json)
+
+      if request.respond_to?(:convert_to_json)
+        request.send(:convert_to_json, hash)
+      else
+        JSON.dump(hash)
       end
     end
 
