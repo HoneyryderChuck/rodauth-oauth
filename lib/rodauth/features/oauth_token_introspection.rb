@@ -16,7 +16,7 @@ module Rodauth
     # /introspect
     auth_server_route(:introspect) do |r|
       before_introspect_route
-      require_oauth_application
+      require_oauth_application_for_introspect
 
       r.post do
         catch_error do
@@ -97,6 +97,18 @@ module Rodauth
     end
 
     private
+
+    def require_oauth_application_for_introspect
+      (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v[/\A *Bearer (.*)\Z/, 1]))
+
+      return require_oauth_application unless token
+
+      oauth_application = current_oauth_application
+
+      authorization_required unless oauth_application
+
+      @oauth_application = oauth_application
+    end
 
     def oauth_server_metadata_body(*)
       super.tap do |data|

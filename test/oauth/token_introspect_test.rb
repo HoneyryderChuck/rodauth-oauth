@@ -120,18 +120,38 @@ class RodauthOAuthTokenIntrospectTest < RodaIntegration
 
     header "Accept", "application/json"
 
-    token = set_oauth_grant_with_token(type: "client_credentials", account_id: nil)
+    grant = set_oauth_grant_with_token(type: "client_credentials", account_id: nil)
 
     # valid token, and now we're getting somewhere
     post("/introspect", {
            client_id: oauth_application[:client_id],
            client_secret: "CLIENT_SECRET",
-           token: token[:token]
+           token: grant[:token]
          })
     assert last_response.status == 200
     assert json_body["active"] == true
     assert json_body["username"] == "Foo"
-    assert json_body["scope"] == token[:scopes]
+    assert json_body["scope"] == grant[:scopes]
+    assert json_body["client_id"] == oauth_application[:client_id]
+    assert json_body["token_type"] == "bearer"
+    assert json_body.key?("exp")
+  end
+
+  def test_oauth_introspect_access_token_client_credentials_auth
+    setup_application
+    header "Accept", "application/json"
+    client_credentials_grant = set_oauth_grant_with_token(type: "client_credentials", account_id: nil, token: "CLIENT_TOKEN",
+                                                          refresh_token: "CLIENT_REFRESH_TOKEN")
+    header "Authorization", "Bearer #{client_credentials_grant[:token]}"
+
+    # valid token, and now we're getting somewhere
+    post("/introspect", {
+           token: oauth_grant_with_token[:token]
+         })
+    assert last_response.status == 200
+    assert json_body["active"] == true
+    assert json_body["username"] == account[:email]
+    assert json_body["scope"] == oauth_grant_with_token[:scopes]
     assert json_body["client_id"] == oauth_application[:client_id]
     assert json_body["token_type"] == "bearer"
     assert json_body.key?("exp")
