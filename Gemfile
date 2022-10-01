@@ -18,11 +18,8 @@ else
 end
 
 gem "rack"
+gem "rackup"
 gem "roda"
-if RUBY_VERSION >= "2.4.0"
-  gem "rack-session"
-  gem "rackup"
-end
 gem "tilt"
 gem "tzinfo-data"
 

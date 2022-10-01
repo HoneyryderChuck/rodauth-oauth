@@ -23,7 +23,7 @@ else
     token_endpoint_auth_method: "client_secret_basic",
     grant_types: %w[client_credentials],
     redirect_uris: ["http://localhost:9294"],
-    client_uri: "http://localhost:9294",
+    client_uri: "http://localhost:9294"
   }.freeze
 
   puts "registering client application...."

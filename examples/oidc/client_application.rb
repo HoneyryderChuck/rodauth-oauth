@@ -5,7 +5,6 @@ require "net/http"
 require "securerandom"
 require "roda"
 require "roda/session_middleware"
-require "rack/session"
 require "omniauth/openid_connect"
 
 AUTHORIZATION_SERVER = ENV.fetch("AUTHORIZATION_SERVER_URI", "http://localhost:9292")
@@ -141,9 +140,7 @@ class ClientApplication < Roda
   plugin :csrf, skip_middleware: true
 
   secret = ENV.delete("RODAUTH_SESSION_SECRET") || SecureRandom.random_bytes(64)
-  # use RodaSessionMiddleware, secret: secret, key: "client-application.session"
-
-  use Rack::Session::Cookie, key: "rack.session", secret: secret
+  use RodaSessionMiddleware, secret: secret, key: "client-application.session"
 
   auth_server_uri = URI(AUTHORIZATION_SERVER)
 

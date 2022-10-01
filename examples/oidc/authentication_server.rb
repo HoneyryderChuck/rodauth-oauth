@@ -109,7 +109,8 @@ class AuthenticationServer < Roda
 
   plugin :rodauth, json: true do
     db DB
-    enable :login, :logout, :create_account, :oidc, :oauth_client_credentials_grant, :oauth_token_introspection, :oidc_dynamic_client_registration
+    enable :login, :logout, :create_account, :oidc, :oauth_client_credentials_grant, :oauth_token_introspection,
+           :oidc_dynamic_client_registration
     login_return_to_requested_location? true
     account_password_hash_column :ph
     title_instance_variable :@page_title
