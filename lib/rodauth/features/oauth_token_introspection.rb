@@ -38,10 +38,6 @@ module Rodauth
 
           oauth_grant ||= oauth_grant_by_refresh_token(param("token")) if token_type_hint.nil?
 
-          if oauth_application && (oauth_grant && !grant_from_application?(oauth_grant, oauth_application))
-            redirect_response_error("invalid_request")
-          end
-
           json_response_success(json_token_introspect_payload(oauth_grant))
         end
 
