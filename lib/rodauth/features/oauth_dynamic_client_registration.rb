@@ -43,6 +43,19 @@ module Rodauth
 
     private
 
+    def _before_register
+      raise %{dynamic client registration requires authentication.
+        Override ´before_register` to perform it.
+        example:
+
+          before_register do
+            account = _account_from_login(request.env["HTTP_X_USER_EMAIL"])
+            authorization_required unless account
+            @oauth_application_params[:account_id] = account[:id]
+          end
+      }
+    end
+
     def validate_client_registration_params
       oauth_client_registration_required_params.each do |required_param|
         unless request.params.key?(required_param)

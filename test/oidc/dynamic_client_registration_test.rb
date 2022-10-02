@@ -9,7 +9,6 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
 
   def test_oidc_client_registration_response_type_id_token
     rodauth do
-      enable :oidc_dynamic_client_registration
       oauth_application_scopes %w[read write]
     end
     setup_application(:oauth_implicit_grant)
@@ -32,7 +31,6 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
 
   def test_oidc_client_registration_native_application_type
     rodauth do
-      enable :oidc_dynamic_client_registration
       oauth_valid_uri_schemes %w[http https newapp]
       oauth_application_scopes %w[read write]
     end
@@ -70,7 +68,6 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
 
   def test_oidc_client_registration_web_application_type
     rodauth do
-      enable :oidc_dynamic_client_registration
       oauth_valid_uri_schemes %w[http https]
       oauth_application_scopes %w[read write]
     end
@@ -106,7 +103,6 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
 
   def test_oidc_client_registration_subject_type
     rodauth do
-      enable :oidc_dynamic_client_registration
       oauth_valid_uri_schemes %w[http https]
       oauth_application_scopes %w[read write]
     end
@@ -156,7 +152,6 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
 
   def test_oidc_client_registration_id_token_signed_response
     rodauth do
-      enable :oidc_dynamic_client_registration
       oauth_application_scopes %w[read write]
     end
     setup_application
@@ -190,7 +185,6 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
 
   def test_oidc_client_registration_userinfo_signed_response
     rodauth do
-      enable :oidc_dynamic_client_registration
       oauth_application_scopes %w[read write]
     end
     setup_application
@@ -225,10 +219,9 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
 
   def test_oidc_client_registration_request_object
     rodauth do
-      enable :oauth_jwt_secured_authorization_request, :oidc_dynamic_client_registration
       oauth_application_scopes %w[read write]
     end
-    setup_application
+    setup_application(:oauth_jwt_secured_authorization_request)
     header "Accept", "application/json"
 
     post("/register", valid_registration_params.merge("request_object_signing_alg" => "smth"))
@@ -259,6 +252,17 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
   end
 
   private
+
+  def setup_application(*)
+    rodauth do
+      before_register {} # no auth
+    end
+    super
+  end
+
+  def oauth_feature
+    :oidc_dynamic_client_registration
+  end
 
   def valid_registration_params
     @valid_registration_params ||= {

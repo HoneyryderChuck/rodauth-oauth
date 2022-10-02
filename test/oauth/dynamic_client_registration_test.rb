@@ -7,7 +7,6 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
   def test_oauth_dynamic_client_wrong_params
     rodauth do
-      enable :oauth_dynamic_client_registration
       oauth_application_scopes %w[read write]
     end
     setup_application
@@ -41,11 +40,10 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
   def test_oauth_dynamic_client_contacts
     rodauth do
-      enable :oauth_authorization_code_grant
       oauth_application_scopes %w[read write]
     end
 
-    setup_application
+    setup_application(:oauth_authorization_code_grant)
     header "Accept", "application/json"
 
     post("/register", valid_registration_params.merge("contacts" => "smthsmth"))
@@ -58,11 +56,10 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
   def test_oauth_dynamic_client_grant_types
     rodauth do
-      enable :oauth_authorization_code_grant
       oauth_application_scopes %w[read write]
     end
 
-    setup_application
+    setup_application(:oauth_authorization_code_grant)
     header "Accept", "application/json"
 
     post("/register", valid_registration_params.merge("grant_types" => "smthsmth"))
@@ -85,11 +82,10 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
   def test_oauth_dynamic_client_response_types
     rodauth do
-      enable :oauth_authorization_code_grant
       oauth_application_scopes %w[read write]
     end
 
-    setup_application
+    setup_application(:oauth_authorization_code_grant)
     header "Accept", "application/json"
 
     post("/register", valid_registration_params.merge("response_types" => "smthsmth"))
@@ -259,6 +255,13 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
   end
 
   private
+
+  def setup_application(*)
+    rodauth do
+      before_register {} # no auth
+    end
+    super
+  end
 
   def oauth_feature
     :oauth_dynamic_client_registration
