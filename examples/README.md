@@ -50,7 +50,7 @@ In this example, the resource server is separate from the authorization server.
 On one shell, do
 > ruby authorization_server/app.rb
 On another shell, do
-> RESOURCE_SERVER="http://localhost:9294" ruby client_application/app.rb
+> RESOURCE_SERVER_URI="http://localhost:9294" ruby client_application/app.rb
 On another
 > ruby resource_server/app.rb
 ```
@@ -61,9 +61,30 @@ Same as the previous one. However, see how the books are retrieved from a differ
 
 ## What's relevant to know
 
-Be aware of the resource/authorization server communication when books are retrieved.
+Be aware of the resource/authorization server communication when books are retrieved. Also, se how the resource server register a client application on boot, and uses the client credentials grant to get a token to access the introspection endpoint.
 
-# 3. JWT Authorization Server / Client Application
+# 3. Device code Authorization Server / Client Application
+
+In this example, a device (ex: TV) to authorization server interaction is simulated.
+
+## How to run
+
+```
+On one shell, do
+> ruby device_grant/app.rb
+On another shell, do
+> ruby device_grant/client_application.rb
+```
+
+## How to use
+
+See how, once the auth server generates a device code, it ask to (in real life, using a different device, like your phone) access a given URL to introduce it.
+
+## What's relevant to know
+
+See how, after one enters the device code, the original page updates.
+
+# 4. JWT Authorization Server / Client Application
 
 In this example, the authorization server generates JWT access tokens.
 
@@ -84,7 +105,7 @@ On your browser, go to `http://localhost:9293`. Click `Authorize` and login in t
 
 As there isn't a token lookup when verifying the token (the signature of the JWT is verified instead), you should see significant improvements here.
 
-# 4. SAML Bearer Grant Authorization Server / Client Application / Saml IdP
+# 5. SAML Bearer Grant Authorization Server / Client Application / Saml IdP
 
 In this example, the client requests SAML assertions to the identity provider, which it then sends to the authorization to generate access tokens.
 
@@ -108,17 +129,21 @@ On your browser, go to `http://localhost:9293`. Click `Authorize` and you should
 You'll be redirected from SSO back to the client application with a SAML assertion.
 
 
-# 5. OpenID
+# 6. OpenID
 
 This is a setup of an OpenID provider and consumer, where the provider has auto-discovery, and the client uses an omniauth/openid-compatible library to integrate.
 
 ## How to run
 
 ```
-On one shell, do
+# On one shell, do
 > ruby oidc/authorization_server.rb
-On another shell, do
+# On another shell, do
 > ruby oidc/client_application.rb
+
+# if you want to test resource-server mode, run these two instead:
+> ruby jwt/resource_server.rb
+> RESOURCE_SERVER_URI=http://localhost:9294/books ruby oidc/client_application.rb
 ```
 
 ## How to use

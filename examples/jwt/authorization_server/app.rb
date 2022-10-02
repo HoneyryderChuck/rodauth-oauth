@@ -94,7 +94,7 @@ class AuthorizationServer < Roda
 
   plugin :rodauth, json: true do
     db DB
-    enable :login, :logout, :create_account, :oauth_jwt, :oauth_authorization_code_grant, :oauth_dynamic_client_registration
+    enable :login, :logout, :create_account, :oauth_authorization_code_grant, :oauth_dynamic_client_registration, :oauth_jwt
     login_return_to_requested_location? true
     account_password_hash_column :ph
     title_instance_variable :@page_title
