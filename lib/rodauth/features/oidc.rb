@@ -564,6 +564,12 @@ module Rodauth
       end
     end
 
+    def supported_response_mode?(response_mode, *)
+      return super unless response_mode == "none"
+
+      param("response_type") == "none"
+    end
+
     def supports_token_response_type?
       features.include?(:oauth_implicit_grant)
     end
@@ -586,6 +592,8 @@ module Rodauth
         redirect_response_error("invalid_request") unless supports_token_response_type?
 
         response_params.replace(_do_authorize_code.merge(_do_authorize_id_token).merge(_do_authorize_token))
+      when "none"
+        response_mode ||= "none"
       end
       response_mode ||= "fragment" unless response_params.empty?
 
@@ -609,6 +617,12 @@ module Rodauth
       params = json_access_token_payload(oauth_grant)
       params.delete("access_token")
       params
+    end
+
+    def authorize_response(params, mode)
+      redirect_url = URI.parse(redirect_uri)
+      redirect(redirect_url.to_s) if mode == "none"
+      super
     end
 
     # Logout

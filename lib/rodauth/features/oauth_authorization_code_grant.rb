@@ -44,10 +44,6 @@ module Rodauth
       when "code", nil
         response_mode ||= "query"
         response_params.replace(_do_authorize_code)
-      when "none"
-        response_mode ||= "none"
-      else
-        return super if response_params.empty?
       end
 
       response_params["state"] = param("state") if param_or_nil("state")
