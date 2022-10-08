@@ -14,6 +14,10 @@ module Rodauth
     button "Authorize", "oauth_authorize"
     button "Back to Client Application", "oauth_authorize_post"
 
+    auth_value_method :use_oauth_access_type?, false
+
+    auth_value_method :oauth_grants_access_type_column, :access_type
+
     translatable_method :authorize_page_lead, "The application %<name>s would like to access your data"
     translatable_method :oauth_grants_scopes_label, "Scopes"
     translatable_method :oauth_applications_contacts_label, "Contacts"
@@ -63,6 +67,10 @@ module Rodauth
 
       redirect_response_error("invalid_request") unless check_valid_response_type?
 
+      redirect_response_error("invalid_request") unless check_valid_access_type? && check_valid_approval_prompt?
+
+      try_approval_prompt if use_oauth_access_type? && request.get?
+
       redirect_response_error("invalid_scope") if (request.post? || param_or_nil("scope")) && !check_valid_scopes?
     end
 
@@ -72,6 +80,41 @@ module Rodauth
 
     def check_valid_redirect_uri?
       oauth_application[oauth_applications_redirect_uri_column].split(" ").include?(redirect_uri)
+    end
+
+    ACCESS_TYPES = %w[offline online].freeze
+
+    def check_valid_access_type?
+      return true unless use_oauth_access_type?
+
+      access_type = param_or_nil("access_type")
+      !access_type || ACCESS_TYPES.include?(access_type)
+    end
+
+    APPROVAL_PROMPTS = %w[force auto].freeze
+
+    def check_valid_approval_prompt?
+      return true unless use_oauth_access_type?
+
+      approval_prompt = param_or_nil("approval_prompt")
+      !approval_prompt || APPROVAL_PROMPTS.include?(approval_prompt)
+    end
+
+    def try_approval_prompt
+      approval_prompt = param_or_nil("approval_prompt")
+
+      return unless approval_prompt && approval_prompt == "auto"
+
+      return if db[oauth_grants_table].where(
+        oauth_grants_account_id_column => account_id,
+        oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+        oauth_grants_redirect_uri_column => redirect_uri,
+        oauth_grants_scopes_column => scopes.join(oauth_scope_separator),
+        oauth_grants_access_type_column => "online"
+      ).count.zero?
+
+      # if there's a previous oauth grant for the params combo, it means that this user has approved before.
+      request.env["REQUEST_METHOD"] = "POST"
     end
 
     def authorization_required
@@ -87,7 +130,7 @@ module Rodauth
 
     def authorize_response(params, mode); end
 
-    def create_token_from_authorization_code(grant_params, should_generate_refresh_token = false, oauth_grant: nil)
+    def create_token_from_authorization_code(grant_params, should_generate_refresh_token = !use_oauth_access_type?, oauth_grant: nil)
       # fetch oauth grant
       oauth_grant ||= valid_locked_oauth_grant(grant_params)
 
@@ -97,12 +140,14 @@ module Rodauth
     end
 
     def create_oauth_grant(create_params = {})
-      create_params.merge!(
-        oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-        oauth_grants_redirect_uri_column => redirect_uri,
-        oauth_grants_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_grant_expires_in),
-        oauth_grants_scopes_column => scopes.join(oauth_scope_separator)
-      )
+      create_params[oauth_grants_oauth_application_id_column] = oauth_application[oauth_applications_id_column]
+      create_params[oauth_grants_redirect_uri_column] = redirect_uri
+      create_params[oauth_grants_expires_in_column] = Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_grant_expires_in)
+      create_params[oauth_grants_scopes_column] = scopes.join(oauth_scope_separator)
+
+      if use_oauth_access_type? && (access_type = param_or_nil("access_type"))
+        create_params[oauth_grants_access_type_column] = access_type
+      end
 
       ds = db[oauth_grants_table]
 

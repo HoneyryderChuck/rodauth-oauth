@@ -54,6 +54,9 @@ class RodauthOAuthTokenPkceTest < RodaIntegration
   end
 
   def test_token_authorization_code_pkce_with_code_sha256_verifier
+    rodauth do
+      use_oauth_access_type? true
+    end
     setup_application
 
     pkce_grant = oauth_grant(access_type: "online", code_challenge_method: "S256", code_challenge: PKCE_CHALLENGE)
@@ -78,6 +81,9 @@ class RodauthOAuthTokenPkceTest < RodaIntegration
   end
 
   def test_token_authorization_code_pkce_with_plain_code_verifier
+    rodauth do
+      use_oauth_access_type? true
+    end
     setup_application
 
     pkce_grant = oauth_grant(access_type: "online", code_challenge_method: "plain", code_challenge: PKCE_VERIFIER)

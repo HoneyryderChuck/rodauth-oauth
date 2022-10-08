@@ -6,8 +6,6 @@ module Rodauth
   Feature.define(:oauth_authorization_code_grant, :OauthAuthorizationCodeGrant) do
     depends :oauth_authorize_base
 
-    auth_value_method :use_oauth_access_type?, true
-
     def oauth_grant_types_supported
       super | %w[authorization_code]
     end
@@ -25,41 +23,11 @@ module Rodauth
     def validate_authorize_params
       super
 
-      redirect_response_error("invalid_request") unless check_valid_access_type? && check_valid_approval_prompt?
-
       redirect_response_error("invalid_request") if (response_mode = param_or_nil("response_mode")) && response_mode != "form_post"
-
-      try_approval_prompt if use_oauth_access_type? && request.get?
     end
 
     def validate_token_params
       redirect_response_error("invalid_request") if param_or_nil("grant_type") == "authorization_code" && !param_or_nil("code")
-      super
-    end
-
-    def try_approval_prompt
-      approval_prompt = param_or_nil("approval_prompt")
-
-      return unless approval_prompt && approval_prompt == "auto"
-
-      return if db[oauth_grants_table].where(
-        oauth_grants_account_id_column => account_id,
-        oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-        oauth_grants_redirect_uri_column => redirect_uri,
-        oauth_grants_scopes_column => scopes.join(oauth_scope_separator),
-        oauth_grants_access_type_column => "online"
-      ).count.zero?
-
-      # if there's a previous oauth grant for the params combo, it means that this user has approved before.
-      request.env["REQUEST_METHOD"] = "POST"
-    end
-
-    def create_oauth_grant(create_params = {})
-      # Access Type flow
-      if use_oauth_access_type? && (access_type = param_or_nil("access_type"))
-        create_params[oauth_grants_access_type_column] = access_type
-      end
-
       super
     end
 
@@ -92,10 +60,7 @@ module Rodauth
         oauth_grants_type_column => "authorization_code",
         oauth_grants_account_id_column => account_id
       }
-      # Access Type flow
-      if use_oauth_access_type? && (access_type = param_or_nil("access_type"))
-        create_params[oauth_grants_access_type_column] = access_type
-      end
+
       { "code" => create_oauth_grant(create_params) }
     end
 
@@ -136,25 +101,7 @@ module Rodauth
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column]
       }
 
-      create_token_from_authorization_code(grant_params, !use_oauth_access_type?)
-    end
-
-    ACCESS_TYPES = %w[offline online].freeze
-
-    def check_valid_access_type?
-      return true unless use_oauth_access_type?
-
-      access_type = param_or_nil("access_type")
-      !access_type || ACCESS_TYPES.include?(access_type)
-    end
-
-    APPROVAL_PROMPTS = %w[force auto].freeze
-
-    def check_valid_approval_prompt?
-      return true unless use_oauth_access_type?
-
-      approval_prompt = param_or_nil("approval_prompt")
-      !approval_prompt || APPROVAL_PROMPTS.include?(approval_prompt)
+      create_token_from_authorization_code(grant_params)
     end
 
     def check_valid_response_type?

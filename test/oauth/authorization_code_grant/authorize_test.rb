@@ -144,6 +144,9 @@ class RodauthOauthAuthorizeTest < RodaIntegration
   end
 
   def test_authorize_post_authorize_access_type_online
+    rodauth do
+      use_oauth_access_type? true
+    end
     setup_application
     login
 
@@ -201,6 +204,9 @@ class RodauthOauthAuthorizeTest < RodaIntegration
   end
 
   def test_authorize_post_authorize_access_type_online_approval_prompt_auto
+    rodauth do
+      use_oauth_access_type? true
+    end
     setup_application
     login
 

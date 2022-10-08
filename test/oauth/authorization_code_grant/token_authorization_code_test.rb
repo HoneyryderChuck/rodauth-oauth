@@ -357,6 +357,9 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
   end
 
   def test_token_authorization_code_online_successful
+    rodauth do
+      use_oauth_access_type? true
+    end
     setup_application
 
     online_grant = oauth_grant(access_type: "online")
