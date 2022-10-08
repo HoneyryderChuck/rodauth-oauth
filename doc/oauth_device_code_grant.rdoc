@@ -36,3 +36,6 @@ oauth_grant_user_code_param :: (default: "user_code") the param which the OAuth 
 oauth_grant_user_code_label :: (default: "User code") the label for the field in the form described above;
 oauth_device_search_button :: (default: "Search") the label of the submit button of the device grant device search form;
 oauth_device_verification_button :: (default: "Verify") the label of the submit button of the device grant device verification form;
+
+oauth_device_search_page_lead :: Lead text of the device search form.
+oauth_device_verification_page_lead :: Lead text of the device verification form.

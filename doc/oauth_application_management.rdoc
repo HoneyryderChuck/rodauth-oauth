@@ -65,3 +65,6 @@ oauth_application_oauth_grants_view :: The HTML of the Oauth application grants 
 
 create_oauth_application_error_flash :: The flash error to display when there were submission errors creating an Oauth application.
 create_oauth_application_notice_flash :: The flash message to display when an Oauth application is created successfully.
+
+oauth_no_applications_text :: Lead text when applications list is empty.
+oauth_no_grants_text :: Lead text when grants list is empty.

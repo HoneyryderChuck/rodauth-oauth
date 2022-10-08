@@ -19,3 +19,5 @@ oauth_grants_token_label :: Label for the oauth grant.
 oauth_grants_type_label :: Label for the oauth grant type.
 
 oauth_grant_revoke_button :: Label for the grant revoke button.
+
+oauth_no_grants_text :: Lead text when grants list is empty.

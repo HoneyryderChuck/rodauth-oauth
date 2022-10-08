@@ -11,7 +11,7 @@ It alternatively can set up a resource server.
 oauth_application_scopes :: default scopes to assign to a client application, <tt>["profile.read"]</tt> by default.
 oauth_token_type :: type of the generated access token, <tt>"bearer"</tt> by default.
 oauth_grant_expires_in :: The number of seconds an oauth grant is valid after creation, <tt>5 minutes</tt> by default.
-oauth_token_expires_in :: The number of seconds an oauth token is valid after creation, <tt>5 minutes</tt> by default.
+oauth_access_token_expires_in :: The number of seconds an oauth token is valid after creation, <tt>5 minutes</tt> by default.
 oauth_refresh_token_expires_in :: The number of seconds a refresh token is valid after creation, <tt>1 year</tt> by default.
 oauth_refresh_token_protection_policy :: protection policy for the refresh token (<tt>rotation</tt> by default).
 oauth_scope_separator :: character used to separate scopes in the db field value, white-space by default.
@@ -50,10 +50,10 @@ oauth_grants_table :: the db table where oauth grants are stored, <tt>:oauth_gra
 oauth_grants_id_column :: the db column where the oauth grant primary key is stored, <tt>:id</tt> by default.
 oauth_grants_oauth_application_id_column :: the db column where the oauth grant oauth application ID is stored, <tt>:oauth_application_id</tt> by default.
 oauth_grants_account_id_column :: the db column where the oauth grant account ID is stored, <tt>:account_id</tt> by default.
+oauth_grants_type_column :: the db column where the grant type is stored, <tt>:type</tt> by default.
 oauth_grants_code_column :: the db column where the oauth grant authorization code is stored, <tt>:code</tt> by default.
 oauth_grants_redirect_uri_column :: the db column where the oauth grant redirect URI is stored, <tt>:redirect_uri</tt> by default.
 oauth_grants_scopes_column :: the db column where the oauth grant scopes are stored, <tt>:scopes<tt> by default.
-oauth_grants_access_type_column :: the db column where the oauth grant access type is stored, <tt>:access_type<tt> by default.
 oauth_grants_expires_in_column :: the db column where the oauth grant expiration time is stored, <tt>:expires_in</tt> by default.
 oauth_grants_revoked_at_column :: the db column where the oauth grant revocation time is stored, <tt>:revoked_at</tt> by default.
 oauth_grants_token_column :: the db column where the oauth token access token is stored (when it's stored), <tt>:token</tt> by default.
