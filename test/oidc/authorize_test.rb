@@ -613,6 +613,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     rodauth do
       oauth_jwt_keys("RS256" => OpenSSL::PKey::RSA.generate(2048))
       oauth_applications_jwks_column :jwks
+      oauth_response_mode "query"
     end
     super
   end

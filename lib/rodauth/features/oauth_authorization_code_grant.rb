@@ -6,6 +6,8 @@ module Rodauth
   Feature.define(:oauth_authorization_code_grant, :OauthAuthorizationCodeGrant) do
     depends :oauth_authorize_base
 
+    auth_value_method :oauth_response_mode, "form_post"
+
     def oauth_grant_types_supported
       super | %w[authorization_code]
     end
@@ -23,7 +25,9 @@ module Rodauth
     def validate_authorize_params
       super
 
-      redirect_response_error("invalid_request") if (response_mode = param_or_nil("response_mode")) && response_mode != "form_post"
+      return unless (response_mode = param_or_nil("response_mode")) && !oauth_response_modes_supported.include?(response_mode)
+
+      redirect_response_error("invalid_request")
     end
 
     def validate_token_params
@@ -42,7 +46,7 @@ module Rodauth
 
       case response_type
       when "code", nil
-        response_mode ||= "query"
+        response_mode ||= oauth_response_mode
         response_params.replace(_do_authorize_code)
       end
 

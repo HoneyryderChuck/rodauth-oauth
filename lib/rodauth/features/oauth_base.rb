@@ -33,7 +33,6 @@ module Rodauth
     auth_value_method :oauth_refresh_token_expires_in, 60 * 60 * 24 * 360 # 1 year
     auth_value_method :oauth_unique_id_generation_retries, 3
 
-    auth_value_method :oauth_response_mode, "query"
     auth_value_method :oauth_token_endpoint_auth_methods_supported, %w[client_secret_basic client_secret_post]
     auth_value_method :oauth_grant_types_supported, %w[refresh_token]
     auth_value_method :oauth_response_types_supported, []

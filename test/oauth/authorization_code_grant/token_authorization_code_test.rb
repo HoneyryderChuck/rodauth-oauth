@@ -227,7 +227,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
 
     # second go at it
     login
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=#{CGI.escape(oauth_application[:scopes])}"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=#{CGI.escape(oauth_application[:scopes])}&response_mode=query"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
 
@@ -326,7 +326,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
 
     # second go at it
     login
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=#{CGI.escape(oauth_application[:scopes])}"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=#{CGI.escape(oauth_application[:scopes])}&response_mode=query"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
 
