@@ -104,6 +104,14 @@ oauth_grants_refresh_token_column :refresh_token
 
 in order to keep storing the tokens in plaintext, set the hash column options to`nil`. In order to keep storing the hashed token in a separate coluumn, just redefine it to the name of the column.
 
+## oauth_response_mode is now form_post.
+
+To get the old behaviour back:
+
+```ruby
+oauth_response_mode "query"
+```
+
 ## renamed options
 
 The following auth config methods were renamed (rename them if you're redefining them):

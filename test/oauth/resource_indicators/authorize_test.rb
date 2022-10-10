@@ -25,7 +25,7 @@ class RodauthOauthResourceIndicatorsAuthorizeTest < RodaIntegration
   def test_authorize_one_resource_valid
     setup_application
     login
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&resource=#{CGI.escape('https://resource.com')}"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&resource=#{CGI.escape('https://resource.com')}&response_mode=query"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
     check "user.read"

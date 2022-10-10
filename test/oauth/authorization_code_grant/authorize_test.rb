@@ -314,6 +314,13 @@ class RodauthOauthAuthorizeTest < RodaIntegration
 
   private
 
+  def setup_application(*)
+    rodauth do
+      oauth_response_mode "query"
+    end
+    super
+  end
+
   def oauth_feature
     :oauth_authorization_code_grant
   end
