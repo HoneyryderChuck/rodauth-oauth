@@ -59,8 +59,8 @@ oauth_grants_expires_in_column :: the db column where the oauth grant expiration
 oauth_grants_revoked_at_column :: the db column where the oauth grant revocation time is stored, <tt>:revoked_at</tt> by default.
 oauth_grants_token_column :: the db column where the oauth token access token is stored (when it's stored), <tt>:token</tt> by default.
 oauth_grants_refresh_token_column :: the db column where the refresh token is stored, <tt>:refresh_token</tt> by default.
-oauth_grants_token_hash_column :: the db column where the access token hash is stored, <tt>nil<tt> by default.
-oauth_grants_refresh_token_hash_column :: the db column where the refresh token hash is stored, <tt>nil<tt> by default.
+oauth_grants_token_hash_column :: the db column where the access token hash is stored, <tt>:token<tt> by default.
+oauth_grants_refresh_token_hash_column :: the db column where the refresh token hash is stored, <tt>:refresh_token<tt> by default.
 oauth_grants_unique_columns :: uniqueness index to use in ON CONFLICT queries (when supported).
 
 

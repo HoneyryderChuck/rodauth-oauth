@@ -49,6 +49,8 @@ class SAMLIntegration < RodaIntegration
       enable :login, :oauth_authorization_code_grant, *features
       login_return_to_requested_location? true
       oauth_application_scopes scopes
+      oauth_grants_token_hash_column nil
+      oauth_grants_refresh_token_hash_column nil
     end
 
     roda do |r|

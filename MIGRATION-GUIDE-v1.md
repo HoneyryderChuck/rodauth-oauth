@@ -273,7 +273,6 @@ This was a security improvement. However, if you were relying on, set `oauth_req
 
 This was a security improvement. However, if you were relying on, set `oauth_refresh_token_protection_policy` to `"none"`.
 
-
 ## using access tokens won't set rodauth session
 
 Which means that rodauth won't identify you as "logged in". If you were relying on this behaviour, you'll have to tweak one of the available `rodauth` options.

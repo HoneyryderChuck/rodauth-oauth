@@ -130,6 +130,8 @@ class RodaIntegration < Minitest::Test
       title_instance_variable :@page_title
       login_return_to_requested_location? true
       oauth_application_scopes scopes
+      oauth_grants_token_hash_column nil
+      oauth_grants_refresh_token_hash_column nil
     end
     roda do |r|
       ::I18n.locale = :en
