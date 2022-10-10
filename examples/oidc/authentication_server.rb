@@ -121,7 +121,6 @@ class AuthenticationServer < Roda
 
     oauth_jwt_keys("RS256" => PRIV_KEY)
     oauth_jwt_public_keys("RS256" => PUB_KEY)
-    oauth_grants_refresh_token_hash_column :refresh_token
 
     before_register do
       email = request.env["HTTP_AUTHORIZATION"]

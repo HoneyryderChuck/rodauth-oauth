@@ -240,34 +240,28 @@ In this section, the non-standard features are going to be described in more det
 
 ### Token / Secrets Hashing
 
-Although not human-friendly as passwords, for security reasons, you might not want to store access (and refresh) tokens in the database. If that is the case, You'll have to add the respective hash columns in the table:
+Access tokens, refresh tokens and client secrets are hashed before being stored in the database (using `bcrypt`), by default.
 
-```ruby
-# in migration
-String :token_hash, null: false, token: true
-String :refresh_token_hash, token, true
-# and you DO NOT NEED the token and refresh_token columns anymore!
-```
-
-And declare them in the plugin:
+Disabling this behaviour is a matter of nullifying the hash column option:
 
 ```ruby
 plugin :rodauth do
   enable :oauth_authorization_code_grant
-  oauth_grants_token_hash_column :token_hash
-  oauth_grants_token_hash_column :refresh_token_hash
+
+  # storing access token, refresh token and client secret in plaintext:
+  oauth_grants_token_hash_column nil
+  oauth_grants_refresh_token_hash_column nil
+  oauth_applications_client_secret_hash_column nil
 ```
 
-#### Client Secret
-
-By default, it's expected that the "client secret" property from an OAuth application is only known by the owner, and only the hash is stored in the database; this way, the authorization server doesn't know what the client secret is, only the application owner. The provided [OAuth Applications Extensions](#oauth-applications) application form contains a "Client Secret" input field for this reason.
-
-However, this extension is optional, and you might want to generate the secrets and store them as is. In that case, you'll have to re-define some options:
+If you'd like to replace the hashing function (for, let's say, [argon2](https://github.com/technion/ruby-argon2)), you'll need to perform the following overrides:
 
 ```ruby
 plugin :rodauth do
   enable :oauth_authorization_code_grant
-  secret_matches? ->(application, secret){ application[:client_secret] == secret }
+
+  secret_matches? { |oauth_application, secret| Argon2::Password.verify_password(secret, oauth_application[oauth_applications_client_secret_hash_column]) }
+  secret_hash { |secret| Argon2::Password.create(secret) }
 end
 ```
 

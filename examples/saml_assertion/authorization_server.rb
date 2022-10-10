@@ -80,8 +80,6 @@ class AuthorizationServer < Roda
     title_instance_variable :@page_title
 
     oauth_application_scopes %w[profile.read books.read books.write]
-
-    oauth_grants_refresh_token_hash_column :refresh_token
   end
 
   plugin :not_found do

@@ -55,8 +55,8 @@ module Rodauth
     end
 
     # Enables Token Hash
-    auth_value_method :oauth_grants_token_hash_column, nil
-    auth_value_method :oauth_grants_refresh_token_hash_column, nil
+    auth_value_method :oauth_grants_token_hash_column, :token
+    auth_value_method :oauth_grants_refresh_token_hash_column, :refresh_token
 
     # Access Token reuse
     auth_value_method :oauth_reuse_access_token, false

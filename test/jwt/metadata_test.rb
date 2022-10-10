@@ -31,7 +31,6 @@ class RodauthOauthJwtServerMetadataTest < JWTIntegration
     end
   end
 
-
   def test_oauth_jwt_bearer_metadata_no_hashed_secret
     rodauth do
       oauth_applications_client_secret_hash_column nil

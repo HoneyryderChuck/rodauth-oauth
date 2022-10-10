@@ -102,8 +102,6 @@ class AuthorizationServer < Roda
 
     oauth_application_scopes %w[profile.read books.read books.write]
     oauth_valid_uri_schemes %w[http https]
-
-    oauth_grants_refresh_token_hash_column :refresh_token
   end
 
   plugin :not_found do
