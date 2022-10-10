@@ -200,11 +200,11 @@ module Rodauth
         return_params["client_id"] = client_id
         return_params["client_id_issued_at"] = Time.now.utc.iso8601
         if create_params.key?(oauth_applications_client_secret_column)
-          create_params[oauth_applications_client_secret_column] = secret_hash(create_params[oauth_applications_client_secret_column])
+          set_client_secret(create_params, create_params[oauth_applications_client_secret_column])
           return_params.delete("client_secret")
         else
           client_secret = oauth_unique_id_generator
-          create_params[oauth_applications_client_secret_column] = secret_hash(client_secret)
+          set_client_secret(create_params, client_secret)
           return_params["client_secret"] = client_secret
           return_params["client_secret_expires_at"] = 0
 

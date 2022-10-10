@@ -193,11 +193,9 @@ module Rodauth
       redirect_uris = oauth_application_params[oauth_application_redirect_uri_param]
       redirect_uris = redirect_uris.to_a.reject(&:empty?).join(" ") if redirect_uris.respond_to?(:each)
       create_params[oauth_applications_redirect_uri_column] = redirect_uris unless redirect_uris.empty?
-      # set client ID/secret pairs
 
-      create_params.merge! \
-        oauth_applications_client_secret_column => \
-          secret_hash(oauth_application_params[oauth_application_client_secret_param])
+      # set client ID/secret pairs
+      set_client_secret(create_params, oauth_application_params[oauth_application_client_secret_param])
 
       if create_params[oauth_applications_scopes_column]
         create_params[oauth_applications_scopes_column] = create_params[oauth_applications_scopes_column].join(oauth_scope_separator)

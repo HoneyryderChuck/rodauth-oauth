@@ -29,7 +29,8 @@ oauth_applications_name_column :: the db column where the oauth application name
 oauth_applications_description_column :: the db column where the oauth application description is stored, <tt>:description</tt> by default.
 oauth_applications_scopes_column :: the db column where the oauth allowed scopes are stored, <tt>:scopes</tt> by default.
 oauth_applications_client_id_column :: the db column where the oauth application client ID is stored, <tt>:client_id</tt> by default.
-oauth_applications_client_secret_column :: the db column where the oauth application hashed client secret to is stored, <tt>:client_secret</tt> by default.
+oauth_applications_client_secret_column :: the db column where the oauth application plaintext client secret is stored, <tt>:client_secret</tt> by default.
+oauth_applications_client_secret_hash_column :: the db column where the oauth application hashed client secret is stored, <tt>:client_secret</tt> by default.
 oauth_applications_redirect_uri_column :: the db column where the oauth application redirect URI is stored, <tt>:redirect_uri</tt> by default.
 oauth_applications_homepage_url_column :: the db column where the oauth application homepage URL is stored, <tt>:homepage_url</tt> by default.
 oauth_applications_contacts_column :: the db column where the oauth application contacts are stored, <tt>:contacts</tt> by default.

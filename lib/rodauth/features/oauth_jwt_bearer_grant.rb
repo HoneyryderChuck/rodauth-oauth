@@ -13,7 +13,11 @@ module Rodauth
     )
 
     def oauth_token_endpoint_auth_methods_supported
-      super | %w[client_secret_jwt private_key_jwt urn:ietf:params:oauth:client-assertion-type:jwt-bearer]
+      if oauth_applications_client_secret_hash_column.nil?
+        super | %w[client_secret_jwt private_key_jwt urn:ietf:params:oauth:client-assertion-type:jwt-bearer]
+      else
+        super | %w[private_key_jwt]
+      end
     end
 
     def oauth_grant_types_supported

@@ -54,7 +54,7 @@ module Rodauth
       auth_value_method :"oauth_grants_#{column}_column", column
     end
 
-    # Oauth Token Hash
+    # Enables Token Hash
     auth_value_method :oauth_grants_token_hash_column, nil
     auth_value_method :oauth_grants_refresh_token_hash_column, nil
 
@@ -75,6 +75,8 @@ module Rodauth
     ].each do |column|
       auth_value_method :"oauth_applications_#{column}_column", column
     end
+    # Enables client secret Hash
+    auth_value_method :oauth_applications_client_secret_hash_column, :client_secret
 
     auth_value_method :oauth_authorization_required_error_status, 401
     auth_value_method :oauth_invalid_response_status, 400
@@ -397,7 +399,19 @@ module Rodauth
     end
 
     def secret_matches?(oauth_application, secret)
-      BCrypt::Password.new(oauth_application[oauth_applications_client_secret_column]) == secret
+      if oauth_applications_client_secret_hash_column
+        BCrypt::Password.new(oauth_application[oauth_applications_client_secret_hash_column]) == secret
+      else
+        oauth_application[oauth_applications_client_secret_column] == secret
+      end
+    end
+
+    def set_client_secret(params, secret)
+      if oauth_applications_client_secret_hash_column
+        params[oauth_applications_client_secret_hash_column] = secret_hash(secret)
+      else
+        params[oauth_applications_client_secret_column] = secret
+      end
     end
 
     def secret_hash(secret)

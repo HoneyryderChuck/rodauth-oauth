@@ -84,7 +84,7 @@ class RodauthOauthJWTTokenJwtBearerTest < JWTIntegration
   def test_oauth_jwt_bearer_as_client_secret_jwt_not_from_application
     setup_application(:oauth_authorization_code_grant)
 
-    oauth_application(client_secret: "SECRET")
+    oauth_application(client_secret: "SECRET", token_endpoint_auth_method: "client_secret_jwt")
     grant = set_oauth_grant(type: "authorization_code")
 
     post("/token",

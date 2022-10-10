@@ -82,6 +82,28 @@ UPDATE "oauth_grants"
 
 And now you can deploy the app with v1 installed (after you've done the required changes).
 
+## oauth applications: oauth_applications_client_secret_hash_column
+
+The client secret is hashed (with bcrypt) before being stored, by default. While previously it was also hashed by default, this is now driven by the new `:oauth_applications_client_secret_hash_column` options, which is set to `:client_secret`. In order to disable hashing and store the client secret in plain-text (smth whic, p.ex. the `client_secret_jwt` auth method requires), just do this:
+
+```ruby
+oauth_applications_client_secret_hash_column nil
+```
+
+## oauth grants: access token and refresh token hashed by default
+
+access token and refresh token columns are now hashed by default, and point to the same column as the main counterpart:
+
+```ruby
+# this is now the default
+oauth_grants_token_hash_column :token
+oauth_grants_token_column :token
+oauth_grants_refresh_token_hash_column :refresh_token
+oauth_grants_refresh_token_column :refresh_token
+```
+
+in order to keep storing the tokens in plaintext, set the hash column options to`nil`. In order to keep storing the hashed token in a separate coluumn, just redefine it to the name of the column.
+
 ## renamed options
 
 The following auth config methods were renamed (rename them if you're redefining them):
