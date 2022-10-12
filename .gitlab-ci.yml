@@ -41,8 +41,6 @@ cache:
 - "DATABASE_URL=sqlite3::memory: bundle exec rake test"
 - "DATABASE_URL=postgresql://oauth:password@postgres/oauth bundle exec rake test"
 - "DATABASE_URL=mysql://root:password@mysql/oauth bundle exec rake test"
-# JWT supported libs
-- "JWT_LIB=json/jwt DATABASE_URL=postgresql://oauth:password@postgres/oauth bundle exec rake test"
 
 .truffletest: &truffletest
 - "DATABASE_URL=sqlite3::memory: bundle exec rake test"
