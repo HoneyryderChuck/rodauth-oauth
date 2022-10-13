@@ -48,7 +48,8 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.foreign_key :accounts, column: :account_id
       t.integer :oauth_application_id
       t.foreign_key :oauth_applications, column: :oauth_application_id
-      t.string :code, null: false
+      t.string :type, null: true
+      t.string :code, null: true
       t.index(%i[oauth_application_id code], unique: true)
       t.string :token, unique: true
       t.string :refresh_token, unique: true
