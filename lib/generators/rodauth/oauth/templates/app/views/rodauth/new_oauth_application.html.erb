@@ -37,11 +37,6 @@
       <%= text_field_tag "jwks_uri", rodauth.param('jwks_uri'), id: "jwks-uri", class: "form-control#{' is-invalid' if rodauth.field_error('jwks_uri')}" %>
       <%= rodauth.field_error('jwks_uri') %>
     </div>
-    <div class="form-group">
-      <%= label_tag "jwt_public_key", rodauth.oauth_applications_jwt_public_key_label %>
-      <%= text_field_tag "jwt_public_key", rodauth.param('jwt_public_key'), id: "jwt-public-key", class: "form-control#{' is-invalid' if rodauth.field_error('jwt_public_key')}" %>
-      <%= rodauth.field_error('jwt_public_key') %>
-    </div>
   <% end %>
   <% rodauth.oauth_application_scopes.each do |scope| %>
     <div class="form-check">
