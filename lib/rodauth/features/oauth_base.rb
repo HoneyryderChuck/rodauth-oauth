@@ -116,7 +116,9 @@ module Rodauth
       :authorization_server_url,
       :oauth_unique_id_generator,
       :oauth_grants_unique_columns,
-      :require_authorizable_account
+      :require_authorizable_account,
+      :oauth_account_ds,
+      :oauth_application_ds
     )
 
     # /token
@@ -173,13 +175,11 @@ module Rodauth
 
       return unless account_id
 
-      account_ds(account_id).first
+      oauth_account_ds(account_id).first
     end
 
     def current_oauth_application
-      db[oauth_applications_table].where(
-        oauth_applications_id_column => authorization_token[oauth_grants_oauth_application_id_column]
-      ).first
+      oauth_application_ds(authorization_token[oauth_grants_oauth_application_id_column]).first
     end
 
     def accepts_json?
@@ -294,6 +294,14 @@ module Rodauth
     end
 
     private
+
+    def oauth_account_ds(account_id)
+      account_ds(account_id)
+    end
+
+    def oauth_application_ds(oauth_application_id)
+      db[oauth_applications_table].where(oauth_applications_id_column => oauth_application_id)
+    end
 
     def require_authorizable_account
       require_account

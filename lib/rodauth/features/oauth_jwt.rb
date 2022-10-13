@@ -32,7 +32,7 @@ module Rodauth
 
       return if subject == authorization_token["client_id"]
 
-      account_ds(subject).first
+      oauth_account_ds(subject).first
     end
 
     def current_oauth_application
