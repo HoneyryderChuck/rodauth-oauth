@@ -5,3 +5,5 @@ The +oauth_authorization_code_grant+ feature implements the OAuth 2.0 Authorizat
 https://datatracker.ietf.org/doc/html/rfc6749#section-1.3
 
 == Auth Value Methods
+
+oauth_response_mode :: default response mode (<tt>form_post</tt> by default).

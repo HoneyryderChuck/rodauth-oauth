@@ -15,7 +15,6 @@ oauth_access_token_expires_in :: The number of seconds an oauth token is valid a
 oauth_refresh_token_expires_in :: The number of seconds a refresh token is valid after creation, <tt>1 year</tt> by default.
 oauth_refresh_token_protection_policy :: protection policy for the refresh token (<tt>rotation</tt> by default).
 oauth_scope_separator :: character used to separate scopes in the db field value, white-space by default.
-oauth_response_mode :: default response mode (<tt>query</tt> by default).
 oauth_token_endpoint_auth_methods_supported :: list of supported auth methods for the token endpoint (contains "client_secret_basic" and "client_secret_post" by default).
 oauth_grant_types_supported :: list of supported grant types.
 oauth_response_types_supported :: list of supported response types.
@@ -61,7 +60,6 @@ oauth_grants_token_column :: the db column where the oauth token access token is
 oauth_grants_refresh_token_column :: the db column where the refresh token is stored, <tt>:refresh_token</tt> by default.
 oauth_grants_token_hash_column :: the db column where the access token hash is stored, <tt>:token<tt> by default.
 oauth_grants_refresh_token_hash_column :: the db column where the refresh token hash is stored, <tt>:refresh_token<tt> by default.
-oauth_grants_unique_columns :: uniqueness index to use in ON CONFLICT queries (when supported).
 
 
 json_response_content_type :: The content type to set for json responses, <tt>application/json</tt> by default.
@@ -91,15 +89,8 @@ token_route :: the route for token generation, defaults to +token+.
 before_token_route :: Run arbitrary code before the token route.
 before_token :: Run arbitrary code before generating an access token.
 
-fetch_access_token :: retrieves the access token from the request (defaults to fetching from the "Authorization" header).
-oauth_unique_id_generator :: generates random base64 strings, used for raw access tokens, client IDs, etc.
 oauth_unique_id_generation_retries :: max retries for token generation.
-secret_matches? :: verifies if provided secret matches the application's client secret.
-secret_hash :: calculates the hash  of a given client secret.
-generate_token_hash :: hashes an access token (when the token hash is stored in the db).
-authorization_server_url :: returns the authorization server origin URL.
 oauth_reuse_access_token :: when true, it'll reuse the same access token for a given account/client application for each new verified grant.
-require_authorizable_account :: requires the account to be logged in by default (calls `require_account`), can be overriden to add more functionality (i.e. requiring 2FA before authorization).
 
 require_authorization_error_flash :: The flash error to display when authorization is required.
 revoke_unauthorized_account_error_flash :: The flash error to display when an unauthorized account tries to revoke a token.
@@ -108,3 +99,16 @@ oauth_cancel_button :: button label which cancels the device verification.
 
 http_request :: performs a GET http request to the given URL (or a POST with url-encoded body, if form data is passed)
 http_request_cache :: store where http requests get cached according to the HTTP cache rules.
+
+== Auth methods
+
+fetch_access_token :: retrieves the access token from the request (defaults to fetching from the "Authorization" header).
+secret_matches? :: verifies if provided secret matches the application's client secret.
+secret_hash :: calculates the hash  of a given client secret.
+generate_token_hash :: hashes an access token (when the token hash is stored in the db).
+authorization_server_url :: returns the authorization server origin URL.
+oauth_unique_id_generator :: generates random base64 strings, used for raw access tokens, client IDs, etc.
+oauth_grants_unique_columns :: uniqueness index to use in ON CONFLICT queries (when supported).
+require_authorizable_account :: requires the account to be logged in by default (calls `require_account`), can be overriden to add more functionality (i.e. requiring 2FA before authorization).
+oauth_account_ds :: returns a dataset filtered for an account id (overriden in rails to use Active Record <tt>Account</tt> model)
+oauth_application_ds :: returns a dataset filtered for an oauth application id (overriden in rails to use Active Record <tt>OAuthApplication</tt> model)
