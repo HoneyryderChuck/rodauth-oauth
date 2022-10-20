@@ -146,10 +146,11 @@ module Rodauth
 
         now = Time.now
 
-        if _grant_with_access_token?(oauth_grant)
-          db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column])
-                                .update(oauth_grants_code_column => nil)
-          return oauth_grant
+        if oauth_grant[oauth_grants_user_code_column].nil?
+          return create_token_from_authorization_code(
+            { oauth_grants_id_column => oauth_grant[oauth_grants_id_column] },
+            oauth_grant: oauth_grant
+          )
         end
 
         if oauth_grant[oauth_grants_revoked_at_column]
@@ -169,16 +170,11 @@ module Rodauth
       elsif grant_type == "device_code"
 
         # fetch oauth grant
-        oauth_grant = valid_oauth_grant_ds(
+        rs = valid_oauth_grant_ds(
           oauth_grants_user_code_column => param("user_code")
-        ).for_update.first
+        ).update(oauth_grants_user_code_column => nil, oauth_grants_type_column => "device_code")
 
-        return unless oauth_grant
-
-        create_token_from_authorization_code(
-          { oauth_grants_id_column => oauth_grant[oauth_grants_id_column] },
-          oauth_grant: oauth_grant
-        )
+        return unless rs.positive?
       else
         super
       end

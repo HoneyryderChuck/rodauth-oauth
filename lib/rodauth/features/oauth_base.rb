@@ -455,8 +455,6 @@ module Rodauth
         return grant_params
       end
 
-      # grant_params = { oauth_grants_id_column => grant_params[oauth_grants_id_column] }
-
       update_params = {
         oauth_grants_expires_in_column => Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_access_token_expires_in),
         oauth_grants_code_column => nil
