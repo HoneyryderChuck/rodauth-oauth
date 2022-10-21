@@ -2,6 +2,6 @@
 
 module Rodauth
   module OAuth
-    VERSION = "0.10.4"
+    VERSION = "1.0.0-beta1"
   end
 end
