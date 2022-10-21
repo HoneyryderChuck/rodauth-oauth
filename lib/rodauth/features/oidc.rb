@@ -93,6 +93,7 @@ module Rodauth
     auth_value_method :use_rp_initiated_logout?, false
 
     auth_value_methods(
+      :get_oidc_account_last_login_at,
       :get_oidc_param,
       :get_additional_param,
       :require_acr_value_phr,
@@ -290,7 +291,7 @@ module Rodauth
 
       redirect_response_error("invalid_request") unless max_age.positive?
 
-      if Time.now - last_account_login_at > max_age
+      if Time.now - get_oidc_account_last_login_at(session_value) > max_age
         # force user to re-login
         clear_session
         set_session_value(login_redirect_session_key, request.fullpath)
@@ -304,6 +305,10 @@ module Rodauth
       try_prompt
       super
       try_acr_values
+    end
+
+    def get_oidc_account_last_login_at(account_id)
+      get_activity_timestamp(account_id, account_activity_last_activity_column)
     end
 
     def jwt_subject(oauth_grant, client_application = oauth_application)
@@ -447,7 +452,7 @@ module Rodauth
       id_token_claims[:acr] = oauth_grant[oauth_grants_acr_column] if oauth_grant[oauth_grants_acr_column]
 
       # Time when the End-User authentication occurred.
-      id_token_claims[:auth_time] = last_account_login_at.to_i
+      id_token_claims[:auth_time] = get_oidc_account_last_login_at(oauth_grant[oauth_grants_account_id_column]).to_i
 
       account = db[accounts_table].where(account_id_column => oauth_grant[oauth_grants_account_id_column]).first
 
