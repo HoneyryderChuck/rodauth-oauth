@@ -13,14 +13,14 @@ module Rodauth
 
     # /revoke
     auth_server_route(:revoke) do |r|
-      before_revoke_route
-
       if logged_in?
         require_account
         require_oauth_application_from_account
       else
         require_oauth_application
       end
+
+      before_revoke_route
 
       r.post do
         catch_error do

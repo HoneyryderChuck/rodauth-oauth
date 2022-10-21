@@ -41,11 +41,10 @@ module Rodauth
 
     # /device-authorization
     auth_server_route(:device_authorization) do |r|
+      require_oauth_application
       before_device_authorization_route
 
       r.post do
-        require_oauth_application
-
         user_code = generate_user_code
         device_code = transaction do
           before_device_authorization
@@ -67,8 +66,8 @@ module Rodauth
 
     # /device
     auth_server_route(:device) do |r|
-      before_device_route
       require_authorizable_account
+      before_device_route
 
       r.get do
         if (user_code = param_or_nil("user_code"))
