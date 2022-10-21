@@ -152,8 +152,8 @@ module Rodauth
     auth_server_route(:oidc_logout) do |r|
       next unless use_rp_initiated_logout?
 
-      before_oidc_logout_route
       require_authorizable_account
+      before_oidc_logout_route
 
       # OpenID Providers MUST support the use of the HTTP GET and POST methods
       r.on method: %i[get post] do

@@ -26,8 +26,8 @@ module Rodauth
 
     # /authorize
     auth_server_route(:authorize) do |r|
-      before_authorize_route
       require_authorizable_account
+      before_authorize_route
 
       validate_authorize_params
 

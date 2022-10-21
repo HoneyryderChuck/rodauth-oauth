@@ -15,8 +15,8 @@ module Rodauth
 
     # /introspect
     auth_server_route(:introspect) do |r|
-      before_introspect_route
       require_oauth_application_for_introspect
+      before_introspect_route
 
       r.post do
         catch_error do

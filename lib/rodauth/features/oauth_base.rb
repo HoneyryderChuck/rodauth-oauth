@@ -123,8 +123,8 @@ module Rodauth
 
     # /token
     auth_server_route(:token) do |r|
-      before_token_route
       require_oauth_application
+      before_token_route
 
       r.post do
         catch_error do
