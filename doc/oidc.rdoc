@@ -32,6 +32,7 @@ oidc_logout_route :: the route which user uses to logout.
 
 get_oidc_param :: returns the value for an OpenID connect claim (such as "email", "name", "phone_number", etc...)
 get_additional_param :: sets the values for additional scopes.
+get_oidc_account_last_login_at :: returns the timestamp for an account's last login (used to get the `"auth_time"` OIDC claim)
 
 oauth_prompt_login_cookie_key :: try prompt cookie key.
 oauth_prompt_login_cookie_options :: prompt cookie options.
