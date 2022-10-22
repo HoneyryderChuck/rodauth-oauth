@@ -201,6 +201,8 @@ if $PROGRAM_NAME == __FILE__
   require "rack"
 
   Rack::Server.start(
-    app: AuthenticationServer, Port: 9292
+    app: AuthenticationServer,
+    pid: ENV["PIDFILE"],
+    Port: ENV.fetch("PORT", 9292)
   )
 end
