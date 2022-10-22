@@ -63,7 +63,11 @@ module Rodauth
     end
 
     def jwt_subject(oauth_grant, client_application = oauth_application)
-      oauth_grant[oauth_grants_account_id_column] || client_application[oauth_applications_client_id_column]
+      account_id = oauth_grant[oauth_grants_account_id_column]
+
+      return account_id.to_s if account_id
+
+      client_application[oauth_applications_client_id_column]
     end
 
     def oauth_server_metadata_body(path = nil)

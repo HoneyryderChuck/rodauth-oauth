@@ -47,7 +47,7 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
     payload = verify_access_token_response(json_body, oauth_grant, "SECRET", "HS256")
 
     # by default the subject type is public
-    assert payload["sub"] == account[:id]
+    assert payload["sub"] == account[:id].to_s
 
     # use token
     header "Authorization", "Bearer #{json_body['access_token']}"
