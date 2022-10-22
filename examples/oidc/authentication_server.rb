@@ -154,6 +154,8 @@ class AuthenticationServer < Roda
     oauth_jwt_keys("RS256" => PRIV_KEY)
     oauth_jwt_public_keys("RS256" => PUB_KEY)
 
+    use_rp_initiated_logout? true
+
     before_register do
       # bypass authentication
     end
