@@ -260,7 +260,11 @@ module Rodauth
     end
 
     def oauth_response_types_supported
-      super | %w[id_token none]
+      grant_types = oauth_grant_types_supported
+      oidc_response_types = %w[id_token none]
+      oidc_response_types |= ["code id_token"] if grant_types.include?("authorization_code")
+      oidc_response_types |= ["code token", "id_token token", "code id_token token"] if grant_types.include?("implicit")
+      super | oidc_response_types
     end
 
     def current_oauth_account
@@ -673,20 +677,11 @@ module Rodauth
 
       scope_claims.unshift("auth_time")
 
-      response_types_supported = metadata[:response_types_supported]
-
-      response_types_supported |= %w[none]
-      response_types_supported |= ["code id_token"] if metadata[:grant_types_supported].include?("authorization_code")
-      if metadata[:grant_types_supported].include?("implicit")
-        response_types_supported |= ["code token", "id_token token", "code id_token token"]
-      end
-
       alg_values, enc_values = oauth_jwt_jwe_keys.keys.transpose
 
       metadata.merge(
         userinfo_endpoint: userinfo_url,
         end_session_endpoint: (oidc_logout_url if use_rp_initiated_logout?),
-        response_types_supported: response_types_supported,
         subject_types_supported: %w[public pairwise],
 
         id_token_signing_alg_values_supported: metadata[:token_endpoint_auth_signing_alg_values_supported],
