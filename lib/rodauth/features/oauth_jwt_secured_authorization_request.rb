@@ -13,6 +13,8 @@ module Rodauth
     translatable_method :oauth_request_uri_not_supported_message, "request uri is unsupported"
     translatable_method :oauth_invalid_request_object_message, "request object is invalid"
 
+    auth_value_method :max_param_bytesize, nil if Rodauth::VERSION >= "2.26.0"
+
     private
 
     # /authorize

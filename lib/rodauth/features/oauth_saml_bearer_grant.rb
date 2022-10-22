@@ -17,6 +17,8 @@ module Rodauth
     auth_value_method :oauth_saml_security_digest_method, XMLSecurity::Document::SHA1
     auth_value_method :oauth_saml_security_signature_method, XMLSecurity::Document::RSA_SHA1
 
+    auth_value_method :max_param_bytesize, nil if Rodauth::VERSION >= "2.26.0"
+
     auth_value_methods(
       :require_oauth_application_from_saml2_bearer_assertion_issuer,
       :require_oauth_application_from_saml2_bearer_assertion_subject,
