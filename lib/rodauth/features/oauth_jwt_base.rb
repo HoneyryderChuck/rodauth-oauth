@@ -279,7 +279,7 @@ module Rodauth
       end
 
       def jwt_encode(payload,
-                     signing_algorithm: oauth_jwt_keys.keys.first)
+                     signing_algorithm: oauth_jwt_keys.keys.first, **)
         headers = {}
 
         key = oauth_jwt_keys[signing_algorithm] || _jwt_key
