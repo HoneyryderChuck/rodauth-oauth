@@ -21,7 +21,7 @@ else
   end
   DB.create_table(:oauth_applications) do
     primary_key :id, type: Integer
-    foreign_key :account_id, :accounts, null: false
+    foreign_key :account_id, :accounts, null: true
     String :name, null: false
     String :description, null: true
     String :homepage_url, null: true

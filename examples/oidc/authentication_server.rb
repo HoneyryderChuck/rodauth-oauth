@@ -28,7 +28,7 @@ else
   end
   DB.create_table(:oauth_applications) do
     primary_key :id, type: Integer
-    foreign_key :account_id, :accounts, null: false
+    foreign_key :account_id, :accounts, null: true
     String :name, null: false
     String :description, null: true
     String :homepage_url, null: true
@@ -36,6 +36,37 @@ else
     String :client_id, null: false, unique: true
     String :client_secret, null: false, unique: true
     String :scopes, null: false
+    # extra params
+    String :token_endpoint_auth_method, null: true
+    String :grant_types, null: true
+    String :response_types, null: true
+    String :client_uri, null: true
+    String :logo_uri, null: true
+    String :tos_uri, null: true
+    String :policy_uri, null: true
+    String :jwks_uri, null: true
+    String :jwks, null: true, type: :text
+    String :contacts, null: true
+    String :software_id, null: true
+    String :software_version, null: true
+    # oidc extra params
+    String :sector_identifier_uri, null: true
+    String :application_type, null: true
+    String :subject_type, null: true
+    String :id_token_signed_response_alg, null: true
+    String :id_token_encrypted_response_alg, null: true
+    String :id_token_encrypted_response_enc, null: true
+    String :userinfo_signed_response_alg, null: true
+    String :userinfo_encrypted_response_alg, null: true
+    String :userinfo_encrypted_response_enc, null: true
+    String :request_object_signing_alg, null: true
+    String :request_object_encryption_alg, null: true
+    String :request_object_encryption_enc, null: true
+
+    # JWT/OIDC per application signing verification
+    String :jwt_public_key, type: :text
+    # RP-initiated logout
+    String :post_logout_redirect_uri
   end
   DB.create_table :oauth_grants do
     primary_key :id, type: Integer
@@ -109,8 +140,9 @@ class AuthenticationServer < Roda
 
   plugin :rodauth, json: true do
     db DB
-    enable :login, :logout, :create_account, :oidc, :oauth_client_credentials_grant, :oauth_token_introspection,
-           :oidc_dynamic_client_registration
+    enable :login, :logout, :create_account, :oidc,
+           :oauth_implicit_grant, :oauth_client_credentials_grant, :oauth_token_introspection,
+           :oidc_dynamic_client_registration, :oauth_jwt_bearer_grant
     login_return_to_requested_location? true
     account_password_hash_column :ph
     title_instance_variable :@page_title
@@ -123,11 +155,7 @@ class AuthenticationServer < Roda
     oauth_jwt_public_keys("RS256" => PUB_KEY)
 
     before_register do
-      email = request.env["HTTP_AUTHORIZATION"]
-      authorization_required unless email
-      account = _account_from_login(email)
-      authorization_required unless account
-      @oauth_application_params[:account_id] = account[:id]
+      # bypass authentication
     end
 
     get_oidc_param do |account, param|
