@@ -9,12 +9,13 @@
   }
   <p class="lead">
   #{
-    rodauth.authorize_page_lead(name: <<-LINK
-      <a target="_blank" href="#{h(rodauth.oauth_application[rodauth.oauth_applications_homepage_url_column])}">
+    application_uri = rodauth.oauth_application[rodauth.oauth_applications_homepage_url_column]
+    application_name = application_uri ? (<<-LINK) : rodauth.oauth_application[rodauth.oauth_applications_name_column]
+      <a target="_blank" href="#{h(application_uri)}">
         #{h(rodauth.oauth_application[rodauth.oauth_applications_name_column])}
       </a>
     LINK
-    )
+    rodauth.authorize_page_lead(name: application_name)
   }
   </p>
   <div class="list-group">

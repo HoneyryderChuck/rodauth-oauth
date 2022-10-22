@@ -8,7 +8,7 @@ module Rodauth
 
     before "register"
 
-    auth_value_method :oauth_client_registration_required_params, %w[redirect_uris client_name client_uri]
+    auth_value_method :oauth_client_registration_required_params, %w[redirect_uris client_name]
 
     PROTECTED_APPLICATION_ATTRIBUTES = %w[account_id client_id].freeze
 

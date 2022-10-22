@@ -21,7 +21,7 @@ else
     # foreign_key :account_id, :accounts, null: false
     String :name, null: false
     String :description, null: true
-    String :homepage_url, null: false
+    String :homepage_url, null: true
     String :redirect_uri, null: false
     String :client_id, null: false, unique: true
     String :client_secret, null: false, unique: true
