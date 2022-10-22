@@ -76,7 +76,7 @@ module Rodauth
           key = oauth_applications_redirect_uri_column
         when "token_endpoint_auth_method"
           unless oauth_token_endpoint_auth_methods_supported.include?(value)
-            register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(key))
+            register_throw_json_response_error("invalid_client_metadata", register_invalid_client_metadata_message(key, value))
           end
           # verify if in range
           key = oauth_applications_token_endpoint_auth_method_column
@@ -84,7 +84,7 @@ module Rodauth
           if value.is_a?(Array)
             value = value.each do |grant_type|
               unless oauth_grant_types_supported.include?(grant_type)
-                register_throw_json_response_error("invalid_client_metadata", register_oauth_invalid_grant_type_message(grant_type))
+                register_throw_json_response_error("invalid_client_metadata", register_invalid_client_metadata_message(grant_type, value))
               end
             end.join(" ")
           else
