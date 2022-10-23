@@ -9,7 +9,7 @@ class RodauthOauthResourceIndicatorsAuthorizeTest < RodaIntegration
     end
     setup_application
     login
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&resource=bla"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code&resource=bla"
     assert page.current_url.end_with?("?error=invalid_target"),
            "was redirected instead to #{page.current_url}"
   end
@@ -17,7 +17,7 @@ class RodauthOauthResourceIndicatorsAuthorizeTest < RodaIntegration
   def test_authorize_one_resource_uri_with_fragment
     setup_application
     login
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&resource=#{CGI.escape('https://resource.com#bla=bla')}"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code&resource=#{CGI.escape('https://resource.com#bla=bla')}"
     assert page.current_url.end_with?("?error=invalid_target"),
            "was redirected instead to #{page.current_url}"
   end
@@ -25,7 +25,7 @@ class RodauthOauthResourceIndicatorsAuthorizeTest < RodaIntegration
   def test_authorize_one_resource_valid
     setup_application
     login
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&resource=#{CGI.escape('https://resource.com')}&response_mode=query"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&resource=#{CGI.escape('https://resource.com')}&response_type=code&response_mode=query"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
     check "user.read"
@@ -48,7 +48,8 @@ class RodauthOauthResourceIndicatorsAuthorizeTest < RodaIntegration
     skip # capybara rack-test does not support same param 2 times in form submit
     setup_application
     login
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&resource=#{CGI.escape('https://resource.com')}&resource=#{CGI.escape('https://resource2.com')}"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code&" \
+          "resource=#{CGI.escape('https://resource.com')}&resource=#{CGI.escape('https://resource2.com')}"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
     check "user.read"

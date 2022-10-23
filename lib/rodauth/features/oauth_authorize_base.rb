@@ -65,7 +65,7 @@ module Rodauth
     def validate_authorize_params
       redirect_response_error("invalid_request", request.referer || default_redirect) unless oauth_application && check_valid_redirect_uri?
 
-      redirect_response_error("invalid_request") unless check_valid_response_type?
+      redirect_response_error("invalid_request") unless param_or_nil("response_type") && check_valid_response_type?
 
       redirect_response_error("invalid_request") unless check_valid_access_type? && check_valid_approval_prompt?
 

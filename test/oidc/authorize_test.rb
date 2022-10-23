@@ -8,7 +8,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     login
 
     # show the authorization form
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&nonce=NONCE"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&nonce=NONCE&response_type=code"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
     check "openid"
@@ -236,7 +236,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     # OLD grant
     oauth_grant(access_type: "online", expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 60))
 
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code&" \
           "prompt=none"
 
     unless ENV.key?("ONLY_ONE_TOKEN")
@@ -253,14 +253,14 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
   def test_oidc_authorize_post_authorize_prompt_login
     setup_application
 
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code&" \
           "prompt=login"
     assert page.current_path.include?("/login"),
            "was redirected instead to #{page.current_url}"
 
     login(visit: false)
 
-    assert page.current_url.end_with?("/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&prompt=login"),
+    assert page.current_url.end_with?("/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code&prompt=login"),
            "was redirected instead to #{page.current_url}"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
@@ -284,7 +284,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     login(login: "foo2@example.com")
     logout
 
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code&" \
           "prompt=select-account"
 
     # I should now select an account
@@ -298,7 +298,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     fill_in "Password", with: "0123456789"
     click_button "Login"
 
-    assert page.current_url.end_with?("/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&prompt=select-account"),
+    assert page.current_url.end_with?("/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code&prompt=select-account"),
            "was redirected instead to #{page.current_url}"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
@@ -315,14 +315,14 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     setup_application
     login
 
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code&" \
           "prompt=login"
     assert page.current_path.start_with?("/login"),
            "was redirected instead to #{page.current_url}"
 
     login(visit: false)
 
-    assert page.current_url.end_with?("/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&prompt=login"),
+    assert page.current_url.end_with?("/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code&prompt=login"),
            "was redirected instead to #{page.current_url}"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
@@ -421,7 +421,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
       setup_application
       login
 
-      visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+      visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code&" \
             "display=consent"
       assert page.current_path == "/authorize",
              "was redirected instead to #{page.current_path}"
@@ -432,7 +432,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     setup_application
     login
 
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code&" \
           "ui_locales=pt de es"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
@@ -490,7 +490,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
       setup_application
       login
 
-      visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+      visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code&" \
             "max_age=3"
       assert page.current_path == "/authorize",
              "was redirected instead to #{page.current_path}"
@@ -506,7 +506,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     setup_application
     login
 
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code&" \
           "acr_values=phr"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
@@ -594,7 +594,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
       fill_in "Password", with: "0123456789"
       click_button "Login"
 
-      visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+      visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code&" \
             "acr_values=phrh"
       assert page.current_path == "/webauthn-auth",
              "was redirected instead to #{page.current_path}"

@@ -10,7 +10,7 @@ class RodauthOauthPkceAuthorizeTest < RodaIntegration
 
     # show the authorization form
     visit "/authorize?client_id=#{oauth_application[:client_id]}&" \
-          "code_challenge=#{PKCE_CHALLENGE}&code_challenge_method=S256&response_mode=query"
+          "code_challenge=#{PKCE_CHALLENGE}&code_challenge_method=S256&response_mode=query&response_type=code"
 
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
@@ -37,7 +37,7 @@ class RodauthOauthPkceAuthorizeTest < RodaIntegration
 
     # show the authorization form
     visit "/authorize?client_id=#{oauth_application[:client_id]}&" \
-          "code_challenge=#{PKCE_CHALLENGE}&code_challenge_method=S256&response_mode=query"
+          "code_challenge=#{PKCE_CHALLENGE}&code_challenge_method=S256&response_mode=query&response_type=code"
 
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
@@ -63,7 +63,7 @@ class RodauthOauthPkceAuthorizeTest < RodaIntegration
     login
 
     # show the authorization form
-    visit "/authorize?client_id=#{oauth_application[:client_id]}"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code"
 
     assert page.current_url.include?("?error=invalid_request"),
            "code challenge required"
@@ -78,7 +78,7 @@ class RodauthOauthPkceAuthorizeTest < RodaIntegration
     login
 
     # show the authorization form
-    visit "/authorize?client_id=#{oauth_application[:client_id]}"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code"
 
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"

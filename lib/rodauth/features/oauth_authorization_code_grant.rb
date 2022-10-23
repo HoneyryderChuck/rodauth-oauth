@@ -25,9 +25,9 @@ module Rodauth
     def validate_authorize_params
       super
 
-      return unless (response_mode = param_or_nil("response_mode")) && !oauth_response_modes_supported.include?(response_mode)
+      response_mode = param_or_nil("response_mode")
 
-      redirect_response_error("invalid_request")
+      redirect_response_error("invalid_request") if response_mode && !oauth_response_modes_supported.include?(response_mode)
     end
 
     def validate_token_params
