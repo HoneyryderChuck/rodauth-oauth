@@ -534,9 +534,15 @@ module Rodauth
     def proxy_get_param(get_param_func, claims, claims_locales)
       meth = method(get_param_func)
       if meth.arity == 2
-        ->(account, param, cl = claims) { cl[param] = meth[account, param] }
+        lambda do |account, param, cl = claims|
+          value = meth[account, param]
+          cl[param] = value if value
+        end
       elsif claims_locales.nil?
-        ->(account, param, cl = claims) { cl[param] = meth[account, param, nil] }
+        lambda do |account, param, cl = claims|
+          value = meth[account, param, nil]
+          cl[param] = value if value
+        end
       else
         lambda do |account, param, cl = claims|
           claims_values = claims_locales.map do |locale|
@@ -547,7 +553,7 @@ module Rodauth
             cl[param] = claims_values.first
           else
             claims_locales.zip(claims_values).each do |locale, value|
-              cl["#{param}##{locale}"] = value
+              cl["#{param}##{locale}"] = value if value
             end
           end
         end
