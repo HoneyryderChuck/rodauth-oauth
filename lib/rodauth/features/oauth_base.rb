@@ -768,6 +768,10 @@ module Rodauth
           query_params << ["error_description=#{CGI.escape(message)}"]
         end
 
+        state = param_or_nil("state")
+
+        query_params << "state=#{state}" if state
+
         query_params << redirect_url.query if redirect_url.query
         redirect_url.query = query_params.join("&")
         redirect(redirect_url.to_s)
