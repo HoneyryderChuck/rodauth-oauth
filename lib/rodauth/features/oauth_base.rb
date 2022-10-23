@@ -228,13 +228,20 @@ module Rodauth
     end
 
     def fetch_access_token
-      value = request.env["HTTP_AUTHORIZATION"]
+      if (token = request.params["access_token"])
+        if request.post? && !(request.content_type.start_with?("application/x-www-form-urlencoded") &&
+                        request.params.size == 1)
+          return
+        end
+      else
+        value = request.env["HTTP_AUTHORIZATION"]
 
-      return unless value && !value.empty?
+        return unless value && !value.empty?
 
-      scheme, token = value.split(" ", 2)
+        scheme, token = value.split(" ", 2)
 
-      return unless scheme.downcase == oauth_token_type
+        return unless scheme.downcase == oauth_token_type
+      end
 
       return if token.nil? || token.empty?
 
@@ -245,11 +252,11 @@ module Rodauth
       return @authorization_token if defined?(@authorization_token)
 
       # check if there is a token
-      bearer_token = fetch_access_token
+      access_token = fetch_access_token
 
-      return unless bearer_token
+      return unless access_token
 
-      @authorization_token = oauth_grant_by_token(bearer_token)
+      @authorization_token = oauth_grant_by_token(access_token)
     end
 
     def require_oauth_authorization(*scopes)

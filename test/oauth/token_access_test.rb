@@ -64,13 +64,37 @@ class RodauthOAuthTokenAccessTest < RodaIntegration
     assert last_response.status == 401
   end
 
-  def test_token_access_private_valid_token
+  def test_token_access_private_valid_bearer_token
     setup_application
 
     header "Accept", "application/json"
     set_authorization_header
     # valid token, and now we're getting somewhere
     get("/private")
+    assert last_response.status == 200
+    assert last_response["x-oauth-subject"] == account[:id]
+    assert last_response["x-oauth-current-account"] == account[:id]
+    assert last_response["x-oauth-current-application"] == "CLIENT_ID"
+  end
+
+  def test_token_access_private_valid_post_token
+    setup_application
+
+    header "Accept", "application/json"
+    # valid token, and now we're getting somewhere
+    post("/private", "access_token" => oauth_grant_with_token[:token])
+    assert last_response.status == 200
+    assert last_response["x-oauth-subject"] == account[:id]
+    assert last_response["x-oauth-current-account"] == account[:id]
+    assert last_response["x-oauth-current-application"] == "CLIENT_ID"
+  end
+
+  def test_token_access_private_valid_get_token
+    setup_application
+
+    header "Accept", "application/json"
+    # valid token, and now we're getting somewhere
+    get("/private", "access_token" => oauth_grant_with_token[:token])
     assert last_response.status == 200
     assert last_response["x-oauth-subject"] == account[:id]
     assert last_response["x-oauth-current-account"] == account[:id]

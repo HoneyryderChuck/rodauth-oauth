@@ -148,17 +148,15 @@ class RodaIntegration < Minitest::Test
       yield(rodauth) if block_given?
       rodauth.require_oauth_authorization(*scopes)
 
-      r.on "private" do
-        r.get do
-          response["x-oauth-subject"] = rodauth.oauth_token_subject
-          if (current_account = rodauth.current_oauth_account)
-            response["x-oauth-current-account"] = current_account[:id]
-          end
-          if (current_application = rodauth.current_oauth_application)
-            response["x-oauth-current-application"] = current_application[:client_id]
-          end
-          view inline: (flash["error"] || flash["notice"] || "Authorized")
+      r.on "private", method: %i[get post] do
+        response["x-oauth-subject"] = rodauth.oauth_token_subject
+        if (current_account = rodauth.current_oauth_account)
+          response["x-oauth-current-account"] = current_account[:id]
         end
+        if (current_application = rodauth.current_oauth_application)
+          response["x-oauth-current-application"] = current_application[:client_id]
+        end
+        view inline: (flash["error"] || flash["notice"] || "Authorized")
       end
     end
   end

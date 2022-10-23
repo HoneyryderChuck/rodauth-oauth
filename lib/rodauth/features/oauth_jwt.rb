@@ -49,11 +49,11 @@ module Rodauth
       return @authorization_token if defined?(@authorization_token)
 
       @authorization_token = begin
-        bearer_token = fetch_access_token
+        access_token = fetch_access_token
 
-        return unless bearer_token
+        return unless access_token
 
-        jwt_claims = jwt_decode(bearer_token)
+        jwt_claims = jwt_decode(access_token)
 
         return unless jwt_claims
 

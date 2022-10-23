@@ -16,12 +16,12 @@ module Rodauth
       return @authorization_token if defined?(@authorization_token)
 
       # check if there is a token
-      bearer_token = fetch_access_token
+      access_token = fetch_access_token
 
-      return unless bearer_token
+      return unless access_token
 
       # where in resource server, NOT the authorization server.
-      payload = introspection_request("access_token", bearer_token)
+      payload = introspection_request("access_token", access_token)
 
       return unless payload["active"]
 
