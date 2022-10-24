@@ -76,8 +76,7 @@ module Rodauth
 
     auth_value_method :oauth_grants_nonce_column, :nonce
     auth_value_method :oauth_grants_acr_column, :acr
-    auth_value_method :oauth_grants_nonce_column, :nonce
-    auth_value_method :oauth_grants_acr_column, :acr
+    auth_value_method :oauth_grants_claims_locales_column, :claims_locales
 
     auth_value_method :oauth_jwt_subject_type, "public" # fallback subject type: public, pairwise
     auth_value_method :oauth_jwt_subject_secret, nil # salt for pairwise generation
@@ -122,9 +121,17 @@ module Rodauth
 
           oidc_claims = { "sub" => claims["sub"] }
 
-          fill_with_account_claims(oidc_claims, account, oauth_scopes)
-
           @oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => claims["client_id"]).first
+
+          oauth_grant = valid_oauth_grant_ds(
+            oauth_grants_oauth_application_id_column => @oauth_application[oauth_applications_id_column],
+            oauth_grants_account_id_column => account[account_id_column]
+          ).first
+
+          claims_locales = oauth_grant[oauth_grants_claims_locales_column] if oauth_grant
+
+          # 5.4 - The Claims requested by the profile, email, address, and phone scope values are returned from the UserInfo Endpoint
+          fill_with_account_claims(oidc_claims, account, oauth_scopes, claims_locales)
 
           if (algo = @oauth_application && @oauth_application[oauth_applications_userinfo_signed_response_alg_column])
             params = {
@@ -435,6 +442,9 @@ module Rodauth
       if (acr = param_or_nil("acr"))
         create_params[oauth_grants_acr_column] = acr
       end
+      if (claims_locales = param_or_nil("claims_locales"))
+        create_params[oauth_grants_claims_locales_column] = claims_locales
+      end
       super
     end
 
@@ -444,7 +454,7 @@ module Rodauth
       oauth_grant
     end
 
-    def generate_id_token(oauth_grant)
+    def generate_id_token(oauth_grant, include_claims = false)
       oauth_scopes = oauth_grant[oauth_grants_scopes_column].split(oauth_scope_separator)
 
       return unless oauth_scopes.include?("openid")
@@ -465,7 +475,9 @@ module Rodauth
       # who just authorized its generation.
       return unless account
 
-      fill_with_account_claims(id_token_claims, account, oauth_scopes)
+      # 5.4 - However, when no Access Token is issued (which is the case for the response_type value id_token),
+      # the resulting Claims are returned in the ID Token.
+      fill_with_account_claims(id_token_claims, account, oauth_scopes, param_or_nil("claims_locales")) if include_claims
 
       params = {
         jwks: oauth_application_jwks(oauth_application),
@@ -481,7 +493,7 @@ module Rodauth
     end
 
     # aka fill_with_standard_claims
-    def fill_with_account_claims(claims, account, scopes)
+    def fill_with_account_claims(claims, account, scopes, claims_locales)
       scopes_by_claim = scopes.each_with_object({}) do |scope, by_oidc|
         next if scope == "openid"
 
@@ -494,9 +506,7 @@ module Rodauth
 
       oidc_scopes, additional_scopes = scopes_by_claim.keys.partition { |key| OIDC_SCOPES_MAP.key?(key) }
 
-      if (claims_locales = param_or_nil("claims_locales"))
-        claims_locales = claims_locales.split(" ").map(&:to_sym)
-      end
+      claims_locales = claims_locales.split(" ").map(&:to_sym) if claims_locales
 
       unless oidc_scopes.empty?
         if respond_to?(:get_oidc_param)
@@ -590,9 +600,10 @@ module Rodauth
     end
 
     def do_authorize(response_params = {}, response_mode = param_or_nil("response_mode"))
-      case param("response_type")
+      response_type = param("response_type")
+      case response_type
       when "id_token"
-        response_params.replace(_do_authorize_id_token)
+        response_params.replace(_do_authorize_id_token(true))
       when "code token"
         redirect_response_error("invalid_request") unless supports_token_response_type?
 
@@ -615,7 +626,7 @@ module Rodauth
       super(response_params, response_mode)
     end
 
-    def _do_authorize_id_token
+    def _do_authorize_id_token(include_claims = false)
       grant_params = {
         oauth_grants_account_id_column => account_id,
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
@@ -627,8 +638,11 @@ module Rodauth
       if (acr = param_or_nil("acr"))
         grant_params[oauth_grants_acr_column] = acr
       end
+      if (claims_locales = param_or_nil("claims_locales"))
+        grant_params[oauth_grants_claims_locales_column] = claims_locales
+      end
       oauth_grant = generate_token(grant_params, false)
-      generate_id_token(oauth_grant)
+      generate_id_token(oauth_grant, include_claims)
       params = json_access_token_payload(oauth_grant)
       params.delete("access_token")
       params

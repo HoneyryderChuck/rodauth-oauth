@@ -8,7 +8,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
   def test_oidc_userinfo_openid
     setup_application
 
-    access_token = generate_access_token("openid")
+    access_token = generate_access_token(oauth_grant(scopes: "openid"))
     login(access_token)
 
     @json_body = nil
@@ -21,7 +21,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
   def test_oidc_userinfo_email
     setup_application
 
-    access_token = generate_access_token("openid email")
+    access_token = generate_access_token(oauth_grant(scopes: "openid email"))
     login(access_token)
 
     @json_body = nil
@@ -37,7 +37,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
   def test_oidc_userinfo_email_email
     setup_application
 
-    access_token = generate_access_token("openid email.email")
+    access_token = generate_access_token(oauth_grant(scopes: "openid email.email"))
     login(access_token)
 
     @json_body = nil
@@ -50,10 +50,36 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
     assert !json_body.key?("email_verified")
   end
 
+  def test_oidc_userinfo_claims_locales
+    rodauth do
+      get_additional_param do |account, claim, locale|
+        case claim
+        when :name
+          locale == :pt ? "Tiago" : "James"
+        else
+          account[claim]
+        end
+      end
+    end
+    setup_application
+
+    access_token = generate_access_token(oauth_grant(scopes: "openid name", claims_locales: "pt en"))
+    login(access_token)
+
+    @json_body = nil
+    # valid token, and now we're getting somewhere
+    get("/userinfo")
+
+    assert last_response.status == 200
+    assert json_body.key?("sub")
+    assert json_body["name#pt"] == "Tiago"
+    assert json_body["name#en"] == "James"
+  end
+
   def test_oidc_userinfo_address
     setup_application
 
-    access_token = generate_access_token("openid address")
+    access_token = generate_access_token(oauth_grant(scopes: "openid address"))
     login(access_token)
 
     @json_body = nil
@@ -70,7 +96,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
   def test_oidc_userinfo_additional_claims
     setup_application
 
-    access_token = generate_access_token("openid fruit")
+    access_token = generate_access_token(oauth_grant(scopes: "openid fruit"))
     login(access_token)
 
     @json_body = nil
@@ -93,7 +119,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
     setup_application
     oauth_application(userinfo_signed_response_alg: "RS512")
 
-    access_token = generate_access_token("openid fruit")
+    access_token = generate_access_token(oauth_grant(scopes: "openid fruit"))
     login(access_token)
 
     @json_body = nil
@@ -133,7 +159,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
       userinfo_encrypted_response_enc: "A256CBC-HS512"
     )
 
-    access_token = generate_access_token("openid fruit")
+    access_token = generate_access_token(oauth_grant(scopes: "openid fruit"))
     login(access_token)
 
     @json_body = nil
@@ -188,9 +214,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
     header "Authorization", "Bearer #{token}"
   end
 
-  def generate_access_token(scopes = "openid")
-    grant = oauth_grant(scopes: scopes)
-
+  def generate_access_token(grant)
     post("/token",
          client_id: oauth_application[:client_id],
          client_secret: "CLIENT_SECRET",

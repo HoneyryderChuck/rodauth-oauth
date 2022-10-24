@@ -439,7 +439,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     assert page.html.include?("Autorizar")
   end
 
-  def test_oidc_authorize_post_authorize_claims_locales
+  def test_oidc_authorize_post_authorize_id_token_claims_locales
     jws_key = OpenSSL::PKey::RSA.generate(2048)
     jws_public_key = jws_key.public_key
     rodauth do
@@ -471,6 +471,8 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     assert db[:oauth_grants].count == 1,
            "no token has been created"
 
+    grant = db[:oauth_grants].first
+
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#token_type=bearer&expires_in=3600&id_token=([^&]+)/,
            "was redirected instead to #{page.current_url}"
 
@@ -482,6 +484,54 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     ) do |claims|
       assert claims["name#pt"] == "Tiago"
       assert claims["name#en"] == "James"
+    end
+  end
+
+  def test_oidc_authorize_post_authorize_code_id_token_claims_locales
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
+    rodauth do
+      oauth_jwt_keys("RS256" => jws_key)
+      get_additional_param do |account, claim, locale|
+        case claim
+        when :name
+          locale == :pt ? "Tiago" : "James"
+        else
+          account[claim]
+        end
+      end
+    end
+    setup_application(:oauth_implicit_grant)
+    login
+
+    oauth_application(scopes: "openid name")
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid name&" \
+          "claims_locales=pt en&response_type=code id_token"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    check "openid"
+
+    check "name"
+    # submit authorization request
+    click_button "Authorize"
+    assert page.current_url =~ /#{oauth_application[:redirect_uri]}#code=([^&]+)&token_type=bearer&expires_in=3600&id_token=([^&]+)/,
+           "was redirected instead to #{page.current_url}"
+
+    # assert db[:oauth_grants].count == 1,
+    # "no token has been created"
+
+    grant = db[:oauth_grants].first
+    grant[:claims_locales] == "pt en"
+
+    verify_id_token(
+      Regexp.last_match(2),
+      db[:oauth_grants].first,
+      signing_key: jws_public_key,
+      signing_algo: "RS256"
+    ) do |claims|
+      assert claims["name#pt"].nil?
+      assert claims["name#en"].nil?
     end
   end
 

@@ -71,6 +71,7 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       # uncomment to use OIDC nonce
       # t.string :nonce
       # t.string :acr
+      # t.string :claims_locales
     end
   end
 end

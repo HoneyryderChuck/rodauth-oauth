@@ -83,6 +83,8 @@ else
     index %i[oauth_application_id code], unique: true
     String :access_type, null: false, default: "offline"
     String :nonce
+    String :acr
+    String :claims_locales
     # if using PKCE flow
     # String :code_challenge
     # String :code_challenge_method

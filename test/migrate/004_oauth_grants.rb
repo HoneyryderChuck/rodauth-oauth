@@ -35,6 +35,7 @@ Sequel.migration do
       # oidc
       String :nonce
       String :acr
+      String :claims_locales
     end
   end
 
