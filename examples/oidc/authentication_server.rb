@@ -105,6 +105,23 @@ hash = ::BCrypt::Password.create("password", cost: BCrypt::Engine::MIN_COST)
 # test user
 DB[:accounts].insert_conflict(target: :email).insert(name: "Fernando Pessoa", email: "foo@bar.com", ph: hash)
 
+TEST_ADDRESS = {
+  country: "DE",
+  street_address: "Heiligengeistbrücke 13",
+  formatted: "Heiligengeistbrücke 13\nOhrenbach\nFreistaat Bayern\n91620\nDE",
+  locality: "Ohrenbach",
+  postal_code: "91620",
+  region: "Freistaat Bayern"
+}.freeze
+
+TEST_PROFILE = {
+  name: "Ferdinand Mensch",
+  family_name: "Gottschalk",
+  given_name: "Peter",
+  birthdate: "1996-08-30",
+  gender: "male"
+}.freeze
+
 # test application
 unless DB[:oauth_applications].where(client_id: CLIENT_ID).first
   email = "admin@localhost.com"
@@ -119,7 +136,7 @@ unless DB[:oauth_applications].where(client_id: CLIENT_ID).first
     description: "About myself",
     redirect_uri: "http://localhost:9293/auth/openid_connect/callback",
     homepage_url: "http://localhost:9293",
-    scopes: "openid email profile books.read",
+    scopes: "openid email address phone profile books.read",
     account_id: account_id
   )
   DB[:oauth_applications].where(id: application_id).first
@@ -150,7 +167,7 @@ class AuthenticationServer < Roda
     title_instance_variable :@page_title
     login_return_to_requested_location? true
 
-    oauth_application_scopes %w[openid email profile books.read]
+    oauth_application_scopes %w[openid email address phone profile books.read]
     oauth_valid_uri_schemes %w[http https]
 
     oauth_jwt_keys("RS256" => PRIV_KEY)
@@ -167,10 +184,16 @@ class AuthenticationServer < Roda
       case param
       when :email
         account[:email]
-      when :email_verified
+      when :email_verified, :phone_number_verified
         true
-      when :name
-        account[:name]
+      when :phone_number
+        "804-222-1111"
+      when :street_address, :locality, :region, :postal_code, :country
+        TEST_ADDRESS[param]
+      when :name, :family_name, :given_name, :middle_name, :nickname,
+           :preferred_username, :profile, :picture, :website, :gender,
+           :birthdate, :zoneinfo, :locale, :updated_at
+        TEST_PROFILE[param]
       end
     end
   end
