@@ -94,6 +94,7 @@ module Rodauth
 
     auth_value_methods(
       :get_oidc_account_last_login_at,
+      :oidc_authorize_on_prompt_none?,
       :get_oidc_param,
       :get_additional_param,
       :require_acr_value_phr,
@@ -296,6 +297,10 @@ module Rodauth
       end
     end
 
+    def oidc_authorize_on_prompt_none?(_account)
+      false
+    end
+
     def validate_authorize_params
       return super unless (max_age = param_or_nil("max_age"))
 
@@ -364,15 +369,7 @@ module Rodauth
 
         require_account
 
-        if db[oauth_grants_table].where(
-          oauth_grants_account_id_column => account_id,
-          oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-          oauth_grants_redirect_uri_column => redirect_uri,
-          oauth_grants_scopes_column => scopes.join(oauth_scope_separator),
-          oauth_grants_access_type_column => "online"
-        ).count.zero?
-          redirect_response_error("consent_required")
-        end
+        redirect_response_error("interaction_required") unless oidc_authorize_on_prompt_none?(account_from_session)
 
         request.env["REQUEST_METHOD"] = "POST"
       when "login"
@@ -658,7 +655,7 @@ module Rodauth
       grant_params = {
         oauth_grants_account_id_column => account_id,
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-        oauth_grants_scopes_column => scopes.join(" ")
+        oauth_grants_scopes_column => scopes.join(oauth_scope_separator)
       }
       if (nonce = param_or_nil("nonce"))
         grant_params[oauth_grants_nonce_column] = nonce

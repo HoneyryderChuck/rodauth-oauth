@@ -176,6 +176,8 @@ class AuthenticationServer < Roda
     use_rp_initiated_logout? true
     oauth_response_mode "query"
 
+    oidc_authorize_on_prompt_none? { |_account| true }
+
     before_register do
       # bypass authentication
     end

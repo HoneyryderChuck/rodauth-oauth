@@ -217,34 +217,39 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     verify_id_token(Regexp.last_match(3), db[:oauth_grants].first, signing_key: jws_public_key, signing_algo: "RS256")
   end
 
-  def test_oidc_authorize_post_authorize_prompt_none
+  def test_oidc_authorize_post_authorize_prompt_none_login_required
     setup_application
 
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
           "prompt=none"
     assert page.current_url.include?("?error=login_required"),
            "was redirected instead to #{page.current_url}"
+  end
 
+  def test_oidc_authorize_post_authorize_prompt_none_interaction_required
+    setup_application
     login
 
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
           "prompt=none"
-    assert page.current_url.include?("?error=consent_required"),
+    assert page.current_url.include?("?error=interaction_required"),
            "was redirected instead to #{page.current_url}"
+  end
 
-    # OLD grant
-    oauth_grant(access_type: "online", expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 60))
+  def test_oidc_authorize_post_authorize_prompt_none_auto_authorize
+    rodauth do
+      oidc_authorize_on_prompt_none? do |_account|
+        true
+      end
+    end
+    setup_application
+    login
 
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code&" \
           "prompt=none"
 
-    unless ENV.key?("ONLY_ONE_TOKEN")
-      assert db[:oauth_grants].count == 2,
-             "no new grant has been created"
-    end
-
-    new_grant = db[:oauth_grants].order(:id).last
-
+    assert db[:oauth_grants].count == 1, "new grant not created"
+    new_grant = db[:oauth_grants].first
     assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{new_grant[:code]}",
            "was redirected instead to #{page.current_url}"
   end
