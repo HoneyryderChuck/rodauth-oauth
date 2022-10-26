@@ -65,6 +65,7 @@ module Rodauth
     depends :account_expiration, :oauth_jwt, :oauth_jwt_jwks, :oauth_authorization_code_grant
 
     auth_value_method :oauth_application_scopes, %w[openid]
+    auth_value_method :oauth_acr_values_supported, %w[phr phrh]
 
     %i[
       subject_type application_type sector_identifier_uri
@@ -414,6 +415,8 @@ module Rodauth
       return unless (acr_values = param_or_nil("acr_values"))
 
       acr_values.split(" ").each do |acr_value|
+        next unless oauth_acr_values_supported.include?(acr_value)
+
         case acr_value
         when "phr" then require_acr_value_phr
         when "phrh" then require_acr_value_phrh
@@ -724,6 +727,7 @@ module Rodauth
         userinfo_endpoint: userinfo_url,
         end_session_endpoint: (oidc_logout_url if use_rp_initiated_logout?),
         subject_types_supported: %w[public pairwise],
+        acr_values_supported: oauth_acr_values_supported,
 
         id_token_signing_alg_values_supported: metadata[:token_endpoint_auth_signing_alg_values_supported],
         id_token_encryption_alg_values_supported: Array(alg_values),
