@@ -140,10 +140,10 @@ module Rodauth
     end
 
     def create_oauth_grant(create_params = {})
-      create_params[oauth_grants_oauth_application_id_column] = oauth_application[oauth_applications_id_column]
-      create_params[oauth_grants_redirect_uri_column] = redirect_uri
-      create_params[oauth_grants_expires_in_column] = Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_grant_expires_in)
-      create_params[oauth_grants_scopes_column] = scopes.join(oauth_scope_separator)
+      create_params[oauth_grants_oauth_application_id_column] ||= oauth_application[oauth_applications_id_column]
+      create_params[oauth_grants_redirect_uri_column] ||= redirect_uri
+      create_params[oauth_grants_expires_in_column] ||= Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_grant_expires_in)
+      create_params[oauth_grants_scopes_column] ||= scopes.join(oauth_scope_separator)
 
       if use_oauth_access_type? && (access_type = param_or_nil("access_type"))
         create_params[oauth_grants_access_type_column] = access_type

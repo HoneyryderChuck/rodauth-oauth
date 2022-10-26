@@ -36,7 +36,7 @@ class OIDCIntegration < JWTIntegration
     claims, headers = JWT.decode(data, signing_key, true, { "algorithm" => signing_algo })
 
     assert headers["alg"] == signing_algo
-    verify_id_token_claims(claims, oauth_grant)
+    verify_id_token_claims(claims, oauth_grant) if oauth_grant
     yield claims if block_given?
     claims
   end

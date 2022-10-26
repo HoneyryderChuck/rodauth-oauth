@@ -28,23 +28,24 @@ module Rodauth
 
       redirect_response_error("invalid_request") unless supported_response_mode?(response_mode)
 
-      response_params.replace(_do_authorize_token)
+      oauth_grant = _do_authorize_token
+
+      response_params.replace(json_access_token_payload(oauth_grant))
 
       response_params["state"] = param("state") if param_or_nil("state")
 
       [response_params, response_mode]
     end
 
-    def _do_authorize_token
+    def _do_authorize_token(grant_params = {})
       grant_params = {
         oauth_grants_type_column => "implicit",
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
         oauth_grants_scopes_column => scopes,
         oauth_grants_account_id_column => account_id
-      }
-      oauth_grant = generate_token(grant_params, false)
+      }.merge(grant_params)
 
-      json_access_token_payload(oauth_grant)
+      generate_token(grant_params, false)
     end
 
     def authorize_response(params, mode)

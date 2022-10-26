@@ -48,6 +48,7 @@ class JWTIntegration < RodaIntegration
 
     assert claims.key?("client_id")
     assert claims["client_id"] == "CLIENT_ID"
+    assert claims["scope"] == oauth_grant[:scopes]
     verify_jwt_claims(claims, oauth_grant, audience: audience)
     claims
   end

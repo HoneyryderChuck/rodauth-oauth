@@ -436,16 +436,26 @@ module Rodauth
     def require_acr_value(_acr); end
 
     def create_oauth_grant(create_params = {})
-      if (nonce = param_or_nil("nonce"))
-        create_params[oauth_grants_nonce_column] = nonce
-      end
-      if (acr = param_or_nil("acr"))
-        create_params[oauth_grants_acr_column] = acr
-      end
-      if (claims_locales = param_or_nil("claims_locales"))
-        create_params[oauth_grants_claims_locales_column] = claims_locales
-      end
+      create_params.replace(oidc_grant_params.merge(create_params))
       super
+    end
+
+    def create_oauth_grant_with_token(create_params = {})
+      create_params[oauth_grants_type_column] = "hybrid"
+      create_params[oauth_grants_account_id_column] = account_id
+      create_params[oauth_grants_expires_in_column] = Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_access_token_expires_in)
+      authorization_code = create_oauth_grant(create_params)
+      access_token = if oauth_jwt_access_tokens
+                       _generate_jwt_access_token(create_params)
+                     else
+                       oauth_grant = valid_oauth_grant_ds.where(oauth_grants_code_column => authorization_code).first
+                       _generate_access_token(oauth_grant)
+                     end
+
+      {
+        "code" => authorization_code,
+        **json_access_token_payload(oauth_grants_token_column => access_token)
+      }
     end
 
     def create_token(*)
@@ -603,21 +613,36 @@ module Rodauth
       response_type = param("response_type")
       case response_type
       when "id_token"
-        response_params.replace(_do_authorize_id_token(true))
+        grant_params = oidc_grant_params
+        generate_id_token(grant_params, true)
+        response_params.replace("id_token" => grant_params[:id_token])
       when "code token"
         redirect_response_error("invalid_request") unless supports_token_response_type?
 
-        response_params.replace(_do_authorize_code.merge(_do_authorize_token))
+        response_params.replace(create_oauth_grant_with_token)
       when "code id_token"
-        response_params.replace(_do_authorize_code.merge(_do_authorize_id_token))
+        params = _do_authorize_code
+        oauth_grant = valid_oauth_grant_ds.where(oauth_grants_code_column => params["code"]).first
+        generate_id_token(oauth_grant)
+        response_params.replace(
+          "id_token" => oauth_grant[:id_token],
+          "code" => params["code"]
+        )
       when "id_token token"
         redirect_response_error("invalid_request") unless supports_token_response_type?
 
-        response_params.replace(_do_authorize_id_token.merge(_do_authorize_token))
+        oauth_grant = _do_authorize_token(oauth_grants_type_column => "hybrid")
+        generate_id_token(oauth_grant)
+
+        response_params.replace(json_access_token_payload(oauth_grant))
       when "code id_token token"
         redirect_response_error("invalid_request") unless supports_token_response_type?
 
-        response_params.replace(_do_authorize_code.merge(_do_authorize_id_token).merge(_do_authorize_token))
+        params = create_oauth_grant_with_token
+        oauth_grant = valid_oauth_grant_ds.where(oauth_grants_code_column => params["code"]).first
+        generate_id_token(oauth_grant)
+
+        response_params.replace(params.merge("id_token" => oauth_grant[:id_token]))
       when "none"
         response_mode ||= "none"
       end
@@ -626,7 +651,7 @@ module Rodauth
       super(response_params, response_mode)
     end
 
-    def _do_authorize_id_token(include_claims = false)
+    def oidc_grant_params
       grant_params = {
         oauth_grants_account_id_column => account_id,
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
@@ -641,11 +666,7 @@ module Rodauth
       if (claims_locales = param_or_nil("claims_locales"))
         grant_params[oauth_grants_claims_locales_column] = claims_locales
       end
-      oauth_grant = generate_token(grant_params, false)
-      generate_id_token(oauth_grant, include_claims)
-      params = json_access_token_payload(oauth_grant)
-      params.delete("access_token")
-      params
+      grant_params
     end
 
     def authorize_response(params, mode)
