@@ -62,6 +62,5 @@ en:
     oauth_slow_down_message: "authorization request is still pending but poll interval should be increased"
     oauth_code_challenge_required_message: "code challenge required"
     oauth_unsupported_transform_algorithm_message: "transform algorithm not supported"
-    oauth_request_uri_not_supported_message: "request uri is unsupported"
     oauth_invalid_request_object_message: "request object is invalid"
     oauth_invalid_scope_message: "The Access Token expired"

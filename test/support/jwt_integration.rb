@@ -73,6 +73,7 @@ class JWTIntegration < RodaIntegration
     claims = {
       iss: "http://www.example.com",
       aud: "http://www.example.com",
+      response_mode: "query",
       response_type: "code",
       client_id: application[:client_id],
       redirect_uri: application[:redirect_uri],

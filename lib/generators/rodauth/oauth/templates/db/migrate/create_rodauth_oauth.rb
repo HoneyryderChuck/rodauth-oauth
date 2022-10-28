@@ -37,6 +37,7 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       # t.string :request_object_signing_alg, null: true
       # t.string :request_object_encryption_alg, null: true
       # t.string :request_object_encryption_enc, null: true
+      # t.string :request_uris, null: true
       # JWT/OIDC per application signing verification
       # t.text :jwt_public_key, null: true
       # RP-initiated logout

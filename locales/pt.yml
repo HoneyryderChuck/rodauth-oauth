@@ -62,6 +62,5 @@ pt:
     oauth_slow_down_message: "o pedido de autorização ainda está pendente mas o intervalo de actualização deve ser aumentado"
     oauth_code_challenge_required_message: "código de negociação necessário"
     oauth_unsupported_transform_algorithm_message: "algoritmo de transformação não suportado"
-    oauth_request_uri_not_supported_message: "request_uri não é suportado"
     oauth_invalid_request_object_message: "request_object é inválido"
     oauth_invalid_scope_message: "O Token de acesso expirou"

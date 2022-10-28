@@ -16,6 +16,9 @@ module Rodauth
 
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = uri.scheme == "https"
+        http.open_timeout = 15
+        http.read_timeout = 15
+        http.write_timeout = 15 if http.respond_to?(:write_timeout)
 
         if form_data
           request = Net::HTTP::Post.new(uri.request_uri)
