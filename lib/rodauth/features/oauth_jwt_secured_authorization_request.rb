@@ -4,6 +4,8 @@ require "rodauth/oauth"
 
 module Rodauth
   Feature.define(:oauth_jwt_secured_authorization_request, :OauthJwtSecuredAuthorizationRequest) do
+    ALLOWED_REQUEST_URI_CONTENT_TYPES = %w[application/jose application/oauth-authz-req+jwt].freeze
+
     depends :oauth_authorize_base, :oauth_jwt_base
 
     auth_value_method :oauth_require_request_uri_registration, false
@@ -30,11 +32,13 @@ module Rodauth
       return super unless (request_object || request_uri) && oauth_application
 
       if request_uri
+        request_uri = CGI.unescape(request_uri)
+
         redirect_response_error("invalid_request_uri") unless supported_request_uri?(request_uri, oauth_application)
 
         response = http_request(request_uri)
 
-        unless response.code.to_i == 200 && response["content-type"] == "application/oauth-authz-req+jwt"
+        unless response.code.to_i == 200 && ALLOWED_REQUEST_URI_CONTENT_TYPES.include?(response["content-type"])
           redirect_response_error("invalid_request_uri")
         end
 

@@ -162,7 +162,7 @@ class AuthenticationServer < Roda
     db DB
     enable :login, :logout, :create_account, :oidc,
            :oauth_implicit_grant, :oauth_client_credentials_grant, :oauth_token_introspection,
-           :oidc_dynamic_client_registration, :oauth_jwt_bearer_grant
+           :oidc_dynamic_client_registration, :oauth_jwt_bearer_grant, :oauth_jwt_secured_authorization_request
     login_return_to_requested_location? true
     account_password_hash_column :ph
     title_instance_variable :@page_title
@@ -178,6 +178,7 @@ class AuthenticationServer < Roda
     oauth_response_mode "query"
 
     oidc_authorize_on_prompt_none? { |_account| true }
+    oauth_jwt_jws_algorithms_supported { super() | %w[none] }
 
     before_register do
       # bypass authentication

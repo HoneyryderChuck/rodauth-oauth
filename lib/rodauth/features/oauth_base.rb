@@ -3,6 +3,7 @@
 require "time"
 require "base64"
 require "securerandom"
+require "cgi"
 require "rodauth/version"
 require "rodauth/oauth"
 require "rodauth/oauth/database_extensions"
