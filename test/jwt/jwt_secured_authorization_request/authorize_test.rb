@@ -71,6 +71,36 @@ class RodauthOauthJwtSecuredAuthorizationRequestAuthorizeTest < JWTIntegration
            "was redirected instead to #{page.current_url}"
   end
 
+  def test_jwt_authorize_with_signed_request_jwks_without_aud_and_iss
+    setup_application
+    login
+
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
+
+    application = oauth_application(jwks: JSON.dump([JWT::JWK.new(jws_public_key).export.merge(use: "sig", alg: "RS256")]))
+
+    signed_request = generate_signed_request(application, signing_key: jws_key, iss: nil)
+    visit "/authorize?request=#{signed_request}&client_id=#{application[:client_id]}"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_url}"
+
+    signed_request = generate_signed_request(application, signing_key: jws_key, aud: nil)
+    visit "/authorize?request=#{signed_request}&client_id=#{application[:client_id]}"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_url}"
+
+    signed_request = generate_signed_request(application, signing_key: jws_key, iss: nil, aud: "http://www.example2.com")
+    visit "/authorize?request=#{signed_request}&client_id=#{application[:client_id]}"
+    assert page.current_url.include?("error=invalid_request_object"),
+           "was redirected instead to #{page.current_url}"
+
+    signed_request = generate_signed_request(application, signing_key: jws_key, iss: "http://www.example2.com")
+    visit "/authorize?request=#{signed_request}&client_id=#{application[:client_id]}"
+    assert page.current_url.include?("error=invalid_request_object"),
+           "was redirected instead to #{page.current_url}"
+  end
+
   def test_jwt_authorize_with_signed_request_jwks_request_object_signing_alg
     setup_application
     login

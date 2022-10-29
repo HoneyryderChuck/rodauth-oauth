@@ -178,6 +178,7 @@ class AuthenticationServer < Roda
     oauth_response_mode "query"
 
     oidc_authorize_on_prompt_none? { |_account| true }
+    oauth_request_object_signing_alg_allow_none true
     oauth_jwt_jws_algorithms_supported { super() | %w[none] }
 
     before_register do

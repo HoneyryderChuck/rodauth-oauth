@@ -9,6 +9,7 @@ module Rodauth
     depends :oauth_authorize_base, :oauth_jwt_base
 
     auth_value_method :oauth_require_request_uri_registration, false
+    auth_value_method :oauth_request_object_signing_alg_allow_none, false
 
     auth_value_method :oauth_applications_request_uris_column, :request_uris
 
@@ -45,21 +46,38 @@ module Rodauth
         request_object = response.body
       end
 
-      if (jwks = oauth_application_jwks(oauth_application))
-        jwks = JSON.parse(jwks, symbolize_names: true) if jwks.is_a?(String)
-      else
-        redirect_response_error("invalid_request_object")
-      end
-
       request_sig_enc_opts = {
         jws_algorithm: oauth_application[oauth_applications_request_object_signing_alg_column],
         jws_encryption_algorithm: oauth_application[oauth_applications_request_object_encryption_alg_column],
         jws_encryption_method: oauth_application[oauth_applications_request_object_encryption_enc_column]
       }.compact
 
-      claims = jwt_decode(request_object, jwks: jwks, verify_jti: false, verify_aud: false, **request_sig_enc_opts)
+      request_sig_enc_opts[:jws_algorithm] ||= "none" if oauth_request_object_signing_alg_allow_none
+
+      if request_sig_enc_opts[:jws_algorithm] == "none"
+        jwks = nil
+      elsif (jwks = oauth_application_jwks(oauth_application))
+        jwks = JSON.parse(jwks, symbolize_names: true) if jwks.is_a?(String)
+      else
+        redirect_response_error("invalid_request_object")
+      end
+
+      claims = jwt_decode(request_object,
+                          jwks: jwks,
+                          verify_jti: false,
+                          verify_iss: false,
+                          verify_aud: false,
+                          **request_sig_enc_opts)
 
       redirect_response_error("invalid_request_object") unless claims
+
+      if (iss = claims["iss"]) && (iss != oauth_jwt_issuer)
+        redirect_response_error("invalid_request_object")
+      end
+
+      if (aud = claims["aud"]) && !verify_aud(aud, oauth_jwt_issuer)
+        redirect_response_error("invalid_request_object")
+      end
 
       # If signed, the Authorization Request
       # Object SHOULD contain the Claims "iss" (issuer) and "aud" (audience)
@@ -89,6 +107,7 @@ module Rodauth
 
     def oauth_server_metadata_body(*)
       super.tap do |data|
+        data[:request_parameter_supported] = true
         data[:request_uri_parameter_supported] = true
         data[:require_request_uri_registration] = oauth_require_request_uri_registration
       end

@@ -79,7 +79,7 @@ class JWTIntegration < RodaIntegration
       redirect_uri: application[:redirect_uri],
       scope: application[:scopes],
       state: "ABCDEF"
-    }.merge(extra_claims)
+    }.merge(extra_claims).compact
 
     headers = {}
 
