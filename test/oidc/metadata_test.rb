@@ -35,8 +35,6 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
     assert json_body["grant_types_supported"] == %w[refresh_token authorization_code implicit]
     assert json_body["subject_types_supported"] == %w[public pairwise]
 
-    assert json_body["id_token_signing_alg_values_supported"] == %w[RS256]
-
     assert json_body["token_endpoint_auth_methods_supported"] == %w[client_secret_basic client_secret_post]
     assert json_body["token_endpoint_auth_signing_alg_values_supported"] == %w[RS256]
 

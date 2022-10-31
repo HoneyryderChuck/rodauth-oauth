@@ -779,8 +779,6 @@ module Rodauth
 
       scope_claims.unshift("auth_time")
 
-      alg_values, enc_values = oauth_jwt_jwe_keys.keys.transpose
-
       metadata.merge(
         userinfo_endpoint: userinfo_url,
         end_session_endpoint: (oidc_logout_url if use_rp_initiated_logout?),
@@ -788,9 +786,9 @@ module Rodauth
         acr_values_supported: oauth_acr_values_supported,
         claims_parameter_supported: true,
 
-        id_token_signing_alg_values_supported: metadata[:token_endpoint_auth_signing_alg_values_supported],
-        id_token_encryption_alg_values_supported: Array(alg_values),
-        id_token_encryption_enc_values_supported: Array(enc_values),
+        id_token_signing_alg_values_supported: oauth_jwt_jws_algorithms_supported,
+        id_token_encryption_alg_values_supported: oauth_jwt_jwe_algorithms_supported,
+        id_token_encryption_enc_values_supported: oauth_jwt_jwe_encryption_methods_supported,
 
         userinfo_signing_alg_values_supported: oauth_jwt_jws_algorithms_supported,
         userinfo_encryption_alg_values_supported: oauth_jwt_jwe_algorithms_supported,
