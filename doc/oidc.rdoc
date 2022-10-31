@@ -15,6 +15,7 @@ oauth_application_scopes :: overwrites the default to <tt>["openid"]</tt>.
 oauth_grants_nonce_column :: db column where an authorization nonce is stored, <tt>:nonce</tt> by default.
 oauth_grants_acr_column :: db column where an authorization acr values are stored, <tt>:acr</tt> by default.
 oauth_grants_claims_locales_column :: db column where an authorization claims locales are stored, <tt>:claims_locales</tt> by default.
+oauth_grants_claims_column :: db column where an authorization claims are stored, <tt>:claims</tt> by default.
 
 oauth_applications_application_type_column :: db colummn where the application type is stored.
 oauth_applications_sector_identifier_uri_column :: db colummn where the sector identifier uri is stored.

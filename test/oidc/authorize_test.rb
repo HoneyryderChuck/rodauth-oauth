@@ -525,6 +525,71 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     end
   end
 
+  def test_oidc_authorize_post_authorize_code_id_token_claims_essentials
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
+    rodauth do
+      oauth_jwt_keys("RS256" => jws_key)
+      get_oidc_param do |account, claim|
+        case claim
+        when :name
+          "James"
+        when :nickname
+          "Snoop"
+        else
+          account[claim]
+        end
+      end
+      get_additional_param do |account, claim|
+        case claim
+        when :foo
+          "bar"
+        else
+          account[claim]
+        end
+      end
+    end
+    setup_application(:oauth_implicit_grant)
+    login
+
+    oauth_application(scopes: "openid name")
+
+    claims = JSON.dump({
+                         "userinfo" => { "name" => { "essential " => true } },
+                         "id_token" => {
+                           "nickname" => { "essential " => true },
+                           "foo" => {
+                             "essential" => true,
+                             "values" => %w[bar ba2]
+                           }
+                         }
+                       })
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+          "claims=#{CGI.escape(claims)}&response_type=code id_token"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    check "openid"
+    # submit authorization request
+    click_button "Authorize"
+    assert page.current_url =~ /#{oauth_application[:redirect_uri]}#id_token=([^&]+)&code=([^&]+)/,
+           "was redirected instead to #{page.current_url}"
+
+    grant = db[:oauth_grants].first
+    assert grant[:claims] == claims
+
+    verify_id_token(
+      Regexp.last_match(1),
+      db[:oauth_grants].first,
+      signing_key: jws_public_key,
+      signing_algo: "RS256"
+    ) do |idtoken_claims|
+      assert idtoken_claims["name"].nil?
+      assert idtoken_claims["nickname"] == "Snoop"
+      assert idtoken_claims["foo"] == "bar"
+    end
+  end
+
   unless RUBY_ENGINE == "truffleruby"
     def test_oidc_authorize_post_authorize_max_age
       setup_application

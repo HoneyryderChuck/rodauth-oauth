@@ -75,9 +75,9 @@ module Rodauth
       auth_value_method :"oauth_applications_#{column}_column", column
     end
 
-    auth_value_method :oauth_grants_nonce_column, :nonce
-    auth_value_method :oauth_grants_acr_column, :acr
-    auth_value_method :oauth_grants_claims_locales_column, :claims_locales
+    %i[nonce acr claims_locales claims].each do |column|
+      auth_value_method :"oauth_grants_#{column}_column", column
+    end
 
     auth_value_method :oauth_jwt_subject_type, "public" # fallback subject type: public, pairwise
     auth_value_method :oauth_jwt_subject_secret, nil # salt for pairwise generation
@@ -131,6 +131,13 @@ module Rodauth
           ).first
 
           claims_locales = oauth_grant[oauth_grants_claims_locales_column] if oauth_grant
+
+          if (claims = oauth_grant[oauth_grants_claims_column])
+            claims = JSON.parse(claims)
+            if (userinfo_essential_claims = claims["userinfo"])
+              oauth_scopes |= userinfo_essential_claims.to_a
+            end
+          end
 
           # 5.4 - The Claims requested by the profile, email, address, and phone scope values are returned from the UserInfo Endpoint
           fill_with_account_claims(oidc_claims, account, oauth_scopes, claims_locales)
@@ -302,17 +309,32 @@ module Rodauth
     end
 
     def validate_authorize_params
-      return super unless (max_age = param_or_nil("max_age"))
+      if (max_age = param_or_nil("max_age"))
 
-      max_age = Integer(max_age)
+        max_age = Integer(max_age)
 
-      redirect_response_error("invalid_request") unless max_age.positive?
+        redirect_response_error("invalid_request") unless max_age.positive?
 
-      if Time.now - get_oidc_account_last_login_at(session_value) > max_age
-        # force user to re-login
-        clear_session
-        set_session_value(login_redirect_session_key, request.fullpath)
-        redirect require_login_redirect
+        if Time.now - get_oidc_account_last_login_at(session_value) > max_age
+          # force user to re-login
+          clear_session
+          set_session_value(login_redirect_session_key, request.fullpath)
+          redirect require_login_redirect
+        end
+      end
+
+      if (claims = param_or_nil("claims"))
+        # The value is a JSON object listing the requested Claims.
+        claims = JSON.parse(claims)
+
+        claims.each do |_, individual_claims|
+          redirect_response_error("invalid_request") unless individual_claims.is_a?(Hash)
+
+          individual_claims.each do |_, claim|
+            redirect_response_error("invalid_request") unless claim.nil? || individual_claims.is_a?(Hash)
+          end
+        end
+
       end
 
       super
@@ -485,6 +507,15 @@ module Rodauth
       # who just authorized its generation.
       return unless account
 
+      if (claims = oauth_grant[oauth_grants_claims_column])
+        claims = JSON.parse(claims)
+        if (id_token_essential_claims = claims["id_token"])
+          oauth_scopes |= id_token_essential_claims.to_a
+
+          include_claims = true
+        end
+      end
+
       # 5.4 - However, when no Access Token is issued (which is the case for the response_type value id_token),
       # the resulting Claims are returned in the ID Token.
       fill_with_account_claims(id_token_claims, account, oauth_scopes, param_or_nil("claims_locales")) if include_claims
@@ -504,10 +535,30 @@ module Rodauth
 
     # aka fill_with_standard_claims
     def fill_with_account_claims(claims, account, scopes, claims_locales)
+      additional_claims_info = {}
+
       scopes_by_claim = scopes.each_with_object({}) do |scope, by_oidc|
         next if scope == "openid"
 
-        oidc, param = scope.split(".", 2)
+        if scope.is_a?(Array)
+          # essential claims
+          param, additional_info = scope
+
+          param = param.to_sym
+
+          oidc, = OIDC_SCOPES_MAP.find do |_, oidc_scopes|
+            oidc_scopes.include?(param)
+          end || param.to_s
+
+          param = nil if oidc == param.to_s
+
+          additional_claims_info[param] = additional_info
+        else
+
+          oidc, param = scope.split(".", 2)
+
+          param = param.to_sym if param
+        end
 
         by_oidc[oidc] ||= []
 
@@ -520,7 +571,7 @@ module Rodauth
 
       unless oidc_scopes.empty?
         if respond_to?(:get_oidc_param)
-          get_oidc_param = proxy_get_param(:get_oidc_param, claims, claims_locales)
+          get_oidc_param = proxy_get_param(:get_oidc_param, claims, claims_locales, additional_claims_info)
 
           oidc_scopes.each do |scope|
             scope_claims = claims
@@ -541,7 +592,7 @@ module Rodauth
       return if additional_scopes.empty?
 
       if respond_to?(:get_additional_param)
-        get_additional_param = proxy_get_param(:get_additional_param, claims, claims_locales)
+        get_additional_param = proxy_get_param(:get_additional_param, claims, claims_locales, additional_claims_info)
 
         additional_scopes.each do |scope|
           get_additional_param[account, scope.to_sym]
@@ -551,23 +602,30 @@ module Rodauth
       end
     end
 
-    def proxy_get_param(get_param_func, claims, claims_locales)
+    def proxy_get_param(get_param_func, claims, claims_locales, additional_claims_info)
       meth = method(get_param_func)
       if meth.arity == 2
         lambda do |account, param, cl = claims|
-          value = meth[account, param]
+          additional_info = additional_claims_info[param] || EMPTY_HASH
+          value = additional_info["value"] || meth[account, param]
+          value = nil if additional_info["values"] && additional_info["values"].include?(value)
           cl[param] = value if value
         end
       elsif claims_locales.nil?
         lambda do |account, param, cl = claims|
-          value = meth[account, param, nil]
+          additional_info = additional_claims_info[param] || EMPTY_HASH
+          value = additional_info["value"] || meth[account, param, nil]
+          value = nil if additional_info["values"] && additional_info["values"].include?(value)
           cl[param] = value if value
         end
       else
         lambda do |account, param, cl = claims|
           claims_values = claims_locales.map do |locale|
-            meth[account, param, locale]
-          end
+            additional_info = additional_claims_info[param] || EMPTY_HASH
+            value = additional_info["value"] || meth[account, param, locale]
+            value = nil if additional_info["values"] && additional_info["values"].include?(value)
+            value
+          end.compact
 
           if claims_values.uniq.size == 1
             cl[param] = claims_values.first
@@ -666,6 +724,9 @@ module Rodauth
       if (claims_locales = param_or_nil("claims_locales"))
         grant_params[oauth_grants_claims_locales_column] = claims_locales
       end
+      if (claims = param_or_nil("claims"))
+        grant_params[oauth_grants_claims_column] = claims
+      end
       grant_params
     end
 
@@ -725,6 +786,7 @@ module Rodauth
         end_session_endpoint: (oidc_logout_url if use_rp_initiated_logout?),
         subject_types_supported: %w[public pairwise],
         acr_values_supported: oauth_acr_values_supported,
+        claims_parameter_supported: true,
 
         id_token_signing_alg_values_supported: metadata[:token_endpoint_auth_signing_alg_values_supported],
         id_token_encryption_alg_values_supported: Array(alg_values),

@@ -36,6 +36,7 @@ Sequel.migration do
       String :nonce
       String :acr
       String :claims_locales
+      String :claims
     end
   end
 

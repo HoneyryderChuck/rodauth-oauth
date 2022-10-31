@@ -86,6 +86,7 @@ else
     String :nonce
     String :acr
     String :claims_locales
+    String :claims
     # if using PKCE flow
     # String :code_challenge
     # String :code_challenge_method

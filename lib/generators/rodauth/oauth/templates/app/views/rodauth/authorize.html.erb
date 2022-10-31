@@ -62,6 +62,9 @@
       <% if params[:claims_locales] %>
         <%= hidden_field_tag :claims_locales,  params[:claims_locales] %>
       <% end %>
+      <% if params[:claims] %>
+        <%= hidden_field_tag :claims,  sanitize(params[:claims]) %>
+      <% end %>
       <% if params[:acr_values] %>
         <%= hidden_field_tag :acr,  params[:acr_values] %>
       <% end %>

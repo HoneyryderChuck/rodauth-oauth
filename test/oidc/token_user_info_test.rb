@@ -109,6 +109,55 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
     assert json_body["fruit"] == "tutti-frutti"
   end
 
+  def test_oidc_userinfo_claims
+    rodauth do
+      get_oidc_param do |account, claim|
+        case claim
+        when :name
+          "James"
+        when :nickname
+          "Snoop"
+        else
+          account[claim]
+        end
+      end
+      get_additional_param do |account, claim|
+        case claim
+        when :foo
+          "bar"
+        else
+          account[claim]
+        end
+      end
+    end
+    setup_application
+
+    claims = JSON.dump({
+                         "userinfo" => { "name" => { "essential " => true } },
+                         "id_token" => {
+                           "nickname" => { "essential " => true },
+                           "foo" => {
+                             "essential" => true,
+                             "values" => %w[bar ba2]
+                           }
+                         }
+                       })
+
+    access_token = generate_access_token(oauth_grant(scopes: "openid", claims: claims))
+    login(access_token)
+
+    @json_body = nil
+    # valid token, and now we're getting somewhere
+    get("/userinfo")
+
+    assert last_response.status == 200
+    assert json_body.key?("sub")
+    assert json_body.key?("name")
+    assert json_body["name"] == "James"
+    assert !json_body.key?("nickname")
+    assert !json_body.key?("foo")
+  end
+
   def test_oidc_userinfo_signed_response_alg
     jws_rs256_key = OpenSSL::PKey::RSA.generate(2048)
     jws_rs512_key = OpenSSL::PKey::RSA.generate(2048)
