@@ -46,7 +46,6 @@ module Rodauth
 
       case response_type
       when "code", nil
-        response_mode ||= oauth_response_mode
         response_params.replace(_do_authorize_code)
       end
 
