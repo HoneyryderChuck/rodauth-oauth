@@ -83,6 +83,8 @@ else
     String :scopes, null: false
     index %i[oauth_application_id code], unique: true
     String :access_type, null: false, default: "offline"
+    String :code_challenge
+    String :code_challenge_method
     String :nonce
     String :acr
     String :claims_locales
@@ -162,7 +164,8 @@ class AuthenticationServer < Roda
   plugin :rodauth, json: true do
     db DB
     enable :login, :logout, :create_account, :oidc,
-           :oauth_implicit_grant, :oauth_client_credentials_grant, :oauth_token_introspection,
+           :oauth_implicit_grant, :oauth_client_credentials_grant,
+           :oauth_pkce, :oauth_token_introspection,
            :oidc_dynamic_client_registration, :oauth_jwt_bearer_grant, :oauth_jwt_secured_authorization_request
     login_return_to_requested_location? true
     account_password_hash_column :ph
@@ -175,6 +178,7 @@ class AuthenticationServer < Roda
     oauth_jwt_keys("RS256" => PRIV_KEY)
     oauth_jwt_public_keys("RS256" => PUB_KEY)
 
+    oauth_require_pkce false
     use_rp_initiated_logout? true
     oauth_response_mode "query"
 
