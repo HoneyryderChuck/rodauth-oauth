@@ -122,8 +122,17 @@ TEST_PROFILE = {
   name: "Ferdinand Mensch",
   family_name: "Gottschalk",
   given_name: "Peter",
+  middle_name: "Franz",
+  nickname: "Poltermeister",
+  preferred_username: "PM",
+  profile: "https://id-provider/franz",
+  picture: "https://id-provider/franz.jpg",
+  website: "https://id-provider/franz/about",
   birthdate: "1996-08-30",
-  gender: "male"
+  gender: "male",
+  zoneinfo: "Europe/Paris",
+  locale: "de-DE",
+  updated_at: Time.new(2022, 9, 10, 14, 1).to_i
 }.freeze
 
 # test application
