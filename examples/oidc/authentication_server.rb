@@ -194,6 +194,7 @@ class AuthenticationServer < Roda
     oidc_authorize_on_prompt_none? { |_account| true }
     oauth_request_object_signing_alg_allow_none true
     oauth_jwt_jws_algorithms_supported { super() | %w[none] }
+    oauth_acr_values_supported { super() | %w[1 2] }
 
     before_register do
       # bypass authentication

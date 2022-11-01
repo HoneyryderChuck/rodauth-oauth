@@ -45,7 +45,6 @@ class OIDCIntegration < JWTIntegration
     verify_jwt_claims(claims, oauth_grant)
 
     assert claims["nonce"] == oauth_grant[:nonce]
-    assert claims["acr"] == oauth_grant[:acr]
     assert claims.key?("auth_time")
   end
 end

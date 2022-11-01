@@ -661,7 +661,9 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#id_token=([^&]+)/,
            "was redirected instead to #{page.current_url}"
-    verify_id_token(Regexp.last_match(1), db[:oauth_grants].first, signing_key: jws_public_key, signing_algo: "RS256")
+    verify_id_token(Regexp.last_match(1), db[:oauth_grants].first, signing_key: jws_public_key, signing_algo: "RS256") do |claims|
+      assert claims["acr"] == "phr"
+    end
   end
 
   begin
@@ -669,7 +671,11 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
   rescue LoadError
   else
     def test_oidc_authorize_post_authorize_acr_value_phrh_with_2factor_webauthn
+      jws_key = OpenSSL::PKey::RSA.generate(2048)
+      jws_public_key = jws_key.public_key
       rodauth do
+        oauth_jwt_keys("RS256" => jws_key)
+        oauth_jwt_public_keys("RS256" => jws_public_key)
         enable :webauthn_login
         two_factor_auth_return_to_requested_location? true
         hmac_secret "12345678"
@@ -699,7 +705,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
       fill_in "Password", with: "0123456789"
       click_button "Login"
 
-      visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code&" \
+      visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code id_token&" \
             "acr_values=phrh"
       assert page.current_path == "/webauthn-auth",
              "was redirected instead to #{page.current_path}"
@@ -709,6 +715,16 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
       assert page.current_path == "/authorize",
              "was redirected instead to #{page.current_path}"
+
+      check "openid"
+      # submit authorization request
+      click_button "Authorize"
+
+      assert page.current_url =~ /#{oauth_application[:redirect_uri]}#id_token=([^&]+)/,
+             "was redirected instead to #{page.current_url}"
+      verify_id_token(Regexp.last_match(1), db[:oauth_grants].first, signing_key: jws_public_key, signing_algo: "RS256") do |claims|
+        assert claims["acr"] == "phrh"
+      end
     end
   end
 

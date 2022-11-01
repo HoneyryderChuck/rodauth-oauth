@@ -65,7 +65,6 @@ module Rodauth
     depends :account_expiration, :oauth_jwt, :oauth_jwt_jwks, :oauth_authorization_code_grant
 
     auth_value_method :oauth_application_scopes, %w[openid]
-    auth_value_method :oauth_acr_values_supported, %w[phr phrh]
 
     %i[
       subject_type application_type sector_identifier_uri
@@ -93,6 +92,7 @@ module Rodauth
     auth_value_method :use_rp_initiated_logout?, false
 
     auth_value_methods(
+      :oauth_acr_values_supported,
       :get_oidc_account_last_login_at,
       :oidc_authorize_on_prompt_none?,
       :get_oidc_param,
@@ -304,6 +304,13 @@ module Rodauth
       end
     end
 
+    def oauth_acr_values_supported
+      acr_values = []
+      acr_values << "phrh" if features.include?(:webauthn_login)
+      acr_values << "phr" if respond_to?(:require_two_factor_authenticated)
+      acr_values
+    end
+
     def oidc_authorize_on_prompt_none?(_account)
       false
     end
@@ -343,7 +350,7 @@ module Rodauth
     def require_authorizable_account
       try_prompt
       super
-      try_acr_values
+      @acr = try_acr_values
     end
 
     def get_oidc_account_last_login_at(account_id)
@@ -437,25 +444,34 @@ module Rodauth
         next unless oauth_acr_values_supported.include?(acr_value)
 
         case acr_value
-        when "phr" then require_acr_value_phr
-        when "phrh" then require_acr_value_phrh
+        when "phr"
+          return acr_value if require_acr_value_phr
+        when "phrh"
+          return acr_value if require_acr_value_phrh
         else
-          require_acr_value(acr_value)
+          return acr_value if require_acr_value(acr_value)
         end
       end
+
+      nil
     end
 
     def require_acr_value_phr
-      return unless respond_to?(:require_two_factor_authenticated)
+      return false unless respond_to?(:require_two_factor_authenticated)
 
       require_two_factor_authenticated
+      true
     end
 
     def require_acr_value_phrh
+      return false unless features.include?(:webauthn_login)
+
       require_acr_value_phr && two_factor_login_type_match?("webauthn")
     end
 
-    def require_acr_value(_acr); end
+    def require_acr_value(_acr)
+      true
+    end
 
     def create_oauth_grant(create_params = {})
       create_params.replace(oidc_grant_params.merge(create_params))
@@ -718,9 +734,7 @@ module Rodauth
       if (nonce = param_or_nil("nonce"))
         grant_params[oauth_grants_nonce_column] = nonce
       end
-      if (acr = param_or_nil("acr"))
-        grant_params[oauth_grants_acr_column] = acr
-      end
+      grant_params[oauth_grants_acr_column] = @acr if @acr
       if (claims_locales = param_or_nil("claims_locales"))
         grant_params[oauth_grants_claims_locales_column] = claims_locales
       end
