@@ -56,7 +56,7 @@ module Rodauth
 
     def require_oauth_application_from_client_secret_jwt(client_id, assertion, alg)
       oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => client_id).first
-      authorization_required unless supports_auth_method?(oauth_application, "client_secret_jwt")
+      authorization_required unless oauth_application && supports_auth_method?(oauth_application, "client_secret_jwt")
       client_secret = oauth_application[oauth_applications_client_secret_column]
       claims = jwt_assertion(assertion, jws_key: client_secret, jws_algorithm: alg)
       authorization_required unless claims && claims["iss"] == client_id
@@ -65,7 +65,7 @@ module Rodauth
 
     def require_oauth_application_from_private_key_jwt(client_id, assertion)
       oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => client_id).first
-      authorization_required unless supports_auth_method?(oauth_application, "private_key_jwt")
+      authorization_required unless oauth_application && supports_auth_method?(oauth_application, "private_key_jwt")
       jwks = oauth_application_jwks(oauth_application)
       claims = jwt_assertion(assertion, jwks: jwks)
       authorization_required unless claims
@@ -82,7 +82,8 @@ module Rodauth
 
     def jwt_assertion(assertion, **kwargs)
       claims = jwt_decode(assertion, verify_iss: false, verify_aud: false, **kwargs)
-      return unless verify_aud(request.url, claims["aud"])
+
+      return unless claims && verify_aud(request.url, claims["aud"])
 
       claims
     end
