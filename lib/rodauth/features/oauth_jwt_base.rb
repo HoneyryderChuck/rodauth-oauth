@@ -211,14 +211,23 @@ module Rodauth
 
         claims = if is_authorization_server?
                    if jwks
+                     jwks = jwks[:keys] if jwks.is_a?(Hash)
+
                      enc_algs = [jws_encryption_algorithm].compact
                      enc_meths = [jws_encryption_method].compact
 
                      sig_algs = jws_algorithm ? [jws_algorithm] : jwks.select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
                      sig_algs = sig_algs.compact.map(&:to_sym)
 
-                     jws = JSON::JWT.decode(token, JSON::JWK::Set.new({ keys: jwks }), enc_algs + sig_algs, enc_meths)
-                     jws = JSON::JWT.decode(jws.plain_text, JSON::JWK::Set.new({ keys: jwks }), sig_algs) if jws.is_a?(JSON::JWE)
+                     # JWKs may be set up without a KID, when there's a single one
+                     if jwks.size == 1 && !jwks[0][:kid]
+                       key = jwks[0]
+                       jwk_key = JSON::JWK.new(key)
+                       jws = JSON::JWT.decode(token, jwk_key)
+                     else
+                       jws = JSON::JWT.decode(token, JSON::JWK::Set.new({ keys: jwks }), enc_algs + sig_algs, enc_meths)
+                       jws = JSON::JWT.decode(jws.plain_text, JSON::JWK::Set.new({ keys: jwks }), sig_algs) if jws.is_a?(JSON::JWE)
+                     end
                      jws
                    elsif jws_key
                      JSON::JWT.decode(token, jws_key)
@@ -372,8 +381,18 @@ module Rodauth
         # decode jwt
         claims = if is_authorization_server?
                    if jwks
-                     algorithms = jws_algorithm ? [jws_algorithm] : jwks.select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
-                     JWT.decode(token, nil, true, algorithms: algorithms, jwks: { keys: jwks }, **verify_claims_params).first
+                     jwks = jwks[:keys] if jwks.is_a?(Hash)
+
+                     # JWKs may be set up without a KID, when there's a single one
+                     if jwks.size == 1 && !jwks[0][:kid]
+                       key = jwks[0]
+                       algo = key[:alg]
+                       key = JWT::JWK.import(key).keypair
+                       JWT.decode(token, key, true, algorithms: [algo], **verify_claims_params).first
+                     else
+                       algorithms = jws_algorithm ? [jws_algorithm] : jwks.select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
+                       JWT.decode(token, nil, true, algorithms: algorithms, jwks: { keys: jwks }, **verify_claims_params).first
+                     end
                    elsif jws_key
                      JWT.decode(token, jws_key, true, algorithms: [jws_algorithm], **verify_claims_params).first
                    end

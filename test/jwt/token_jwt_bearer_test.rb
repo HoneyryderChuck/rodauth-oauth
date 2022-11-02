@@ -222,6 +222,42 @@ class RodauthOauthJWTTokenJwtBearerTest < JWTIntegration
     assert last_response.status == 200
   end
 
+  def test_oauth_jwt_bearer_as_private_key_jwt_no_kid
+    rodauth do
+      oauth_jwt_keys("RS256" => OpenSSL::PKey::RSA.generate(2048))
+    end
+    setup_application(:oauth_authorization_code_grant)
+
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
+    jwk = JWT::JWK.new(jws_public_key).export
+    jwk.delete(:kid)
+    oauth_application = set_oauth_application(
+      client_id: "ID2",
+      jwks: JSON.dump([jwk.merge(use: "sig", alg: "RS256")]),
+      token_endpoint_auth_method: "private_key_jwt"
+    )
+    grant = set_oauth_grant(type: "authorization_code", oauth_application_id: oauth_application[:id])
+
+    post("/token",
+         client_assertion_type: "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+         client_assertion: jwt_assertion(oauth_application[:client_id], "RS256", jws_key),
+         grant_type: "authorization_code",
+         code: grant[:code],
+         redirect_uri: grant[:redirect_uri])
+
+    verify_response
+
+    jwt_token = json_body["access_token"]
+
+    # use token
+    header "Authorization", "Bearer #{jwt_token}"
+
+    # valid token, and now we're getting somewhere
+    get("/private")
+    assert last_response.status == 200
+  end
+
   private
 
   def oauth_feature
