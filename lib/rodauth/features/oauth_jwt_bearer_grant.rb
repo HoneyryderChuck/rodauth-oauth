@@ -81,7 +81,7 @@ module Rodauth
     end
 
     def jwt_assertion(assertion, **kwargs)
-      claims = jwt_decode(assertion, verify_iss: false, verify_aud: false, **kwargs)
+      claims = jwt_decode(assertion, verify_iss: false, verify_aud: false, verify_jti: false, **kwargs)
 
       return unless claims && verify_aud(request.url, claims["aud"])
 

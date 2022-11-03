@@ -276,7 +276,6 @@ class RodauthOauthJWTTokenJwtBearerTest < JWTIntegration
       iat: Time.now.to_i, # issued at
       exp: Time.now.to_i + 3600
     }.merge(extra_claims)
-    claims[:jti] = Digest::SHA256.hexdigest("#{claims[:aud]}:#{claims[:iat]}")
 
     headers = {}
 
