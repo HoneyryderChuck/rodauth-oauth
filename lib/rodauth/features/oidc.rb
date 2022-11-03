@@ -125,6 +125,8 @@ module Rodauth
 
           @oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => claims["client_id"]).first
 
+          throw_json_response_error(oauth_authorization_required_error_status, "invalid_token") unless @oauth_application
+
           oauth_grant = valid_oauth_grant_ds(
             oauth_grants_oauth_application_id_column => @oauth_application[oauth_applications_id_column],
             oauth_grants_account_id_column => account[account_id_column]
@@ -142,7 +144,7 @@ module Rodauth
           # 5.4 - The Claims requested by the profile, email, address, and phone scope values are returned from the UserInfo Endpoint
           fill_with_account_claims(oidc_claims, account, oauth_scopes, claims_locales)
 
-          if (algo = @oauth_application && @oauth_application[oauth_applications_userinfo_signed_response_alg_column])
+          if (algo = @oauth_application[oauth_applications_userinfo_signed_response_alg_column])
             params = {
               jwks: oauth_application_jwks(@oauth_application),
               encryption_algorithm: @oauth_application[oauth_applications_userinfo_encrypted_response_alg_column],
@@ -150,7 +152,12 @@ module Rodauth
             }.compact
 
             jwt = jwt_encode(
-              oidc_claims,
+              oidc_claims.merge(
+                # If signed, the UserInfo Response SHOULD contain the Claims iss (issuer) and aud (audience) as members. The iss value
+                # SHOULD be the OP's Issuer Identifier URL. The aud value SHOULD be or include the RP's Client ID value.
+                iss: oauth_jwt_issuer,
+                aud: @oauth_application[oauth_applications_client_id_column]
+              ),
               signing_algorithm: algo,
               **params
             )
