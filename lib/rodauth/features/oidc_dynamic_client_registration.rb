@@ -128,6 +128,19 @@ module Rodauth
         end
       end
 
+      if features.include?(:oidc_rp_initiated_logout) && (defined?(oauth_applications_post_logout_redirect_uris_column) &&
+           (value = @oauth_application_params[oauth_applications_post_logout_redirect_uris_column]))
+        if value.is_a?(Array)
+          @oauth_application_params[oauth_applications_post_logout_redirect_uris_column] = value.each do |redirect_uri|
+            unless check_valid_uri?(redirect_uri)
+              register_throw_json_response_error("invalid_client_metadata", register_invalid_uri_message(redirect_uri))
+            end
+          end.join(" ")
+        else
+          register_throw_json_response_error("invalid_client_metadata", register_invalid_uri_message(value))
+        end
+      end
+
       if (value = @oauth_application_params[oauth_applications_id_token_encrypted_response_alg_column]) &&
          !oauth_jwt_jwe_algorithms_supported.include?(value)
         register_throw_json_response_error("invalid_client_metadata",

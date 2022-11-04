@@ -85,10 +85,7 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
   end
 
   def test_oidc_metadata_openid_configuration_rp_initiated_logout
-    rodauth do
-      use_rp_initiated_logout? true
-    end
-    setup_application
+    setup_application(:oidc_rp_initiated_logout)
 
     get("/.well-known/openid-configuration")
 

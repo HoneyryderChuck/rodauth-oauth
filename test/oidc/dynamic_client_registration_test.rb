@@ -168,6 +168,23 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
     assert last_response.status == 400
   end
 
+  def test_oidc_client_registration_post_logout_redirect_uris
+    setup_application(:oidc_rp_initiated_logout)
+    header "Accept", "application/json"
+
+    post("/register", valid_registration_params.merge(
+                        "post_logout_redirect_uris" => "bla"
+                      ))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge(
+                        "post_logout_redirect_uris" => %w[https://logout.com]
+                      ))
+
+    assert last_response.status == 201
+  end
+
   def test_oidc_client_registration_id_token_signed_response
     setup_application
     header "Accept", "application/json"

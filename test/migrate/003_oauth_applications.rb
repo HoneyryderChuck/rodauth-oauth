@@ -44,7 +44,7 @@ Sequel.migration do
       # JWT/OIDC per application signing verification
       String :jwt_public_key, type: :text
       # RP-initiated logout
-      String :post_logout_redirect_uri
+      String :post_logout_redirect_uris
     end
   end
 
