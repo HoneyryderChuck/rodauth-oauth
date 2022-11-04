@@ -85,16 +85,14 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
   end
 
   def test_oidc_metadata_openid_configuration_rp_initiated_logout
-    rodauth do
-      use_rp_initiated_logout? true
-    end
-    setup_application
+    setup_application(:oidc_rp_initiated_logout)
 
     get("/.well-known/openid-configuration")
 
     assert last_response.status == 200
 
     assert json_body["end_session_endpoint"] == "http://example.org/oidc-logout"
+    assert json_body["backchannel_logout_session_supported"] == true
   end
 
   private

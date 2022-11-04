@@ -67,7 +67,7 @@ else
     # JWT/OIDC per application signing verification
     String :jwt_public_key, type: :text
     # RP-initiated logout
-    String :post_logout_redirect_uri
+    String :post_logout_redirect_uris
   end
   DB.create_table :oauth_grants do
     primary_key :id, type: Integer
@@ -175,7 +175,9 @@ class AuthenticationServer < Roda
     enable :login, :logout, :create_account, :oidc,
            :oauth_implicit_grant, :oauth_client_credentials_grant,
            :oauth_pkce, :oauth_token_introspection,
-           :oidc_dynamic_client_registration, :oauth_jwt_bearer_grant, :oauth_jwt_secured_authorization_request
+           :oidc_dynamic_client_registration, :oauth_jwt_bearer_grant, :oauth_jwt_secured_authorization_request,
+           :oidc_rp_initiated_logout
+
     login_return_to_requested_location? true
     account_password_hash_column :ph
     title_instance_variable :@page_title
@@ -188,7 +190,6 @@ class AuthenticationServer < Roda
     oauth_jwt_public_keys("RS256" => PUB_KEY)
 
     oauth_require_pkce false
-    use_rp_initiated_logout? true
     oauth_response_mode "query"
 
     oidc_authorize_on_prompt_none? { |_account| true }

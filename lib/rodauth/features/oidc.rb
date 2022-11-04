@@ -17,6 +17,7 @@ module Rodauth
       issuer
       authorization_endpoint
       end_session_endpoint
+      backchannel_logout_session_supported
       token_endpoint
       userinfo_endpoint
       jwks_uri
@@ -86,10 +87,6 @@ module Rodauth
     auth_value_method :oauth_prompt_login_cookie_key, "_rodauth_oauth_prompt_login"
     auth_value_method :oauth_prompt_login_cookie_options, {}.freeze
     auth_value_method :oauth_prompt_login_interval, 5 * 60 * 60 # 5 minutes
-
-    # logout
-    auth_value_method :oauth_applications_post_logout_redirect_uri_column, :post_logout_redirect_uri
-    auth_value_method :use_rp_initiated_logout?, false
 
     auth_value_methods(
       :oauth_acr_values_supported,
@@ -168,81 +165,6 @@ module Rodauth
         end
 
         throw_json_response_error(oauth_authorization_required_error_status, "invalid_token")
-      end
-    end
-
-    # /oidc-logout
-    auth_server_route(:oidc_logout) do |r|
-      next unless use_rp_initiated_logout?
-
-      require_authorizable_account
-      before_oidc_logout_route
-
-      # OpenID Providers MUST support the use of the HTTP GET and POST methods
-      r.on method: %i[get post] do
-        catch_error do
-          validate_oidc_logout_params
-
-          #
-          # why this is done:
-          #
-          # we need to decode the id token in order to get the application, because, if the
-          # signing key is application-specific, we don't know how to verify the signature
-          # beforehand. Hence, we have to do it twice: decode-and-do-not-verify, initialize
-          # the @oauth_application, and then decode-and-verify.
-          #
-          claims = jwt_decode(param("id_token_hint"), verify_claims: false)
-          oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => claims["client_id"]).first
-          oauth_grant = db[oauth_grants_table]
-                        .where(
-                          oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-                          oauth_grants_account_id_column => account_id
-                        ).first
-
-          # check whether ID token belongs to currently logged-in user
-          redirect_response_error("invalid_request") unless oauth_grant && claims["sub"] == jwt_subject(
-            oauth_grant, oauth_application
-          )
-
-          # When an id_token_hint parameter is present, the OP MUST validate that it was the issuer of the ID Token.
-          redirect_response_error("invalid_request") unless claims && claims["iss"] == oauth_jwt_issuer
-
-          # now let's logout from IdP
-          transaction do
-            before_logout
-            logout
-            after_logout
-          end
-
-          if (post_logout_redirect_uri = param_or_nil("post_logout_redirect_uri"))
-            catch(:default_logout_redirect) do
-              oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => claims["client_id"]).first
-
-              throw(:default_logout_redirect) unless oauth_application
-
-              post_logout_redirect_uris = oauth_application[oauth_applications_post_logout_redirect_uri_column].split(" ")
-
-              throw(:default_logout_redirect) unless post_logout_redirect_uris.include?(post_logout_redirect_uri)
-
-              if (state = param_or_nil("state"))
-                post_logout_redirect_uri = URI(post_logout_redirect_uri)
-                params = ["state=#{state}"]
-                params << post_logout_redirect_uri.query if post_logout_redirect_uri.query
-                post_logout_redirect_uri.query = params.join("&")
-                post_logout_redirect_uri = post_logout_redirect_uri.to_s
-              end
-
-              redirect(post_logout_redirect_uri)
-            end
-
-          end
-
-          # regular logout procedure
-          set_notice_flash(logout_notice_flash)
-          redirect(logout_redirect)
-        end
-
-        redirect_response_error("invalid_request")
       end
     end
 
@@ -757,18 +679,6 @@ module Rodauth
       super
     end
 
-    # Logout
-
-    def validate_oidc_logout_params
-      redirect_response_error("invalid_request") unless param_or_nil("id_token_hint")
-      # check if valid token hint type
-      return unless (redirect_uri = param_or_nil("post_logout_redirect_uri"))
-
-      return if check_valid_uri?(redirect_uri)
-
-      redirect_response_error("invalid_request")
-    end
-
     # Webfinger
 
     def json_webfinger_payload
@@ -802,7 +712,6 @@ module Rodauth
 
       metadata.merge(
         userinfo_endpoint: userinfo_url,
-        end_session_endpoint: (oidc_logout_url if use_rp_initiated_logout?),
         subject_types_supported: %w[public pairwise],
         acr_values_supported: oauth_acr_values_supported,
         claims_parameter_supported: true,
