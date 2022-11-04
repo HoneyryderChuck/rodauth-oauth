@@ -64,3 +64,4 @@ en:
     oauth_unsupported_transform_algorithm_message: "transform algorithm not supported"
     oauth_invalid_request_object_message: "request object is invalid"
     oauth_invalid_scope_message: "The Access Token expired"
+    oauth_authorize_parameter_required: "'%{parameter}' is a required parameter"

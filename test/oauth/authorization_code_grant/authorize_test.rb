@@ -59,14 +59,16 @@ class RodauthOauthAuthorizeTest < RodaIntegration
 
     visit "/authorize?client_id=#{application[:client_id]}&" \
           "scope=user.read+user.write&response_type=code"
-    assert page.current_url.include?("?error=invalid_request"),
+    assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_url}"
+    assert_includes page.html, "'redirect_uri' is a required parameter"
 
     visit "/authorize?client_id=#{application[:client_id]}&" \
           "redirect_uri=http://redirect2&" \
           "scope=user.read+user.write&response_type=code"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_url}"
+    refute_includes page.html, "'redirect_uri' is a required parameter"
   end
 
   def test_authorize_post_authorize_same_code

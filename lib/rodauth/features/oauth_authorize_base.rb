@@ -23,6 +23,7 @@ module Rodauth
     translatable_method :oauth_applications_contacts_label, "Contacts"
     translatable_method :oauth_applications_tos_uri_label, "Terms of service URL"
     translatable_method :oauth_applications_policy_uri_label, "Policy URL"
+    translatable_method :oauth_authorize_parameter_required, "'%<parameter>s' is a required parameter"
 
     # /authorize
     auth_server_route(:authorize) do |r|
@@ -75,11 +76,23 @@ module Rodauth
     end
 
     def check_valid_response_type?
+      response_type = param_or_nil("response_type")
+
+      set_error_flash(oauth_authorize_parameter_required(parameter: "response_type")) if response_type.nil?
+
       false
     end
 
     def check_valid_redirect_uri?
-      oauth_application[oauth_applications_redirect_uri_column].split(" ").include?(redirect_uri)
+      application_redirect_uris = oauth_application[oauth_applications_redirect_uri_column].split(" ")
+
+      if (redirect_uri = param_or_nil("redirect_uri"))
+        application_redirect_uris.include?(redirect_uri)
+      else
+        set_error_flash(oauth_authorize_parameter_required(parameter: "redirect_uri")) if application_redirect_uris.size > 1
+
+        true
+      end
     end
 
     ACCESS_TYPES = %w[offline online].freeze
