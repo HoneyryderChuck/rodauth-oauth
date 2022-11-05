@@ -165,10 +165,10 @@ module Rodauth
             value.each do |uri|
               next if uri.empty?
 
-              set_field_error(key, invalid_url_message) unless check_valid_uri?(uri)
+              set_field_error(key, invalid_url_message) unless check_valid_no_fragment_uri?(uri)
             end
           else
-            set_field_error(key, invalid_url_message) unless check_valid_uri?(value)
+            set_field_error(key, invalid_url_message) unless check_valid_no_fragment_uri?(value)
           end
         elsif key == oauth_application_scopes_param
 

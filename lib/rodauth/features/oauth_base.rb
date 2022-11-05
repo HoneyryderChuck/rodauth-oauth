@@ -847,6 +847,10 @@ module Rodauth
       URI::DEFAULT_PARSER.make_regexp(oauth_valid_uri_schemes).match?(uri)
     end
 
+    def check_valid_no_fragment_uri?(uri)
+      check_valid_uri?(uri) && URI.parse(uri).fragment.nil?
+    end
+
     # Resource server mode
 
     def authorization_server_metadata

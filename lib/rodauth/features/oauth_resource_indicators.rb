@@ -70,10 +70,6 @@ module Rodauth
       super(oauth_grant, update_params.merge(oauth_grants_resource_column => resource_indicators))
     end
 
-    def check_valid_no_fragment_uri?(uri)
-      check_valid_uri?(uri) && URI.parse(uri).fragment.nil?
-    end
-
     module IndicatorAuthorizationCodeGrant
       private
 
