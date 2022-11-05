@@ -33,6 +33,10 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
     assert last_response.status == 400
 
+    post("/register", valid_registration_params.merge("redirect_uris" => %w[https://example.com/callback#foo=bar]))
+
+    assert last_response.status == 400
+
     post("/register", valid_registration_params.merge("redirect_uris" => %w[https://example.com/callback]))
 
     assert last_response.status == 201

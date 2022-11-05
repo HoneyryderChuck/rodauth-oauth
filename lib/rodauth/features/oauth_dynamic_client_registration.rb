@@ -68,7 +68,10 @@ module Rodauth
         when "redirect_uris"
           if value.is_a?(Array)
             value = value.each do |uri|
-              register_throw_json_response_error("invalid_redirect_uri", register_invalid_uri_message(uri)) unless check_valid_uri?(uri)
+              unless check_valid_no_fragment_uri?(uri)
+                register_throw_json_response_error("invalid_redirect_uri",
+                                                   register_invalid_uri_message(uri))
+              end
             end.join(" ")
           else
             register_throw_json_response_error("invalid_redirect_uri", register_invalid_uri_message(value))
