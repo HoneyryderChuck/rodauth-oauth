@@ -55,6 +55,7 @@ en:
     invalid_url_message: "Invalid URL"
     oauth_unsupported_token_type_message: "Invalid token type hint"
     null_error_message: "is not filled"
+    oauth_unsupported_response_type_message: "Unsupported response type"
     oauth_already_in_use_message: "error generating unique token"
     oauth_expired_token_message: "the device code has expired"
     oauth_access_denied_message: "the authorization request has been denied"

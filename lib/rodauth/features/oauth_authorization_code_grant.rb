@@ -106,7 +106,7 @@ module Rodauth
     def check_valid_response_type?
       response_type = param_or_nil("response_type")
 
-      response_type.nil? || response_type == "code" || response_type == "none" || super
+      response_type == "code" || response_type == "none" || super
     end
 
     def oauth_server_metadata_body(*)

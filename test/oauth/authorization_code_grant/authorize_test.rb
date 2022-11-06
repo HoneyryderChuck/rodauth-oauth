@@ -261,7 +261,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     # show the authorization form
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&response_type=unknown"
 
-    assert page.current_url.include?("?error=invalid_request"),
+    assert page.current_url.include?("?error=unsupported_response_type"),
            "was redirected instead to #{page.current_url}"
   end
 

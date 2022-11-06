@@ -23,4 +23,5 @@ authorize_page_lead :: lead text for the authorization form.
 oauth_applications_contacts_label :: Form label for the oauth application contacts.
 oauth_applications_policy_uri_label :: Form label for the oauth application Policy URI.
 oauth_applications_tos_uri_label :: Form label for the oauth application Terms of Service URI.
+oauth_unsupported_response_type_message :: Error message for the <tt>unsupported_response_type</tt> error code.
 oauth_authorize_parameter_required :: Error message for required params missing from the authorization request.
