@@ -155,10 +155,12 @@ unless DB[:oauth_applications].where(client_id: CLIENT_ID).first
   DB[:oauth_applications].where(id: application_id).first
 end
 
+# rubocop:disable Style/MutableConstant
 # PRIV_KEY = OpenSSL::PKey::EC.new(File.read(File.join(__dir__, "..", "ecprivkey.pem")))
-PRIV_KEY = OpenSSL::PKey::RSA.new(File.read(File.join(__dir__, "rsaprivkey.pem")))
+PRIV_KEYS = [OpenSSL::PKey::RSA.new(File.read(File.join(__dir__, "rsaprivkey.pem")))]
 # PUB_KEY = OpenSSL::PKey::EC.new(File.read(File.join(__dir__, "..", "ecpubkey.pem")))
-PUB_KEY = OpenSSL::PKey::RSA.new(File.read(File.join(__dir__, "rsapubkey.pem")))
+PUB_KEYS = [OpenSSL::PKey::RSA.new(File.read(File.join(__dir__, "rsapubkey.pem")))]
+# rubocop:enable Style/MutableConstant
 
 class AuthenticationServer < Roda
   plugin :render, views: File.expand_path("../assets/html", __dir__)
@@ -186,8 +188,8 @@ class AuthenticationServer < Roda
     oauth_application_scopes %w[openid email address phone profile books.read]
     oauth_valid_uri_schemes %w[http https]
 
-    oauth_jwt_keys("RS256" => PRIV_KEY)
-    oauth_jwt_public_keys("RS256" => PUB_KEY)
+    oauth_jwt_keys("RS256" => PRIV_KEYS)
+    oauth_jwt_public_keys("RS256" => PUB_KEYS)
 
     oauth_require_pkce false
     oauth_response_mode "query"
@@ -266,6 +268,18 @@ class AuthenticationServer < Roda
           { "name" => "Crime and Punishment", "author" => "Fyodor Dostoevsky" },
           { "name" => "Emma", "author" => "Jane Austen" }
         ]
+      end
+    end
+
+    r.on "rotate-keys" do
+      r.get do
+        jws_key = OpenSSL::PKey::RSA.generate(2048)
+        jws_public_key = jws_key.public_key
+
+        PRIV_KEYS.unshift(jws_key)
+        PUB_KEYS.unshift(jws_public_key)
+
+        "rotated"
       end
     end
   end
