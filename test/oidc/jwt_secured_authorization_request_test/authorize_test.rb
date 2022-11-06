@@ -200,7 +200,7 @@ class RodauthOauthOIDCJwtSecuredAuthorizationRequestAuthorizeTest < OIDCIntegrat
 
   def generate_signed_request(application, signing_key: OpenSSL::PKey::RSA.generate(2048), encryption_key: nil, **extra_claims)
     claims = {
-      iss: "http://www.example.com",
+      iss: application[:client_id],
       aud: "http://www.example.com",
       response_mode: "query",
       response_type: "code",

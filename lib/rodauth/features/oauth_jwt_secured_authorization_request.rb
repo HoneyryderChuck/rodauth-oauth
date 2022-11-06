@@ -71,7 +71,7 @@ module Rodauth
 
       redirect_response_error("invalid_request_object") unless claims
 
-      if (iss = claims["iss"]) && (iss != oauth_jwt_issuer)
+      if (iss = claims["iss"]) && (iss != oauth_application[oauth_applications_client_id_column])
         redirect_response_error("invalid_request_object")
       end
 
@@ -98,7 +98,7 @@ module Rodauth
     end
 
     def supported_request_uri?(request_uri, oauth_application)
-      return false unless check_valid_no_fragment_uri?(request_uri)
+      return false unless check_valid_uri?(request_uri)
 
       request_uris = oauth_application[oauth_applications_request_uris_column]
 
