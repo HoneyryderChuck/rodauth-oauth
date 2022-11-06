@@ -270,7 +270,25 @@ module Rodauth
             redirect_response_error("invalid_request") unless claim.nil? || individual_claims.is_a?(Hash)
           end
         end
+      end
 
+      sc = scopes
+
+      if sc && sc.include?("offline_access")
+
+        sc.delete("offline_access")
+
+        # MUST ensure that the prompt parameter contains consent
+        # MUST ignore the offline_access request unless the Client
+        # is using a response_type value that would result in an
+        # Authorization Code
+        if param_or_nil("prompt") == "consent" && (
+          (response_type = param_or_nil("response_type")) && response_type.split(" ").include?("code")
+        )
+          request.params["access_type"] = "offline"
+        end
+
+        request.params["scope"] = sc.join(" ")
       end
 
       super
@@ -323,6 +341,8 @@ module Rodauth
 
       case prompt
       when "none"
+        return unless request.get?
+
         redirect_response_error("login_required") unless logged_in?
 
         require_account
@@ -331,6 +351,8 @@ module Rodauth
 
         request.env["REQUEST_METHOD"] = "POST"
       when "login"
+        return unless request.get?
+
         if logged_in? && request.cookies[oauth_prompt_login_cookie_key] == "login"
           ::Rack::Utils.delete_cookie_header!(response.headers, oauth_prompt_login_cookie_key, oauth_prompt_login_cookie_options)
           return
@@ -347,18 +369,18 @@ module Rodauth
 
         redirect require_login_redirect
       when "consent"
+        return unless request.post?
+
         require_account
 
-        if db[oauth_grants_table].where(
-          oauth_grants_account_id_column => account_id,
-          oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-          oauth_grants_redirect_uri_column => redirect_uri,
-          oauth_grants_scopes_column => scopes.join(oauth_scope_separator),
-          oauth_grants_access_type_column => "online"
-        ).count.zero?
-          redirect_response_error("consent_required")
-        end
+        client_scopes = oauth_application[oauth_applications_scopes_column].split(" ")
+        sc = scopes || []
+
+        redirect_response_error("consent_required") unless (client_scopes - sc).empty?
+
       when "select-account"
+        return unless request.get?
+
         # only works if select_account plugin is available
         require_select_account if respond_to?(:require_select_account)
       else

@@ -28,10 +28,14 @@
     <h1 class="display-6"><%= rodauth.oauth_grants_scopes_label %></h1>
 
     <% rodauth.authorize_scopes.each do |scope| %>
-      <div class="form-check">
-        <%= check_box_tag "scope[]", scope, id: scope, class: "form-check-input" %>
-        <%= label_tag scope, scope, class: "form-check-label" %>
-      </div>
+      <% if rodauth.features.include?(:oidc) && scope == "offline_access" %>
+        <%= hidden_field_tag "scope[]", scope %>
+      <% else %>
+        <div class="form-check">
+          <%= check_box_tag "scope[]", scope, id: scope, class: "form-check-input" %>
+          <%= label_tag scope, scope, class: "form-check-label" %>
+        </div>
+      <% end %>
     <% end %>
     <%= hidden_field_tag :client_id, params[:client_id] %>
     <% %i[access_type response_type response_mode state redirect_uri].each do |oauth_param| %>
@@ -53,6 +57,9 @@
       <% end %>
     <% end %>
     <% if rodauth.features.include?(:oidc) %>
+      <% if params[:prompt] %>
+        <%= hidden_field_tag :prompt,  params[:prompt] %>
+      <% end %>
       <% if params[:nonce] %>
         <%= hidden_field_tag :nonce,  params[:nonce] %>
       <% end %>
