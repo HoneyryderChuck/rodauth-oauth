@@ -373,10 +373,9 @@ module Rodauth
 
         require_account
 
-        client_scopes = oauth_application[oauth_applications_scopes_column].split(" ")
         sc = scopes || []
 
-        redirect_response_error("consent_required") unless (client_scopes - sc).empty?
+        redirect_response_error("consent_required") if sc.empty?
 
       when "select-account"
         return unless request.get?
