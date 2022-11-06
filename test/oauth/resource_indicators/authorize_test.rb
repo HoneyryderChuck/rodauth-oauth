@@ -9,7 +9,7 @@ class RodauthOauthResourceIndicatorsAuthorizeTest < RodaIntegration
     end
     setup_application
     login
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code&resource=bla"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code&response_mode=query&resource=bla"
     assert page.current_url.end_with?("?error=invalid_target"),
            "was redirected instead to #{page.current_url}"
   end
@@ -17,7 +17,7 @@ class RodauthOauthResourceIndicatorsAuthorizeTest < RodaIntegration
   def test_authorize_one_resource_uri_with_fragment
     setup_application
     login
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code&resource=#{CGI.escape('https://resource.com#bla=bla')}"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code&resource=#{CGI.escape('https://resource.com#bla=bla')}&response_mode=query"
     assert page.current_url.end_with?("?error=invalid_target"),
            "was redirected instead to #{page.current_url}"
   end
