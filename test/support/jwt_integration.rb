@@ -71,7 +71,7 @@ class JWTIntegration < RodaIntegration
                               encryption_method: "A128CBC-HS256",
                               encryption_algorithm: "RSA-OAEP", **extra_claims)
     claims = {
-      iss: "http://www.example.com",
+      iss: application[:client_id],
       aud: "http://www.example.com",
       response_mode: "query",
       response_type: "code",
