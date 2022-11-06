@@ -10,7 +10,7 @@ class RodauthOauthJwtSecuredAuthorizationRequestAuthorizeTest < JWTIntegration
     setup_application
     login
 
-    visit "/authorize?request=eyIknowthisisbad.yes.yes&client_id=#{oauth_application[:client_id]}"
+    visit "/authorize?request=eyIknowthisisbad.yes.yes&client_id=#{oauth_application[:client_id]}&response_mode=query"
     assert page.current_url.include?("?error=invalid_request_object"),
            "was redirected instead to #{page.current_url}"
   end
@@ -28,7 +28,7 @@ class RodauthOauthJwtSecuredAuthorizationRequestAuthorizeTest < JWTIntegration
 
     signed_request = generate_signed_request(oauth_application)
 
-    visit "/authorize?request=#{signed_request}&client_id=#{oauth_application[:client_id]}"
+    visit "/authorize?request=#{signed_request}&client_id=#{oauth_application[:client_id]}&response_mode=query"
     assert page.current_url.include?("?error=invalid_request_object"),
            "was redirected instead to #{page.current_url}"
   end
@@ -91,12 +91,12 @@ class RodauthOauthJwtSecuredAuthorizationRequestAuthorizeTest < JWTIntegration
            "was redirected instead to #{page.current_url}"
 
     signed_request = generate_signed_request(application, signing_key: jws_key, iss: nil, aud: "http://www.example2.com")
-    visit "/authorize?request=#{signed_request}&client_id=#{application[:client_id]}"
+    visit "/authorize?request=#{signed_request}&client_id=#{application[:client_id]}&response_mode=query"
     assert page.current_url.include?("error=invalid_request_object"),
            "was redirected instead to #{page.current_url}"
 
     signed_request = generate_signed_request(application, signing_key: jws_key, iss: "http://www.example2.com")
-    visit "/authorize?request=#{signed_request}&client_id=#{application[:client_id]}"
+    visit "/authorize?request=#{signed_request}&client_id=#{application[:client_id]}&response_mode=query"
     assert page.current_url.include?("error=invalid_request_object"),
            "was redirected instead to #{page.current_url}"
   end
@@ -117,13 +117,13 @@ class RodauthOauthJwtSecuredAuthorizationRequestAuthorizeTest < JWTIntegration
     )
 
     visit "/authorize?request=#{generate_signed_request(application, signing_key: jws_256_key, signing_algorithm: 'RS256')}&" \
-          "client_id=#{application[:client_id]}"
+          "client_id=#{application[:client_id]}&response_mode=query"
 
     assert page.current_url.include?("?error=invalid_request_object"),
            "was redirected instead to #{page.current_url}"
 
     visit "/authorize?request=#{generate_signed_request(application, signing_key: jws_512_key, signing_algorithm: 'RS512')}&" \
-          "client_id=#{application[:client_id]}"
+          "client_id=#{application[:client_id]}&response_mode=query"
 
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
@@ -195,7 +195,7 @@ class RodauthOauthJwtSecuredAuthorizationRequestAuthorizeTest < JWTIntegration
     )
 
     signed_request = generate_signed_request(application, signing_key: jws_key, encryption_key: jwe_key, encryption_method: "A128CBC-HS256")
-    visit "/authorize?request=#{signed_request}&client_id=#{application[:client_id]}"
+    visit "/authorize?request=#{signed_request}&client_id=#{application[:client_id]}&response_mode=query"
     assert page.current_path == "/callback",
            "was redirected instead to #{page.current_path}"
 
@@ -216,7 +216,7 @@ class RodauthOauthJwtSecuredAuthorizationRequestAuthorizeTest < JWTIntegration
     setup_application
     login
 
-    visit "/authorize?request_uri=bla&client_id=#{oauth_application[:client_id]}"
+    visit "/authorize?request_uri=bla&client_id=#{oauth_application[:client_id]}&response_mode=query"
     assert page.current_url.include?("?error=invalid_request_uri"),
            "was redirected instead to #{page.current_url}"
   end
@@ -242,7 +242,7 @@ class RodauthOauthJwtSecuredAuthorizationRequestAuthorizeTest < JWTIntegration
         body: signed_request
       )
 
-    visit "/authorize?request_uri=#{CGI.escape(request_uri)}&client_id=#{oauth_application[:client_id]}"
+    visit "/authorize?request_uri=#{CGI.escape(request_uri)}&client_id=#{oauth_application[:client_id]}&response_mode=query"
     assert page.current_url.include?("?error=invalid_request_object"),
            "was redirected instead to #{page.current_url}"
   end
@@ -275,11 +275,11 @@ class RodauthOauthJwtSecuredAuthorizationRequestAuthorizeTest < JWTIntegration
         body: signed_request
       )
 
-    visit "/authorize?request_uri=#{CGI.escape(request_uri2)}&client_id=#{application[:client_id]}"
+    visit "/authorize?request_uri=#{CGI.escape(request_uri2)}&client_id=#{application[:client_id]}&response_mode=query"
     assert page.current_url.include?("?error=invalid_request_uri"),
            "was redirected instead to #{page.current_path}"
 
-    visit "/authorize?request_uri=#{CGI.escape(request_uri)}&client_id=#{application[:client_id]}"
+    visit "/authorize?request_uri=#{CGI.escape(request_uri)}&client_id=#{application[:client_id]}&response_mode=query"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
   end

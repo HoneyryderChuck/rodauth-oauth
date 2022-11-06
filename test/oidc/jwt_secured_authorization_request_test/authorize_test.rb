@@ -10,7 +10,8 @@ class RodauthOauthOIDCJwtSecuredAuthorizationRequestAuthorizeTest < OIDCIntegrat
     setup_application
     login
 
-    visit "/authorize?request=eyIknowthisisbad.yes.yes&client_id=#{oauth_application[:client_id]}"
+    visit "/authorize?request=eyIknowthisisbad.yes.yes&client_id=#{oauth_application[:client_id]}&" \
+          "response_mode=query"
     assert page.current_url.include?("?error=invalid_request_object"),
            "was redirected instead to #{page.current_url}"
   end
@@ -28,7 +29,8 @@ class RodauthOauthOIDCJwtSecuredAuthorizationRequestAuthorizeTest < OIDCIntegrat
 
     signed_request = generate_signed_request(oauth_application)
 
-    visit "/authorize?request=#{signed_request}&client_id=#{oauth_application[:client_id]}"
+    visit "/authorize?request=#{signed_request}&client_id=#{oauth_application[:client_id]}&" \
+          "response_mode=query"
     assert page.current_url.include?("?error=invalid_request_object"),
            "was redirected instead to #{page.current_url}"
   end
@@ -111,7 +113,8 @@ class RodauthOauthOIDCJwtSecuredAuthorizationRequestAuthorizeTest < OIDCIntegrat
     setup_application
     login
 
-    visit "/authorize?request_uri=bla&client_id=#{oauth_application[:client_id]}"
+    visit "/authorize?request_uri=bla&client_id=#{oauth_application[:client_id]}&" \
+          "response_mode=query"
     assert page.current_url.include?("?error=invalid_request_uri"),
            "was redirected instead to #{page.current_url}"
   end
@@ -137,7 +140,8 @@ class RodauthOauthOIDCJwtSecuredAuthorizationRequestAuthorizeTest < OIDCIntegrat
         body: signed_request
       )
 
-    visit "/authorize?request_uri=#{CGI.escape(request_uri)}&client_id=#{oauth_application[:client_id]}"
+    visit "/authorize?request_uri=#{CGI.escape(request_uri)}&client_id=#{oauth_application[:client_id]}&" \
+          "response_mode=query"
     assert page.current_url.include?("?error=invalid_request_object"),
            "was redirected instead to #{page.current_url}"
   end
@@ -170,11 +174,13 @@ class RodauthOauthOIDCJwtSecuredAuthorizationRequestAuthorizeTest < OIDCIntegrat
         body: signed_request
       )
 
-    visit "/authorize?request_uri=#{CGI.escape(request_uri2)}&client_id=#{application[:client_id]}"
+    visit "/authorize?request_uri=#{CGI.escape(request_uri2)}&client_id=#{application[:client_id]}&" \
+          "response_mode=query"
     assert page.current_url.include?("?error=invalid_request_uri"),
            "was redirected instead to #{page.current_path}"
 
-    visit "/authorize?request_uri=#{CGI.escape(request_uri)}&client_id=#{application[:client_id]}"
+    visit "/authorize?request_uri=#{CGI.escape(request_uri)}&client_id=#{application[:client_id]}&" \
+          "response_mode=query"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
 

@@ -90,6 +90,32 @@ module Rodauth
       end
     end
 
+    def _redirect_response_error(redirect_url, query_params)
+      response_mode = param_or_nil("response_mode") || oauth_response_mode
+
+      case response_mode
+      when "form_post"
+        response["Content-Type"] = "text/html"
+        response.write <<-FORM
+          <html>
+            <head><title></title></head>
+            <body onload="javascript:document.forms[0].submit()">
+              <form method="post" action="#{redirect_uri}">
+                #{
+                  query_params.map do |name, value|
+                    "<input type=\"hidden\" name=\"#{name}\" value=\"#{scope.h(value)}\" />"
+                  end.join
+                }
+              </form>
+            </body>
+          </html>
+        FORM
+        request.halt
+      else
+        super
+      end
+    end
+
     def create_token(grant_type)
       return super unless supported_grant_type?(grant_type, "authorization_code")
 

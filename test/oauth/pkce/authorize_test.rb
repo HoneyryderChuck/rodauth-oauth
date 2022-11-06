@@ -63,7 +63,7 @@ class RodauthOauthPkceAuthorizeTest < RodaIntegration
     login
 
     # show the authorization form
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code&response_mode=query"
 
     assert page.current_url.include?("?error=invalid_request"),
            "code challenge required"
