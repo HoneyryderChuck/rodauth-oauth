@@ -61,12 +61,16 @@
 
     #{
       rodauth.authorize_scopes.map do |scope|
-        <<-HTML
-          <div class="form-check">
-            <input id="#{scope}" class="form-check-input" type="checkbox" name="scope[]" value="#{h(scope)}">
-            <label class="form-check-label" for="#{scope}">#{h(scope)}</label>
-          </div>
-        HTML
+        if rodauth.features.include?(:oidc) && scope == "offline_access"
+          "<input type=\"hidden\" name=\"scope[]\" value=\"#{scope}\" />"
+        else
+          <<-HTML
+            <div class="form-check">
+              <input id="#{scope}" class="form-check-input" type="checkbox" name="scope[]" value="#{h(scope)}">
+              <label class="form-check-label" for="#{scope}">#{h(scope)}</label>
+            </div>
+          HTML
+        end
       end.join
     }
 
@@ -78,6 +82,7 @@
     #{"<input type=\"hidden\" name=\"redirect_uri\" value=\"#{rodauth.redirect_uri}\"/>" if rodauth.param_or_nil("redirect_uri")}
     #{"<input type=\"hidden\" name=\"code_challenge\" value=\"#{rodauth.param("code_challenge")}\"/>" if rodauth.features.include?(:oauth_pkce) && rodauth.param_or_nil("code_challenge")}
     #{"<input type=\"hidden\" name=\"code_challenge_method\" value=\"#{rodauth.param("code_challenge_method")}\"/>" if rodauth.features.include?(:oauth_pkce) && rodauth.param_or_nil("code_challenge_method")}
+    #{"<input type=\"hidden\" name=\"prompt\" value=\"#{rodauth.param("prompt")}\"/>" if rodauth.features.include?(:oidc) && rodauth.param_or_nil("prompt")}
     #{"<input type=\"hidden\" name=\"nonce\" value=\"#{rodauth.param("nonce")}\"/>" if rodauth.features.include?(:oidc) && rodauth.param_or_nil("nonce")}
     #{"<input type=\"hidden\" name=\"ui_locales\" value=\"#{rodauth.param("ui_locales")}\"/>" if rodauth.features.include?(:oidc) && rodauth.param_or_nil("ui_locales")}
     #{"<input type=\"hidden\" name=\"claims_locales\" value=\"#{rodauth.param("claims_locales")}\"/>" if rodauth.features.include?(:oidc) && rodauth.param_or_nil("claims_locales")}

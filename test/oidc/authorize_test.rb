@@ -254,6 +254,39 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
            "was redirected instead to #{page.current_url}"
   end
 
+  def test_oidc_authorize_post_authorize_offline_access
+    setup_application(:oauth_implicit_grant)
+    login
+
+    oauth_application = set_oauth_application(scopes: "openid")
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid offline_access&response_type=code"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    refute_includes page.html, "offline"
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid offline_access&response_type=token&" \
+          "prompt=consent"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    refute_includes page.html, "offline"
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid offline_access&response_type=code&" \
+          "prompt=consent"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    assert_includes page.html, "offline"
+
+    check "openid"
+    # submit authorization request
+    click_button "Authorize"
+
+    new_grant = db[:oauth_grants].order(:id).last
+    assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{new_grant[:code]}",
+           "was redirected instead to #{page.current_url}"
+    assert new_grant[:access_type] == "offline"
+  end
+
   def test_oidc_authorize_post_authorize_prompt_login
     setup_application
 
@@ -343,8 +376,9 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     setup_application
     login
 
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code&" \
           "prompt=consent"
+    click_button "Authorize"
     assert page.current_url.include?("?error=consent_required"),
            "was redirected instead to #{page.current_url}"
   end
