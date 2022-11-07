@@ -47,9 +47,19 @@ module Rodauth
           response = http_request(uri, *args)
           ttl = if response.key?("cache-control")
                   cache_control = response["cache-control"]
-                  cache_control[/max-age=(\d+)/, 1].to_i
+                  if cache_control.include?("no-cache")
+                    nil
+                  else
+                    max_age = cache_control[/max-age=(\d+)/, 1].to_i
+                    max_age.zero? ? nil : max_age
+                  end
                 elsif response.key?("expires")
-                  Time.parse(response["expires"]).to_i - Time.now.to_i
+                  expires = response["expires"]
+                  begin
+                    Time.parse(expires).to_i - Time.now.to_i
+                  rescue ArgumentError
+                    nil
+                  end
                 end
 
           [JSON.parse(response.body, symbolize_names: true), ttl]
