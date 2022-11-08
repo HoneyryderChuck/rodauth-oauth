@@ -67,7 +67,7 @@ module Rodauth
       redirect_url = URI.parse(redirect_uri)
       case mode
       when "query"
-        params = params.map { |k, v| "#{k}=#{v}" }
+        params = params.map { |k, v| "#{CGI.escape(k)}=#{CGI.escape(v)}" }
         params << redirect_url.query if redirect_url.query
         redirect_url.query = params.join("&")
         redirect(redirect_url.to_s)
@@ -79,7 +79,7 @@ module Rodauth
               <form method="post" action="#{redirect_uri}">
                 #{
                   params.map do |name, value|
-                    "<input type=\"hidden\" name=\"#{name}\" value=\"#{scope.h(value)}\" />"
+                    "<input type=\"hidden\" name=\"#{scope.h(name)}\" value=\"#{scope.h(value)}\" />"
                   end.join
                 }
                 <input type="submit" class="btn btn-outline-primary" value="#{scope.h(oauth_authorize_post_button)}"/>
