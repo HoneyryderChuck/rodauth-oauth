@@ -18,8 +18,6 @@ module Rodauth
     auth_value_methods(:http_request)
     auth_value_methods(:http_request_cache)
 
-    SCOPES = %w[profile.read].freeze
-
     before "token"
 
     error_flash "Please authorize to continue", "require_authorization"
@@ -83,7 +81,7 @@ module Rodauth
     auth_value_method :oauth_already_in_use_response_status, 409
 
     # Feature options
-    auth_value_method :oauth_application_scopes, SCOPES
+    auth_value_method :oauth_application_scopes, []
     auth_value_method :oauth_token_type, "bearer"
     auth_value_method :oauth_refresh_token_protection_policy, "rotation" # can be: none, sender_constrained, rotation
 
