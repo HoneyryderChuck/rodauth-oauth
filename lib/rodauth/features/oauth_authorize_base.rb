@@ -10,6 +10,7 @@ module Rodauth
     after "authorize"
 
     view "authorize", "Authorize", "authorize"
+    view "authorize_error", "Authorize Error", "authorize_error"
 
     button "Authorize", "oauth_authorize"
     button "Back to Client Application", "oauth_authorize_post"
@@ -24,7 +25,7 @@ module Rodauth
     translatable_method :oauth_applications_tos_uri_label, "Terms of service URL"
     translatable_method :oauth_applications_policy_uri_label, "Policy URL"
     translatable_method :oauth_unsupported_response_type_message, "Unsupported response type"
-    translatable_method :oauth_authorize_parameter_required, "'%<parameter>s' is a required parameter"
+    translatable_method :oauth_authorize_parameter_required, "Invalid or missing '%<parameter>s'"
 
     # /authorize
     auth_server_route(:authorize) do |r|
@@ -65,7 +66,15 @@ module Rodauth
     private
 
     def validate_authorize_params
-      redirect_response_error("invalid_request", request.referer || default_redirect) unless oauth_application && check_valid_redirect_uri?
+      redirect_authorize_error("client_id") unless oauth_application
+
+      redirect_uris = oauth_application[oauth_applications_redirect_uri_column].split(" ")
+
+      if (redirect_uri = param_or_nil("redirect_uri"))
+        redirect_authorize_error("redirect_uri") unless redirect_uris.include?(redirect_uri)
+      elsif redirect_uris.size > 1
+        redirect_authorize_error("redirect_uri")
+      end
 
       redirect_response_error("unsupported_response_type") unless check_valid_response_type?
 
@@ -78,18 +87,6 @@ module Rodauth
 
     def check_valid_response_type?
       false
-    end
-
-    def check_valid_redirect_uri?
-      application_redirect_uris = oauth_application[oauth_applications_redirect_uri_column].split(" ")
-
-      if (redirect_uri = param_or_nil("redirect_uri"))
-        application_redirect_uris.include?(redirect_uri)
-      else
-        set_error_flash(oauth_authorize_parameter_required(parameter: "redirect_uri")) if application_redirect_uris.size > 1
-
-        true
-      end
     end
 
     ACCESS_TYPES = %w[offline online].freeze
@@ -125,6 +122,21 @@ module Rodauth
 
       # if there's a previous oauth grant for the params combo, it means that this user has approved before.
       request.env["REQUEST_METHOD"] = "POST"
+    end
+
+    def redirect_authorize_error(parameter, referer = request.referer || default_redirect)
+      error_message = oauth_authorize_parameter_required(parameter: parameter)
+
+      if accepts_json?
+        status_code = oauth_invalid_response_status
+
+        throw_json_response_error(status_code, "invalid_request", error_message)
+      else
+        scope.instance_variable_set(:@error, error_message)
+        scope.instance_variable_set(:@back_url, referer)
+
+        return_response(authorize_error_view)
+      end
     end
 
     def authorization_required

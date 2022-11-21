@@ -12,32 +12,42 @@ class RodauthOauthAuthorizeTest < RodaIntegration
   def test_authorize_get_authorize_not_logged_in_no_client_application
     setup_application
     visit "/authorize"
+
     assert page.current_path == "/login",
            "was redirected instead to #{page.current_path}"
   end
 
-  def test_authorize_get_authorize
+  def test_authorize_get_authorize_no_client_application
     setup_application
     login
     visit "/authorize"
-    assert page.current_path == "/",
+
+    assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    assert_includes page.html, "Invalid or missing 'client_id'"
+    assert_includes page.html, "Cancel"
   end
 
   def test_authorize_get_authorize_invalid_client_id
     setup_application
     login
     visit "/authorize?client_id=bla"
-    assert page.current_url.end_with?("/?error=invalid_request"),
-           "was redirected instead to #{page.current_url}"
+
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    assert_includes page.html, "Invalid or missing 'client_id'"
+    assert_includes page.html, "Cancel"
   end
 
   def test_authorize_get_authorize_invalid_redirect_uri
     setup_application
     login
     visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code&redirect_uri=bla"
-    assert page.current_url.end_with?("/?error=invalid_request"),
-           "was redirected instead to #{page.current_url}"
+
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    assert_includes page.html, "Invalid or missing 'redirect_uri'"
+    assert_includes page.html, "Cancel"
   end
 
   def test_authorize_get_authorize_invalid_scope
@@ -51,7 +61,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
            "was redirected instead to #{page.current_url}"
   end
 
-  def test_authorize_get_authorize_multiple_uris
+  def test_authorize_get_authorize_multiple_uris_no_redirect_uri
     setup_application
     login
 
@@ -60,15 +70,23 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     visit "/authorize?client_id=#{application[:client_id]}&" \
           "scope=user.read+user.write&response_type=code"
     assert page.current_path == "/authorize",
-           "was redirected instead to #{page.current_url}"
-    assert_includes page.html, "'redirect_uri' is a required parameter"
+           "was redirected instead to #{page.current_path}"
+    assert_includes page.html, "Invalid or missing 'redirect_uri'"
+    assert_includes page.html, "Cancel"
+  end
+
+  def test_authorize_get_authorize_multiple_uris
+    setup_application
+    login
+
+    application = oauth_application(redirect_uri: "http://redirect1 http://redirect2")
 
     visit "/authorize?client_id=#{application[:client_id]}&" \
           "redirect_uri=http://redirect2&" \
           "scope=user.read+user.write&response_type=code"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_url}"
-    refute_includes page.html, "'redirect_uri' is a required parameter"
+    refute_includes page.html, "Invalid or missing 'redirect_uri'"
   end
 
   def test_authorize_post_authorize_same_code

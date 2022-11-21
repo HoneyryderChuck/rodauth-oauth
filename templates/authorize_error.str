@@ -1,0 +1,12 @@
+<div class="container">
+  <div class="alert alert-danger">
+    <p>
+      #{@error}
+    </p>
+  </div>
+ <p class="text-center">
+  <a href="#{@back_url}" class="btn btn-outline-danger">
+    #{rodauth.oauth_cancel_button}
+  </a>
+ </p>
+</div>
