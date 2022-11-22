@@ -655,7 +655,8 @@ module Rodauth
       when "id_token token"
         redirect_response_error("invalid_request") unless supports_token_response_type?
 
-        oauth_grant = _do_authorize_token(oauth_grants_type_column => "hybrid")
+        grant_params = oidc_grant_params.merge(oauth_grants_type_column => "hybrid")
+        oauth_grant = _do_authorize_token(grant_params)
         generate_id_token(oauth_grant)
 
         response_params.replace(json_access_token_payload(oauth_grant))

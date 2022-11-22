@@ -175,7 +175,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     login
 
     # show the authorization form
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=id_token+token"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=id_token+token&nonce=NONCE"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
     check "openid"
