@@ -457,6 +457,9 @@ module Rodauth
 
       return unless oauth_scopes.include?("openid")
 
+      signing_algorithm = oauth_application[oauth_applications_id_token_signed_response_alg_column] ||
+                          oauth_jwt_keys.keys.first
+
       id_token_claims = jwt_claims(oauth_grant)
 
       id_token_claims[:nonce] = oauth_grant[oauth_grants_nonce_column] if oauth_grant[oauth_grants_nonce_column]
@@ -465,6 +468,16 @@ module Rodauth
 
       # Time when the End-User authentication occurred.
       id_token_claims[:auth_time] = get_oidc_account_last_login_at(oauth_grant[oauth_grants_account_id_column]).to_i
+
+      # Access Token hash value.
+      if (access_token = oauth_grant[oauth_grants_token_column])
+        id_token_claims[:at_hash] = id_token_hash(access_token, signing_algorithm)
+      end
+
+      # code hash value.
+      if (code = oauth_grant[oauth_grants_code_column])
+        id_token_claims[:c_hash] = id_token_hash(code, signing_algorithm)
+      end
 
       account = db[accounts_table].where(account_id_column => oauth_grant[oauth_grants_account_id_column]).first
 
@@ -488,10 +501,7 @@ module Rodauth
 
       params = {
         jwks: oauth_application_jwks(oauth_application),
-        signing_algorithm: (
-          oauth_application[oauth_applications_id_token_signed_response_alg_column] ||
-          oauth_jwt_keys.keys.first
-        ),
+        signing_algorithm: signing_algorithm,
         encryption_algorithm: oauth_application[oauth_applications_id_token_encrypted_response_alg_column],
         encryption_method: oauth_application[oauth_applications_id_token_encrypted_response_enc_column]
       }.compact
@@ -665,6 +675,7 @@ module Rodauth
 
         params = create_oauth_grant_with_token
         oauth_grant = valid_oauth_grant_ds.where(oauth_grants_code_column => params["code"]).first
+        oauth_grant[oauth_grants_token_column] = params["access_token"]
         generate_id_token(oauth_grant)
 
         response_params.replace(params.merge("id_token" => oauth_grant[:id_token]))
@@ -785,6 +796,20 @@ module Rodauth
         response["Pragma"] = "no-cache"
       end
       return_response(jwt)
+    end
+
+    def id_token_hash(hash, algo)
+      digest = case algo
+               when /256/ then Digest::SHA256
+               when /384/ then Digest::SHA384
+               when /512/ then Digest::SHA512
+               end
+
+      return unless digest
+
+      hash = digest.digest(hash)
+      hash = hash[0...hash.size / 2]
+      Base64.urlsafe_encode64(hash).tr("=", "")
     end
   end
 end
