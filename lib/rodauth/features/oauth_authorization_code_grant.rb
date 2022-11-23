@@ -120,7 +120,6 @@ module Rodauth
       return super unless supported_grant_type?(grant_type, "authorization_code")
 
       grant_params = {
-        oauth_grants_type_column => grant_type,
         oauth_grants_code_column => param("code"),
         oauth_grants_redirect_uri_column => param("redirect_uri"),
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column]
