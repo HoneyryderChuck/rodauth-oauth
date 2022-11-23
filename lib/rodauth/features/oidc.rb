@@ -292,6 +292,11 @@ module Rodauth
       end
 
       super
+
+      return unless (response_type = param_or_nil("response_type"))
+      return unless response_type.include?("id_token")
+
+      redirect_response_error("invalid_request") unless param_or_nil("nonce")
     end
 
     def require_authorizable_account

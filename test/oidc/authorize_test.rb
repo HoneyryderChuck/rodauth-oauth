@@ -76,7 +76,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     login
 
     # show the authorization form
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=id_token&state=STATE"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=id_token&state=STATE&nonce=NONCE"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
     check "openid"
@@ -147,7 +147,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     login
 
     # show the authorization form
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code+id_token"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code+id_token&nonce=NONCE"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
     check "openid"
@@ -200,7 +200,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     login
 
     # show the authorization form
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code+id_token+token"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code+id_token+token&nonce=NONCE"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
     check "openid"
@@ -396,7 +396,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     application = oauth_application(id_token_signed_response_alg: "RS512")
 
     # show the authorization form
-    visit "/authorize?client_id=#{application[:client_id]}&scope=openid&response_type=id_token"
+    visit "/authorize?client_id=#{application[:client_id]}&scope=openid&response_type=id_token&nonce=NONCE"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
     check "openid"
@@ -432,7 +432,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     )
 
     # show the authorization form
-    visit "/authorize?client_id=#{application[:client_id]}&scope=openid&response_type=id_token"
+    visit "/authorize?client_id=#{application[:client_id]}&scope=openid&response_type=id_token&nonce=NONCE"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
     check "openid"
@@ -491,7 +491,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     oauth_application(scopes: "openid name")
 
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid name&" \
-          "claims_locales=pt en&response_type=id_token"
+          "claims_locales=pt en&response_type=id_token&nonce=NONCE"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
     check "openid"
@@ -535,6 +535,9 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid name&" \
           "claims_locales=pt en&response_type=code id_token"
+    assert current_url.include?("?error=invalid_request")
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid name&" \
+          "claims_locales=pt en&response_type=code id_token&nonce=NONCE"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
     check "openid"
@@ -600,7 +603,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
                        })
 
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
-          "claims=#{CGI.escape(claims)}&response_type=code id_token"
+          "claims=#{CGI.escape(claims)}&response_type=code id_token&nonce=NONCE"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
     check "openid"
@@ -681,7 +684,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     login
 
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&&response_type=id_token&" \
-          "acr_values=phr"
+          "acr_values=phr&nonce=NONCE"
     assert page.current_path == "/otp-auth",
            "was redirected instead to #{page.current_path}"
     fill_in "Authentication Code", with: totp.now
@@ -740,7 +743,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
       click_button "Login"
 
       visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code id_token&" \
-            "acr_values=phrh"
+            "acr_values=phrh&nonce=NONCE"
       assert page.current_path == "/webauthn-auth",
              "was redirected instead to #{page.current_path}"
       challenge = JSON.parse(page.find("#webauthn-auth-form")["data-credential-options"])["challenge"]

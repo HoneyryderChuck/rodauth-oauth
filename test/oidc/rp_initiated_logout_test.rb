@@ -67,7 +67,7 @@ class RodauthOAuthOIDCRpInitiatedLogoutTest < OIDCIntegration
   end
 
   def generate_id_token(application = oauth_application)
-    visit "/authorize?client_id=#{application[:client_id]}&scope=openid&response_type=code+id_token"
+    visit "/authorize?client_id=#{application[:client_id]}&scope=openid&response_type=code+id_token&nonce=NONCE"
     check "openid"
     click_button "Authorize"
     assert page.current_url.start_with?("https://example.com/callback"),
