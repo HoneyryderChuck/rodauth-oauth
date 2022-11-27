@@ -19,31 +19,35 @@ module Rodauth
         catch_error do
           validate_oidc_logout_params
 
-          #
-          # why this is done:
-          #
-          # we need to decode the id token in order to get the application, because, if the
-          # signing key is application-specific, we don't know how to verify the signature
-          # beforehand. Hence, we have to do it twice: decode-and-do-not-verify, initialize
-          # the @oauth_application, and then decode-and-verify.
-          #
-          claims = jwt_decode(param("id_token_hint"), verify_claims: false)
+          oauth_application = nil
 
-          redirect_logout_with_error(oauth_invalid_client_message) unless claims
+          if (id_token_hint = param_or_nil("id_token_hint"))
+            #
+            # why this is done:
+            #
+            # we need to decode the id token in order to get the application, because, if the
+            # signing key is application-specific, we don't know how to verify the signature
+            # beforehand. Hence, we have to do it twice: decode-and-do-not-verify, initialize
+            # the @oauth_application, and then decode-and-verify.
+            #
+            claims = jwt_decode(id_token_hint, verify_claims: false)
 
-          oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => claims["aud"]).first
-          oauth_grant = db[oauth_grants_table]
-                        .where(
-                          oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-                          oauth_grants_account_id_column => account_id
-                        ).first
+            redirect_logout_with_error(oauth_invalid_client_message) unless claims
 
-          # check whether ID token belongs to currently logged-in user
-          redirect_logout_with_error(oauth_invalid_client_message) unless oauth_grant && claims["sub"] == jwt_subject(oauth_grant,
-                                                                                                                      oauth_application)
+            oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => claims["aud"]).first
+            oauth_grant = db[oauth_grants_table]
+                          .where(
+                            oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+                            oauth_grants_account_id_column => account_id
+                          ).first
 
-          # When an id_token_hint parameter is present, the OP MUST validate that it was the issuer of the ID Token.
-          redirect_logout_with_error(oauth_invalid_client_message) unless claims && claims["iss"] == oauth_jwt_issuer
+            # check whether ID token belongs to currently logged-in user
+            redirect_logout_with_error(oauth_invalid_client_message) unless oauth_grant && claims["sub"] == jwt_subject(oauth_grant,
+                                                                                                                        oauth_application)
+
+            # When an id_token_hint parameter is present, the OP MUST validate that it was the issuer of the ID Token.
+            redirect_logout_with_error(oauth_invalid_client_message) unless claims && claims["iss"] == oauth_jwt_issuer
+          end
 
           # now let's logout from IdP
           transaction do
@@ -92,7 +96,6 @@ module Rodauth
     # Logout
 
     def validate_oidc_logout_params
-      redirect_logout_with_error(oauth_invalid_client_message) unless param_or_nil("id_token_hint")
       # check if valid token hint type
       return unless (redirect_uri = param_or_nil("post_logout_redirect_uri"))
 
