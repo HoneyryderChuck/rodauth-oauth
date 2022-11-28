@@ -445,10 +445,7 @@ module Rodauth
                        _generate_access_token(oauth_grant)
                      end
 
-      {
-        "code" => authorization_code,
-        **json_access_token_payload(oauth_grants_token_column => access_token)
-      }
+      json_access_token_payload(oauth_grants_token_column => access_token).merge("code" => authorization_code)
     end
 
     def create_token(*)

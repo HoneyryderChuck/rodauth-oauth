@@ -12,6 +12,8 @@ cache:
 
 .before_script: &before_script
   # rails 5.1 and lower need older version of bundler
+  - ls
+  - rm -f Gemfile.lock
   - bundle install
   - |-
       if [ "$BUNDLE_GEMFILE" !=~ "rails" ]; then
