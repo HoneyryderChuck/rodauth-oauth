@@ -88,7 +88,7 @@ task prepare_website: [:website_rdoc] do
   Dir.chdir "www"
   system("bundle install")
   FileUtils.rm_rf("wiki")
-  system("git clone https://gitlab.com/honeyryderchuck/rodauth-oauth.wiki.git wiki")
+  system("git clone https://gitlab.com/os85/rodauth-oauth.wiki.git wiki")
   Dir.glob("wiki/*.md") do |path|
     data = File.read(path)
     name = File.basename(path, ".md")

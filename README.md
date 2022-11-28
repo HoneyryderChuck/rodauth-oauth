@@ -1,8 +1,8 @@
 # Rodauth::Oauth
 
 [![Gem Version](https://badge.fury.io/rb/rodauth-oauth.svg)](http://rubygems.org/gems/rodauth-oauth)
-[![pipeline status](https://gitlab.com/honeyryderchuck/rodauth-oauth/badges/master/pipeline.svg)](https://gitlab.com/honeyryderchuck/rodauth-oauth/pipelines?page=1&scope=all&ref=master)
-[![coverage report](https://gitlab.com/honeyryderchuck/rodauth-oauth/badges/master/coverage.svg?job=coverage)](https://honeyryderchuck.gitlab.io/rodauth-oauth/coverage/#_AllFiles)
+[![pipeline status](https://gitlab.com/os85/rodauth-oauth/badges/master/pipeline.svg)](https://gitlab.com/os85/rodauth-oauth/pipelines?page=1&scope=all&ref=master)
+[![coverage report](https://gitlab.com/os85/rodauth-oauth/badges/master/coverage.svg?job=coverage)](https://os85.gitlab.io/rodauth-oauth/coverage/#_AllFiles)
 
 This is an extension to the `rodauth` gem which implements the [OAuth 2.0 framework](https://tools.ietf.org/html/rfc6749) for an authorization server.
 
@@ -65,10 +65,10 @@ Or install it yourself as:
 ## Resources
 |               |                                                             |
 | ------------- | ----------------------------------------------------------- |
-| Website       | https://honeyryderchuck.gitlab.io/rodauth-oauth/            |
-| Documentation | https://honeyryderchuck.gitlab.io/rodauth-oauth/rdoc/       |
-| Wiki          | https://gitlab.com/honeyryderchuck/rodauth-oauth/wikis/home |
-| CI            | https://gitlab.com/honeyryderchuck/rodauth-oauth/pipelines  |
+| Website       | https://os85.gitlab.io/rodauth-oauth/            |
+| Documentation | https://os85.gitlab.io/rodauth-oauth/rdoc/       |
+| Wiki          | https://gitlab.com/os85/rodauth-oauth/wikis/home |
+| CI            | https://gitlab.com/os85/rodauth-oauth/pipelines  |
 
 ## Articles
 
@@ -132,12 +132,12 @@ end
 
 ### Example (TL;DR)
 
-Just [check our example applications](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/tree/master/examples/).
+Just [check our example applications](https://gitlab.com/os85/rodauth-oauth/-/tree/master/examples/).
 
 
 ### Database migrations
 
-You have to generate database tables for accounts, oauth applications, grants and tokens. In order for you to hit the ground running, [here's a set of migrations (using `sequel`) to generate the needed tables](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/tree/master/test/migrate) (omit the first 2 if you already have account tables, and [follow recommendations from rodauth accordingly](https://github.com/jeremyevans/rodauth)).
+You have to generate database tables for accounts, oauth applications, grants and tokens. In order for you to hit the ground running, [here's a set of migrations (using `sequel`) to generate the needed tables](https://gitlab.com/os85/rodauth-oauth/-/tree/master/test/migrate) (omit the first 2 if you already have account tables, and [follow recommendations from rodauth accordingly](https://github.com/jeremyevans/rodauth)).
 
 You can change column names or even use existing tables, however, be aware that you'll have to define new column accessors at the `rodauth` plugin declaration level. Let's say, for instance, you'd like to change the `oauth_grants` table name to `access_grants`, and it's `code` column to `authorization_code`; then, you'd have to do the following:
 
@@ -270,7 +270,7 @@ end
 
 `rodauth-oauth` supports translating all user-facing text found in all pages and forms, by integrating with [rodauth-i18n](https://github.com/janko/rodauth-i18n). Just set it up in your application and `rodauth` configuration.
 
-Default translations shipping with `rodauth-oauth` can be found [in this directory](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/tree/master/locales). If they're not available for the languages you'd like to support, consider getting them translated from the english text, and contributing them to this repository via a Merge Request.
+Default translations shipping with `rodauth-oauth` can be found [in this directory](https://gitlab.com/os85/rodauth-oauth/-/tree/master/locales). If they're not available for the languages you'd like to support, consider getting them translated from the english text, and contributing them to this repository via a Merge Request.
 
 (This feature is available since `v0.7`.)
 
@@ -289,4 +289,4 @@ After checking out the repo, run `bundle install` to install dependencies. Then,
 
 ## Contributing
 
-Bug reports and pull requests are welcome on Gitlab at https://gitlab.com/honeyryderchuck/rodauth-oauth.
+Bug reports and pull requests are welcome on Gitlab at https://gitlab.com/os85/rodauth-oauth.

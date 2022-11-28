@@ -1,13 +1,13 @@
 title: Rodauth OAuth
 description: "Rodauth OAuth: OAuth 2.0 and OpenID for rodauth."
-authorurl: https://gitlab.com/honeyryderchuck
-repourl: https://gitlab.com/honeyryderchuck/rodauth-oauth
+authorurl: https://gitlab.com/os85
+repourl: https://gitlab.com/os85/rodauth-oauth
 baseurl: "/rodauth-oauth"
-url: honeyryderchuck.gitlab.io
+url: os85.gitlab.io
 markdown: kramdown
 destination: build
 links:
-  gitlab: https://gitlab.com/honeyryderchuck/rodauth-oauth
+  gitlab: https://gitlab.com/os85/rodauth-oauth
   rubygems: https://rubygems.org
 include:
   - wiki
