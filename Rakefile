@@ -85,8 +85,6 @@ end
 desc "Builds Homepage"
 task prepare_website: [:website_rdoc] do
   require "fileutils"
-  Dir.chdir "www"
-  system("bundle install")
   FileUtils.rm_rf("wiki")
   system("git clone https://gitlab.com/os85/rodauth-oauth.wiki.git wiki")
   Dir.glob("wiki/*.md") do |path|

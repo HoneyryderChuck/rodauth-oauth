@@ -66,7 +66,7 @@ cache:
         - mysql_native_password
 
 variables:
-  BUNDLE_WITHOUT: demo:website
+  BUNDLE_WITHOUT: demo:docs
   BUNDLE_JOBS: 10
   BUNDLE_PATH: vendor
   CI: 1
@@ -240,37 +240,26 @@ coverage:
   artifacts:
     paths:
       - "coverage/"
-jekyll:
-  stage: test
+
+docs:
+  stage: deploy
+  needs:
+    - coverage
   image: "ruby:3.1"
   variables:
-    BUNDLE_WITH: website
-    JEKYLL_ENV: production
+    BUNDLE_WITHOUT: test:coverage:assorted
   before_script:
-    - *install_deps
-    - *before_script
+    - bundle install --quiet
   script:
     - bundle exec rake check_method_doc
     - bundle exec rake prepare_website
-    - bundle exec jekyll build -s www -d www/public
   artifacts:
     paths:
-      - www/public/
-pages:
-  stage: deploy
-  dependencies:
-    - coverage
-    - jekyll
-  script:
-    - mv www/public .
-    - mv coverage public
-  artifacts:
-    paths:
-      - public
-    expire_in: 30 days
-  only:
-    - master
-
+      - doc/
+      - wiki/
+      - coverage/
+  # only:
+  #   - master
 
 prepare_release:
   stage: prepare
