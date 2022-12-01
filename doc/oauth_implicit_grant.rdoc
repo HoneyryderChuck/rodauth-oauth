@@ -5,5 +5,3 @@ The +oauth_implicit_grant+ feature implements the OAuth 2.0 implicit grant.
 https://datatracker.ietf.org/doc/html/rfc6749#section-1.3.2
 
 == Auth Value Methods
-
-use_oauth_implicit_grant_type? :: Whether implicit grant flow can be used, <tt>false</tt> by default.

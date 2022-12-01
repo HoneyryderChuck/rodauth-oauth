@@ -1,47 +1,9 @@
 = Documentation for OAuth JWT feature
 
-The +oauth_jwt+ feature implements the JWT profile for OAuth 2.0 access tokens, and provides JWT helper functions.
+The +oauth_jwt+ feature implements the JWT profile for OAuth 2.0 access tokens.
 
 https://datatracker.ietf.org/doc/html/rfc9068
 
 == Value Methods
 
-oauth_jwt_subject_type :: JWT subject claim type, <tt>"public"</tt> by default.
-oauth_jwt_subject_secret :: hashing secret to use when subject claim type is "pairwise", <tt>nil</tt> by default.
-oauth_jwt_token_issuer :: JWT issuer claim, <tt>nil</tt> by default.
-oauth_jwt_audience :: JWT audience claim, <tt>nil</tt> by default.
-oauth_applications_jwt_public_key_label :: Form label for the oauth application client application public key.
-oauth_application_jwt_public_key_param :: Form param for the oauth application client application public key.
-oauth_application_jwks_param :: Form param for the oauth application client application JSON Web Keys.
-oauth_applications_jwt_public_key_column :: db column where to store an oauth application's publid key, used for verifying JWT tokens, <tt>:jwt_public_key</tt> by default.
-oauth_applications_request_object_encryption_alg_column :: db column where to store the encryption algorithm used for the request object JWT for the oauth application, <tt>:request_object_encryption_alg</tt> by default.
-oauth_applications_request_object_encryption_enc_column :: db column where to store the encryption method used for the request object JWT for the oauth application, <tt>:request_object_encryption_enc</tt> by default.
-oauth_applications_request_object_signing_alg_column :: db column where to store the signing algorithm used for the request object JWT for the oauth application, <tt>:request_object_signing_alg</tt> by default.
-oauth_applications_subject_type_column :: db column where to store the type of subject claim used for the oauth application, <tt>:subject_type</tt> by default.
-oauth_jwt_key :: the signing key, can be a String or an RSA/EC key.
-oauth_jwt_keys :: collection of the auth server signing keys indexed by algo (**must** include <tt>oauth_jwt_key</tt> unless nil).
-oauth_jwt_public_keys :: collection of the auth server public signing keys, which will be exposed in the JWKs endpoint.
-oauth_jwt_public_key :: the JWT verification key, can be an RSA/EC public key.
-oauth_jwt_algorithm :: JWT signing algorithm, <tt>"HS256"</tt> by default.
-oauth_jwt_jwe_keys :: collection of the auth server encryption keys indexed by algo/method tuple (**must** include <tt>oauth_jwe_key</tt> unless nil).
-oauth_jwt_jwe_public_keys :: collection of the auth server public encryption keys, which will be exposed in the JWKs endpoint.
-oauth_jwt_jwe_key :: JWE encryption/decryption key, <tt>nil</tt> by default.
-oauth_jwt_jwe_public_key :: JWT encryption public key, <tt>nil</tt> by default.
-oauth_jwt_jwe_algorithm :: JWT encryption algorithm, <tt>nil</tt> by default.
-oauth_jwt_jwe_encryption_method :: JWT encryption method, <tt>nil</tt> by default.
-oauth_jwt_jwe_copyright :: JWE copyright parameter, <tt>nil</tt> by default.
-oauth_jwt_legacy_algorithm :: legacy JWT signing algorithm, to be exposed via JWKs uri during key rotation.
-oauth_jwt_legacy_public_key :: legacy JWT public key, to be exposed via JWKs uri during key rotation.
-
-request_uri_not_supported_message :: error description for the "request_uri" OAuth error code, <tt>"request uri is unsupported"</tt> by default.
-invalid_request_object_message :: error description for the "invalid_request" OAuth error code, <tt>"request object is invalid"</tt> by default.
-
-jwks_route :: the route for the jwks, defaults to +jwks+.
-
-== Auth methods
-
-jwt_encode :: encodes a given JWT token.
-jwt_decode :: decodes a given JWT token.
-jwks_set :: returns the JWK set to expose over JSON.
-before_jwks_route :: Run arbitrary code before the JWKS route.
-generate_jti :: generates a unique jti claimm.
+* oauth_jwt_access_tokens :: defines whether to encode access tokens as JWT <tt>true</tt> by default.

@@ -1,5 +1,5 @@
 <%= form_tag rodauth.device_path, method: :get, class: "form-horizontal", id: "device-search-form" do %>
-  <p class="lead">Insert the user code from the device you'd like to authorize.</p>
+  <p class="lead"><%= rodauth.oauth_device_search_page_lead %></p>
 
   <div class="form-group">
     <%= label_tag "user_code", rodauth.oauth_grant_user_code_label %>

@@ -130,7 +130,7 @@ class RodauthOauthApplicationsTest < RodaIntegration
     :oauth_application_management
   end
 
-  def setup_application
-    super(&:oauth_applications)
+  def setup_application(*args)
+    super(*args, &:load_oauth_application_management_routes)
   end
 end

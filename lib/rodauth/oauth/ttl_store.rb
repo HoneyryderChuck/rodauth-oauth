@@ -28,6 +28,8 @@ class Rodauth::OAuth::TtlStore
 
     payload, ttl = block.call
 
+    return payload unless ttl
+
     @store_mutex.synchronize do
       # given that the block call triggers network, and two requests for the same key be processed
       # at the same time, this ensures the first one wins.

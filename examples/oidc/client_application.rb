@@ -19,7 +19,7 @@ else
   TEST_APPLICATION_PARAMS = {
     client_name: "Myself",
     description: "About myself",
-    scopes: "openid email profile books.read",
+    scopes: "openid email address phone profile books.read",
     token_endpoint_auth_method: "client_secret_basic",
     grant_types: %w[authorization_code refresh_token],
     response_types: %w[code],
@@ -140,15 +140,13 @@ class ClientApplication < Roda
   plugin :csrf, skip_middleware: true
 
   secret = ENV.delete("RODAUTH_SESSION_SECRET") || SecureRandom.random_bytes(64)
-  # use RodaSessionMiddleware, secret: secret, key: "client-application.session"
-
-  use Rack::Session::Cookie, key: "rack.session", secret: secret
+  use RodaSessionMiddleware, secret: secret, key: "client-application.session"
 
   auth_server_uri = URI(AUTHORIZATION_SERVER)
 
   use OmniAuth::Strategies::OpenIDConnect,
       identifier: AUTHORIZATION_SERVER,
-      scope: %i[openid email profile books.read],
+      scope: %i[openid email address phone profile books.read],
       response_type: :code,
       discovery: true,
       uid_field: "sub",
@@ -210,7 +208,7 @@ class ClientApplication < Roda
       # This is the redirect uri, where the authorization server redirects to with grant information for
       # the user to generate an access token.
       #
-      r.get do
+      r.is method: %i[get post] do
         session_state = session.delete("state")
 
         if session_state

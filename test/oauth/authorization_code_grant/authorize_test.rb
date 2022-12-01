@@ -12,42 +12,67 @@ class RodauthOauthAuthorizeTest < RodaIntegration
   def test_authorize_get_authorize_not_logged_in_no_client_application
     setup_application
     visit "/authorize"
+
     assert page.current_path == "/login",
            "was redirected instead to #{page.current_path}"
   end
 
-  def test_authorize_get_authorize
+  def test_authorize_get_authorize_no_client_application
     setup_application
     login
     visit "/authorize"
-    assert page.current_path == "/",
+
+    assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    assert_includes page.html, "Invalid or missing 'client_id'"
+    assert_includes page.html, "Cancel"
   end
 
   def test_authorize_get_authorize_invalid_client_id
     setup_application
     login
     visit "/authorize?client_id=bla"
-    assert page.current_url.end_with?("/?error=invalid_request"),
-           "was redirected instead to #{page.current_url}"
+
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    assert_includes page.html, "Invalid or missing 'client_id'"
+    assert_includes page.html, "Cancel"
   end
 
   def test_authorize_get_authorize_invalid_redirect_uri
     setup_application
     login
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&redirect_uri=bla"
-    assert page.current_url.end_with?("/?error=invalid_request"),
-           "was redirected instead to #{page.current_url}"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code&redirect_uri=bla"
+
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    assert_includes page.html, "Invalid or missing 'redirect_uri'"
+    assert_includes page.html, "Cancel"
   end
 
   def test_authorize_get_authorize_invalid_scope
     setup_application
     login
-    visit "/authorize?client_id=#{oauth_application[:client_id]}& " \
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&" \
+          "response_type=code&" \
           "redirect_uri=#{oauth_application[:redirect_uri]}&" \
           "scope=marvel"
     assert page.current_url.include?("?error=invalid_scope"),
            "was redirected instead to #{page.current_url}"
+  end
+
+  def test_authorize_get_authorize_multiple_uris_no_redirect_uri
+    setup_application
+    login
+
+    application = oauth_application(redirect_uri: "http://redirect1 http://redirect2")
+
+    visit "/authorize?client_id=#{application[:client_id]}&" \
+          "scope=user.read+user.write&response_type=code"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    assert_includes page.html, "Invalid or missing 'redirect_uri'"
+    assert_includes page.html, "Cancel"
   end
 
   def test_authorize_get_authorize_multiple_uris
@@ -57,15 +82,11 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     application = oauth_application(redirect_uri: "http://redirect1 http://redirect2")
 
     visit "/authorize?client_id=#{application[:client_id]}&" \
-          "scope=user.read+user.write"
-    assert page.current_url.include?("?error=invalid_request"),
-           "was redirected instead to #{page.current_url}"
-
-    visit "/authorize?client_id=#{application[:client_id]}&" \
           "redirect_uri=http://redirect2&" \
-          "scope=user.read+user.write"
+          "scope=user.read+user.write&response_type=code"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_url}"
+    refute_includes page.html, "Invalid or missing 'redirect_uri'"
   end
 
   def test_authorize_post_authorize_same_code
@@ -78,10 +99,11 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     _grant = oauth_grant(code: "CODE")
 
     # show the authorization form
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&response_type=code"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
 
+    check "user.read"
     # submit authorization request
     click_button "Authorize"
 
@@ -97,9 +119,10 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     login
 
     # show the authorization form
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code&scope=user.read+user.write&response_type=code"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    check "user.read"
 
     # submit authorization request
     click_button "Authorize"
@@ -122,9 +145,11 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     login
 
     # show the authorization form
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&access_type=online"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&access_type=online&response_type=code"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+
+    check "user.read"
 
     # submit authorization request
     click_button "Authorize"
@@ -140,13 +165,18 @@ class RodauthOauthAuthorizeTest < RodaIntegration
   end
 
   def test_authorize_post_authorize_access_type_online
+    rodauth do
+      use_oauth_access_type? true
+    end
     setup_application
     login
 
     # show the authorization form
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&access_type=online"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&access_type=online&response_type=code"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+
+    check "user.read"
 
     # submit authorization request
     click_button "Authorize"
@@ -167,7 +197,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
 
     # no previous grant
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&" \
-          "access_type=online&approval_prompt=auto"
+          "access_type=online&approval_prompt=auto&response_type=code"
     assert page.current_path.start_with?("/authorize"),
            "was redirected instead to #{page.current_path}"
 
@@ -175,7 +205,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     oauth_grant(access_type: "offline", expires_in: Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: 60))
 
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&" \
-          "access_type=online&approval_prompt=auto"
+          "access_type=online&approval_prompt=auto&response_type=code"
     assert page.current_path.start_with?("/authorize"),
            "was redirected instead to #{page.current_path}"
   end
@@ -189,12 +219,15 @@ class RodauthOauthAuthorizeTest < RodaIntegration
 
     # extra scope
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read&" \
-          "access_type=online&approval_prompt=auto"
+          "access_type=online&approval_prompt=auto&response_type=code"
     assert page.current_path.start_with?("/authorize"),
            "was redirected instead to #{page.current_path}"
   end
 
   def test_authorize_post_authorize_access_type_online_approval_prompt_auto
+    rodauth do
+      use_oauth_access_type? true
+    end
     setup_application
     login
 
@@ -202,15 +235,17 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     oauth_grant(access_type: "online", expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 60))
 
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&" \
-          "access_type=online&approval_prompt=auto"
+          "access_type=online&approval_prompt=auto&response_type=code"
 
     new_grant = db[:oauth_grants].order(:id).last
 
     assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{new_grant[:code]}",
            "was redirected instead to #{page.current_url}"
 
-    assert db[:oauth_grants].count == 2,
-           "no new grant has been created"
+    unless ENV.key?("ONLY_ONE_TOKEN")
+      assert db[:oauth_grants].count == 2,
+             "no new grant has been created"
+    end
 
     assert new_grant[:access_type] == "online"
   end
@@ -220,10 +255,11 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     login
 
     # show the authorization form
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&state=STATE"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code&state=STATE"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
 
+    check "user.read"
     # submit authorization request
     click_button "Authorize"
 
@@ -242,9 +278,12 @@ class RodauthOauthAuthorizeTest < RodaIntegration
 
     # show the authorization form
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&response_type=unknown"
-
-    assert page.current_url.include?("?error=invalid_request"),
+    assert page.current_url.include?("?error=unsupported_response_type"),
            "was redirected instead to #{page.current_url}"
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&response_mode=form_post&response_type=unknown"
+
+    assert_includes page.html, "name=\"error\" value=\"unsupported_response_type\""
   end
 
   def test_authorize_post_authorize_code_form_post
@@ -252,9 +291,11 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     login
 
     # show the authorization form
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&response_mode=form_post"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&response_type=code&response_mode=form_post"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+
+    check "user.read"
 
     # submit authorization request
     click_button "Authorize"
@@ -277,10 +318,11 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     login
 
     # show the authorization form
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&response_type=code"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
 
+    check "user.read"
     # submit authorization request
     click_button "Authorize"
 
@@ -295,6 +337,13 @@ class RodauthOauthAuthorizeTest < RodaIntegration
   end
 
   private
+
+  def setup_application(*)
+    rodauth do
+      oauth_response_mode "query"
+    end
+    super
+  end
 
   def oauth_feature
     :oauth_authorization_code_grant

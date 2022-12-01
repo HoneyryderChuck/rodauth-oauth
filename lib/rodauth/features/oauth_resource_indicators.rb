@@ -1,14 +1,12 @@
 # frozen_string_literal: true
 
-require "rodauth/oauth/version"
-require "rodauth/oauth/ttl_store"
+require "rodauth/oauth"
 
 module Rodauth
   Feature.define(:oauth_resource_indicators, :OauthResourceIndicators) do
     depends :oauth_authorize_base
 
     auth_value_method :oauth_grants_resource_column, :resource
-    auth_value_method :oauth_tokens_resource_column, :resource
 
     def resource_indicators
       return @resource_indicators if defined?(@resource_indicators)
@@ -38,9 +36,10 @@ module Rodauth
     def require_oauth_authorization(*)
       super
 
-      return unless authorization_token[oauth_tokens_resource_column]
+      # done so to support token-in-grant-db, jwt, and resource-server mode
+      token_indicators = authorization_token[oauth_grants_resource_column] || authorization_token["resource"]
 
-      token_indicators = authorization_token[oauth_tokens_resource_column]
+      return unless token_indicators
 
       token_indicators = token_indicators.split(" ") if token_indicators.is_a?(String)
 
@@ -49,7 +48,7 @@ module Rodauth
 
     private
 
-    def validate_oauth_token_params
+    def validate_token_params
       super
 
       return unless resource_indicators
@@ -59,15 +58,8 @@ module Rodauth
       end
     end
 
-    def create_oauth_token_from_token(oauth_token, update_params)
+    def create_token_from_token(oauth_grant, update_params)
       return super unless resource_indicators
-
-      return super unless oauth_token[oauth_tokens_oauth_grant_id_column]
-
-      oauth_grant = db[oauth_grants_table].where(
-        oauth_grants_id_column => oauth_token[oauth_tokens_oauth_grant_id_column],
-        oauth_grants_revoked_at_column => nil
-      ).first
 
       grant_indicators = oauth_grant[oauth_grants_resource_column]
 
@@ -75,11 +67,7 @@ module Rodauth
 
       redirect_response_error("invalid_target") unless (grant_indicators - resource_indicators) != grant_indicators
 
-      super(oauth_token, update_params.merge(oauth_tokens_resource_column => resource_indicators))
-    end
-
-    def check_valid_no_fragment_uri?(uri)
-      check_valid_uri?(uri) && URI.parse(uri).fragment.nil?
+      super(oauth_grant, update_params.merge(oauth_grants_resource_column => resource_indicators))
     end
 
     module IndicatorAuthorizationCodeGrant
@@ -95,8 +83,10 @@ module Rodauth
         end
       end
 
-      def create_oauth_token_from_authorization_code(oauth_grant, create_params, *args)
+      def create_token_from_authorization_code(grant_params, *args, oauth_grant: nil)
         return super unless resource_indicators
+
+        oauth_grant ||= valid_locked_oauth_grant(grant_params)
 
         redirect_response_error("invalid_target") unless oauth_grant[oauth_grants_resource_column]
 
@@ -106,7 +96,15 @@ module Rodauth
 
         redirect_response_error("invalid_target") unless (grant_indicators - resource_indicators) != grant_indicators
 
-        super(oauth_grant, create_params.merge(oauth_tokens_resource_column => resource_indicators), *args)
+        # update ownership
+        if grant_indicators != resource_indicators
+          oauth_grant = __update_and_return__(
+            db[oauth_grants_table].where(oauth_grants_id_column => oauth_grant[oauth_grants_id_column]),
+            oauth_grants_resource_column => resource_indicators
+          )
+        end
+
+        super({ oauth_grants_id_column => oauth_grant[oauth_grants_id_column] }, *args, oauth_grant: oauth_grant)
       end
 
       def create_oauth_grant(create_params = {})
@@ -117,12 +115,12 @@ module Rodauth
     end
 
     module IndicatorIntrospection
-      def json_token_introspect_payload(token)
-        return super unless token[oauth_tokens_oauth_grant_id_column]
+      def json_token_introspect_payload(grant)
+        return super unless grant[oauth_grants_id_column]
 
         payload = super
 
-        token_indicators = token[oauth_tokens_resource_column]
+        token_indicators = grant[oauth_grants_resource_column]
 
         token_indicators = token_indicators.split(" ") if token_indicators.is_a?(String)
 
@@ -134,7 +132,7 @@ module Rodauth
       def introspection_request(*)
         payload = super
 
-        payload[oauth_tokens_resource_column] = payload["aud"] if payload["aud"]
+        payload[oauth_grants_resource_column] = payload["aud"] if payload["aud"]
 
         payload
       end
@@ -145,6 +143,16 @@ module Rodauth
         return super unless resource_indicators
 
         super.merge(aud: resource_indicators)
+      end
+
+      def jwt_decode(token, verify_aud: true, **args)
+        claims = super(token, verify_aud: false, **args)
+
+        return claims unless verify_aud
+
+        return unless claims["aud"] && claims["aud"].one? { |aud| request.url.starts_with?(aud) }
+
+        claims
       end
     end
 

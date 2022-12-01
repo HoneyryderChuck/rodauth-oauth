@@ -12,7 +12,7 @@ class RodauthOAuthResourceIndicatorsTokenAccessTest < RodaIntegration
     setup_application
 
     header "Accept", "application/json"
-    set_authorization_header(oauth_token(resource: "http://smthelse.com"))
+    set_authorization_header(oauth_grant_with_token(resource: "http://smthelse.com"))
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 401
@@ -25,7 +25,7 @@ class RodauthOAuthResourceIndicatorsTokenAccessTest < RodaIntegration
     setup_application
 
     header "Accept", "application/json"
-    set_authorization_header(oauth_token(resource: "http://example.org"))
+    set_authorization_header(oauth_grant_with_token(resource: "http://example.org"))
     # valid token, and now we're getting somewhere
     get("/private")
     assert last_response.status == 200

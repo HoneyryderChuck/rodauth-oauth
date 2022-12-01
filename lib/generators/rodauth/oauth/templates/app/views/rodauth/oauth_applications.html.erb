@@ -4,7 +4,7 @@
   <%= link_to rodauth.new_oauth_application_page_title, "#{rodauth.oauth_applications_path}/new", class: "btn btn-secondary" %>
 </div>
 <% if apps_count.zero? %>
-  <p>No oauth applications yet!</p>
+  <p><%= rodauth.oauth_no_applications_text %></p>
 <% else %>
   <table class="table">
     <thead>
@@ -26,5 +26,5 @@
       <% end %>
     </tbody>
   </table>
-  <%= rodauth.oauth_management_pagination_links(oauth_applications_ds) %>
+  <%= rodauth.oauth_management_pagination_links(oauth_applications_ds).html_safe %>
 <% end %>

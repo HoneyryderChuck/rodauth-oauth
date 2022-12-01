@@ -1,5 +1,11 @@
 -
   -
+    name: "1.0.0.pre.beta2"
+    path: "1_0_0_beta2_md.html"
+  -
+    name: "1.0.0.pre.beta1"
+    path: "1_0_0_beta1_md.html"
+  -
     name: "0.10.4"
     path: "0_10_4_md.html"
   -

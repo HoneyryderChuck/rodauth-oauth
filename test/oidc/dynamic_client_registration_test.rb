@@ -1,17 +1,14 @@
 # frozen_string_literal: true
 
 require "test_helper"
+require "webmock/minitest"
 
 class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
   include Rack::Test::Methods
+  include WebMock::API
 
   def test_oidc_client_registration_response_type_id_token
-    rodauth do
-      enable :oidc_dynamic_client_registration
-      oauth_application_scopes %w[read write]
-      use_oauth_implicit_grant_type? true
-    end
-    setup_application
+    setup_application(:oauth_implicit_grant)
     header "Accept", "application/json"
 
     post("/register", valid_registration_params.merge(
@@ -31,9 +28,7 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
 
   def test_oidc_client_registration_native_application_type
     rodauth do
-      enable :oidc_dynamic_client_registration
       oauth_valid_uri_schemes %w[http https newapp]
-      oauth_application_scopes %w[read write]
     end
     setup_application
     header "Accept", "application/json"
@@ -69,12 +64,9 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
 
   def test_oidc_client_registration_web_application_type
     rodauth do
-      enable :oidc_dynamic_client_registration
       oauth_valid_uri_schemes %w[http https]
-      oauth_application_scopes %w[read write]
-      use_oauth_implicit_grant_type? true
     end
-    setup_application
+    setup_application(:oauth_implicit_grant)
     header "Accept", "application/json"
 
     post("/register", valid_registration_params.merge(
@@ -106,9 +98,7 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
 
   def test_oidc_client_registration_subject_type
     rodauth do
-      enable :oidc_dynamic_client_registration
       oauth_valid_uri_schemes %w[http https]
-      oauth_application_scopes %w[read write]
     end
     setup_application
     header "Accept", "application/json"
@@ -130,13 +120,72 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
                       ))
 
     assert last_response.status == 201
+
+    redirect_uris = %w[https://foobar.com/callback https://foobar.com/callback2]
+
+    stub_request(:get, "https://fail.example.net/file_of_redirect_uris.json")
+      .to_return(body: JSON.dump(%w[https://google.com]))
+
+    post("/register", valid_registration_params.merge(
+                        "redirect_uris" => redirect_uris,
+                        "subject_type" => "pairwise",
+                        "sector_identifier_uri" => "https://fail.example.net/file_of_redirect_uris.json"
+                      ))
+    assert last_response.status == 400
+
+    stub_request(:get, "https://succ.example.net/file_of_redirect_uris.json")
+      .to_return(body: JSON.dump(redirect_uris))
+
+    post("/register", valid_registration_params.merge(
+                        "redirect_uris" => redirect_uris,
+                        "subject_type" => "pairwise",
+                        "sector_identifier_uri" => "https://succ.example.net/file_of_redirect_uris.json"
+                      ))
+    assert last_response.status == 201
+  end
+
+  def test_oidc_client_registration_request_uris
+    rodauth do
+      oauth_require_request_uri_registration true
+    end
+    setup_application(:oauth_jwt_secured_authorization_request)
+    header "Accept", "application/json"
+
+    post("/register", valid_registration_params.merge(
+                        "request_uris" => "bla"
+                      ))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge(
+                        "request_uris" => %w[https://registero.com]
+                      ))
+
+    assert last_response.status == 201
+
+    post("/register", valid_registration_params)
+
+    assert last_response.status == 400
+  end
+
+  def test_oidc_client_registration_post_logout_redirect_uris
+    setup_application(:oidc_rp_initiated_logout)
+    header "Accept", "application/json"
+
+    post("/register", valid_registration_params.merge(
+                        "post_logout_redirect_uris" => "bla"
+                      ))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge(
+                        "post_logout_redirect_uris" => %w[https://logout.com]
+                      ))
+
+    assert last_response.status == 201
   end
 
   def test_oidc_client_registration_id_token_signed_response
-    rodauth do
-      enable :oidc_dynamic_client_registration
-      oauth_application_scopes %w[read write]
-    end
     setup_application
     header "Accept", "application/json"
 
@@ -167,10 +216,6 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
   end
 
   def test_oidc_client_registration_userinfo_signed_response
-    rodauth do
-      enable :oidc_dynamic_client_registration
-      oauth_application_scopes %w[read write]
-    end
     setup_application
     header "Accept", "application/json"
 
@@ -202,11 +247,7 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
   end
 
   def test_oidc_client_registration_request_object
-    rodauth do
-      enable :oidc_dynamic_client_registration
-      oauth_application_scopes %w[read write]
-    end
-    setup_application
+    setup_application(:oauth_jwt_secured_authorization_request)
     header "Accept", "application/json"
 
     post("/register", valid_registration_params.merge("request_object_signing_alg" => "smth"))
@@ -238,6 +279,17 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
 
   private
 
+  def setup_application(*)
+    rodauth do
+      before_register {} # no auth
+    end
+    super
+  end
+
+  def oauth_feature
+    :oidc_dynamic_client_registration
+  end
+
   def valid_registration_params
     @valid_registration_params ||= {
       "redirect_uris" => %w[https://foobar.com/callback https://foobar.com/callback2],
@@ -247,7 +299,7 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
       "client_name" => "This client name",
       "client_uri" => "https://foobar.com",
       "logo_uri" => "https://foobar.com/logo.png",
-      "scope" => "read write",
+      "scope" => "openid",
       "contacts" => %w[emp@mail.com],
       "tos_uri" => "https://foobar.com/tos",
       "policy_uri" => "https://foobar.com/policy",

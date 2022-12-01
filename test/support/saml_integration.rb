@@ -38,18 +38,19 @@ class SAMLIntegration < RodaIntegration
     ))
   end
 
-  def setup_application
-    feature = oauth_feature
+  def setup_application(*features)
+    features << oauth_feature
     scopes = test_scopes
 
     testdb = db
 
     rodauth do
       db testdb
-      enable :login, :oauth_authorization_code_grant, feature
+      enable :login, :oauth_authorization_code_grant, *features
       login_return_to_requested_location? true
-      oauth_application_default_scope scopes.first
       oauth_application_scopes scopes
+      oauth_grants_token_hash_column nil
+      oauth_grants_refresh_token_hash_column nil
     end
 
     roda do |r|
@@ -72,6 +73,10 @@ class SAMLIntegration < RodaIntegration
 
   def oauth_feature
     :oauth_saml_bearer_grant
+  end
+
+  def default_grant_type
+    "saml2-bearer"
   end
 
   def saml_assertion(principal)

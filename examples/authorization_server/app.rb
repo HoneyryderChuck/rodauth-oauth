@@ -19,10 +19,10 @@ else
   end
   DB.create_table(:oauth_applications) do
     primary_key :id, type: Integer
-    foreign_key :account_id, :accounts, null: false
+    foreign_key :account_id, :accounts, null: true
     String :name, null: false
     String :description, null: true
-    String :homepage_url, null: false
+    String :homepage_url, null: true
     String :redirect_uri, null: false
     String :client_id, null: false, unique: true
     String :client_secret, null: false, unique: true
@@ -45,7 +45,10 @@ else
     primary_key :id, type: Integer
     foreign_key :account_id, :accounts, null: false
     foreign_key :oauth_application_id, :oauth_applications, null: false
-    String :code, null: false
+    String :type, null: false
+    String :code, null: true
+    String :token, token: true, unique: true
+    String :refresh_token, token: true, unique: true
     DateTime :expires_in, null: false
     String :redirect_uri
     DateTime :revoked_at
@@ -55,18 +58,6 @@ else
     # if using PKCE flow
     # String :code_challenge
     # String :code_challenge_method
-  end
-  DB.create_table :oauth_tokens do |_t|
-    primary_key :id, type: Integer
-    foreign_key :account_id, :accounts
-    foreign_key :oauth_grant_id, :oauth_grants
-    foreign_key :oauth_token_id, :oauth_tokens
-    foreign_key :oauth_application_id, :oauth_applications, null: false
-    String :token, token: true
-    String :refresh_token, token: true
-    DateTime :expires_in, null: false
-    DateTime :revoked_at
-    String :scopes, null: false
   end
 end
 
@@ -95,16 +86,16 @@ class AuthorizationServer < Roda
 
   plugin :rodauth, json: true do
     db DB
-    enable :login, :logout, :create_account, :oauth, :oauth_dynamic_client_registration
+    enable :login, :logout, :create_account,
+           :oauth_authorization_code_grant, :oauth_client_credentials_grant,
+           :oauth_application_management, :oauth_grant_management, :oauth_token_revocation,
+           :oauth_dynamic_client_registration, :oauth_token_introspection
     login_return_to_requested_location? true
     account_password_hash_column :ph
     title_instance_variable :@page_title
 
     oauth_application_scopes %w[profile.read books.read books.write]
-    oauth_application_default_scope "profile.read"
     oauth_valid_uri_schemes %w[http https]
-
-    oauth_tokens_refresh_token_hash_column :refresh_token
 
     before_register do
       email = request.env["HTTP_AUTHORIZATION"]
@@ -123,9 +114,9 @@ class AuthorizationServer < Roda
   route do |r|
     r.assets
     r.rodauth
-    rodauth.oauth_applications
-    rodauth.oauth_tokens
-    rodauth.oauth_server_metadata
+    rodauth.load_oauth_application_management_routes
+    rodauth.load_oauth_grant_management_routes
+    rodauth.load_oauth_server_metadata_route
 
     r.root do
       view inline: <<~HTML
@@ -135,7 +126,7 @@ class AuthorizationServer < Roda
         </p>
         <% else %>
           <p class="lead">
-            This is the demo authorization server for <a href="https://gitlab.com/honeyryderchuck/rodauth-oauth">Roda Oauth</a>.
+            This is the demo authorization server for <a href="https://gitlab.com/os85/rodauth-oauth">Roda Oauth</a>.
             Roda Oauth extends Rodauth to support the OAuth 2.0 authorization protocol, while adhering to the same principles of the parent library.
           </p>
           <p class="lead">In the authorization server, you can setup your account, and also register client applications.</p>
@@ -143,7 +134,7 @@ class AuthorizationServer < Roda
             <a class="btn btn-outline-primary btn-padded" href="/login">Login</a>
             <a class="btn btn-outline-secondary btn-padded" href="/create-account">Sign Up</a>
           </p>
-          <footer class="lead">This demo site is part of the Rodauth repository, so if you want to know how it works, you can <a href="https://gitlab.com/honeyryderchuck/rodauth-oauth/tree/master/examples">review the source</a>.</footer>
+          <footer class="lead">This demo site is part of the Rodauth repository, so if you want to know how it works, you can <a href="https://gitlab.com/os85/rodauth-oauth/tree/master/examples">review the source</a>.</footer>
         <% end %>
       HTML
     end

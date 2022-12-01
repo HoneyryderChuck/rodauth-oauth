@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "onelogin/ruby-saml"
+require "rodauth/oauth"
 
 module Rodauth
   Feature.define(:oauth_saml_bearer_grant, :OauthSamlBearerGrant) do
@@ -16,11 +17,17 @@ module Rodauth
     auth_value_method :oauth_saml_security_digest_method, XMLSecurity::Document::SHA1
     auth_value_method :oauth_saml_security_signature_method, XMLSecurity::Document::RSA_SHA1
 
+    auth_value_method :max_param_bytesize, nil if Rodauth::VERSION >= "2.26.0"
+
     auth_value_methods(
       :require_oauth_application_from_saml2_bearer_assertion_issuer,
       :require_oauth_application_from_saml2_bearer_assertion_subject,
       :account_from_saml2_bearer_assertion
     )
+
+    def oauth_grant_types_supported
+      super | %w[urn:ietf:params:oauth:grant-type:saml2-bearer]
+    end
 
     private
 
@@ -94,7 +101,6 @@ module Rodauth
 
     def oauth_server_metadata_body(*)
       super.tap do |data|
-        data[:grant_types_supported] << "urn:ietf:params:oauth:grant-type:saml2-bearer"
         data[:token_endpoint_auth_methods_supported] << "urn:ietf:params:oauth:client-assertion-type:saml2-bearer"
       end
     end

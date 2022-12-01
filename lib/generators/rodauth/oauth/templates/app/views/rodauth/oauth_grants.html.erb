@@ -1,0 +1,37 @@
+<% oauth_grants = rodauth.scope.instance_variable_get(:@oauth_grants) %>
+<% grants_count = oauth_grants.count %>
+<% if grants_count.zero? %>
+  <p><%= rodauth.oauth_no_grants_text %></p>
+<% else %>
+  <table class="table">
+    <thead>
+      <tr>
+        <th scope="col"><=% rodauth.oauth_applications_name_label %></th>
+        <th scope="col"><=% rodauth.oauth_grants_type_label %></th>
+        <th scope="col"><=% rodauth.oauth_grants_token_label %></th>
+        <th scope="col"><=% rodauth.oauth_grants_refresh_token_label %></th>
+        <th scope="col"><=% rodauth.oauth_grants_expires_in_label %></th>
+        <th scope="col"><=% rodauth.oauth_grants_scopes_label %></th>
+        <th scope="col"><span class="badge badge-pill badge-dark"><%= grants_count %></span>
+      </tr>
+    </thead>
+    <tbody>
+      <% oauth_grants.each do |oauth_grant| %>
+        <tr>
+          <td><%= oauth_grant[rodauth.oauth_applications_name_column] %></td>
+          <td><%= oauth_grant[rodauth.oauth_grants_type_column] %></td>
+          <td><code class="token"><%= oauth_grant[rodauth.oauth_grants_token_column] %></code></td>
+          <td><code class="token"><%= oauth_grant[rodauth.oauth_grants_refresh_token_column] %></code></td>
+          <td><%= oauth_grant[rodauth.oauth_grants_expires_in_column] %></td>
+          <td><%= oauth_grant[rodauth.oauth_grants_scopes_column] %></td>
+          <td>
+            <%= form_tag rodauth.oauth_grant_path(oauth_grant[rodauth.oauth_grants_id_column]), method: :post do %>
+              <%= submit_tag rodauth.oauth_grant_revoke_button, class: "btn btn-danger" %>
+            <% end %>
+          </td>
+        </tr>
+      <% end %>
+    </tbody>
+  </table>
+  <%= rodauth.oauth_management_pagination_links(oauth_grants) %>
+<% end %>

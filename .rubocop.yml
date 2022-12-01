@@ -198,6 +198,9 @@ Metrics/CyclomaticComplexity:
 Metrics/PerceivedComplexity:
   Enabled: false
 
+Metrics/BlockNesting:
+  Enabled: false
+
 Style/MultipleComparison:
   Enabled: false
 
@@ -231,9 +234,6 @@ Style/SoleNestedConditional:
 # this breaks some tests, to_h returns a frozen hash apparently?
 Style/HashConversion:
   Enabled: false
-
-Metrics/BlockNesting:
-  Max: 4
 
 Lint/SuppressedException:
   Exclude:

@@ -8,7 +8,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
   def test_oidc_userinfo_openid
     setup_application
 
-    access_token = generate_access_token("openid")
+    access_token = generate_access_token(oauth_grant(scopes: "openid"))
     login(access_token)
 
     @json_body = nil
@@ -21,7 +21,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
   def test_oidc_userinfo_email
     setup_application
 
-    access_token = generate_access_token("openid email")
+    access_token = generate_access_token(oauth_grant(scopes: "openid email"))
     login(access_token)
 
     @json_body = nil
@@ -37,7 +37,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
   def test_oidc_userinfo_email_email
     setup_application
 
-    access_token = generate_access_token("openid email.email")
+    access_token = generate_access_token(oauth_grant(scopes: "openid email.email"))
     login(access_token)
 
     @json_body = nil
@@ -50,10 +50,36 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
     assert !json_body.key?("email_verified")
   end
 
+  def test_oidc_userinfo_claims_locales
+    rodauth do
+      get_additional_param do |account, claim, locale|
+        case claim
+        when :name
+          locale == :pt ? "Tiago" : "James"
+        else
+          account[claim]
+        end
+      end
+    end
+    setup_application
+
+    access_token = generate_access_token(oauth_grant(scopes: "openid name", claims_locales: "pt en"))
+    login(access_token)
+
+    @json_body = nil
+    # valid token, and now we're getting somewhere
+    get("/userinfo")
+
+    assert last_response.status == 200
+    assert json_body.key?("sub")
+    assert json_body["name#pt"] == "Tiago"
+    assert json_body["name#en"] == "James"
+  end
+
   def test_oidc_userinfo_address
     setup_application
 
-    access_token = generate_access_token("openid address")
+    access_token = generate_access_token(oauth_grant(scopes: "openid address"))
     login(access_token)
 
     @json_body = nil
@@ -70,7 +96,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
   def test_oidc_userinfo_additional_claims
     setup_application
 
-    access_token = generate_access_token("openid fruit")
+    access_token = generate_access_token(oauth_grant(scopes: "openid fruit"))
     login(access_token)
 
     @json_body = nil
@@ -83,18 +109,66 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
     assert json_body["fruit"] == "tutti-frutti"
   end
 
+  def test_oidc_userinfo_claims
+    rodauth do
+      get_oidc_param do |account, claim|
+        case claim
+        when :name
+          "James"
+        when :nickname
+          "Snoop"
+        else
+          account[claim]
+        end
+      end
+      get_additional_param do |account, claim|
+        case claim
+        when :foo
+          "bar"
+        else
+          account[claim]
+        end
+      end
+    end
+    setup_application
+
+    claims = JSON.dump({
+                         "userinfo" => { "name" => { "essential " => true } },
+                         "id_token" => {
+                           "nickname" => { "essential " => true },
+                           "foo" => {
+                             "essential" => true,
+                             "values" => %w[bar ba2]
+                           }
+                         }
+                       })
+
+    access_token = generate_access_token(oauth_grant(scopes: "openid", claims: claims))
+    login(access_token)
+
+    @json_body = nil
+    # valid token, and now we're getting somewhere
+    get("/userinfo")
+
+    assert last_response.status == 200
+    assert json_body.key?("sub")
+    assert json_body.key?("name")
+    assert json_body["name"] == "James"
+    assert !json_body.key?("nickname")
+    assert !json_body.key?("foo")
+  end
+
   def test_oidc_userinfo_signed_response_alg
     jws_rs256_key = OpenSSL::PKey::RSA.generate(2048)
     jws_rs512_key = OpenSSL::PKey::RSA.generate(2048)
     jws_rs512_public_key = jws_rs512_key.public_key
     rodauth do
-      oauth_jwt_keys { { "RS256" => jws_rs256_key, "RS512" => jws_rs512_key } }
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => jws_rs256_key, "RS512" => jws_rs512_key)
     end
     setup_application
     oauth_application(userinfo_signed_response_alg: "RS512")
 
-    access_token = generate_access_token("openid fruit")
+    access_token = generate_access_token(oauth_grant(scopes: "openid fruit"))
     login(access_token)
 
     @json_body = nil
@@ -121,8 +195,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
     jws_public_key = jws_key.public_key
 
     rodauth do
-      oauth_jwt_key jws_key
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => jws_key)
     end
     setup_application
     oauth_application(
@@ -135,7 +208,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
       userinfo_encrypted_response_enc: "A256CBC-HS512"
     )
 
-    access_token = generate_access_token("openid fruit")
+    access_token = generate_access_token(oauth_grant(scopes: "openid fruit"))
     login(access_token)
 
     @json_body = nil
@@ -159,10 +232,9 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
 
   private
 
-  def setup_application
+  def setup_application(*)
     rodauth do
-      oauth_jwt_key OpenSSL::PKey::RSA.generate(2048)
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => OpenSSL::PKey::RSA.generate(2048))
       get_oidc_param do |account, claim|
         case claim
         when :email_verified
@@ -191,9 +263,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
     header "Authorization", "Bearer #{token}"
   end
 
-  def generate_access_token(scopes = "openid")
-    grant = oauth_grant(scopes: scopes)
-
+  def generate_access_token(grant)
     post("/token",
          client_id: oauth_application[:client_id],
          client_secret: "CLIENT_SECRET",
@@ -203,7 +273,7 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
 
     verify_response
 
-    verify_oauth_token
+    verify_oauth_grant
     json_body["access_token"]
   end
 end

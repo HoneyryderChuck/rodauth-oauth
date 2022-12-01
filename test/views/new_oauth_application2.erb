@@ -1,6 +1,6 @@
 <form action= "/oauth-applications" method="post" class="form-horizontal" role="form" id="oauth-application-form">
   <h2>Register Oauth Application</h2>
-  <%= csrf_tag if respond_to?(:csrf_tag) %>
+  <%= csrf_tag("/oauth-applications") if respond_to?(:csrf_tag) %>
   <input type="hidden" name="lp" value="<%= rodauth.param('lp') %>"/>
   <div class="form-group">
     <label class="col-sm-2 control-label" for="name">Name</label>

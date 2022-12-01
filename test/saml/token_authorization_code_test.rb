@@ -41,9 +41,9 @@ class RodauthOAuthTokenSAMLAuthorizationCodeTest < SAMLIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_tokens].count == 1
+    assert db[:oauth_grants].count == 1
 
-    access_token = db[:oauth_tokens].first
+    access_token = db[:oauth_grants].first
 
     assert access_token[:scopes] == oauth_application[:scopes]
     assert json_body["token_type"] == "bearer"
@@ -56,19 +56,21 @@ class RodauthOAuthTokenSAMLAuthorizationCodeTest < SAMLIntegration
   def test_token_grant_client_authentication_with_assertion_successful
     setup_application
 
+    grant = set_oauth_grant(type: "authorization_code")
+
     post("/token",
          client_assertion_type: "urn:ietf:params:oauth:client-assertion-type:saml2-bearer",
          client_assertion: saml_assertion(oauth_application),
          grant_type: "authorization_code",
-         code: oauth_grant[:code],
-         redirect_uri: oauth_grant[:redirect_uri])
+         code: grant[:code],
+         redirect_uri: grant[:redirect_uri])
 
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_tokens].count == 1
+    assert db[:oauth_grants].count == 1
 
-    access_token = db[:oauth_tokens].first
+    access_token = db[:oauth_grants].first
 
     assert access_token[:scopes] == oauth_application[:scopes]
     assert json_body["token_type"] == "bearer"
@@ -80,7 +82,7 @@ class RodauthOAuthTokenSAMLAuthorizationCodeTest < SAMLIntegration
 
   private
 
-  def setup_application
+  def setup_application(*)
     super
     header "Accept", "application/json"
   end

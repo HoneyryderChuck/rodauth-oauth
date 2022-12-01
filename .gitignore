@@ -5,7 +5,7 @@ coverage
 /pkg/
 /spec/reports/
 /tmp/
-Gemfile*.lock
+Gemfile-*.lock
 test.db
 /test/tmp
 www/public

@@ -6,12 +6,11 @@ https://tools.ietf.org/html/rfc7636
 
 == Auth Value Methods
 
-use_oauth_pkce? :: Whether PKCE is enabled, <tt>true</tt> by default.
-oauth_require_pkce :: Enforces usage of PKCE, <tt>false</tt> by default.
+oauth_require_pkce :: Enforces usage of PKCE, <tt>true</tt> by default.
 oauth_pkce_challenge_method :: challenge method used in PKCE flow, <tt>S256</tt> by default.
 oauth_grants_code_challenge_column :: the db column where the oauth grant PKCE code challenge is stored, <tt>:code_challenge</tt> by default.
 oauth_grants_code_challenge_method_column :: the db column where the oauth grant PKCE code challenge method is stored, <tt>:code_challenge_method</tt> by default.
-code_challenge_required_error_code :: oauth error code for when PKCE code challenge is required, <tt>"invalid_request"</tt> by default.
-code_challenge_required_message :: error description for the "code challenge required" OAuth error code, <tt>"code challenge required"</tt> by default.
-unsupported_transform_algorithm_error_code :: oauth error code for when the PKCE transform algorithm is unsupported, <tt>"invalid_request"</tt> by default.
-unsupported_transform_algorithm_message :: error description for the PKCE "unsupported transform algorithm" OAuth error code, <tt>"transform algorithm not supported"</tt> by default.
+oauth_code_challenge_required_error_code :: oauth error code for when PKCE code challenge is required, <tt>"invalid_request"</tt> by default.
+oauth_code_challenge_required_message :: error description for the "code challenge required" OAuth error code, <tt>"code challenge required"</tt> by default.
+oauth_unsupported_transform_algorithm_error_code :: oauth error code for when the PKCE transform algorithm is unsupported, <tt>"invalid_request"</tt> by default.
+oauth_unsupported_transform_algorithm_message :: error description for the PKCE "unsupported transform algorithm" OAuth error code, <tt>"transform algorithm not supported"</tt> by default.

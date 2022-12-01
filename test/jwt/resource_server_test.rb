@@ -128,16 +128,16 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
   private
 
   def generate_access_token(priv_key, alg, params = {})
-    exp = oauth_token[:expires_in]
-    exp = Time.parse(oauth_token[:expires_in]) unless exp.is_a?(Time)
+    exp = oauth_grant[:expires_in]
+    exp = Time.parse(oauth_grant[:expires_in]) unless exp.is_a?(Time)
     params = {
-      sub: oauth_token[:account_id],
+      sub: oauth_grant[:account_id],
       iss: "https://auth-server", # issuer
       iat: Time.now.to_i, # issued at
       client_id: oauth_application[:client_id],
       exp: exp.to_i,
-      aud: "resource-server",
-      scope: oauth_token[:scopes]
+      aud: oauth_application[:client_id],
+      scope: oauth_grant[:scopes]
     }.merge(params)
 
     headers = {}
@@ -152,13 +152,21 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
 
   def setup_application(auth_url = "https://auth-server")
     resource_server = Class.new(Roda)
+    resource_server.plugin :common_logger if ENV.key?("RODAUTH_DEBUG")
 
     resource_server.plugin :rodauth do
-      enable :oauth_jwt
-      oauth_jwt_token_issuer auth_url
-      oauth_jwt_audience "resource-server"
-      is_authorization_server? false
+      enable :oauth_resource_server, :oauth_jwt
       authorization_server_url auth_url
+
+      http_request_cache do
+        obj = Object.new
+        obj.define_singleton_method(:[]) { |*|; } # rubocop:disable Lint/EmptyBlock
+        obj.define_singleton_method(:set) do |*, &blk|
+          body, _ttl = blk.call
+          body
+        end
+        obj
+      end
     end
 
     resource_server.route do |r|

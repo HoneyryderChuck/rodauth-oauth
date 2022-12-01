@@ -5,10 +5,10 @@ require "test_helper"
 class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
   include Rack::Test::Methods
 
-  def test_oauth_jwt_authorization_code_hmac_sha256
+  def test_oauth_jwt_not_jwt_access_token
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_keys("HS256" => "SECRET")
+      oauth_jwt_access_tokens false
     end
     setup_application
 
@@ -21,26 +21,15 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
     verify_response
 
-    oauth_token = verify_oauth_token
+    assert db[:oauth_grants].count == 1
+    grant = db[:oauth_grants].first
 
-    payload = verify_access_token_response(json_body, oauth_token, "SECRET", "HS256")
-
-    # by default the subject type is public
-    assert payload["sub"] == account[:id]
-
-    # use token
-    header "Authorization", "Bearer #{json_body['access_token']}"
-
-    # valid token, and now we're getting somewhere
-    get("/private")
-    assert last_response.status == 200
+    assert json_body["token"] = grant[:token]
   end
 
-  def test_oauth_jwt_authorization_code_hmac_sha256_subject_pairwise
+  def test_oauth_jwt_authorization_code_hmac_sha256
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
-      oauth_jwt_subject_type "pairwise"
+      oauth_jwt_keys("HS256" => "SECRET")
     end
     setup_application
 
@@ -53,11 +42,12 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
     verify_response
 
-    oauth_token = verify_oauth_token
+    oauth_grant = verify_oauth_grant
 
-    payload = verify_access_token_response(json_body, oauth_token, "SECRET", "HS256")
+    payload = verify_access_token_response(json_body, oauth_grant, "SECRET", "HS256")
+
     # by default the subject type is public
-    assert payload["sub"] != account[:id]
+    assert payload["sub"] == account[:id].to_s
 
     # use token
     header "Authorization", "Bearer #{json_body['access_token']}"
@@ -69,10 +59,9 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
   def test_token_authorization_code_hmac_sha256_hash_columns
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
-      oauth_tokens_token_hash_column :token_hash
-      oauth_tokens_refresh_token_hash_column :refresh_token_hash
+      oauth_jwt_keys("HS256" => "SECRET")
+      oauth_grants_token_hash_column :token_hash
+      oauth_grants_refresh_token_hash_column :refresh_token_hash
     end
     setup_application
 
@@ -85,13 +74,13 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
     verify_response
 
-    oauth_token = verify_oauth_token
+    oauth_grant = verify_oauth_grant
 
-    assert oauth_token[:refresh_token].nil?
-    assert !oauth_token[:refresh_token_hash].nil?
+    assert oauth_grant[:refresh_token].nil?
+    assert !oauth_grant[:refresh_token_hash].nil?
 
-    assert json_body["access_token"] != oauth_token[:token_hash]
-    assert json_body["refresh_token"] != oauth_token[:refresh_token_hash]
+    assert json_body["access_token"] != oauth_grant[:token_hash]
+    assert json_body["refresh_token"] != oauth_grant[:refresh_token_hash]
     assert !json_body["expires_in"].nil?
 
     header "Authorization", "Bearer #{json_body['access_token']}"
@@ -104,9 +93,8 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
     rsa_private = OpenSSL::PKey::RSA.generate 2048
     rsa_public = rsa_private.public_key
     rodauth do
-      oauth_jwt_key rsa_private
-      oauth_jwt_public_key rsa_public
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => rsa_private)
+      oauth_jwt_public_keys("RS256" => rsa_public)
     end
     setup_application
 
@@ -119,9 +107,9 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
     verify_response
 
-    oauth_token = verify_oauth_token
+    oauth_grant = verify_oauth_grant
 
-    verify_access_token_response(json_body, oauth_token, rsa_public, "RS256")
+    verify_access_token_response(json_body, oauth_grant, rsa_public, "RS256")
 
     # use token
     header "Authorization", "Bearer #{json_body['access_token']}"
@@ -139,9 +127,8 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
       ecdsa_public.private_key = nil
 
       rodauth do
-        oauth_jwt_key ecdsa_key
-        oauth_jwt_public_key ecdsa_public
-        oauth_jwt_algorithm "ES256"
+        oauth_jwt_keys("ES256" => ecdsa_key)
+        oauth_jwt_public_keys("ES256" => ecdsa_public)
       end
       setup_application
 
@@ -154,9 +141,9 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
       verify_response
 
-      oauth_token = verify_oauth_token
+      oauth_grant = verify_oauth_grant
 
-      verify_access_token_response(json_body, oauth_token, ecdsa_public, "ES256")
+      verify_access_token_response(json_body, oauth_grant, ecdsa_public, "ES256")
 
       # use token
       header "Authorization", "Bearer #{json_body['access_token']}"
@@ -171,12 +158,9 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
     jwe_key = OpenSSL::PKey::RSA.new(2048)
 
     rodauth do
-      oauth_jwt_key "SECRET"
-      oauth_jwt_algorithm "HS256"
-      oauth_jwt_jwe_keys { { %w[RSA-OAEP A128CBC-HS256] => jwe_key } }
-      oauth_jwt_jwe_public_key jwe_key.public_key
-      oauth_jwt_jwe_algorithm "RSA-OAEP"
-      oauth_jwt_jwe_encryption_method "A128CBC-HS256"
+      oauth_jwt_keys("HS256" => "SECRET")
+      oauth_jwt_jwe_keys(%w[RSA-OAEP A128CBC-HS256] => jwe_key)
+      oauth_jwt_jwe_public_keys(%w[RSA-OAEP A128CBC-HS256] => jwe_key.public_key)
     end
     setup_application
 
@@ -189,13 +173,13 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
     verify_response
 
-    oauth_token = verify_oauth_token
+    oauth_grant = verify_oauth_grant
 
     encrypted_token = json_body["access_token"]
 
     token = JWE.decrypt(encrypted_token, jwe_key)
 
-    verify_access_token_response(json_body.merge("access_token" => token), oauth_token, "SECRET", "HS256")
+    verify_access_token_response(json_body.merge("access_token" => token), oauth_grant, "SECRET", "HS256")
 
     # use token
     header "Authorization", "Bearer #{json_body['access_token']}"
@@ -225,8 +209,8 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
       verify_response
 
-      oauth_token = verify_oauth_token
-      verify_access_token_response(json_body, oauth_token, legacy_rsa_public, "RS256")
+      oauth_grant = verify_oauth_grant
+      verify_access_token_response(json_body, oauth_grant, legacy_rsa_public, "RS256")
     end
 
     # Set up new app and tokens
@@ -234,7 +218,7 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
     # Resource server
     @rodauth_blocks.clear
     rodauth do
-      oauth_jwt_keys { { "RS256" => legacy_rsa_public } }
+      oauth_jwt_keys("RS256" => legacy_rsa_public)
     end
     setup_application
 
@@ -251,11 +235,10 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
   private
 
-  def setup_application
+  def setup_application(*)
     super
     rodauth do
-      oauth_jwt_key OpenSSL::PKey::RSA.new(2048)
-      oauth_jwt_algorithm "HS256"
+      oauth_jwt_keys("HS256" => OpenSSL::PKey::RSA.new(2048))
     end
     header "Accept", "application/json"
   end

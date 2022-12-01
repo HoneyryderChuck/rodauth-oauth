@@ -4,7 +4,6 @@ The +oauth_application_management+ feature provides OAuth Client Application Man
 
 == Auth Value Methods
 
-oauth_valid_uri_schemes :: list of support URI schemes for a client application's "redirect_uri", <tt>%w[https]</tt> by default.
 oauth_application_required_params :: fields required when submitting a new client application, <tt>%w[name description scopes homepage_url redirect_uri client_secret]</tt> by default.
 oauth_application_client_id_param: form parameter for a client application client id, <tt>client_id</tt> by default.
 oauth_application_client_secret_param: form parameter for a client application client secret, <tt>client_secret</tt> by default.
@@ -15,16 +14,16 @@ oauth_application_scopes_param: form parameter for a client application scopes, 
 oauth_application_homepage_url_param: form parameter for a client application homepage URL, <tt>homepage_url</tt> by default.
 oauth_applications_id_pattern :: pattern matcher to retrieve the client application ID from the URL, <tt>Integer</tt> by default (must respond to "match").
 oauth_application_path :: URL sub-path used for a client application view.
-oauth_applications_oauth_tokens_path :: URL sub-path used for a client application's oauth tokens views, <tt>"oauth-tokens"</tt> by default
+oauth_applications_oauth_grants_path :: URL sub-path used for a client application's oauth grants views, <tt>"oauth-tokens"</tt> by default
 invalid_url_message :: error description for the "invalid_url" OAuth error code, <tt>"Invalid URL"</tt> by default.
 null_error_message :: error description for the "null_error" OAuth error code, <tt>"is not filled"</tt> by default.
 oauth_applications_per_page :: max number of oauth applications to list in the oauth applications route.
-oauth_tokens_per_page :: max number of oauth tokens to list in the routes listing oauth tokens.
+oauth_grants_per_page :: max number of oauth grants to list in the routes listing oauth tokens.
 
 new_oauth_application_page_title :: Title for the new OAuth application form.
 oauth_application_page_title :: Title for an OAuth application page.
 oauth_applications_page_title :: Title for the OAuth applications page.
-oauth_application_oauth_tokens_page_title :: Title for the OAuth tokens page for a given application.
+oauth_application_oauth_grants_page_title :: Title for the OAuth grants page for a given application.
 
 oauth_applications_client_id_label :: Form label for the oauth application client ID.
 oauth_applications_name_label :: Form label for the oauth application name.
@@ -39,8 +38,14 @@ oauth_applications_jwks_uri_label :: Form label for the oauth application URI wh
 oauth_applications_policy_uri_label :: Form label for the oauth application Policy URI.
 oauth_applications_tos_uri_label :: Form label for the oauth application Terms of Service URI.
 
+oauth_grants_expires_in_label :: Label for the oauth grant expires in property.
+oauth_grants_revoked_at_label :: Label for the oauth grant revocation date.
+oauth_grants_refresh_token_label :: Label for the oauth grant refresh token.
+oauth_grants_token_label :: Label for the oauth grant.
+oauth_grants_type_label :: Label for the oauth grant type.
+
 oauth_application_button :: Label of OAuth application form button.
-oauth_token_revoke_button :: Label for the token revoke button.
+oauth_grant_revoke_button :: Label for the grant revoke button.
 
 oauth_application_client_id_param :: Form input for the oauth application client ID.
 oauth_application_client_secret_param :: Form input for the oauth application client secert.
@@ -56,7 +61,10 @@ after_create_oauth_application :: Run arbitrary code after creating an oauth app
 oauth_applications_view :: The HTML of the Oauth applications dashboard.
 oauth_application_view :: The HTML of an Oauth application page.
 new_oauth_application_view :: The HTML of a new Oauth application form.
-oauth_application_oauth_tokens_view :: The HTML of the Oauth application issued tokens dashboard.
+oauth_application_oauth_grants_view :: The HTML of the Oauth application grants dashboard.
 
 create_oauth_application_error_flash :: The flash error to display when there were submission errors creating an Oauth application.
 create_oauth_application_notice_flash :: The flash message to display when an Oauth application is created successfully.
+
+oauth_no_applications_text :: Lead text when applications list is empty.
+oauth_no_grants_text :: Lead text when grants list is empty.

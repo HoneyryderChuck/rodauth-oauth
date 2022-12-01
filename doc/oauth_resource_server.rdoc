@@ -1,0 +1,10 @@
+= Documentation for OAuth Resource Server feature
+
+The +oauth_resource_server+ feature streamlines the support for an OAuth Resource Server.
+
+https://www.rfc-editor.org/rfc/rfc6749#section-1.1
+
+== Auth Value Methods
+
+is_authorization_server? :: flag to signal whether it's an authorization server, <tt>false</tt> when this feature is used.
+before_introspection_request :: called before introspecting on a given access token (resource server only).

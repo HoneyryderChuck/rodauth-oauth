@@ -106,6 +106,22 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     assert json_body["error"] == "invalid_request"
   end
 
+  def test_token_authorization_code_some_other_application
+    setup_application
+
+    other_application = set_oauth_application(client_id: "OTHER_ID")
+
+    post("/token",
+         client_id: other_application[:client_id],
+         client_secret: "CLIENT_SECRET",
+         grant_type: "authorization_code",
+         code: oauth_grant[:code],
+         redirect_uri: oauth_grant[:redirect_uri])
+
+    assert last_response.status == 400
+    assert json_body["error"] == "invalid_grant"
+  end
+
   def test_token_authorization_code_successful
     setup_application
 
@@ -119,12 +135,11 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_tokens].count == 1
+    assert db[:oauth_grants].count == 1
 
-    oauth_token = db[:oauth_tokens].first
+    oauth_grant = db[:oauth_grants].first
 
-    verify_oauth_grant_revoked(oauth_token)
-    verify_access_token_response(json_body, oauth_token)
+    verify_access_token_response(json_body, oauth_grant)
   end
 
   def test_token_authorization_code_client_secret_basic
@@ -190,7 +205,7 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     assert last_response.status == 200
   end
 
-  def test_token_authorization_code_reuse_token_successful
+  def test_token_authorization_code_reuse_token
     rodauth do
       oauth_reuse_access_token true
     end
@@ -206,38 +221,48 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_tokens].count == 1
-    oauth_token = db[:oauth_tokens].first
-    verify_oauth_grant_revoked(oauth_token)
-    verify_access_token_response(json_body, oauth_token)
+    assert db[:oauth_grants].count == 1
+    oauth_grant = db[:oauth_grants].first
+    verify_access_token_response(json_body, oauth_grant)
 
     # second go at it
-    @oauth_grant = nil
-    another_grant = oauth_grant(code: "CODE2")
+    login
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=#{CGI.escape(oauth_application[:scopes])}&" \
+          "response_type=code&response_mode=query"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+
+    check "user.read"
+    check "user.write"
+    # submit authorization request
+    click_button "Authorize"
+    assert page.current_url.start_with?("#{oauth_application[:redirect_uri]}?code="),
+           "was redirected instead to #{page.current_url}"
+
+    grant_code = page.current_url[/code=(.+)/, 1]
 
     post("/token",
          client_id: oauth_application[:client_id],
          client_secret: "CLIENT_SECRET",
          grant_type: "authorization_code",
-         code: another_grant[:code],
-         redirect_uri: another_grant[:redirect_uri])
+         code: grant_code,
+         redirect_uri: oauth_grant[:redirect_uri])
 
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_tokens].count == 1
-    oauth_token2 = db[:oauth_tokens].first
-    verify_oauth_grant_revoked(oauth_token2)
-    verify_access_token_response(json_body, oauth_token2)
+    assert db[:oauth_grants].count == 1
+    oauth_grant2 = db[:oauth_grants].first
+    verify_access_token_response(json_body, oauth_grant2)
 
-    assert oauth_token[:id] == oauth_token2[:id]
-    assert oauth_token[:token] == oauth_token2[:token]
+    assert oauth_grant[:id] == oauth_grant2[:id]
+    assert oauth_grant[:token] == oauth_grant2[:token]
   end
 
   def test_token_authorization_code_hash_columns_successful
     rodauth do
-      oauth_tokens_token_hash_column :token_hash
-      oauth_tokens_refresh_token_hash_column :refresh_token_hash
+      oauth_grants_token_hash_column :token_hash
+      oauth_grants_refresh_token_hash_column :refresh_token_hash
     end
     setup_application
 
@@ -251,19 +276,17 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_tokens].count == 1
+    assert db[:oauth_grants].count == 1
 
-    access_token = db[:oauth_tokens].first
+    oauth_grant = db[:oauth_grants].first
 
-    verify_oauth_grant_revoked(access_token)
+    assert oauth_grant[:token].nil?
+    assert !oauth_grant[:token_hash].nil?
+    assert oauth_grant[:refresh_token].nil?
+    assert !oauth_grant[:refresh_token_hash].nil?
 
-    assert access_token[:token].nil?
-    assert !access_token[:token_hash].nil?
-    assert access_token[:refresh_token].nil?
-    assert !access_token[:refresh_token_hash].nil?
-
-    assert json_body["access_token"] != access_token[:token_hash]
-    assert json_body["refresh_token"] != access_token[:refresh_token_hash]
+    assert json_body["access_token"] != oauth_grant[:token_hash]
+    assert json_body["refresh_token"] != oauth_grant[:refresh_token_hash]
     assert !json_body["expires_in"].nil?
 
     header "Accept", "application/json"
@@ -273,7 +296,72 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     assert last_response.status == 200
   end
 
+  def test_token_authorization_code_hash_columns_reuse_token
+    rodauth do
+      oauth_reuse_access_token true
+      oauth_grants_token_hash_column :token_hash
+      oauth_grants_refresh_token_hash_column :refresh_token_hash
+    end
+    setup_application
+
+    post("/token",
+         client_id: oauth_application[:client_id],
+         client_secret: "CLIENT_SECRET",
+         grant_type: "authorization_code",
+         code: oauth_grant[:code],
+         redirect_uri: oauth_grant[:redirect_uri])
+
+    assert last_response.status == 200
+    assert last_response.headers["Content-Type"] == "application/json"
+
+    assert db[:oauth_grants].count == 1
+    oauth_grant = db[:oauth_grants].first
+    assert oauth_grant[:token].nil?
+    assert !oauth_grant[:token_hash].nil?
+    assert oauth_grant[:refresh_token].nil?
+    assert !oauth_grant[:refresh_token_hash].nil?
+
+    assert json_body["access_token"] != oauth_grant[:token_hash]
+    assert json_body["refresh_token"] != oauth_grant[:refresh_token_hash]
+    assert !json_body["expires_in"].nil?
+
+    # second go at it
+    login
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=#{CGI.escape(oauth_application[:scopes])}&" \
+          "response_type=code&response_mode=query"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+
+    check "user.read"
+    check "user.write"
+    # submit authorization request
+    click_button "Authorize"
+    assert page.current_url.start_with?("#{oauth_application[:redirect_uri]}?code="),
+           "was redirected instead to #{page.current_url}"
+
+    grant_code = page.current_url[/code=(.+)/, 1]
+
+    post("/token",
+         client_id: oauth_application[:client_id],
+         client_secret: "CLIENT_SECRET",
+         grant_type: "authorization_code",
+         code: grant_code,
+         redirect_uri: oauth_grant[:redirect_uri])
+
+    assert last_response.status == 200
+    assert last_response.headers["Content-Type"] == "application/json"
+
+    assert db[:oauth_grants].count == 1
+    oauth_grant2 = db[:oauth_grants].first
+
+    assert oauth_grant[:id] == oauth_grant2[:id]
+    assert oauth_grant[:token] == oauth_grant2[:token]
+  end
+
   def test_token_authorization_code_online_successful
+    rodauth do
+      use_oauth_access_type? true
+    end
     setup_application
 
     online_grant = oauth_grant(access_type: "online")
@@ -288,12 +376,11 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_tokens].count == 1
+    assert db[:oauth_grants].count == 1
 
-    access_token = db[:oauth_tokens].first
+    oauth_grant = db[:oauth_grants].first
 
-    verify_oauth_grant_revoked(access_token)
-    assert json_body["access_token"] == access_token[:token]
+    assert json_body["access_token"] == oauth_grant[:token]
     assert json_body["refresh_token"].nil?
     assert !json_body["expires_in"].nil?
   end

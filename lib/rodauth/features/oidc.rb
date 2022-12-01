@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require "rodauth/oauth"
+
 module Rodauth
   Feature.define(:oidc, :Oidc) do
     # https://openid.net/specs/openid-connect-core-1_0.html#StandardClaims
@@ -15,6 +17,7 @@ module Rodauth
       issuer
       authorization_endpoint
       end_session_endpoint
+      backchannel_logout_session_supported
       token_endpoint
       userinfo_endpoint
       jwks_uri
@@ -60,78 +63,98 @@ module Rodauth
       id_token_signing_alg_values_supported
     ].freeze
 
-    depends :account_expiration, :oauth_jwt
+    depends :account_expiration, :oauth_jwt, :oauth_jwt_jwks, :oauth_authorization_code_grant
 
-    auth_value_method :oauth_application_default_scope, "openid"
     auth_value_method :oauth_application_scopes, %w[openid]
 
-    auth_value_method :oauth_applications_id_token_signed_response_alg_column, :id_token_signed_response_alg
-    auth_value_method :oauth_applications_id_token_encrypted_response_alg_column, :id_token_encrypted_response_alg
-    auth_value_method :oauth_applications_id_token_encrypted_response_enc_column, :id_token_encrypted_response_enc
-    auth_value_method :oauth_applications_userinfo_signed_response_alg_column, :userinfo_signed_response_alg
-    auth_value_method :oauth_applications_userinfo_encrypted_response_alg_column, :userinfo_encrypted_response_alg
-    auth_value_method :oauth_applications_userinfo_encrypted_response_enc_column, :userinfo_encrypted_response_enc
+    %i[
+      subject_type application_type sector_identifier_uri
+      id_token_signed_response_alg id_token_encrypted_response_alg id_token_encrypted_response_enc
+      userinfo_signed_response_alg userinfo_encrypted_response_alg userinfo_encrypted_response_enc
+    ].each do |column|
+      auth_value_method :"oauth_applications_#{column}_column", column
+    end
 
-    auth_value_method :oauth_grants_nonce_column, :nonce
-    auth_value_method :oauth_grants_acr_column, :acr
-    auth_value_method :oauth_tokens_nonce_column, :nonce
-    auth_value_method :oauth_tokens_acr_column, :acr
+    %i[nonce acr claims_locales claims].each do |column|
+      auth_value_method :"oauth_grants_#{column}_column", column
+    end
 
-    translatable_method :invalid_scope_message, "The Access Token expired"
+    auth_value_method :oauth_jwt_subject_type, "public" # fallback subject type: public, pairwise
+    auth_value_method :oauth_jwt_subject_secret, nil # salt for pairwise generation
 
-    auth_value_method :webfinger_relation, "http://openid.net/specs/connect/1.0/issuer"
+    translatable_method :oauth_invalid_scope_message, "The Access Token expired"
 
     auth_value_method :oauth_prompt_login_cookie_key, "_rodauth_oauth_prompt_login"
     auth_value_method :oauth_prompt_login_cookie_options, {}.freeze
     auth_value_method :oauth_prompt_login_interval, 5 * 60 * 60 # 5 minutes
 
-    # logout
-    auth_value_method :oauth_applications_post_logout_redirect_uri_column, :post_logout_redirect_uri
-    auth_value_method :use_rp_initiated_logout?, false
-
     auth_value_methods(
+      :oauth_acr_values_supported,
+      :get_oidc_account_last_login_at,
+      :oidc_authorize_on_prompt_none?,
       :get_oidc_param,
       :get_additional_param,
       :require_acr_value_phr,
       :require_acr_value_phrh,
-      :require_acr_value
+      :require_acr_value,
+      :json_webfinger_payload
     )
 
     # /userinfo
-    route(:userinfo) do |r|
-      next unless is_authorization_server?
-
+    auth_server_route(:userinfo) do |r|
       r.on method: %i[get post] do
         catch_error do
-          oauth_token = authorization_token
+          claims = authorization_token
 
-          throw_json_response_error(authorization_required_error_status, "invalid_token") unless oauth_token
+          throw_json_response_error(oauth_authorization_required_error_status, "invalid_token") unless claims
 
-          oauth_scopes = oauth_token["scope"].split(" ")
+          oauth_scopes = claims["scope"].split(" ")
 
-          throw_json_response_error(authorization_required_error_status, "invalid_token") unless oauth_scopes.include?("openid")
+          throw_json_response_error(oauth_authorization_required_error_status, "invalid_token") unless oauth_scopes.include?("openid")
 
-          account = db[accounts_table].where(account_id_column => oauth_token["sub"]).first
+          account = db[accounts_table].where(account_id_column => claims["sub"]).first
 
-          throw_json_response_error(authorization_required_error_status, "invalid_token") unless account
+          throw_json_response_error(oauth_authorization_required_error_status, "invalid_token") unless account
 
           oauth_scopes.delete("openid")
 
-          oidc_claims = { "sub" => oauth_token["sub"] }
+          oidc_claims = { "sub" => claims["sub"] }
 
-          fill_with_account_claims(oidc_claims, account, oauth_scopes)
+          @oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => claims["client_id"]).first
 
-          @oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => oauth_token["client_id"]).first
+          throw_json_response_error(oauth_authorization_required_error_status, "invalid_token") unless @oauth_application
 
-          if (algo = @oauth_application && @oauth_application[oauth_applications_userinfo_signed_response_alg_column])
+          oauth_grant = valid_oauth_grant_ds(
+            oauth_grants_oauth_application_id_column => @oauth_application[oauth_applications_id_column],
+            oauth_grants_account_id_column => account[account_id_column]
+          ).first
+
+          claims_locales = oauth_grant[oauth_grants_claims_locales_column] if oauth_grant
+
+          if (claims = oauth_grant[oauth_grants_claims_column])
+            claims = JSON.parse(claims)
+            if (userinfo_essential_claims = claims["userinfo"])
+              oauth_scopes |= userinfo_essential_claims.to_a
+            end
+          end
+
+          # 5.4 - The Claims requested by the profile, email, address, and phone scope values are returned from the UserInfo Endpoint
+          fill_with_account_claims(oidc_claims, account, oauth_scopes, claims_locales)
+
+          if (algo = @oauth_application[oauth_applications_userinfo_signed_response_alg_column])
             params = {
-              jwks: oauth_application_jwks,
+              jwks: oauth_application_jwks(@oauth_application),
               encryption_algorithm: @oauth_application[oauth_applications_userinfo_encrypted_response_alg_column],
               encryption_method: @oauth_application[oauth_applications_userinfo_encrypted_response_enc_column]
             }.compact
 
             jwt = jwt_encode(
-              oidc_claims,
+              oidc_claims.merge(
+                # If signed, the UserInfo Response SHOULD contain the Claims iss (issuer) and aud (audience) as members. The iss value
+                # SHOULD be the OP's Issuer Identifier URL. The aud value SHOULD be or include the RP's Client ID value.
+                iss: oauth_jwt_issuer,
+                aud: @oauth_application[oauth_applications_client_id_column]
+              ),
               signing_algorithm: algo,
               **params
             )
@@ -141,92 +164,23 @@ module Rodauth
           end
         end
 
-        throw_json_response_error(authorization_required_error_status, "invalid_token")
+        throw_json_response_error(oauth_authorization_required_error_status, "invalid_token")
       end
     end
 
-    # /oidc-logout
-    route(:oidc_logout) do |r|
-      next unless use_rp_initiated_logout?
-
-      before_oidc_logout_route
-      require_authorizable_account
-
-      # OpenID Providers MUST support the use of the HTTP GET and POST methods
-      r.on method: %i[get post] do
-        catch_error do
-          validate_oidc_logout_params
-
-          #
-          # why this is done:
-          #
-          # we need to decode the id token in order to get the application, because, if the
-          # signing key is application-specific, we don't know how to verify the signature
-          # beforehand. Hence, we have to do it twice: decode-and-do-not-verify, initialize
-          # the @oauth_application, and then decode-and-verify.
-          #
-          oauth_token = jwt_decode(param("id_token_hint"), verify_claims: false)
-          oauth_application_id = oauth_token["client_id"]
-
-          # check whether ID token belongs to currently logged-in user
-          redirect_response_error("invalid_request") unless oauth_token["sub"] == jwt_subject(
-            oauth_tokens_account_id_column => account_id,
-            oauth_tokens_oauth_application_id_column => oauth_application_id
-          )
-
-          # When an id_token_hint parameter is present, the OP MUST validate that it was the issuer of the ID Token.
-          redirect_response_error("invalid_request") unless oauth_token && oauth_token["iss"] == issuer
-
-          # now let's logout from IdP
-          transaction do
-            before_logout
-            logout
-            after_logout
-          end
-
-          if (post_logout_redirect_uri = param_or_nil("post_logout_redirect_uri"))
-            catch(:default_logout_redirect) do
-              oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => oauth_token["client_id"]).first
-
-              throw(:default_logout_redirect) unless oauth_application
-
-              post_logout_redirect_uris = oauth_application[oauth_applications_post_logout_redirect_uri_column].split(" ")
-
-              throw(:default_logout_redirect) unless post_logout_redirect_uris.include?(post_logout_redirect_uri)
-
-              if (state = param_or_nil("state"))
-                post_logout_redirect_uri = URI(post_logout_redirect_uri)
-                params = ["state=#{state}"]
-                params << post_logout_redirect_uri.query if post_logout_redirect_uri.query
-                post_logout_redirect_uri.query = params.join("&")
-                post_logout_redirect_uri = post_logout_redirect_uri.to_s
-              end
-
-              redirect(post_logout_redirect_uri)
-            end
-
-          end
-
-          # regular logout procedure
-          set_notice_flash(logout_notice_flash)
-          redirect(logout_redirect)
-        end
-
-        redirect_response_error("invalid_request")
-      end
-    end
-
-    def openid_configuration(alt_issuer = nil)
+    def load_openid_configuration_route(alt_issuer = nil)
       request.on(".well-known/openid-configuration") do
         allow_cors(request)
 
-        request.get do
-          json_response_success(openid_configuration_body(alt_issuer), cache: true)
+        request.is do
+          request.get do
+            json_response_success(openid_configuration_body(alt_issuer), cache: true)
+          end
         end
       end
     end
 
-    def webfinger
+    def load_webfinger_route
       request.on(".well-known/webfinger") do
         request.get do
           resource = param_or_nil("resource")
@@ -236,14 +190,7 @@ module Rodauth
           response.status = 200
           response["Content-Type"] ||= "application/jrd+json"
 
-          json_payload = JSON.dump({
-                                     subject: resource,
-                                     links: [{
-                                       rel: webfinger_relation,
-                                       href: authorization_server_url
-                                     }]
-                                   })
-          return_response(json_payload)
+          return_response(json_webfinger_payload)
         end
       end
     end
@@ -255,6 +202,20 @@ module Rodauth
       else
         super
       end
+    end
+
+    def oauth_response_types_supported
+      grant_types = oauth_grant_types_supported
+      oidc_response_types = %w[id_token none]
+      oidc_response_types |= ["code id_token"] if grant_types.include?("authorization_code")
+      oidc_response_types |= ["code token", "id_token token", "code id_token token"] if grant_types.include?("implicit")
+      super | oidc_response_types
+    end
+
+    def current_oauth_account
+      subject_type = current_oauth_application[oauth_applications_subject_type_column] || oauth_jwt_subject_type
+
+      return super unless subject_type == "pairwise"
     end
 
     private
@@ -272,27 +233,111 @@ module Rodauth
       end
     end
 
+    def oauth_acr_values_supported
+      acr_values = []
+      acr_values << "phrh" if features.include?(:webauthn_login)
+      acr_values << "phr" if respond_to?(:require_two_factor_authenticated)
+      acr_values
+    end
+
+    def oidc_authorize_on_prompt_none?(_account)
+      false
+    end
+
     def validate_authorize_params
-      return super unless (max_age = param_or_nil("max_age"))
+      if (max_age = param_or_nil("max_age"))
 
-      max_age = Integer(max_age)
+        max_age = Integer(max_age)
 
-      redirect_response_error("invalid_request") unless max_age.positive?
+        redirect_response_error("invalid_request") unless max_age.positive?
 
-      if Time.now - last_account_login_at > max_age
-        # force user to re-login
-        clear_session
-        set_session_value(login_redirect_session_key, request.fullpath)
-        redirect require_login_redirect
+        if Time.now - get_oidc_account_last_login_at(session_value) > max_age
+          # force user to re-login
+          clear_session
+          set_session_value(login_redirect_session_key, request.fullpath)
+          redirect require_login_redirect
+        end
+      end
+
+      if (claims = param_or_nil("claims"))
+        # The value is a JSON object listing the requested Claims.
+        claims = JSON.parse(claims)
+
+        claims.each do |_, individual_claims|
+          redirect_response_error("invalid_request") unless individual_claims.is_a?(Hash)
+
+          individual_claims.each do |_, claim|
+            redirect_response_error("invalid_request") unless claim.nil? || individual_claims.is_a?(Hash)
+          end
+        end
+      end
+
+      sc = scopes
+
+      if sc && sc.include?("offline_access")
+
+        sc.delete("offline_access")
+
+        # MUST ensure that the prompt parameter contains consent
+        # MUST ignore the offline_access request unless the Client
+        # is using a response_type value that would result in an
+        # Authorization Code
+        if param_or_nil("prompt") == "consent" && (
+          (response_type = param_or_nil("response_type")) && response_type.split(" ").include?("code")
+        )
+          request.params["access_type"] = "offline"
+        end
+
+        request.params["scope"] = sc.join(" ")
       end
 
       super
+
+      return unless (response_type = param_or_nil("response_type"))
+      return unless response_type.include?("id_token")
+
+      redirect_response_error("invalid_request") unless param_or_nil("nonce")
     end
 
     def require_authorizable_account
       try_prompt
       super
-      try_acr_values
+      @acr = try_acr_values
+    end
+
+    def get_oidc_account_last_login_at(account_id)
+      get_activity_timestamp(account_id, account_activity_last_activity_column)
+    end
+
+    def jwt_subject(oauth_grant, client_application = oauth_application)
+      subject_type = client_application[oauth_applications_subject_type_column] || oauth_jwt_subject_type
+
+      case subject_type
+      when "public"
+        super
+      when "pairwise"
+        identifier_uri = client_application[oauth_applications_sector_identifier_uri_column]
+
+        unless identifier_uri
+          identifier_uri = client_application[oauth_applications_redirect_uri_column]
+          identifier_uri = identifier_uri.split(" ")
+          # If the Client has not provided a value for sector_identifier_uri in Dynamic Client Registration
+          # [OpenID.Registration], the Sector Identifier used for pairwise identifier calculation is the host
+          # component of the registered redirect_uri. If there are multiple hostnames in the registered redirect_uris,
+          # the Client MUST register a sector_identifier_uri.
+          if identifier_uri.size > 1
+            # return error message
+          end
+          identifier_uri = identifier_uri.first
+        end
+
+        identifier_uri = URI(identifier_uri).host
+
+        account_id = oauth_grant[oauth_grants_account_id_column]
+        Digest::SHA256.hexdigest("#{identifier_uri}#{account_id}#{oauth_jwt_subject_secret}")
+      else
+        raise StandardError, "unexpected subject (#{subject_type})"
+      end
     end
 
     # this executes before checking for a logged in account
@@ -301,22 +346,18 @@ module Rodauth
 
       case prompt
       when "none"
+        return unless request.get?
+
         redirect_response_error("login_required") unless logged_in?
 
         require_account
 
-        if db[oauth_grants_table].where(
-          oauth_grants_account_id_column => account_id,
-          oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-          oauth_grants_redirect_uri_column => redirect_uri,
-          oauth_grants_scopes_column => scopes.join(oauth_scope_separator),
-          oauth_grants_access_type_column => "online"
-        ).count.zero?
-          redirect_response_error("consent_required")
-        end
+        redirect_response_error("interaction_required") unless oidc_authorize_on_prompt_none?(account_from_session)
 
         request.env["REQUEST_METHOD"] = "POST"
       when "login"
+        return unless request.get?
+
         if logged_in? && request.cookies[oauth_prompt_login_cookie_key] == "login"
           ::Rack::Utils.delete_cookie_header!(response.headers, oauth_prompt_login_cookie_key, oauth_prompt_login_cookie_options)
           return
@@ -333,18 +374,17 @@ module Rodauth
 
         redirect require_login_redirect
       when "consent"
+        return unless request.post?
+
         require_account
 
-        if db[oauth_grants_table].where(
-          oauth_grants_account_id_column => account_id,
-          oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-          oauth_grants_redirect_uri_column => redirect_uri,
-          oauth_grants_scopes_column => scopes.join(oauth_scope_separator),
-          oauth_grants_access_type_column => "online"
-        ).count.zero?
-          redirect_response_error("consent_required")
-        end
+        sc = scopes || []
+
+        redirect_response_error("consent_required") if sc.empty?
+
       when "select-account"
+        return unless request.get?
+
         # only works if select_account plugin is available
         require_select_account if respond_to?(:require_select_account)
       else
@@ -356,89 +396,147 @@ module Rodauth
       return unless (acr_values = param_or_nil("acr_values"))
 
       acr_values.split(" ").each do |acr_value|
+        next unless oauth_acr_values_supported.include?(acr_value)
+
         case acr_value
-        when "phr" then require_acr_value_phr
-        when "phrh" then require_acr_value_phrh
+        when "phr"
+          return acr_value if require_acr_value_phr
+        when "phrh"
+          return acr_value if require_acr_value_phrh
         else
-          require_acr_value(acr_value)
+          return acr_value if require_acr_value(acr_value)
         end
       end
+
+      nil
     end
 
     def require_acr_value_phr
-      return unless respond_to?(:require_two_factor_authenticated)
+      return false unless respond_to?(:require_two_factor_authenticated)
 
       require_two_factor_authenticated
+      true
     end
 
     def require_acr_value_phrh
+      return false unless features.include?(:webauthn_login)
+
       require_acr_value_phr && two_factor_login_type_match?("webauthn")
     end
 
-    def require_acr_value(_acr); end
+    def require_acr_value(_acr)
+      true
+    end
 
     def create_oauth_grant(create_params = {})
-      if (nonce = param_or_nil("nonce"))
-        create_params[oauth_grants_nonce_column] = nonce
-      end
-      if (acr = param_or_nil("acr"))
-        create_params[oauth_grants_acr_column] = acr
-      end
+      create_params.replace(oidc_grant_params.merge(create_params))
       super
     end
 
-    def create_oauth_token_from_authorization_code(oauth_grant, create_params, *)
-      create_params[oauth_tokens_nonce_column] = oauth_grant[oauth_grants_nonce_column] if oauth_grant[oauth_grants_nonce_column]
-      create_params[oauth_tokens_acr_column] = oauth_grant[oauth_grants_acr_column] if oauth_grant[oauth_grants_acr_column]
+    def create_oauth_grant_with_token(create_params = {})
+      create_params[oauth_grants_type_column] = "hybrid"
+      create_params[oauth_grants_account_id_column] = account_id
+      create_params[oauth_grants_expires_in_column] = Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_access_token_expires_in)
+      authorization_code = create_oauth_grant(create_params)
+      access_token = if oauth_jwt_access_tokens
+                       _generate_jwt_access_token(create_params)
+                     else
+                       oauth_grant = valid_oauth_grant_ds.where(oauth_grants_code_column => authorization_code).first
+                       _generate_access_token(oauth_grant)
+                     end
 
-      super
+      json_access_token_payload(oauth_grants_token_column => access_token).merge("code" => authorization_code)
     end
 
-    def create_oauth_token(*)
-      oauth_token = super
-      generate_id_token(oauth_token)
-      oauth_token
+    def create_token(*)
+      oauth_grant = super
+      generate_id_token(oauth_grant)
+      oauth_grant
     end
 
-    def generate_id_token(oauth_token)
-      oauth_scopes = oauth_token[oauth_tokens_scopes_column].split(oauth_scope_separator)
+    def generate_id_token(oauth_grant, include_claims = false)
+      oauth_scopes = oauth_grant[oauth_grants_scopes_column].split(oauth_scope_separator)
 
       return unless oauth_scopes.include?("openid")
 
-      id_token_claims = jwt_claims(oauth_token)
+      signing_algorithm = oauth_application[oauth_applications_id_token_signed_response_alg_column] ||
+                          oauth_jwt_keys.keys.first
 
-      id_token_claims[:nonce] = oauth_token[oauth_tokens_nonce_column] if oauth_token[oauth_tokens_nonce_column]
+      id_token_claims = jwt_claims(oauth_grant)
 
-      id_token_claims[:acr] = oauth_token[oauth_tokens_acr_column] if oauth_token[oauth_tokens_acr_column]
+      id_token_claims[:nonce] = oauth_grant[oauth_grants_nonce_column] if oauth_grant[oauth_grants_nonce_column]
+
+      id_token_claims[:acr] = oauth_grant[oauth_grants_acr_column] if oauth_grant[oauth_grants_acr_column]
 
       # Time when the End-User authentication occurred.
-      id_token_claims[:auth_time] = last_account_login_at.to_i
+      id_token_claims[:auth_time] = get_oidc_account_last_login_at(oauth_grant[oauth_grants_account_id_column]).to_i
 
-      account = db[accounts_table].where(account_id_column => oauth_token[oauth_tokens_account_id_column]).first
+      # Access Token hash value.
+      if (access_token = oauth_grant[oauth_grants_token_column])
+        id_token_claims[:at_hash] = id_token_hash(access_token, signing_algorithm)
+      end
+
+      # code hash value.
+      if (code = oauth_grant[oauth_grants_code_column])
+        id_token_claims[:c_hash] = id_token_hash(code, signing_algorithm)
+      end
+
+      account = db[accounts_table].where(account_id_column => oauth_grant[oauth_grants_account_id_column]).first
 
       # this should never happen!
       # a newly minted oauth token from a grant should have been assigned to an account
       # who just authorized its generation.
       return unless account
 
-      fill_with_account_claims(id_token_claims, account, oauth_scopes)
+      if (claims = oauth_grant[oauth_grants_claims_column])
+        claims = JSON.parse(claims)
+        if (id_token_essential_claims = claims["id_token"])
+          oauth_scopes |= id_token_essential_claims.to_a
+
+          include_claims = true
+        end
+      end
+
+      # 5.4 - However, when no Access Token is issued (which is the case for the response_type value id_token),
+      # the resulting Claims are returned in the ID Token.
+      fill_with_account_claims(id_token_claims, account, oauth_scopes, param_or_nil("claims_locales")) if include_claims
 
       params = {
-        jwks: oauth_application_jwks,
-        signing_algorithm: oauth_application[oauth_applications_id_token_signed_response_alg_column] || oauth_jwt_algorithm,
+        jwks: oauth_application_jwks(oauth_application),
+        signing_algorithm: signing_algorithm,
         encryption_algorithm: oauth_application[oauth_applications_id_token_encrypted_response_alg_column],
         encryption_method: oauth_application[oauth_applications_id_token_encrypted_response_enc_column]
       }.compact
 
-      oauth_token[:id_token] = jwt_encode(id_token_claims, **params)
+      oauth_grant[:id_token] = jwt_encode(id_token_claims, **params)
     end
 
     # aka fill_with_standard_claims
-    def fill_with_account_claims(claims, account, scopes)
+    def fill_with_account_claims(claims, account, scopes, claims_locales)
+      additional_claims_info = {}
+
       scopes_by_claim = scopes.each_with_object({}) do |scope, by_oidc|
         next if scope == "openid"
 
-        oidc, param = scope.split(".", 2)
+        if scope.is_a?(Array)
+          # essential claims
+          param, additional_info = scope
+
+          param = param.to_sym
+
+          oidc, = OIDC_SCOPES_MAP.find do |_, oidc_scopes|
+            oidc_scopes.include?(param)
+          end || param.to_s
+
+          param = nil if oidc == param.to_s
+
+          additional_claims_info[param] = additional_info
+        else
+
+          oidc, param = scope.split(".", 2)
+
+          param = param.to_sym if param
+        end
 
         by_oidc[oidc] ||= []
 
@@ -447,13 +545,11 @@ module Rodauth
 
       oidc_scopes, additional_scopes = scopes_by_claim.keys.partition { |key| OIDC_SCOPES_MAP.key?(key) }
 
-      if (claims_locales = param_or_nil("claims_locales"))
-        claims_locales = claims_locales.split(" ").map(&:to_sym)
-      end
+      claims_locales = claims_locales.split(" ").map(&:to_sym) if claims_locales
 
       unless oidc_scopes.empty?
         if respond_to?(:get_oidc_param)
-          get_oidc_param = proxy_get_param(:get_oidc_param, claims, claims_locales)
+          get_oidc_param = proxy_get_param(:get_oidc_param, claims, claims_locales, additional_claims_info)
 
           oidc_scopes.each do |scope|
             scope_claims = claims
@@ -474,7 +570,7 @@ module Rodauth
       return if additional_scopes.empty?
 
       if respond_to?(:get_additional_param)
-        get_additional_param = proxy_get_param(:get_additional_param, claims, claims_locales)
+        get_additional_param = proxy_get_param(:get_additional_param, claims, claims_locales, additional_claims_info)
 
         additional_scopes.each do |scope|
           get_additional_param[account, scope.to_sym]
@@ -484,32 +580,45 @@ module Rodauth
       end
     end
 
-    def proxy_get_param(get_param_func, claims, claims_locales)
+    def proxy_get_param(get_param_func, claims, claims_locales, additional_claims_info)
       meth = method(get_param_func)
       if meth.arity == 2
-        ->(account, param, cl = claims) { cl[param] = meth[account, param] }
+        lambda do |account, param, cl = claims|
+          additional_info = additional_claims_info[param] || EMPTY_HASH
+          value = additional_info["value"] || meth[account, param]
+          value = nil if additional_info["values"] && additional_info["values"].include?(value)
+          cl[param] = value if value
+        end
       elsif claims_locales.nil?
-        ->(account, param, cl = claims) { cl[param] = meth[account, param, nil] }
+        lambda do |account, param, cl = claims|
+          additional_info = additional_claims_info[param] || EMPTY_HASH
+          value = additional_info["value"] || meth[account, param, nil]
+          value = nil if additional_info["values"] && additional_info["values"].include?(value)
+          cl[param] = value if value
+        end
       else
         lambda do |account, param, cl = claims|
           claims_values = claims_locales.map do |locale|
-            meth[account, param, locale]
-          end
+            additional_info = additional_claims_info[param] || EMPTY_HASH
+            value = additional_info["value"] || meth[account, param, locale]
+            value = nil if additional_info["values"] && additional_info["values"].include?(value)
+            value
+          end.compact
 
           if claims_values.uniq.size == 1
             cl[param] = claims_values.first
           else
             claims_locales.zip(claims_values).each do |locale, value|
-              cl["#{param}##{locale}"] = value
+              cl["#{param}##{locale}"] = value if value
             end
           end
         end
       end
     end
 
-    def json_access_token_payload(oauth_token)
+    def json_access_token_payload(oauth_grant)
       payload = super
-      payload["id_token"] = oauth_token[:id_token] if oauth_token[:id_token]
+      payload["id_token"] = oauth_grant[:id_token] if oauth_grant[:id_token]
       payload
     end
 
@@ -517,66 +626,104 @@ module Rodauth
 
     def check_valid_response_type?
       case param_or_nil("response_type")
-      when "none", "id_token",
-           "code token", "code id_token", "id_token token", "code id_token token" # multiple
+      when "none", "id_token", "code id_token" # multiple
         true
+      when "code token", "id_token token", "code id_token token"
+        supports_token_response_type?
       else
         super
       end
     end
 
+    def supported_response_mode?(response_mode, *)
+      return super unless response_mode == "none"
+
+      param("response_type") == "none"
+    end
+
+    def supports_token_response_type?
+      features.include?(:oauth_implicit_grant)
+    end
+
     def do_authorize(response_params = {}, response_mode = param_or_nil("response_mode"))
-      return super unless use_oauth_implicit_grant_type?
-
-      case param("response_type")
+      response_type = param("response_type")
+      case response_type
       when "id_token"
-        response_params.replace(_do_authorize_id_token)
+        grant_params = oidc_grant_params
+        generate_id_token(grant_params, true)
+        response_params.replace("id_token" => grant_params[:id_token])
       when "code token"
-        redirect_response_error("invalid_request") unless use_oauth_implicit_grant_type?
+        redirect_response_error("invalid_request") unless supports_token_response_type?
 
-        response_params.replace(_do_authorize_code.merge(_do_authorize_token))
+        response_params.replace(create_oauth_grant_with_token)
       when "code id_token"
-        response_params.replace(_do_authorize_code.merge(_do_authorize_id_token))
+        params = _do_authorize_code
+        oauth_grant = valid_oauth_grant_ds.where(oauth_grants_code_column => params["code"]).first
+        generate_id_token(oauth_grant)
+        response_params.replace(
+          "id_token" => oauth_grant[:id_token],
+          "code" => params["code"]
+        )
       when "id_token token"
-        response_params.replace(_do_authorize_id_token.merge(_do_authorize_token))
-      when "code id_token token"
+        redirect_response_error("invalid_request") unless supports_token_response_type?
 
-        response_params.replace(_do_authorize_code.merge(_do_authorize_id_token).merge(_do_authorize_token))
+        grant_params = oidc_grant_params.merge(oauth_grants_type_column => "hybrid")
+        oauth_grant = _do_authorize_token(grant_params)
+        generate_id_token(oauth_grant)
+
+        response_params.replace(json_access_token_payload(oauth_grant))
+      when "code id_token token"
+        redirect_response_error("invalid_request") unless supports_token_response_type?
+
+        params = create_oauth_grant_with_token
+        oauth_grant = valid_oauth_grant_ds.where(oauth_grants_code_column => params["code"]).first
+        oauth_grant[oauth_grants_token_column] = params["access_token"]
+        generate_id_token(oauth_grant)
+
+        response_params.replace(params.merge("id_token" => oauth_grant[:id_token]))
+      when "none"
+        response_mode ||= "none"
       end
       response_mode ||= "fragment" unless response_params.empty?
 
       super(response_params, response_mode)
     end
 
-    def _do_authorize_id_token
-      create_params = {
-        oauth_tokens_account_id_column => account_id,
-        oauth_tokens_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-        oauth_tokens_scopes_column => scopes
+    def oidc_grant_params
+      grant_params = {
+        oauth_grants_account_id_column => account_id,
+        oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
+        oauth_grants_scopes_column => scopes.join(oauth_scope_separator)
       }
       if (nonce = param_or_nil("nonce"))
-        create_params[oauth_grants_nonce_column] = nonce
+        grant_params[oauth_grants_nonce_column] = nonce
       end
-      if (acr = param_or_nil("acr"))
-        create_params[oauth_grants_acr_column] = acr
+      grant_params[oauth_grants_acr_column] = @acr if @acr
+      if (claims_locales = param_or_nil("claims_locales"))
+        grant_params[oauth_grants_claims_locales_column] = claims_locales
       end
-      oauth_token = generate_oauth_token(create_params, false)
-      generate_id_token(oauth_token)
-      params = json_access_token_payload(oauth_token)
-      params.delete("access_token")
-      params
+      if (claims = param_or_nil("claims"))
+        grant_params[oauth_grants_claims_column] = claims
+      end
+      grant_params
     end
 
-    # Logout
+    def authorize_response(params, mode)
+      redirect_url = URI.parse(redirect_uri)
+      redirect(redirect_url.to_s) if mode == "none"
+      super
+    end
 
-    def validate_oidc_logout_params
-      redirect_response_error("invalid_request") unless param_or_nil("id_token_hint")
-      # check if valid token hint type
-      return unless (redirect_uri = param_or_nil("post_logout_redirect_uri"))
+    # Webfinger
 
-      return if check_valid_uri?(redirect_uri)
-
-      redirect_response_error("invalid_request")
+    def json_webfinger_payload
+      JSON.dump({
+                  subject: param("resource"),
+                  links: [{
+                    rel: "http://openid.net/specs/connect/1.0/issuer",
+                    href: authorization_server_url
+                  }]
+                })
     end
 
     # Metadata
@@ -598,29 +745,23 @@ module Rodauth
 
       scope_claims.unshift("auth_time")
 
-      response_types_supported = metadata[:response_types_supported]
-
-      if metadata[:grant_types_supported].include?("implicit")
-        response_types_supported += ["none", "id_token", "code token", "code id_token", "id_token token", "code id_token token"]
-      end
-
       metadata.merge(
         userinfo_endpoint: userinfo_url,
-        end_session_endpoint: (oidc_logout_url if use_rp_initiated_logout?),
-        response_types_supported: response_types_supported,
-        subject_types_supported: [oauth_jwt_subject_type],
+        subject_types_supported: %w[public pairwise],
+        acr_values_supported: oauth_acr_values_supported,
+        claims_parameter_supported: true,
 
-        id_token_signing_alg_values_supported: metadata[:token_endpoint_auth_signing_alg_values_supported],
-        id_token_encryption_alg_values_supported: [oauth_jwt_jwe_algorithm].compact,
-        id_token_encryption_enc_values_supported: [oauth_jwt_jwe_encryption_method].compact,
+        id_token_signing_alg_values_supported: oauth_jwt_jws_algorithms_supported,
+        id_token_encryption_alg_values_supported: oauth_jwt_jwe_algorithms_supported,
+        id_token_encryption_enc_values_supported: oauth_jwt_jwe_encryption_methods_supported,
 
-        userinfo_signing_alg_values_supported: [],
-        userinfo_encryption_alg_values_supported: [],
-        userinfo_encryption_enc_values_supported: [],
+        userinfo_signing_alg_values_supported: oauth_jwt_jws_algorithms_supported,
+        userinfo_encryption_alg_values_supported: oauth_jwt_jwe_algorithms_supported,
+        userinfo_encryption_enc_values_supported: oauth_jwt_jwe_encryption_methods_supported,
 
-        request_object_signing_alg_values_supported: [],
-        request_object_encryption_alg_values_supported: [],
-        request_object_encryption_enc_values_supported: [],
+        request_object_signing_alg_values_supported: oauth_jwt_jws_algorithms_supported,
+        request_object_encryption_alg_values_supported: oauth_jwt_jwe_algorithms_supported,
+        request_object_encryption_enc_values_supported: oauth_jwt_jwe_encryption_methods_supported,
 
         # These Claim Types are described in Section 5.6 of OpenID Connect Core 1.0 [OpenID.Core].
         # Values defined by this specification are normal, aggregated, and distributed.
@@ -643,6 +784,34 @@ module Rodauth
       response["Access-Control-Max-Age"] = "3600"
       response.status = 200
       return_response
+    end
+
+    def jwt_response_success(jwt, cache = false)
+      response.status = 200
+      response["Content-Type"] ||= "application/jwt"
+      if cache
+        # defaulting to 1-day for everyone, for now at least
+        max_age = 60 * 60 * 24
+        response["Cache-Control"] = "private, max-age=#{max_age}"
+      else
+        response["Cache-Control"] = "no-store"
+        response["Pragma"] = "no-cache"
+      end
+      return_response(jwt)
+    end
+
+    def id_token_hash(hash, algo)
+      digest = case algo
+               when /256/ then Digest::SHA256
+               when /384/ then Digest::SHA384
+               when /512/ then Digest::SHA512
+               end
+
+      return unless digest
+
+      hash = digest.digest(hash)
+      hash = hash[0...hash.size / 2]
+      Base64.urlsafe_encode64(hash).tr("=", "")
     end
   end
 end

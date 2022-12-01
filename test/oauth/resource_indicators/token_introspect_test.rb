@@ -11,19 +11,19 @@ class RodauthOAuthResourceIndicatorsTokenIntrospectTest < RodaIntegration
     end
 
     setup_application
-    oauth_token = set_oauth_token(resource: "https://example.org")
+    oauth_grant = oauth_grant_with_token(resource: "https://example.org")
     login
 
     header "Accept", "application/json"
 
     # valid token, and now we're getting somewhere
     post("/introspect", {
-           token: oauth_token[:token]
+           token: oauth_grant[:token]
          })
     assert last_response.status == 200
     assert json_body["active"] == true
-    assert json_body["scope"] == oauth_token[:scopes]
-    assert json_body["scope"] == oauth_token[:scopes]
+    assert json_body["username"] == account[:email]
+    assert json_body["scope"] == oauth_grant[:scopes]
     assert json_body["client_id"] == oauth_application[:client_id]
     assert json_body["token_type"] == "bearer"
     assert json_body["aud"] == %w[https://example.org]

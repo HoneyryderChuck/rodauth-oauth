@@ -1,0 +1,18 @@
+= Documentation for OAuth JWT Secured Authorization Request feature
+
+The +oauth_jwt_secured_authorization_request+ feature implements support for the JWT-Secured Authorization Request (JAR)
+
+https://datatracker.ietf.org/doc/html/rfc9101
+
+== Value Methods
+
+oauth_require_request_uri_registration :: whether client applications are required to define "request_uris", <tt>false</tt> by default.
+oauth_request_object_signing_alg_allow_none :: whether "none" is accepted as a valid request object signing alg, <tt>false</tt> by default.
+
+oauth_applications_request_uris_column :: the db column where the allowed requesr uris are stored, <tt>:request_uris</tt> by default.
+
+oauth_applications_request_object_encryption_alg_column :: db column where to store the encryption algorithm used for the request object JWT for the oauth application, <tt>:request_object_encryption_alg</tt> by default.
+oauth_applications_request_object_encryption_enc_column :: db column where to store the encryption method used for the request object JWT for the oauth application, <tt>:request_object_encryption_enc</tt> by default.
+oauth_applications_request_object_signing_alg_column :: db column where to store the signing algorithm used for the request object JWT for the oauth application, <tt>:request_object_signing_alg</tt> by default.
+
+oauth_invalid_request_object_message :: error description for the "invalid_request" OAuth error code, <tt>"request object is invalid"</tt> by default.

@@ -5,21 +5,7 @@ require "test_helper"
 class RodauthClientCredentialsGrantOAuthTokenAuthorizationCodeTest < RodaIntegration
   include Rack::Test::Methods
 
-  def test_token_authorization_code_unsupported_grant
-    setup_application
-    post("/token",
-         client_secret: "CLIENT_SECRET",
-         client_id: oauth_application[:client_id],
-         grant_type: "client_credentials")
-
-    assert last_response.status == 400
-    assert json_body["error"] == "invalid_request"
-  end
-
   def test_token_authorization_code_no_client_secret
-    rodauth do
-      use_oauth_client_credentials_grant_type? true
-    end
     setup_application
 
     post("/token",
@@ -30,10 +16,28 @@ class RodauthClientCredentialsGrantOAuthTokenAuthorizationCodeTest < RodaIntegra
     assert json_body["error"] == "invalid_client"
   end
 
+  def test_token_authorization_code_with_scope
+    setup_application
+
+    post("/token",
+         client_id: oauth_application[:client_id],
+         scope: "user.read user.write",
+         client_secret: "CLIENT_SECRET",
+         grant_type: "client_credentials")
+
+    assert last_response.status == 200
+    assert last_response.headers["Content-Type"] == "application/json"
+
+    assert db[:oauth_grants].count == 1
+
+    oauth_grant = db[:oauth_grants].first
+    assert oauth_grant[:scopes] == "user.read user.write"
+
+    verify_access_token_response(json_body, oauth_grant)
+    assert !json_body.key?("refresh_token")
+  end
+
   def test_token_authorization_code_successful
-    rodauth do
-      use_oauth_client_credentials_grant_type? true
-    end
     setup_application
 
     post("/token",
@@ -44,22 +48,27 @@ class RodauthClientCredentialsGrantOAuthTokenAuthorizationCodeTest < RodaIntegra
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_tokens].count == 1
+    assert db[:oauth_grants].count == 1
 
-    oauth_token = db[:oauth_tokens].first
+    oauth_grant = db[:oauth_grants].first
+    assert oauth_grant[:scopes] == "user.read user.write"
 
-    verify_access_token_response(json_body, oauth_token)
+    verify_access_token_response(json_body, oauth_grant)
     assert !json_body.key?("refresh_token")
   end
 
   private
 
-  def setup_application
+  def setup_application(*)
     super
     header "Accept", "application/json"
   end
 
   def oauth_feature
     :oauth_client_credentials_grant
+  end
+
+  def default_grant_type
+    "client_credentials"
   end
 end

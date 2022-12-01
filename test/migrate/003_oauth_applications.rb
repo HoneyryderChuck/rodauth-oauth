@@ -8,7 +8,7 @@ Sequel.migration do
       foreign_key :account_id, :accounts, null: true
       String :name, null: false
       String :description, null: true
-      String :homepage_url, null: false
+      String :homepage_url, null: true
       String :redirect_uri, null: false
       String :client_id, null: false, unique: true
       String :client_secret, null: false, unique: true
@@ -27,6 +27,7 @@ Sequel.migration do
       String :software_id, null: true
       String :software_version, null: true
       # oidc extra params
+      String :sector_identifier_uri, null: true
       String :application_type, null: true
       String :subject_type, null: true
       String :id_token_signed_response_alg, null: true
@@ -38,11 +39,12 @@ Sequel.migration do
       String :request_object_signing_alg, null: true
       String :request_object_encryption_alg, null: true
       String :request_object_encryption_enc, null: true
+      String :request_uris, null: true
 
       # JWT/OIDC per application signing verification
       String :jwt_public_key, type: :text
       # RP-initiated logout
-      String :post_logout_redirect_uri
+      String :post_logout_redirect_uris
     end
   end
 

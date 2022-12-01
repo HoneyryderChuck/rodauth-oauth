@@ -4,7 +4,7 @@ $LOAD_PATH.unshift File.expand_path("../lib", __dir__)
 
 if ENV.key?("CI")
   require "simplecov"
-  commands = [RUBY_ENGINE, RUBY_VERSION, ENV["DATABASE_URL"][%r{(\w+):(//|:)}, 1], ENV["JWT_LIB"], ENV["BUNDLE_GEMFILE"]].compact
+  commands = [RUBY_ENGINE, RUBY_VERSION, ENV.fetch("DATABASE_URL", "")[%r{(\w+):(//|:)}, 1], ENV["JWT_LIB"], ENV["BUNDLE_GEMFILE"]].compact
   SimpleCov.command_name commands.join("-")
   SimpleCov.coverage_dir "coverage/#{RUBY_ENGINE}-#{RUBY_VERSION}"
 end
@@ -23,11 +23,11 @@ require "rodauth/oauth"
 require "rodauth/version"
 require "bcrypt"
 
-PKCE_VERIFIER = "VERIFIER"
-PKCE_CHALLENGE = "a1Y-Z7sHPycP84FUZMgqhDyqVo6DdP5EUEXrLaTUge0" # using S256
-
 module OAuthHelpers
   attr_reader :app
+
+  PKCE_VERIFIER = "VERIFIER"
+  PKCE_CHALLENGE = "a1Y-Z7sHPycP84FUZMgqhDyqVo6DdP5EUEXrLaTUge0" # using S256
 
   private
 
@@ -66,6 +66,7 @@ module OAuthHelpers
     id = db[:oauth_grants].insert({
       oauth_application_id: application[:id],
       account_id: account[:id],
+      type: default_grant_type,
       code: "CODE",
       expires_in: Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: 60 * 5),
       redirect_uri: application[:redirect_uri],
@@ -74,23 +75,16 @@ module OAuthHelpers
     db[:oauth_grants].filter(id: id).first
   end
 
-  def oauth_token(params = {})
-    @oauth_token ||= set_oauth_token(params)
+  def oauth_grant_with_token(params = {})
+    @oauth_grant_with_token ||= set_oauth_grant_with_token(params)
   end
 
-  def set_oauth_token(params = {})
-    application = params.delete(:oauth_application) || oauth_application
-    grant = params.delete(:oauth_grant) || oauth_grant
-    id = db[:oauth_tokens].insert({
-      account_id: account[:id],
-      oauth_application_id: application[:id],
-      oauth_grant_id: grant[:id],
+  def set_oauth_grant_with_token(params = {})
+    set_oauth_grant({
       token: "TOKEN",
       refresh_token: "REFRESH_TOKEN",
-      expires_in: Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: 60 * 5),
-      scopes: grant[:scopes]
+      code: nil
     }.merge(params))
-    db[:oauth_tokens].filter(id: id).first
   end
 
   def account

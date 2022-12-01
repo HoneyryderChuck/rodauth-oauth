@@ -1,44 +1,40 @@
 # frozen_string_literal: true
 
-require "rodauth/oauth/refinements"
+require "rodauth/oauth"
 
 module Rodauth
   Feature.define(:oauth_pkce, :OauthPkce) do
-    using PrefixExtensions
-
     depends :oauth_authorization_code_grant
 
-    auth_value_method :use_oauth_pkce?, true
-
-    auth_value_method :oauth_require_pkce, false
+    auth_value_method :oauth_require_pkce, true
     auth_value_method :oauth_pkce_challenge_method, "S256"
 
     auth_value_method :oauth_grants_code_challenge_column, :code_challenge
     auth_value_method :oauth_grants_code_challenge_method_column, :code_challenge_method
 
-    auth_value_method :code_challenge_required_error_code, "invalid_request"
-    translatable_method :code_challenge_required_message, "code challenge required"
-    auth_value_method :unsupported_transform_algorithm_error_code, "invalid_request"
-    translatable_method :unsupported_transform_algorithm_message, "transform algorithm not supported"
+    auth_value_method :oauth_code_challenge_required_error_code, "invalid_request"
+    translatable_method :oauth_code_challenge_required_message, "code challenge required"
+    auth_value_method :oauth_unsupported_transform_algorithm_error_code, "invalid_request"
+    translatable_method :oauth_unsupported_transform_algorithm_message, "transform algorithm not supported"
 
     private
 
-    def authorized_oauth_application?(oauth_application, client_secret, _)
-      return true if use_oauth_pkce? && param_or_nil("code_verifier")
+    def supports_auth_method?(oauth_application, auth_method)
+      return super unless auth_method == "none"
 
-      super
+      request.params.key?("code_verifier") || super
     end
 
     def validate_authorize_params
-      validate_pkce_challenge_params if use_oauth_pkce?
+      validate_pkce_challenge_params
 
       super
     end
 
     def create_oauth_grant(create_params = {})
       # PKCE flow
-      if use_oauth_pkce? && (code_challenge = param_or_nil("code_challenge"))
-        code_challenge_method = param_or_nil("code_challenge_method")
+      if (code_challenge = param_or_nil("code_challenge"))
+        code_challenge_method = param_or_nil("code_challenge_method") || oauth_pkce_challenge_method
 
         create_params[oauth_grants_code_challenge_column] = code_challenge
         create_params[oauth_grants_code_challenge_method_column] = code_challenge_method
@@ -47,18 +43,18 @@ module Rodauth
       super
     end
 
-    def create_oauth_token_from_authorization_code(oauth_grant, create_params, *)
-      if use_oauth_pkce?
-        if oauth_grant[oauth_grants_code_challenge_column]
-          code_verifier = param_or_nil("code_verifier")
+    def create_token_from_authorization_code(grant_params, *args, oauth_grant: nil)
+      oauth_grant ||= valid_locked_oauth_grant(grant_params)
 
-          redirect_response_error("invalid_request") unless code_verifier && check_valid_grant_challenge?(oauth_grant, code_verifier)
-        elsif oauth_require_pkce
-          redirect_response_error("code_challenge_required")
-        end
+      if oauth_grant[oauth_grants_code_challenge_column]
+        code_verifier = param_or_nil("code_verifier")
+
+        redirect_response_error("invalid_request") unless code_verifier && check_valid_grant_challenge?(oauth_grant, code_verifier)
+      elsif oauth_require_pkce
+        redirect_response_error("code_challenge_required")
       end
 
-      super
+      super({ oauth_grants_id_column => oauth_grant[oauth_grants_id_column] }, *args, oauth_grant: oauth_grant)
     end
 
     def validate_pkce_challenge_params
@@ -91,7 +87,7 @@ module Rodauth
 
     def oauth_server_metadata_body(*)
       super.tap do |data|
-        data[:code_challenge_methods_supported] = oauth_pkce_challenge_method if use_oauth_pkce?
+        data[:code_challenge_methods_supported] = oauth_pkce_challenge_method
       end
     end
   end

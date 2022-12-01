@@ -1,5 +1,8 @@
 # frozen_string_literal: true
 
+require "rodauth/oauth"
+require "rodauth/oauth/http_extensions"
+
 module Rodauth
   Feature.define(:oauth_token_introspection, :OauthTokenIntrospection) do
     depends :oauth_base
@@ -7,47 +10,44 @@ module Rodauth
     before "introspect"
 
     auth_value_methods(
-      :before_introspection_request
+      :resource_owner_identifier
     )
 
     # /introspect
-    route(:introspect) do |r|
-      next unless is_authorization_server?
-
+    auth_server_route(:introspect) do |r|
+      require_oauth_application_for_introspect
       before_introspect_route
-      require_oauth_application
 
       r.post do
         catch_error do
-          validate_oauth_introspect_params
+          validate_introspect_params
+
+          token_type_hint = param_or_nil("token_type_hint")
 
           before_introspect
-          oauth_token = case param("token_type_hint")
-                        when "access_token"
-                          oauth_token_by_token(param("token"))
+          oauth_grant = case token_type_hint
+                        when "access_token", nil
+                          if features.include?(:oauth_jwt) && oauth_jwt_access_tokens
+                            jwt_decode(param("token"))
+                          else
+                            oauth_grant_by_token(param("token"))
+                          end
                         when "refresh_token"
-                          oauth_token_by_refresh_token(param("token"))
-                        else
-                          oauth_token_by_token(param("token")) || oauth_token_by_refresh_token(param("token"))
+                          oauth_grant_by_refresh_token(param("token"))
                         end
 
-          if oauth_application
-            redirect_response_error("invalid_request") if oauth_token && !token_from_application?(oauth_token, oauth_application)
-          elsif oauth_token
-            @oauth_application = db[oauth_applications_table].where(oauth_applications_id_column =>
-              oauth_token[oauth_tokens_oauth_application_id_column]).first
-          end
+          oauth_grant ||= oauth_grant_by_refresh_token(param("token")) if token_type_hint.nil?
 
-          json_response_success(json_token_introspect_payload(oauth_token))
+          json_response_success(json_token_introspect_payload(oauth_grant))
         end
 
-        throw_json_response_error(invalid_oauth_response_status, "invalid_request")
+        throw_json_response_error(oauth_invalid_response_status, "invalid_request")
       end
     end
 
     # Token introspect
 
-    def validate_oauth_introspect_params(token_hint_types = %w[access_token refresh_token].freeze)
+    def validate_introspect_params(token_hint_types = %w[access_token refresh_token].freeze)
       # check if valid token hint type
       if param_or_nil("token_type_hint") && !token_hint_types.include?(param("token_type_hint"))
         redirect_response_error("unsupported_token_type")
@@ -56,17 +56,35 @@ module Rodauth
       redirect_response_error("invalid_request") unless param_or_nil("token")
     end
 
-    def json_token_introspect_payload(token)
-      return { active: false } unless token
+    def json_token_introspect_payload(grant_or_claims)
+      return { active: false } unless grant_or_claims
 
-      {
-        active: true,
-        scope: token[oauth_tokens_scopes_column],
-        client_id: oauth_application[oauth_applications_client_id_column],
-        # username
-        token_type: oauth_token_type,
-        exp: token[oauth_tokens_expires_in_column].to_i
-      }
+      if grant_or_claims["sub"]
+        # JWT
+        {
+          active: true,
+          scope: grant_or_claims["scope"],
+          client_id: grant_or_claims["client_id"],
+          username: resource_owner_identifier(grant_or_claims),
+          token_type: "access_token",
+          exp: grant_or_claims["exp"],
+          iat: grant_or_claims["iat"],
+          nbf: grant_or_claims["nbf"],
+          sub: grant_or_claims["sub"],
+          aud: grant_or_claims["aud"],
+          iss: grant_or_claims["iss"],
+          jti: grant_or_claims["jti"]
+        }
+      else
+        {
+          active: true,
+          scope: grant_or_claims[oauth_grants_scopes_column],
+          client_id: oauth_application[oauth_applications_client_id_column],
+          username: resource_owner_identifier(grant_or_claims),
+          token_type: oauth_token_type,
+          exp: grant_or_claims[oauth_grants_expires_in_column].to_i
+        }
+      end
     end
 
     def check_csrf?
@@ -80,29 +98,41 @@ module Rodauth
 
     private
 
-    def introspection_request(token_type_hint, token)
-      auth_url = URI(authorization_server_url)
-      http = Net::HTTP.new(auth_url.host, auth_url.port)
-      http.use_ssl = auth_url.scheme == "https"
+    def require_oauth_application_for_introspect
+      (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v[/\A *Bearer (.*)\Z/, 1]))
 
-      request = Net::HTTP::Post.new(auth_url.path + introspect_path)
-      request["content-type"] = "application/x-www-form-urlencoded"
-      request["accept"] = json_response_content_type
-      request.set_form_data({ "token_type_hint" => token_type_hint, "token" => token })
+      return require_oauth_application unless token
 
-      before_introspection_request(request)
-      response = http.request(request)
-      authorization_required unless response.code.to_i == 200
+      oauth_application = current_oauth_application
 
-      JSON.parse(response.body)
+      authorization_required unless oauth_application
+
+      @oauth_application = oauth_application
     end
-
-    def before_introspection_request(request); end
 
     def oauth_server_metadata_body(*)
       super.tap do |data|
         data[:introspection_endpoint] = introspect_url
         data[:introspection_endpoint_auth_methods_supported] = %w[client_secret_basic]
+      end
+    end
+
+    def resource_owner_identifier(grant_or_claims)
+      if (account_id = grant_or_claims[oauth_grants_account_id_column])
+        account_ds(account_id).select(login_column).first[login_column]
+      elsif (app_id = grant_or_claims[oauth_grants_oauth_application_id_column])
+        db[oauth_applications_table].where(oauth_applications_id_column => app_id)
+                                    .select(oauth_applications_name_column)
+                                    .first[oauth_applications_name_column]
+      elsif (subject = grant_or_claims["sub"])
+        # JWT
+        if subject == grant_or_claims["client_id"]
+          db[oauth_applications_table].where(oauth_applications_client_id_column => subject)
+                                      .select(oauth_applications_name_column)
+                                      .first[oauth_applications_name_column]
+        else
+          account_ds(subject).select(login_column).first[login_column]
+        end
       end
     end
   end

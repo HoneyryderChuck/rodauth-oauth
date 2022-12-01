@@ -2,7 +2,9 @@
   <% if rodauth.oauth_application[rodauth.oauth_applications_logo_uri_column] %>
     <%= image_tag rodauth.oauth_application[rodauth.oauth_applications_logo_uri_column] %>
   <% end %>
-  <p class="lead">The application <%= link_to rodauth.oauth_application[rodauth.oauth_applications_name_column],  rodauth.oauth_application[rodauth.oauth_applications_homepage_url_column] %> would like to access your data.</p>
+  <% application_uri = rodauth.oauth_application[rodauth.oauth_applications_homepage_url_column] %>
+  <% application_name = application_uri ? link_to(rodauth.oauth_application[rodauth.oauth_applications_name_column], application_uri) : rodauth.oauth_application[rodauth.oauth_applications_name_column] %>
+  <p class="lead"><%= rodauth.authorize_page_lead(name: application_name).html_safe %></p>
 
   <div class="list-group">
     <% if rodauth.oauth_application[rodauth.oauth_applications_tos_uri_column] %>
@@ -23,15 +25,17 @@
   <% end %>
 
   <div class="form-group">
-    <h1 class="display-6"><%= rodauth.oauth_tokens_scopes_label %></h1>
+    <h1 class="display-6"><%= rodauth.oauth_grants_scopes_label %></h1>
 
-    <% rodauth.scopes.each do |scope| %>
-      <% is_default = scope == rodauth.oauth_application_default_scope %>
-      <div class="form-check">
-        <%= check_box_tag "scope[]", scope, is_default, disabled: is_default, id: scope, class: "form-check-input" %>
-        <%= label_tag scope, scope, class: "form-check-label" %>
-        <%= hidden_field_tag "scope[]", scope if is_default %>
-      </div>
+    <% rodauth.authorize_scopes.each do |scope| %>
+      <% if rodauth.features.include?(:oidc) && scope == "offline_access" %>
+        <%= hidden_field_tag "scope[]", scope %>
+      <% else %>
+        <div class="form-check">
+          <%= check_box_tag "scope[]", scope, id: scope, class: "form-check-input" %>
+          <%= label_tag scope, scope, class: "form-check-label" %>
+        </div>
+      <% end %>
     <% end %>
     <%= hidden_field_tag :client_id, params[:client_id] %>
     <% %i[access_type response_type response_mode state redirect_uri].each do |oauth_param| %>
@@ -53,6 +57,9 @@
       <% end %>
     <% end %>
     <% if rodauth.features.include?(:oidc) %>
+      <% if params[:prompt] %>
+        <%= hidden_field_tag :prompt,  params[:prompt] %>
+      <% end %>
       <% if params[:nonce] %>
         <%= hidden_field_tag :nonce,  params[:nonce] %>
       <% end %>
@@ -62,13 +69,16 @@
       <% if params[:claims_locales] %>
         <%= hidden_field_tag :claims_locales,  params[:claims_locales] %>
       <% end %>
+      <% if params[:claims] %>
+        <%= hidden_field_tag :claims,  sanitize(params[:claims]) %>
+      <% end %>
       <% if params[:acr_values] %>
-        <%= hidden_field_tag :acr,  params[:acr_values] %>
+        <%= hidden_field_tag :acr_values,  params[:acr_values] %>
       <% end %>
     <% end %>
   </div>
  <p class="text-center">
     <%= submit_tag rodauth.oauth_authorize_button, class: "btn btn-outline-primary" %>
-    <%= link_to rodauth.oauth_cancel_button, "#{rodauth.redirect_uri}?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request#{"&state=\#{rodauth.state}" if params[:state] }", class: "btn btn-outline-danger" %>
+    <%= link_to rodauth.oauth_cancel_button, "#{rodauth.redirect_uri}?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request#{"&state=\#{CGI.escape(rodauth.state)}" if params[:state] }", class: "btn btn-outline-danger" %>
   </p>
 <% end %>

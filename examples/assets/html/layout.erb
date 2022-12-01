@@ -16,8 +16,8 @@
       <nav class="my-2 my-md-0 mr-md-3">
         <% if rodauth.logged_in? %>
           <% if rodauth.features.include?(:oauth_base) && rodauth.is_authorization_server? %>
-            <% if rodauth.features.include?(:oauth_token_management) %>
-              <a class="p-2 text-dark" href="/oauth-tokens">Tokens</a>
+            <% if rodauth.features.include?(:oauth_grant_management) %>
+              <a class="p-2 text-dark" href="/oauth-grants">Grants</a>
             <% end %>
             <% if rodauth.features.include?(:oauth_application_management) %>
               <a class="p-2 text-dark" href="/oauth-applications">Client Applications</a>

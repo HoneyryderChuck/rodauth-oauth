@@ -1,8 +1,8 @@
 # Rodauth::Oauth
 
 [![Gem Version](https://badge.fury.io/rb/rodauth-oauth.svg)](http://rubygems.org/gems/rodauth-oauth)
-[![pipeline status](https://gitlab.com/honeyryderchuck/rodauth-oauth/badges/master/pipeline.svg)](https://gitlab.com/honeyryderchuck/rodauth-oauth/pipelines?page=1&scope=all&ref=master)
-[![coverage report](https://gitlab.com/honeyryderchuck/rodauth-oauth/badges/master/coverage.svg?job=coverage)](https://honeyryderchuck.gitlab.io/rodauth-oauth/coverage/#_AllFiles)
+[![pipeline status](https://gitlab.com/os85/rodauth-oauth/badges/master/pipeline.svg)](https://gitlab.com/os85/rodauth-oauth/pipelines?page=1&scope=all&ref=master)
+[![coverage report](https://gitlab.com/os85/rodauth-oauth/badges/master/coverage.svg?job=coverage)](https://os85.gitlab.io/rodauth-oauth/coverage/#_AllFiles)
 
 This is an extension to the `rodauth` gem which implements the [OAuth 2.0 framework](https://tools.ietf.org/html/rfc6749) for an authorization server.
 
@@ -16,13 +16,13 @@ This gem implements the following RFCs and features of OAuth:
   * `oauth_authorization_code_grant` - [Authorization code grant](https://tools.ietf.org/html/rfc6749#section-1.3);
   * `oauth_implicit_grant` - [Implicit grant (off by default)](https://tools.ietf.org/html/rfc6749#section-4.2);
   * `oauth_client_credentials_grant` - [Client credentials grant (off by default)](https://tools.ietf.org/html/rfc6749#section-4.4);
-  * `oauth_device_grant` - [Device code grant (off by default)](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-device-flow-15);
+  * `oauth_device_code_grant` - [Device code grant (off by default)](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-device-flow-15);
   * `oauth_token_revocation` - [Token revocation](https://tools.ietf.org/html/rfc7009);
   * `oauth_token_introspection` - [Token introspection](https://tools.ietf.org/html/rfc7662);
   * [Authorization Server Metadata](https://tools.ietf.org/html/rfc8414);
   * `oauth_pkce` - [PKCE](https://tools.ietf.org/html/rfc7636);
   * `oauth_jwt` - [JWT Access Tokens](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-07);
-    * Supports [JWT Secured Authorization Request](https://tools.ietf.org/html/draft-ietf-oauth-jwsreq-20);
+  * `oauth_jwt_secured_authorization_request` - [JWT Secured Authorization Request](https://tools.ietf.org/html/draft-ietf-oauth-jwsreq-20);
   * `oauth_resource_indicators` - [Resource Indicators](https://datatracker.ietf.org/doc/html/rfc8707);
   * Access Type (Token refresh online and offline);
 * `oauth_http_mac` - [MAC Authentication Scheme](https://tools.ietf.org/html/draft-hammer-oauth-v2-mac-token-02);
@@ -35,11 +35,12 @@ This gem implements the following RFCs and features of OAuth:
 
 It also implements the [OpenID Connect layer](https://openid.net/connect/) (via the `openid` feature) on top of the OAuth features it provides, including:
 
-* [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html);
-* [OpenID Connect Discovery](https://openid.net/specs/openid-connect-discovery-1_0-29.html);
-* [OpenID Multiple Response Types](https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html);
-* [OpenID Connect Dynamic Client Registration](https://openid.net/specs/openid-connect-registration-1_0.html);
-* [RP Initiated Logout](https://openid.net/specs/openid-connect-rpinitiated-1_0.html);
+* `oidc`
+  * [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html);
+  * [OpenID Connect Discovery](https://openid.net/specs/openid-connect-discovery-1_0-29.html);
+  * [OpenID Multiple Response Types](https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html);
+* `oidc_dynamic_client_registration` - [OpenID Connect Dynamic Client Registration](https://openid.net/specs/openid-connect-registration-1_0.html);
+* `oidc_rp_initiated_logout` - [RP Initiated Logout](https://openid.net/specs/openid-connect-rpinitiated-1_0.html);
 
 This gem supports also rails (through [rodauth-rails]((https://github.com/janko/rodauth-rails))).
 
@@ -64,10 +65,10 @@ Or install it yourself as:
 ## Resources
 |               |                                                             |
 | ------------- | ----------------------------------------------------------- |
-| Website       | https://honeyryderchuck.gitlab.io/rodauth-oauth/            |
-| Documentation | https://honeyryderchuck.gitlab.io/rodauth-oauth/rdoc/       |
-| Wiki          | https://gitlab.com/honeyryderchuck/rodauth-oauth/wikis/home |
-| CI            | https://gitlab.com/honeyryderchuck/rodauth-oauth/pipelines  |
+| Website       | https://os85.gitlab.io/rodauth-oauth/            |
+| Documentation | https://os85.gitlab.io/rodauth-oauth/rdoc/       |
+| Wiki          | https://gitlab.com/os85/rodauth-oauth/wikis/home |
+| CI            | https://gitlab.com/os85/rodauth-oauth/pipelines  |
 
 ## Articles
 
@@ -81,8 +82,7 @@ This tutorial assumes you already read the documentation and know how to set up 
 ```ruby
 plugin :rodauth do
   # enable it in the plugin
-  enable :login, :oauth
-  oauth_application_default_scope %w[profile.read]
+  enable :login, :oauth_authorization_code_grant
   oauth_application_scopes %w[profile.read profile.write]
 end
 
@@ -111,6 +111,7 @@ route do |r|
   r.is "books" do
     rodauth.require_oauth_authorization("books.read", "books.research")
     r.get do
+      @books = Book.where(user_id: rodauth.current_oauth_account[:id]).all
       # ...
     end
   end
@@ -124,7 +125,6 @@ For OpenID, it's very similar to the example above:
 plugin :rodauth do
   # enable it in the plugin
   enable :login, :oidc
-  oauth_application_default_scope %w[openid]
   oauth_application_scopes %w[openid email profile]
 end
 ```
@@ -132,22 +132,22 @@ end
 
 ### Example (TL;DR)
 
-Just [check our example applications](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/tree/master/examples/).
+Just [check our example applications](https://gitlab.com/os85/rodauth-oauth/-/tree/master/examples/).
 
 
 ### Database migrations
 
-You have to generate database tables for accounts, oauth applications, grants and tokens. In order for you to hit the ground running, [here's a set of migrations (using `sequel`) to generate the needed tables](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/tree/master/test/migrate) (omit the first 2 if you already have account tables, and [follow recommendations from rodauth accordingly](https://github.com/jeremyevans/rodauth)).
+You have to generate database tables for accounts, oauth applications, grants and tokens. In order for you to hit the ground running, [here's a set of migrations (using `sequel`) to generate the needed tables](https://gitlab.com/os85/rodauth-oauth/-/tree/master/test/migrate) (omit the first 2 if you already have account tables, and [follow recommendations from rodauth accordingly](https://github.com/jeremyevans/rodauth)).
 
 You can change column names or even use existing tables, however, be aware that you'll have to define new column accessors at the `rodauth` plugin declaration level. Let's say, for instance, you'd like to change the `oauth_grants` table name to `access_grants`, and it's `code` column to `authorization_code`; then, you'd have to do the following:
 
 ```ruby
 plugin :rodauth do
   # enable it in the plugin
-  enable :login, :oauth
+  enable :login, :oauth_authorization_code_grant
   # ...
-  oauth_grants_table "access_grants"
-  oauth_grants_code_column "authorization_code"
+  oauth_grants_table :access_grants
+  oauth_grants_code_column :authorization_code
 end
 ```
 
@@ -195,9 +195,8 @@ You can then enable this feature in `lib/rodauth_app.rb` and set up any options 
 
 ```ruby
 # lib/roudauth_app.rb
-enable :oauth
+enable :oauth_authorization_code_grant
 # OAuth
-oauth_application_default_scope "profile.read"
 oauth_application_scopes %w[profile.read profile.write books.read books.write]
 ```
 
@@ -242,34 +241,28 @@ In this section, the non-standard features are going to be described in more det
 
 ### Token / Secrets Hashing
 
-Although not human-friendly as passwords, for security reasons, you might not want to store access (and refresh) tokens in the database. If that is the case, You'll have to add the respective hash columns in the table:
+Access tokens, refresh tokens and client secrets are hashed before being stored in the database (using `bcrypt`), by default.
 
-```ruby
-# in migration
-String :token_hash, null: false, token: true
-String :refresh_token_hash, token, true
-# and you DO NOT NEED the token and refresh_token columns anymore!
-```
-
-And declare them in the plugin:
+Disabling this behaviour is a matter of nullifying the hash column option:
 
 ```ruby
 plugin :rodauth do
-  enable :oauth
-  oauth_tokens_token_hash_column :token_hash
-  oauth_tokens_token_hash_column :refresh_token_hash
+  enable :oauth_authorization_code_grant
+
+  # storing access token, refresh token and client secret in plaintext:
+  oauth_grants_token_hash_column nil
+  oauth_grants_refresh_token_hash_column nil
+  oauth_applications_client_secret_hash_column nil
 ```
 
-#### Client Secret
-
-By default, it's expected that the "client secret" property from an OAuth application is only known by the owner, and only the hash is stored in the database; this way, the authorization server doesn't know what the client secret is, only the application owner. The provided [OAuth Applications Extensions](#oauth-applications) application form contains a "Client Secret" input field for this reason.
-
-However, this extension is optional, and you might want to generate the secrets and store them as is. In that case, you'll have to re-define some options:
+If you'd like to replace the hashing function (for, let's say, [argon2](https://github.com/technion/ruby-argon2)), you'll need to perform the following overrides:
 
 ```ruby
 plugin :rodauth do
-  enable :oauth
-  secret_matches? ->(application, secret){ application[:client_secret] == secret }
+  enable :oauth_authorization_code_grant
+
+  secret_matches? { |oauth_application, secret| Argon2::Password.verify_password(secret, oauth_application[oauth_applications_client_secret_hash_column]) }
+  secret_hash { |secret| Argon2::Password.create(secret) }
 end
 ```
 
@@ -277,14 +270,14 @@ end
 
 `rodauth-oauth` supports translating all user-facing text found in all pages and forms, by integrating with [rodauth-i18n](https://github.com/janko/rodauth-i18n). Just set it up in your application and `rodauth` configuration.
 
-Default translations shipping with `rodauth-oauth` can be found [in this directory](https://gitlab.com/honeyryderchuck/rodauth-oauth/-/tree/master/locales). If they're not available for the languages you'd like to support, consider getting them translated from the english text, and contributing them to this repository via a Merge Request.
+Default translations shipping with `rodauth-oauth` can be found [in this directory](https://gitlab.com/os85/rodauth-oauth/-/tree/master/locales). If they're not available for the languages you'd like to support, consider getting them translated from the english text, and contributing them to this repository via a Merge Request.
 
 (This feature is available since `v0.7`.)
 
 
 ## Ruby support policy
 
-The minimum Ruby version required to run `rodauth-oauth` is 2.3 . Besides that, it should support all rubies that rodauth and roda support, including JRuby and truffleruby.
+The minimum Ruby version required to run `rodauth-oauth` is 2.5 . Besides that, it should support all rubies that rodauth and roda support, including JRuby and truffleruby.
 
 ### Rails
 
@@ -296,4 +289,4 @@ After checking out the repo, run `bundle install` to install dependencies. Then,
 
 ## Contributing
 
-Bug reports and pull requests are welcome on Gitlab at https://gitlab.com/honeyryderchuck/rodauth-oauth.
+Bug reports and pull requests are welcome on Gitlab at https://gitlab.com/os85/rodauth-oauth.

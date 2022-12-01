@@ -29,7 +29,7 @@ namespace :coverage do
   end
 end
 
-CI_TASKS = RUBY_VERSION < "2.5" ? %i[test] : %i[test rubocop]
+CI_TASKS = %i[test rubocop]
 
 task "test:ci": CI_TASKS
 
@@ -67,7 +67,7 @@ task :check_method_doc do
     meths = File.binread(f).split("\n").grep(/\A(\w+[!?]?(\([^\)]+\))?) :: /).map { |line| line.split(/( :: |\()/, 2)[0] }.sort
     docs[File.basename(f).sub(/\.rdoc\z/, "")] = meths unless meths.empty?
   end
-  require "rodauth"
+  require "rodauth/oauth"
   docs.each do |f, doc_meths|
     require "./lib/rodauth/features/#{f}"
     feature = Rodauth::FEATURES[f.to_sym]
@@ -85,10 +85,8 @@ end
 desc "Builds Homepage"
 task prepare_website: [:website_rdoc] do
   require "fileutils"
-  Dir.chdir "www"
-  system("bundle install")
   FileUtils.rm_rf("wiki")
-  system("git clone https://gitlab.com/honeyryderchuck/rodauth-oauth.wiki.git wiki")
+  system("git clone https://gitlab.com/os85/rodauth-oauth.wiki.git wiki")
   Dir.glob("wiki/*.md") do |path|
     data = File.read(path)
     name = File.basename(path, ".md")

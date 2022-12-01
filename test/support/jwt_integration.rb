@@ -9,51 +9,53 @@ class JWTIntegration < RodaIntegration
   private
 
   def oauth_feature
-    :oauth_jwt
+    %i[oauth_authorization_code_grant oauth_jwt]
   end
 
-  def verify_oauth_token
-    assert db[:oauth_tokens].count == 1
-
-    oauth_token = db[:oauth_tokens].first
-
-    assert oauth_token[:token].nil?
-
-    oauth_grant = db[:oauth_grants].where(id: oauth_token[:oauth_grant_id]).first
-    assert !oauth_grant[:revoked_at].nil?, "oauth grant should be revoked"
-
-    oauth_token
+  def set_oauth_grant_with_token(params = {})
+    super({
+      token: nil,
+      refresh_token: "REFRESH_TOKEN",
+      code: nil
+    }.merge(params))
   end
 
-  def verify_response
-    assert last_response.status == 200
+  def verify_oauth_grant
+    assert db[:oauth_grants].count == 1
+
+    oauth_grant = db[:oauth_grants].first
+
+    assert oauth_grant[:token].nil?
+
+    oauth_grant
+  end
+
+  def verify_response(status = 200)
+    assert last_response.status == status
     assert last_response.headers["Content-Type"] == "application/json"
   end
 
-  def verify_access_token_response(data, oauth_token, secret, algorithm, audience: "CLIENT_ID")
+  def verify_access_token_response(data, oauth_grant, secret, algorithm, audience: "CLIENT_ID")
     verify_token_common_response(data)
 
     assert data.key?("access_token")
-    verify_access_token(data["access_token"], oauth_token, signing_key: secret, signing_algo: algorithm, audience: audience)
+    verify_access_token(data["access_token"], oauth_grant, signing_key: secret, signing_algo: algorithm, audience: audience)
   end
 
-  def verify_access_token(data, oauth_token, signing_key:, signing_algo:, audience: "CLIENT_ID")
+  def verify_access_token(data, oauth_grant, signing_key:, signing_algo:, audience: "CLIENT_ID")
     claims, headers = JWT.decode(data, signing_key, true, algorithms: [signing_algo])
     assert headers["alg"] == signing_algo
 
-    verify_jwt_claims(claims, oauth_token, audience: audience)
     assert claims.key?("client_id")
     assert claims["client_id"] == "CLIENT_ID"
+    assert claims["scope"] == oauth_grant[:scopes]
+    verify_jwt_claims(claims, oauth_grant, audience: audience)
     claims
   end
 
-  def verify_jwt_claims(claims, _oauth_token, audience: "CLIENT_ID")
+  def verify_jwt_claims(claims, _oauth_grant, audience: claims["client_id"])
     assert claims.key?("iss")
-    if respond_to?(:last_response)
-      assert claims["iss"] == "http://example.org"
-    else
-      assert claims["iss"] == "http://www.example.com"
-    end
+    assert claims["iss"] == example_origin
     assert claims.key?("sub")
     assert claims.key?("aud")
     assert claims["aud"] == audience
@@ -69,14 +71,15 @@ class JWTIntegration < RodaIntegration
                               encryption_method: "A128CBC-HS256",
                               encryption_algorithm: "RSA-OAEP", **extra_claims)
     claims = {
-      iss: "http://www.example.com",
+      iss: application[:client_id],
       aud: "http://www.example.com",
+      response_mode: "query",
       response_type: "code",
       client_id: application[:client_id],
       redirect_uri: application[:redirect_uri],
       scope: application[:scopes],
       state: "ABCDEF"
-    }.merge(extra_claims)
+    }.merge(extra_claims).compact
 
     headers = {}
 
@@ -98,5 +101,13 @@ class JWTIntegration < RodaIntegration
     end
 
     token
+  end
+
+  def example_origin
+    if respond_to?(:last_response)
+      "http://example.org"
+    else
+      "http://www.example.com"
+    end
   end
 end

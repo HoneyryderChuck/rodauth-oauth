@@ -185,7 +185,7 @@ class ClientApplication < Roda
       # This is the redirect uri, where the authorization server redirects to with grant information for
       # the user to generate an access token.
       #
-      r.get do
+      r.post do
         if r.params["error"]
           flash[:error] = "Authorization failed: #{r.params['error_description'] || r.params['error']}"
           r.redirect "/"

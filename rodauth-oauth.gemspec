@@ -11,22 +11,22 @@ Gem::Specification.new do |spec|
 
   spec.summary       = "Implementation of the OAuth 2.0 protocol on top of rodauth."
   spec.description   = "Implementation of the OAuth 2.0 protocol on top of rodauth."
-  spec.homepage      = "https://gitlab.com/honeyryderchuck/rodauth-oauth"
-  # spec.required_ruby_version = Gem::Requirement.new(">= 2.3.0")
+  spec.homepage      = "https://gitlab.com/os85/rodauth-oauth"
+  spec.required_ruby_version = Gem::Requirement.new(">= 2.5.0")
 
   spec.metadata = {
-    "homepage_uri" => "https://honeyryderchuck.gitlab.io/rodauth-oauth/",
-    "documentation_uri" => "https://honeyryderchuck.gitlab.io/rodauth-oauth/rdoc/",
-    "bug_tracker_uri" => "https://gitlab.com/honeyryderchuck/rodauth-oauth/issues",
-    "source_code_uri" => "https://gitlab.com/honeyryderchuck/rodauth-oauth",
-    "changelog_uri" => "https://gitlab.com/honeyryderchuck/rodauth-oauth/-/blob/master/CHANGELOG.md",
+    "homepage_uri" => "https://os85.gitlab.io/rodauth-oauth/",
+    "documentation_uri" => "https://os85.gitlab.io/rodauth-oauth/rdoc/",
+    "bug_tracker_uri" => "https://gitlab.com/os85/rodauth-oauth/issues",
+    "source_code_uri" => "https://gitlab.com/os85/rodauth-oauth",
+    "changelog_uri" => "https://gitlab.com/os85/rodauth-oauth/-/blob/master/CHANGELOG.md",
     "rubygems_mfa_required" => "true"
   }
   spec.license = "Apache-2.0"
 
-  spec.files = Dir["LICENSE.txt", "README.md", "lib/**/*.{rb,erb}", "templates/*", "locales/**/*.yml", "CHANGELOG.md",
+  spec.files = Dir["LICENSE.txt", "README.md", "MIGRATION-GUIDE-V1.md", "lib/**/*.{rb,erb}", "templates/*", "locales/**/*.yml", "CHANGELOG.md",
                    "doc/release_notes/*.md"]
-  spec.extra_rdoc_files = Dir["LICENSE.txt", "README.md", "CHANGELOG.md", "doc/release_notes/*.md"]
+  spec.extra_rdoc_files = Dir["LICENSE.txt", "README.md", "MIGRATION-GUIDE-V1.md", "CHANGELOG.md", "doc/release_notes/*.md"]
 
   spec.require_paths = ["lib"]
 

@@ -1,0 +1,9 @@
+= Documentation for OAuth JWT JWKs feature
+
+The +oauth_jwt_jwks+ feature provides an endpoint, "/jwks", where the provider set of public JSON Web Keys is exposed.
+
+== Auth Methods
+
+jwks_set :: returns the JWK set to expose over JSON.
+jwks_route :: the route for the jwks, defaults to +jwks+.
+before_jwks_route :: Run arbitrary code before the JWKS route.

@@ -7,12 +7,12 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
   include TestSchemas::Methods
 
   def test_oidc_openid_configuration
+    rsa_private = OpenSSL::PKey::RSA.generate(2048)
     rodauth do
-      use_oauth_implicit_grant_type? true
       oauth_application_scopes %w[openid email]
-      oauth_jwt_algorithm "RS256"
+      oauth_jwt_keys("RS256" => rsa_private)
     end
-    setup_application
+    setup_application(:oauth_implicit_grant)
     get("/.well-known/openid-configuration")
 
     assert last_response.status == 200
@@ -23,19 +23,17 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
     assert json_body["token_endpoint"] == "http://example.org/token"
     assert json_body["userinfo_endpoint"] == "http://example.org/userinfo"
     assert json_body["jwks_uri"] == "http://example.org/jwks"
-    assert json_body["registration_endpoint"] == "http://example.org/oauth-applications"
     assert json_body["scopes_supported"] == %w[openid email]
     assert json_body["response_types_supported"] == [
-      "code", "token", "none", "id_token", "code token",
+      "code", "id_token", "none",
       "code id_token",
+      "code token",
       "id_token token",
-      "code id_token token"
+      "code id_token token", "token"
     ]
     assert json_body["response_modes_supported"] == %w[query form_post fragment]
     assert json_body["grant_types_supported"] == %w[refresh_token authorization_code implicit]
-    assert json_body["subject_types_supported"] == %w[public]
-
-    assert json_body["id_token_signing_alg_values_supported"] == %w[RS256]
+    assert json_body["subject_types_supported"] == %w[public pairwise]
 
     assert json_body["token_endpoint_auth_methods_supported"] == %w[client_secret_basic client_secret_post]
     assert json_body["token_endpoint_auth_signing_alg_values_supported"] == %w[RS256]
@@ -60,9 +58,10 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
   end
 
   def test_filters_out_invalid_fields
+    rsa_private = OpenSSL::PKey::RSA.generate(2048)
     rodauth do
+      oauth_jwt_keys("RS256" => rsa_private)
       oauth_application_scopes %w[openid email]
-      oauth_jwt_algorithm "RS256"
     end
     setup_application
     get("/.well-known/openid-configuration")
@@ -86,10 +85,7 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
   end
 
   def test_oidc_metadata_openid_configuration_rp_initiated_logout
-    rodauth do
-      use_rp_initiated_logout? true
-    end
-    setup_application
+    setup_application(:oidc_rp_initiated_logout)
 
     get("/.well-known/openid-configuration")
 
@@ -100,12 +96,12 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
 
   private
 
-  def setup_application
+  def setup_application(*args)
     rodauth do
       last_account_login_at do
         Time.now - 60
       end
     end
-    super(&:openid_configuration)
+    super(*args, &:load_openid_configuration_route)
   end
 end

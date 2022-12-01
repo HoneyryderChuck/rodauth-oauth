@@ -19,7 +19,7 @@ class RodauthOauthResourceIndicatorsJwtAuthorizeTest < JWTIntegration
 
     visit "/authorize?request=#{invalid_signed_request}&client_id=#{application[:client_id]}"
 
-    assert page.current_url.end_with?("?error=invalid_target"),
+    assert page.current_url.include?("?error=invalid_target"),
            "was redirected instead to #{page.current_url}"
 
     signed_request = generate_signed_request(application, signing_key: jws_key, resource: "https://example.org")
@@ -32,9 +32,9 @@ class RodauthOauthResourceIndicatorsJwtAuthorizeTest < JWTIntegration
 
   private
 
-  def setup_application
+  def setup_application(*)
     rodauth do
-      enable :oauth_resource_indicators
+      enable :oauth_jwt_secured_authorization_request, :oauth_resource_indicators
     end
     super
   end

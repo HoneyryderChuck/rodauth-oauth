@@ -4,16 +4,17 @@ require "test_helper"
 
 class RodauthOauthPkceAuthorizeTest < RodaIntegration
   def test_authorize_post_authorize_with_pkce
-    setup_application
+    setup_application(:oauth_pkce)
 
     login
 
     # show the authorization form
     visit "/authorize?client_id=#{oauth_application[:client_id]}&" \
-          "code_challenge=#{PKCE_CHALLENGE}&code_challenge_method=S256"
+          "code_challenge=#{PKCE_CHALLENGE}&code_challenge_method=S256&response_mode=query&response_type=code"
 
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    check "user.read"
 
     # submit authorization request
     click_button "Authorize"
@@ -30,19 +31,17 @@ class RodauthOauthPkceAuthorizeTest < RodaIntegration
   end
 
   def test_authorize_post_authorize_with_pkce_disabled
-    rodauth do
-      use_oauth_pkce? false
-    end
     setup_application
 
     login
 
     # show the authorization form
     visit "/authorize?client_id=#{oauth_application[:client_id]}&" \
-          "code_challenge=#{PKCE_CHALLENGE}&code_challenge_method=S256"
+          "code_challenge=#{PKCE_CHALLENGE}&code_challenge_method=S256&response_mode=query&response_type=code"
 
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
+    check "user.read"
 
     # submit authorization request
     click_button "Authorize"
@@ -59,23 +58,29 @@ class RodauthOauthPkceAuthorizeTest < RodaIntegration
   end
 
   def test_authorize_post_authorize_with_forced_pkce_no_challenge
-    rodauth do
-      oauth_require_pkce true
-    end
-    setup_application
+    setup_application(:oauth_pkce)
 
     login
 
     # show the authorization form
-    visit "/authorize?client_id=#{oauth_application[:client_id]}"
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code&response_mode=query"
 
     assert page.current_url.include?("?error=invalid_request"),
            "code challenge required"
   end
 
-  private
+  def test_authorize_post_authorize_with_unrequired_pkce
+    rodauth do
+      oauth_require_pkce false
+    end
+    setup_application(:oauth_pkce)
 
-  def oauth_feature
-    :oauth_pkce
+    login
+
+    # show the authorization form
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code"
+
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
   end
 end
