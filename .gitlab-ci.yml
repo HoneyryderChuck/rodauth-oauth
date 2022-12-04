@@ -255,7 +255,7 @@ docs:
     - bundle exec rake prepare_website
   artifacts:
     paths:
-      - doc/
+      - rdoc/
       - wiki/
       - coverage/
   # only:

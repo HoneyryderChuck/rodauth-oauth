@@ -55,7 +55,7 @@ RDoc::Task.new do |rdoc|
 end
 
 RDoc::Task.new(:website_rdoc) do |rdoc|
-  rdoc.rdoc_dir = "www/rdoc"
+  rdoc.rdoc_dir = "rdoc"
   rdoc.options += rdoc_opts
   rdoc.rdoc_files.add RDOC_FILES
 end
