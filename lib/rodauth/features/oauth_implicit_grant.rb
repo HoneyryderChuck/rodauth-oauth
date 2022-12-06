@@ -48,6 +48,16 @@ module Rodauth
       generate_token(grant_params, false)
     end
 
+    def _redirect_response_error(redirect_url, query_params)
+      response_type = param("response_type")
+
+      return super if response_type.include?("code")
+
+      query_params = query_params.map { |k, v| "#{k}=#{v}" }
+      redirect_url.fragment = query_params.join("&")
+      redirect(redirect_url.to_s)
+    end
+
     def authorize_response(params, mode)
       return super unless mode == "fragment"
 
