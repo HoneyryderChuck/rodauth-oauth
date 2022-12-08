@@ -47,6 +47,9 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
 
       # :oidc_rp_initiated_logout enabled
       t.string :post_logout_redirect_uris, null: false
+
+      # oidc 3rd party login
+      t.string :initiate_login_uri, null: true
     end
 
     create_table :oauth_grants do |t|

@@ -63,6 +63,7 @@ else
     String :request_object_encryption_alg, null: true
     String :request_object_encryption_enc, null: true
     String :request_uris, null: true
+    String :initiate_login_uri, null: true
 
     # JWT/OIDC per application signing verification
     String :jwt_public_key, type: :text
@@ -177,7 +178,8 @@ class AuthenticationServer < Roda
     enable :login, :logout, :create_account, :oidc,
            :oauth_implicit_grant, :oauth_client_credentials_grant,
            :oauth_pkce, :oauth_token_introspection,
-           :oidc_dynamic_client_registration, :oauth_jwt_bearer_grant, :oauth_jwt_secured_authorization_request,
+           :oidc_dynamic_client_registration, :oauth_jwt_bearer_grant,
+           :oauth_jwt_secured_authorization_request,
            :oidc_rp_initiated_logout
 
     login_return_to_requested_location? true

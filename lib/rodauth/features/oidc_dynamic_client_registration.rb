@@ -141,6 +141,14 @@ module Rodauth
         end
       end
 
+      if (value = @oauth_application_params[oauth_applications_initiate_login_uri_column])
+        uri = URI(value)
+
+        unless uri.scheme == "https" || uri.host == "localhost"
+          register_throw_json_response_error("invalid_client_metadata", register_invalid_uri_message(uri))
+        end
+      end
+
       if (value = @oauth_application_params[oauth_applications_id_token_encrypted_response_alg_column]) &&
          !oauth_jwt_jwe_algorithms_supported.include?(value)
         register_throw_json_response_error("invalid_client_metadata",

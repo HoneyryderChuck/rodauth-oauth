@@ -40,6 +40,7 @@ Sequel.migration do
       String :request_object_encryption_alg, null: true
       String :request_object_encryption_enc, null: true
       String :request_uris, null: true
+      String :initiate_login_uri, null: true
 
       # JWT/OIDC per application signing verification
       String :jwt_public_key, type: :text
