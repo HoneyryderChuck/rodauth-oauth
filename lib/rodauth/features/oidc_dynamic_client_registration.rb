@@ -56,11 +56,11 @@ module Rodauth
           if value.is_a?(Array)
             @oauth_application_params[oauth_applications_request_uris_column] = value.each do |req_uri|
               unless check_valid_uri?(req_uri)
-                register_throw_json_response_error("invalid_redirect_uri", register_invalid_uri_message(req_uri))
+                register_throw_json_response_error("invalid_client_metadata", register_invalid_uri_message(req_uri))
               end
             end.join(" ")
           else
-            register_throw_json_response_error("invalid_redirect_uri", register_invalid_uri_message(value))
+            register_throw_json_response_error("invalid_client_metadata", register_invalid_client_metadata_message("request_uris", value))
           end
         elsif oauth_require_request_uri_registration
           register_throw_json_response_error("invalid_client_metadata", register_required_param_message("request_uris"))
