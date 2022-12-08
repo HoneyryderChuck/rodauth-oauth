@@ -71,7 +71,7 @@ end
 DB.extension :date_arithmetic
 
 # OAuth with myself
-hash = ::BCrypt::Password.create("password", cost: BCrypt::Engine::MIN_COST)
+hash = BCrypt::Password.create("password", cost: BCrypt::Engine::MIN_COST)
 
 # test user
 DB[:accounts].insert_conflict(target: :email).insert(email: "foo@bar.com", ph: hash)
