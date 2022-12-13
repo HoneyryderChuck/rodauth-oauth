@@ -535,7 +535,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
 
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid name&" \
           "claims_locales=pt en&response_type=code id_token"
-    assert current_url.include?("?error=invalid_request")
+    assert current_url.include?("#error=invalid_request")
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid name&" \
           "claims_locales=pt en&response_type=code id_token&nonce=NONCE"
     assert page.current_path == "/authorize",
