@@ -51,7 +51,7 @@ module Rodauth
     def _redirect_response_error(redirect_url, query_params)
       response_type = param("response_type")
 
-      return super if response_type.include?("code")
+      return super if response_type.empty? || response_type.include?("code")
 
       query_params = query_params.map { |k, v| "#{k}=#{v}" }
       redirect_url.fragment = query_params.join("&")
