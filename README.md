@@ -6,6 +6,20 @@
 
 This is an extension to the `rodauth` gem which implements the [OAuth 2.0 framework](https://tools.ietf.org/html/rfc6749) for an authorization server.
 
+## Certification
+[<img width="184" height="96" align="right" src="/openid-certified.jpg" alt="OpenID Certification">](https://openid.net/certification/)
+
+`rodauth-oauth` is [certified](https://openid.net/certification/) for the following profiles of the OpenID Connect™ protocol:
+
+* Basic OP
+* Implicit OP
+* Hybrid OP
+* Config OP
+* Dynamic OP
+* Form Post OP
+
+(it also passes the conformance tests for the RP-Initiated Logout OP).
+
 ## Features
 
 This gem implements the following RFCs and features of OAuth:

@@ -90,6 +90,10 @@ The client secret is hashed (with bcrypt) before being stored, by default. While
 oauth_applications_client_secret_hash_column nil
 ```
 
+## oauth applications: oauth_applications_homepage_url_column no longer required
+
+The homepage url is no longer considered a require prooperty of an OAuth client application.
+
 ## oauth grants: access token and refresh token hashed by default
 
 access token and refresh token columns are now hashed by default, and point to the same column as the main counterpart:
@@ -203,6 +207,14 @@ JWKs URI endpoint has been moved to its plugin. If you require this functionalit
 
 ```ruby
 enable :oauth_jwt, :oauth_jwt_jwks
+```
+
+## OIDC RP-initiated logout segregated in its plugin
+
+It was previously being loaded in the `:oidc` plugin by default. If you require this funtionality, enable the plugin:
+
+```ruby
+enable :oidc_rp_initiated_logout
 ```
 
 ## routing functions renamed
