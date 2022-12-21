@@ -64,7 +64,7 @@ platform :mri, :truffleruby do
   gem "pg"
 end
 
-gem "rbs" if RUBY_VERSION >= "3.0"
+gem "rbs", platforms: :mri if RUBY_VERSION >= "3.0"
 
 group :demo do
   # For demo
