@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "ipaddr"
 require "rodauth/oauth"
 
 module Rodauth
@@ -71,7 +72,8 @@ module Rodauth
       redirect_uris = oauth_application[oauth_applications_redirect_uri_column].split(" ")
 
       if (redirect_uri = param_or_nil("redirect_uri"))
-        redirect_authorize_error("redirect_uri") unless redirect_uris.include?(redirect_uri)
+        normalized_redirect_uri = normalize_redirect_uri_for_comparison(redirect_uri)
+        redirect_authorize_error("redirect_uri") unless redirect_uris.include?(normalized_redirect_uri)
       elsif redirect_uris.size > 1
         redirect_authorize_error("redirect_uri")
       end
@@ -210,6 +212,27 @@ module Rodauth
         end
       end
       create_params[oauth_grants_code_column]
+    end
+
+    def normalize_redirect_uri_for_comparison(redirect_uri)
+      uri = URI(redirect_uri)
+
+      return redirect_uri unless uri.scheme == "http" && uri.port
+
+      hostname = uri.hostname
+
+      # https://www.rfc-editor.org/rfc/rfc8252#section-7.3
+      # ignore (potentially ephemeral) port number for native clients per RFC8252
+      begin
+        ip = IPAddr.new(hostname)
+        uri.port = nil if ip.loopback?
+      rescue IPAddr::InvalidAddressError
+        # https://www.rfc-editor.org/rfc/rfc8252#section-8.3
+        # Although the use of localhost is NOT RECOMMENDED, it is still allowed.
+        uri.port = nil if hostname == "localhost"
+      end
+
+      uri.to_s
     end
   end
 end
