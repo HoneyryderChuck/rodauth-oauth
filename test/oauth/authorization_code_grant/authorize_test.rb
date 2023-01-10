@@ -89,6 +89,34 @@ class RodauthOauthAuthorizeTest < RodaIntegration
     refute_includes page.html, "Invalid or missing 'redirect_uri'"
   end
 
+  def test_authorize_get_authorize_literal_loopback_uri_with_ephemeral_port
+    setup_application
+    login
+
+    application = oauth_application(redirect_uri: "http://127.0.0.1")
+
+    visit "/authorize?client_id=#{application[:client_id]}&" \
+          "redirect_uri=http://127.0.0.1:12345&" \
+          "scope=user.read+user.write&response_type=code"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_url}"
+    refute_includes page.html, "Invalid or missing 'redirect_uri'"
+  end
+  
+  def test_authorize_get_authorize_localhost_loopback_uri_with_ephemeral_port
+    setup_application
+    login
+
+    application = oauth_application(redirect_uri: "http://localhost/redirect")
+
+    visit "/authorize?client_id=#{application[:client_id]}&" \
+          "redirect_uri=http://localhost:5678/redirect&" \
+          "scope=user.read+user.write&response_type=code"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_url}"
+    refute_includes page.html, "Invalid or missing 'redirect_uri'"
+  end
+
   def test_authorize_post_authorize_same_code
     rodauth do
       oauth_unique_id_generator { "CODE" }

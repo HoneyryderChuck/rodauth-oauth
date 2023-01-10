@@ -71,7 +71,8 @@ module Rodauth
       redirect_uris = oauth_application[oauth_applications_redirect_uri_column].split(" ")
 
       if (redirect_uri = param_or_nil("redirect_uri"))
-        redirect_authorize_error("redirect_uri") unless redirect_uris.include?(redirect_uri)
+        normalized_redirect_uri = normalize_redirect_uri_for_comparison(redirect_uri)
+        redirect_authorize_error("redirect_uri") unless redirect_uris.include?(normalized_redirect_uri)
       elsif redirect_uris.size > 1
         redirect_authorize_error("redirect_uri")
       end
@@ -211,5 +212,14 @@ module Rodauth
       end
       create_params[oauth_grants_code_column]
     end
+
+    def normalize_redirect_uri_for_comparison(redirect_uri)
+      parsed_redirect_uri = URI(redirect_uri)
+      # ignore (potentially ephemeral) port number for native clients per RFC8252
+      if %w[127.0.0.1 localhost].include?(parsed_redirect_uri.host) && parsed_redirect_uri.scheme == "http"
+        parsed_redirect_uri.port = nil
+      end
+      parsed_redirect_uri.to_s
+    end  
   end
 end
