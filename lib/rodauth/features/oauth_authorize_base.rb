@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "ipaddr"
 require "rodauth/oauth"
 
 module Rodauth
@@ -214,14 +215,24 @@ module Rodauth
     end
 
     def normalize_redirect_uri_for_comparison(redirect_uri)
-      parsed_redirect_uri = URI(redirect_uri)
+      uri = URI(redirect_uri)
+
+      return redirect_uri unless uri.scheme == "http" && uri.port
+
+      hostname = uri.hostname
+
+      # https://www.rfc-editor.org/rfc/rfc8252#section-7.3
       # ignore (potentially ephemeral) port number for native clients per RFC8252
-      if parsed_redirect_uri.scheme == "http" && %w(127.0.0.1 [::1] localhost).include?(parsed_redirect_uri.host)
-        parsed_redirect_uri.port = nil
-        parsed_redirect_uri.to_s
-      else
-        redirect_uri
+      begin
+        ip = IPAddr.new(hostname)
+        uri.port = nil if ip.loopback?
+      rescue IPAddr::InvalidAddressError
+        # https://www.rfc-editor.org/rfc/rfc8252#section-8.3
+        # Although the use of localhost is NOT RECOMMENDED, it is still allowed.
+        uri.port = nil if hostname == "localhost"
       end
-    end  
+
+      uri.to_s
+    end
   end
 end

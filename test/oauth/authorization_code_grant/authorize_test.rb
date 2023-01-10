@@ -116,7 +116,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
            "was redirected instead to #{page.current_url}"
     refute_includes page.html, "Invalid or missing 'redirect_uri'"
   end
-  
+
   def test_authorize_get_authorize_localhost_loopback_uri_with_ephemeral_port
     setup_application
     login
