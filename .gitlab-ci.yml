@@ -204,6 +204,7 @@ ruby32:
     # export RBS_TEST_TARGET='Rodauth*'
   image: "ruby:3.2"
   script:
+    - bundle exec rake check_method_doc
     - *test
   parallel:
     matrix:
@@ -249,10 +250,9 @@ docs:
   variables:
     BUNDLE_WITHOUT: test:coverage:assorted
   before_script:
-    - bundle install --quiet
+    - gem install hanna-nouveau
   script:
-    - bundle exec rake check_method_doc
-    - bundle exec rake prepare_website
+    - rake prepare_website
   artifacts:
     paths:
       - rdoc/
