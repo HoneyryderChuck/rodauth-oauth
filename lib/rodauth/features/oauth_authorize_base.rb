@@ -216,10 +216,12 @@ module Rodauth
     def normalize_redirect_uri_for_comparison(redirect_uri)
       parsed_redirect_uri = URI(redirect_uri)
       # ignore (potentially ephemeral) port number for native clients per RFC8252
-      if %w(127.0.0.1 [::1] localhost).include?(parsed_redirect_uri.host) && parsed_redirect_uri.scheme == "http"
+      if parsed_redirect_uri.scheme == "http" && %w(127.0.0.1 [::1] localhost).include?(parsed_redirect_uri.host)
         parsed_redirect_uri.port = nil
+        parsed_redirect_uri.to_s
+      else
+        redirect_uri
       end
-      parsed_redirect_uri.to_s
     end  
   end
 end
