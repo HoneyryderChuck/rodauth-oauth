@@ -202,7 +202,7 @@ ruby32:
     # export RBS_TEST_LOGLEVEL=error
     # export RBS_TEST_OPT='-Isig'
     # export RBS_TEST_TARGET='Rodauth*'
-  image: "ruby:3.2-rc"
+  image: "ruby:3.2"
   script:
     - *test
   parallel:
