@@ -46,28 +46,7 @@ module Rodauth
         request_object = response.body
       end
 
-      request_sig_enc_opts = {
-        jws_algorithm: oauth_application[oauth_applications_request_object_signing_alg_column],
-        jws_encryption_algorithm: oauth_application[oauth_applications_request_object_encryption_alg_column],
-        jws_encryption_method: oauth_application[oauth_applications_request_object_encryption_enc_column]
-      }.compact
-
-      request_sig_enc_opts[:jws_algorithm] ||= "none" if oauth_request_object_signing_alg_allow_none
-
-      if request_sig_enc_opts[:jws_algorithm] == "none"
-        jwks = nil
-      elsif (jwks = oauth_application_jwks(oauth_application))
-        jwks = JSON.parse(jwks, symbolize_names: true) if jwks.is_a?(String)
-      else
-        redirect_response_error("invalid_request_object")
-      end
-
-      claims = jwt_decode(request_object,
-                          jwks: jwks,
-                          verify_jti: false,
-                          verify_iss: false,
-                          verify_aud: false,
-                          **request_sig_enc_opts)
+      claims = decode_request_object(request_object)
 
       redirect_response_error("invalid_request_object") unless claims
 
@@ -103,6 +82,35 @@ module Rodauth
       request_uris = oauth_application[oauth_applications_request_uris_column]
 
       request_uris.nil? || request_uris.split(oauth_scope_separator).one? { |uri| request_uri.start_with?(uri) }
+    end
+
+    def decode_request_object(request_object)
+      request_sig_enc_opts = {
+        jws_algorithm: oauth_application[oauth_applications_request_object_signing_alg_column],
+        jws_encryption_algorithm: oauth_application[oauth_applications_request_object_encryption_alg_column],
+        jws_encryption_method: oauth_application[oauth_applications_request_object_encryption_enc_column]
+      }.compact
+
+      request_sig_enc_opts[:jws_algorithm] ||= "none" if oauth_request_object_signing_alg_allow_none
+
+      if request_sig_enc_opts[:jws_algorithm] == "none"
+        jwks = nil
+      elsif (jwks = oauth_application_jwks(oauth_application))
+        jwks = JSON.parse(jwks, symbolize_names: true) if jwks.is_a?(String)
+      else
+        redirect_response_error("invalid_request_object")
+      end
+
+      claims = jwt_decode(request_object,
+                          jwks: jwks,
+                          verify_jti: false,
+                          verify_iss: false,
+                          verify_aud: false,
+                          **request_sig_enc_opts)
+
+      redirect_response_error("invalid_request_object") unless claims
+
+      claims
     end
 
     def oauth_server_metadata_body(*)

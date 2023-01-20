@@ -258,6 +258,25 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
     assert JSON.parse(last_response.body)["token_endpoint_auth_method"] == "client_secret_basic"
   end
 
+  def test_oauth_dynamic_client_require_pushed_authorization_requests
+    rodauth do
+      oauth_application_scopes %w[read write]
+    end
+    setup_application(:oauth_pushed_authorization_request)
+
+    post("/register", valid_registration_params.merge("require_pushed_authorization_requests" => "smth"))
+    assert last_response.status == 400
+    assert JSON.parse(last_response.body)["error"] == "invalid_client_metadata"
+
+    post("/register", valid_registration_params.merge("require_pushed_authorization_requests" => true))
+    assert last_response.status == 201
+    assert JSON.parse(last_response.body)["require_pushed_authorization_requests"] == true
+
+    post("/register", valid_registration_params.merge("require_pushed_authorization_requests" => false))
+    assert last_response.status == 201
+    assert JSON.parse(last_response.body)["require_pushed_authorization_requests"] == false
+  end
+
   private
 
   def setup_application(*)

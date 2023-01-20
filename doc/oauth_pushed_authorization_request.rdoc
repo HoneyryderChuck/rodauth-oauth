@@ -1,0 +1,21 @@
+= Documentation for OAuth Pushed Authorization Request feature
+
+The +oauth_pushed_authorization_request+ feature implements support for the Pushed Authorization Request (PAR)
+
+https://datatracker.ietf.org/doc/html/rfc9126
+
+== Value Methods
+
+par_route :: the route for creating pushed auth requests, defaults to +par+.
+before_par_route :: Run arbitrary code before creatinng  pushed auth request.
+
+oauth_require_pushed_authorization_requests :: sets whether OAuth authorization requests require PAR, <tt>false</tt> by default.
+oauth_applications_require_pushed_authorization_requests_column :: the db column setting, for the respective oauth application, whether OAuth authorization requests require PAR, <tt>false</tt> by default.
+oauth_pushed_authorization_request_expires_in :: The number of seconds a pushed authorization requests is valid after creation, <tt>90</tt> by default.
+oauth_require_pushed_authorization_request_iss_request_object :: in case a "request" object is used to create a PAR, whether the "iss" claim should be verified, <tt>true</tt> by default.
+
+oauth_pushed_authorization_requests_table :: the db table where pushed auth requests are stored, <tt>:oauth_pushed_requests</tt> by default.
+oauth_pushed_authorization_requests_oauth_application_id_column :: the db column where the pushed auth request oauth application ID is stored, <tt>:oauth_application_id</tt> by default.
+oauth_pushed_authorization_requests_params_column :: the db column where the pushed auth request request params are stored, <tt>:params</tt> by default.
+oauth_pushed_authorization_requests_code_column :: the db column where the pushed auth request code is stored, <tt>:code</tt> by default.
+oauth_pushed_authorization_requests_expires_in_column :: the db column where the pushed auth request expiration time is stored, <tt>:expires_in</tt> by default.

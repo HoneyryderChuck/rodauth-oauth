@@ -33,6 +33,7 @@ This gem implements the following RFCs and features of OAuth:
   * `oauth_device_code_grant` - [Device code grant (off by default)](https://datatracker.ietf.org/doc/html/draft-ietf-oauth-device-flow-15);
   * `oauth_token_revocation` - [Token revocation](https://tools.ietf.org/html/rfc7009);
   * `oauth_token_introspection` - [Token introspection](https://tools.ietf.org/html/rfc7662);
+  * `oauth_pushed_authorization_request` - [Pushed Authorization Request](https://datatracker.ietf.org/doc/html/rfc9126);
   * [Authorization Server Metadata](https://tools.ietf.org/html/rfc8414);
   * `oauth_pkce` - [PKCE](https://tools.ietf.org/html/rfc7636);
   * `oauth_jwt` - [JWT Access Tokens](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-07);

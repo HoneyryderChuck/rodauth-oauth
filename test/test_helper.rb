@@ -91,6 +91,25 @@ module OAuthHelpers
     @account ||= db[:accounts].first
   end
 
+  def set_push_request(params = {})
+    application = params.delete(:oauth_application) || oauth_application
+    params = {
+      oauth_application_id: application[:id],
+      code: "CODE",
+      expires_in: Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: 90),
+      params: URI.encode_www_form(
+        response_type: "code",
+        scope: application[:scopes],
+        redirect_uri: application[:redirect_uri]
+      )
+    }.merge(params)
+    db[:oauth_pushed_requests].insert(params)
+    db[:oauth_pushed_requests].where(
+      oauth_application_id: params[:oauth_application_id],
+      code: params[:code]
+    ).first
+  end
+
   def authorization_header(opts = {})
     ["#{opts.delete(:username) || 'foo@example.com'}:#{opts.delete(:password) || '0123456789'}"].pack("m*")
   end
