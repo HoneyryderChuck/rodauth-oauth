@@ -2,23 +2,12 @@
 
 require "test_helper"
 
-class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
+module RodauthOAuthTokenAuthorizationCodeTest
   include Rack::Test::Methods
-
-  def test_token_authorization_code_no_params
-    setup_application
-
-    post("/token")
-    assert last_response.status == 401
-    assert json_body["error"] == "invalid_client"
-  end
 
   def test_token_authorization_code_no_grant_type
     setup_application
-    post("/token",
-         client_secret: "CLIENT_SECRET",
-         client_id: oauth_application[:client_id],
-         code: "CODE")
+    post_token(code: "CODE")
 
     assert last_response.status == 400
     assert json_body["error"] == "invalid_request"
@@ -26,11 +15,8 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
 
   def test_token_authorization_code_unsupported_grant_type
     setup_application
-    post("/token",
-         client_secret: "CLIENT_SECRET",
-         client_id: oauth_application[:client_id],
-         grant_type: "smthsmth",
-         code: "CODE")
+    post_token(grant_type: "smthsmth",
+               code: "CODE")
 
     assert last_response.status == 400
     assert json_body["error"] == "invalid_request"
@@ -38,11 +24,8 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
 
   def test_token_authorization_code_no_grant
     setup_application
-    post("/token",
-         client_secret: "CLIENT_SECRET",
-         client_id: oauth_application[:client_id],
-         grant_type: "authorization_code",
-         code: "CODE")
+    post_token(grant_type: "authorization_code",
+               code: "CODE")
 
     assert last_response.status == 400
     assert json_body["error"] == "invalid_grant"
@@ -52,12 +35,9 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     setup_application
     grant = oauth_grant(expires_in: Sequel.date_sub(Sequel::CURRENT_TIMESTAMP, seconds: 60))
 
-    post("/token",
-         client_secret: "CLIENT_SECRET",
-         client_id: oauth_application[:client_id],
-         grant_type: "authorization_code",
-         code: grant[:code],
-         redirect_uri: grant[:redirect_uri])
+    post_token(grant_type: "authorization_code",
+               code: grant[:code],
+               redirect_uri: grant[:redirect_uri])
 
     assert last_response.status == 400
     assert json_body["error"] == "invalid_grant"
@@ -67,40 +47,21 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     setup_application
     grant = oauth_grant(revoked_at: Sequel::CURRENT_TIMESTAMP)
 
-    post("/token",
-         client_secret: "CLIENT_SECRET",
-         client_id: oauth_application[:client_id],
-         grant_type: "authorization_code",
-         code: grant[:code],
-         redirect_uri: grant[:redirect_uri])
+    post_token(grant_type: "authorization_code",
+               code: grant[:code],
+               redirect_uri: grant[:redirect_uri])
 
     assert last_response.status == 400
     assert json_body["error"] == "invalid_grant"
-  end
-
-  def test_token_authorization_code_no_client_secret
-    setup_application
-
-    post("/token",
-         client_id: oauth_application[:client_id],
-         grant_type: "authorization_code",
-         code: oauth_grant[:code],
-         redirect_uri: oauth_grant[:redirect_uri])
-
-    assert last_response.status == 401
-    assert json_body["error"] == "invalid_client"
   end
 
   def test_token_authorization_code_unsupported_application_grant_type
     setup_application
     oauth_app = oauth_application(grant_types: "implicit")
     oauth_grant = set_oauth_grant(oauth_application: oauth_app)
-    post("/token",
-         client_id: oauth_app[:client_id],
-         client_secret: "CLIENT_SECRET",
-         grant_type: "authorization_code",
-         code: oauth_grant[:code],
-         redirect_uri: oauth_grant[:redirect_uri])
+    post_token(grant_type: "authorization_code",
+               code: oauth_grant[:code],
+               redirect_uri: oauth_grant[:redirect_uri])
 
     assert last_response.status == 400
     assert json_body["error"] == "invalid_request"
@@ -111,12 +72,10 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
 
     other_application = set_oauth_application(client_id: "OTHER_ID")
 
-    post("/token",
-         client_id: other_application[:client_id],
-         client_secret: "CLIENT_SECRET",
-         grant_type: "authorization_code",
-         code: oauth_grant[:code],
-         redirect_uri: oauth_grant[:redirect_uri])
+    post_token(client_id: other_application[:client_id],
+               grant_type: "authorization_code",
+               code: oauth_grant[:code],
+               redirect_uri: oauth_grant[:redirect_uri])
 
     assert last_response.status == 400
     assert json_body["error"] == "invalid_grant"
@@ -125,12 +84,9 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
   def test_token_authorization_code_successful
     setup_application
 
-    post("/token",
-         client_id: oauth_application[:client_id],
-         client_secret: "CLIENT_SECRET",
-         grant_type: "authorization_code",
-         code: oauth_grant[:code],
-         redirect_uri: oauth_grant[:redirect_uri])
+    post_token(grant_type: "authorization_code",
+               code: oauth_grant[:code],
+               redirect_uri: oauth_grant[:redirect_uri])
 
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
@@ -142,81 +98,15 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     verify_access_token_response(json_body, oauth_grant)
   end
 
-  def test_token_authorization_code_client_secret_basic
-    setup_application
-    oauth_app = oauth_application(token_endpoint_auth_method: "client_secret_basic")
-    oauth_grant = set_oauth_grant(oauth_application: oauth_app)
-    post("/token",
-         client_id: oauth_app[:client_id],
-         client_secret: "CLIENT_SECRET",
-         grant_type: "authorization_code",
-         code: oauth_grant[:code],
-         redirect_uri: oauth_grant[:redirect_uri])
-    assert last_response.status == 401
-
-    header "Authorization", "Basic #{authorization_header(
-      username: oauth_app[:client_id],
-      password: 'CLIENT_SECRET'
-    )}"
-    post("/token",
-         grant_type: "authorization_code",
-         code: oauth_grant[:code],
-         redirect_uri: oauth_grant[:redirect_uri])
-
-    assert last_response.status == 200
-  end
-
-  def test_token_authorization_code_client_secret_post
-    setup_application
-    oauth_app = oauth_application(token_endpoint_auth_method: "client_secret_post")
-    oauth_grant = set_oauth_grant(oauth_application: oauth_app)
-
-    header "Authorization", "Basic #{authorization_header(
-      username: oauth_app[:client_id],
-      password: 'CLIENT_SECRET'
-    )}"
-    post("/token",
-         grant_type: "authorization_code",
-         code: oauth_grant[:code],
-         redirect_uri: oauth_grant[:redirect_uri])
-
-    assert last_response.status == 401
-
-    header "Authorization", nil
-    post("/token",
-         client_id: oauth_app[:client_id],
-         client_secret: "CLIENT_SECRET",
-         grant_type: "authorization_code",
-         code: oauth_grant[:code],
-         redirect_uri: oauth_grant[:redirect_uri])
-    assert last_response.status == 200
-  end
-
-  def test_token_authorization_code_none
-    setup_application
-    oauth_app = oauth_application(token_endpoint_auth_method: "none")
-    oauth_grant = set_oauth_grant(oauth_application: oauth_app)
-
-    post("/token",
-         client_id: oauth_app[:client_id],
-         grant_type: "authorization_code",
-         code: oauth_grant[:code],
-         redirect_uri: oauth_grant[:redirect_uri])
-    assert last_response.status == 200
-  end
-
   def test_token_authorization_code_reuse_token
     rodauth do
       oauth_reuse_access_token true
     end
     setup_application
 
-    post("/token",
-         client_id: oauth_application[:client_id],
-         client_secret: "CLIENT_SECRET",
-         grant_type: "authorization_code",
-         code: oauth_grant[:code],
-         redirect_uri: oauth_grant[:redirect_uri])
+    post_token(grant_type: "authorization_code",
+               code: oauth_grant[:code],
+               redirect_uri: oauth_grant[:redirect_uri])
 
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
@@ -241,12 +131,9 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
 
     grant_code = page.current_url[/code=(.+)/, 1]
 
-    post("/token",
-         client_id: oauth_application[:client_id],
-         client_secret: "CLIENT_SECRET",
-         grant_type: "authorization_code",
-         code: grant_code,
-         redirect_uri: oauth_grant[:redirect_uri])
+    post_token(grant_type: "authorization_code",
+               code: grant_code,
+               redirect_uri: oauth_grant[:redirect_uri])
 
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
@@ -266,12 +153,9 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     end
     setup_application
 
-    post("/token",
-         client_id: oauth_application[:client_id],
-         client_secret: "CLIENT_SECRET",
-         grant_type: "authorization_code",
-         code: oauth_grant[:code],
-         redirect_uri: oauth_grant[:redirect_uri])
+    post_token(grant_type: "authorization_code",
+               code: oauth_grant[:code],
+               redirect_uri: oauth_grant[:redirect_uri])
 
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
@@ -304,12 +188,9 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     end
     setup_application
 
-    post("/token",
-         client_id: oauth_application[:client_id],
-         client_secret: "CLIENT_SECRET",
-         grant_type: "authorization_code",
-         code: oauth_grant[:code],
-         redirect_uri: oauth_grant[:redirect_uri])
+    post_token(grant_type: "authorization_code",
+               code: oauth_grant[:code],
+               redirect_uri: oauth_grant[:redirect_uri])
 
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
@@ -341,12 +222,9 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
 
     grant_code = page.current_url[/code=(.+)/, 1]
 
-    post("/token",
-         client_id: oauth_application[:client_id],
-         client_secret: "CLIENT_SECRET",
-         grant_type: "authorization_code",
-         code: grant_code,
-         redirect_uri: oauth_grant[:redirect_uri])
+    post_token(grant_type: "authorization_code",
+               code: grant_code,
+               redirect_uri: oauth_grant[:redirect_uri])
 
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
@@ -366,12 +244,9 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
 
     online_grant = oauth_grant(access_type: "online")
 
-    post("/token",
-         client_id: oauth_application[:client_id],
-         client_secret: "CLIENT_SECRET",
-         grant_type: "authorization_code",
-         code: online_grant[:code],
-         redirect_uri: online_grant[:redirect_uri])
+    post_token(grant_type: "authorization_code",
+               code: online_grant[:code],
+               redirect_uri: online_grant[:redirect_uri])
 
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
