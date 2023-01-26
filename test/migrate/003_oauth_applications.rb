@@ -38,12 +38,21 @@ Sequel.migration do
       String :userinfo_signed_response_alg, null: true
       String :userinfo_encrypted_response_alg, null: true
       String :userinfo_encrypted_response_enc, null: true
+      # for oauth_jwt_secured_authorization_request
       String :request_object_signing_alg, null: true
       String :request_object_encryption_alg, null: true
       String :request_object_encryption_enc, null: true
       String :request_uris, null: true
+      # for oauth_pushed_authorization_request
       TrueClass :require_pushed_authorization_requests, null: false, default: false
 
+      # for oauth_tls_client_auth
+      String :tls_client_auth_subject_dn, null: true
+      String :tls_client_auth_san_dns, null: true
+      String :tls_client_auth_san_uri, null: true
+      String :tls_client_auth_san_ip, null: true
+      String :tls_client_auth_san_email, null: true
+      TrueClass :tls_client_certificate_bound_access_tokens, default: false
       # JWT/OIDC per application signing verification
       String :jwt_public_key, type: :text
       # RP-initiated logout

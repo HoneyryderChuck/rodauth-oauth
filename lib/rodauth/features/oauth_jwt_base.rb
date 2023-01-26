@@ -148,6 +148,14 @@ module Rodauth
         JSON::JWK.new(key)
       end
 
+      def jwk_import(jwk)
+        JSON::JWK.new(jwk)
+      end
+
+      def jwk_thumbprint(jwk)
+        jwk.thumbprint
+      end
+
       def jwt_encode(payload,
                      jwks: nil,
                      encryption_algorithm: oauth_jwt_jwe_keys.keys.dig(0, 0),
@@ -281,6 +289,14 @@ module Rodauth
 
       def jwk_export(key)
         JWT::JWK.new(key).export
+      end
+
+      def jwk_import(jwk)
+        JWT::JWK.import(jwk)
+      end
+
+      def jwk_thumbprint(jwk)
+        JWT::JWK::Thumbprint.new(jwk).generate
       end
 
       def jwt_encode(payload,
@@ -434,6 +450,14 @@ module Rodauth
     else
       # :nocov:
       def jwk_export(_key)
+        raise "#{__method__} is undefined, redefine it or require either \"jwt\" or \"json-jwt\""
+      end
+
+      def jwk_import(_jwk)
+        raise "#{__method__} is undefined, redefine it or require either \"jwt\" or \"json-jwt\""
+      end
+
+      def jwk_thumbprint(_jwk)
         raise "#{__method__} is undefined, redefine it or require either \"jwt\" or \"json-jwt\""
       end
 

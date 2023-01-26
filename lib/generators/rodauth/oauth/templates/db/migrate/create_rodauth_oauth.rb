@@ -48,6 +48,14 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.string :request_uris, null: true
       t.boolean :require_pushed_authorization_requests, null: false, default: false
 
+      # :oauth_tls_client_auth
+      t.string :tls_client_auth_subject_dn, null: true
+      t.string :tls_client_auth_san_dns, null: true
+      t.string :tls_client_auth_san_uri, null: true
+      t.string :tls_client_auth_san_ip, null: true
+      t.string :tls_client_auth_san_email, null: true
+      t.boolean :tls_client_certificate_bound_access_tokens, default: false
+
       # :oidc_rp_initiated_logout enabled
       t.string :post_logout_redirect_uris, null: false
     end
