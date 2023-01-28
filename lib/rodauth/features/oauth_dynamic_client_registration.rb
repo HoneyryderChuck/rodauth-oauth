@@ -142,6 +142,21 @@ module Rodauth
           key = oauth_applications_contacts_column
         when "client_name"
           key = oauth_applications_name_column
+        when "require_pushed_authorization_requests"
+          property = :"oauth_applications_#{key}_column"
+          register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(key)) unless respond_to?(property)
+
+          request.params[key] = value = case value
+                                        when "true" then true
+                                        when "false" then false
+                                        else
+                                          register_throw_json_response_error(
+                                            "invalid_client_metadata",
+                                            register_invalid_param_message(value)
+                                          )
+                                        end
+
+          key = __send__(property)
         else
           if respond_to?(:"oauth_applications_#{key}_column")
             if PROTECTED_APPLICATION_ATTRIBUTES.include?(key)

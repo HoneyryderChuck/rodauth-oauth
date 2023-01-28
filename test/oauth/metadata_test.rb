@@ -56,6 +56,15 @@ class RodauthOauthServerMetadataTest < RodaIntegration
     assert json_body["introspection_endpoint"] == "http://example.org/introspect"
   end
 
+  def test_oauth_server_metadata_with_pushed_authorization_request
+    setup_application(:oauth_pushed_authorization_request)
+    get("/.well-known/oauth-authorization-server")
+
+    assert last_response.status == 200
+    assert json_body["pushed_authorization_request_endpoint"] == "http://example.org/par"
+    assert json_body["require_pushed_authorization_requests"] == false
+  end
+
   def test_oauth_server_metadata_with_pkce
     rodauth do
       oauth_application_scopes %w[read write]

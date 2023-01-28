@@ -44,6 +44,7 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.string :request_object_encryption_alg, null: true
       t.string :request_object_encryption_enc, null: true
       t.string :request_uris, null: true
+      t.boolean :require_pushed_authorization_requests, null: false, default: false
 
       # :oidc_rp_initiated_logout enabled
       t.string :post_logout_redirect_uris, null: false
@@ -82,6 +83,14 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.string :acr
       t.string :claims_locales
       t.string :claims
+    end
+
+    create_table :oauth_pushed_requests do |t|
+      t.integer :oauth_application_id
+      t.foreign_key :oauth_applications, column: :oauth_application_id
+      t.string :params, null: false
+      t.datetime :expires_in, null: false
+      t.index %i[oauth_application_id code], unique: true
     end
   end
 end
