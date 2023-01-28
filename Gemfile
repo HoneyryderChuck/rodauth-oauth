@@ -57,7 +57,11 @@ gem "simplecov"
 gem "pry"
 platform :mri, :truffleruby do
   gem "pry-byebug"
-  gem "sqlite3"
+  if RUBY_VERSION >= "2.7.0"
+    gem "sqlite3"
+  else
+    gem "sqlite3", "< 1.6.0"
+  end
   gem "webauthn"
 
   gem "mysql2"
