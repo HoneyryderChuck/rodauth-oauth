@@ -152,6 +152,11 @@ module Rodauth
         JSON::JWK.new(jwk)
       end
 
+      def jwk_key(jwk)
+        jwk = jwk_import(jwk) unless jwk.is_a?(JSON::JWK)
+        jwk.to_key
+      end
+
       def jwk_thumbprint(jwk)
         jwk.thumbprint
       end
@@ -293,6 +298,11 @@ module Rodauth
 
       def jwk_import(jwk)
         JWT::JWK.import(jwk)
+      end
+
+      def jwk_key(jwk)
+        jwk = jwk_import(jwk) unless jwk.is_a?(JWT::JWK)
+        jwk.keypair
       end
 
       def jwk_thumbprint(jwk)

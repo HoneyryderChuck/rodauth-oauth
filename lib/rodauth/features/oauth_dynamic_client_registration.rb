@@ -203,7 +203,7 @@ module Rodauth
         when "require_pushed_authorization_requests"
           unless respond_to?(:oauth_applications_require_pushed_authorization_requests_column)
             register_throw_json_response_error("invalid_client_metadata",
-              register_invalid_param_message(key))
+                                               register_invalid_param_message(key))
           end
           request.params[key] = value = convert_to_boolean(key, value)
 
@@ -224,7 +224,7 @@ module Rodauth
           #  client using the tls_client_auth authentication method MUST use exactly one of the below metadata
           # parameters to indicate the certificate subject value that the authorization server is to expect when
           # authenticating the respective client.
-          if params.any? { |k, _| k.start_with?("tls_client_auth_") }
+          if params.any? { |k, _| k.to_s.start_with?("tls_client_auth_") }
             register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(key))
           end
 

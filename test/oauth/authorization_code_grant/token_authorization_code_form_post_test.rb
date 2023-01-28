@@ -10,7 +10,7 @@ class RodauthOAuthTokenAuthorizationCodeFormPostTest < RodaIntegration
     setup_application
 
     post("/token")
-    assert last_response.status == 401
+    verify_response(401)
     assert json_body["error"] == "invalid_client"
   end
 
@@ -23,7 +23,7 @@ class RodauthOAuthTokenAuthorizationCodeFormPostTest < RodaIntegration
          code: oauth_grant[:code],
          redirect_uri: oauth_grant[:redirect_uri])
 
-    assert last_response.status == 401
+    verify_response(401)
     assert json_body["error"] == "invalid_client"
   end
 
@@ -41,7 +41,7 @@ class RodauthOAuthTokenAuthorizationCodeFormPostTest < RodaIntegration
          code: oauth_grant[:code],
          redirect_uri: oauth_grant[:redirect_uri])
 
-    assert last_response.status == 401
+    verify_response(401)
 
     header "Authorization", nil
     post("/token", client_id: oauth_app[:client_id],
@@ -49,7 +49,7 @@ class RodauthOAuthTokenAuthorizationCodeFormPostTest < RodaIntegration
                    grant_type: "authorization_code",
                    code: oauth_grant[:code],
                    redirect_uri: oauth_grant[:redirect_uri])
-    assert last_response.status == 200
+    verify_response(200)
   end
 
   private

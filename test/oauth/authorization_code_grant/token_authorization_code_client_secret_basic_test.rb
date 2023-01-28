@@ -18,7 +18,7 @@ class RodauthOAuthTokenAuthorizationCodeClientSecretBasicTest < RodaIntegration
          code: oauth_grant[:code],
          redirect_uri: oauth_grant[:redirect_uri])
 
-    assert last_response.status == 401
+    verify_response(401)
 
     header "Authorization", "Basic #{authorization_header(
       username: oauth_app[:client_id],
@@ -27,7 +27,7 @@ class RodauthOAuthTokenAuthorizationCodeClientSecretBasicTest < RodaIntegration
     post("/token", grant_type: "authorization_code",
                    code: oauth_grant[:code],
                    redirect_uri: oauth_grant[:redirect_uri])
-    assert last_response.status == 200
+    verify_response(200)
   end
 
   private

@@ -9,7 +9,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
     setup_application
     post_token(code: "CODE")
 
-    assert last_response.status == 400
+    verify_response(400)
     assert json_body["error"] == "invalid_request"
   end
 
@@ -18,7 +18,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
     post_token(grant_type: "smthsmth",
                code: "CODE")
 
-    assert last_response.status == 400
+    verify_response(400)
     assert json_body["error"] == "invalid_request"
   end
 
@@ -27,7 +27,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
     post_token(grant_type: "authorization_code",
                code: "CODE")
 
-    assert last_response.status == 400
+    verify_response(400)
     assert json_body["error"] == "invalid_grant"
   end
 
@@ -39,7 +39,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
                code: grant[:code],
                redirect_uri: grant[:redirect_uri])
 
-    assert last_response.status == 400
+    verify_response(400)
     assert json_body["error"] == "invalid_grant"
   end
 
@@ -51,7 +51,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
                code: grant[:code],
                redirect_uri: grant[:redirect_uri])
 
-    assert last_response.status == 400
+    verify_response(400)
     assert json_body["error"] == "invalid_grant"
   end
 
@@ -63,7 +63,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
                code: oauth_grant[:code],
                redirect_uri: oauth_grant[:redirect_uri])
 
-    assert last_response.status == 400
+    verify_response(400)
     assert json_body["error"] == "invalid_request"
   end
 
@@ -77,7 +77,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
                code: oauth_grant[:code],
                redirect_uri: oauth_grant[:redirect_uri])
 
-    assert last_response.status == 400
+    verify_response(400)
     assert json_body["error"] == "invalid_grant"
   end
 
@@ -88,8 +88,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
                code: oauth_grant[:code],
                redirect_uri: oauth_grant[:redirect_uri])
 
-    assert last_response.status == 200
-    assert last_response.headers["Content-Type"] == "application/json"
+    verify_response(200)
 
     assert db[:oauth_grants].count == 1
 
@@ -108,8 +107,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
                code: oauth_grant[:code],
                redirect_uri: oauth_grant[:redirect_uri])
 
-    assert last_response.status == 200
-    assert last_response.headers["Content-Type"] == "application/json"
+    verify_response(200)
 
     assert db[:oauth_grants].count == 1
     oauth_grant = db[:oauth_grants].first
@@ -135,8 +133,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
                code: grant_code,
                redirect_uri: oauth_grant[:redirect_uri])
 
-    assert last_response.status == 200
-    assert last_response.headers["Content-Type"] == "application/json"
+    verify_response(200)
 
     assert db[:oauth_grants].count == 1
     oauth_grant2 = db[:oauth_grants].first
@@ -157,8 +154,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
                code: oauth_grant[:code],
                redirect_uri: oauth_grant[:redirect_uri])
 
-    assert last_response.status == 200
-    assert last_response.headers["Content-Type"] == "application/json"
+    verify_response(200)
 
     assert db[:oauth_grants].count == 1
 
@@ -192,8 +188,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
                code: oauth_grant[:code],
                redirect_uri: oauth_grant[:redirect_uri])
 
-    assert last_response.status == 200
-    assert last_response.headers["Content-Type"] == "application/json"
+    verify_response(200)
 
     assert db[:oauth_grants].count == 1
     oauth_grant = db[:oauth_grants].first
@@ -226,8 +221,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
                code: grant_code,
                redirect_uri: oauth_grant[:redirect_uri])
 
-    assert last_response.status == 200
-    assert last_response.headers["Content-Type"] == "application/json"
+    verify_response(200)
 
     assert db[:oauth_grants].count == 1
     oauth_grant2 = db[:oauth_grants].first
@@ -248,8 +242,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
                code: online_grant[:code],
                redirect_uri: online_grant[:redirect_uri])
 
-    assert last_response.status == 200
-    assert last_response.headers["Content-Type"] == "application/json"
+    verify_response(200)
 
     assert db[:oauth_grants].count == 1
 

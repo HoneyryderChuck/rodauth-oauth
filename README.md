@@ -24,7 +24,7 @@ This is an extension to the `rodauth` gem which implements the [OAuth 2.0 framew
 
 This gem implements the following RFCs and features of OAuth:
 
-* `oauth` - [The OAuth 2.0 protocol framework](https://tools.ietf.org/html/rfc6749):
+* `oauth` - [The OAuth 2.0 protocol framework](-/wikis/home#oauth-20-protocol-framework):
   * [Access Token generation](https://tools.ietf.org/html/rfc6749#section-1.4);
   * [Access Token refresh token grant](https://tools.ietf.org/html/rfc6749#section-1.5);
   * `oauth_authorization_code_grant` - [Authorization code grant](https://tools.ietf.org/html/rfc6749#section-1.3);
@@ -36,6 +36,7 @@ This gem implements the following RFCs and features of OAuth:
   * `oauth_pushed_authorization_request` - [Pushed Authorization Request](https://datatracker.ietf.org/doc/html/rfc9126);
   * [Authorization Server Metadata](https://tools.ietf.org/html/rfc8414);
   * `oauth_pkce` - [PKCE](https://tools.ietf.org/html/rfc7636);
+  * `oauth_tls_client_auth` - [Mutual-TLS Client Authentication](https://datatracker.ietf.org/doc/html/rfc8705);
   * `oauth_jwt` - [JWT Access Tokens](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-07);
   * `oauth_jwt_secured_authorization_request` - [JWT Secured Authorization Request](https://tools.ietf.org/html/draft-ietf-oauth-jwsreq-20);
   * `oauth_resource_indicators` - [Resource Indicators](https://datatracker.ietf.org/doc/html/rfc8707);

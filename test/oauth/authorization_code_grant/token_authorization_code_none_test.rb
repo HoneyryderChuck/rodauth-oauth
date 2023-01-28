@@ -10,7 +10,7 @@ class RodauthOAuthTokenAuthorizationCodeNoneTest < RodaIntegration
     setup_application
 
     post("/token")
-    assert last_response.status == 401
+    verify_response(401)
     assert json_body["error"] == "invalid_client"
   end
 

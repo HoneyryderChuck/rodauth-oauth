@@ -44,7 +44,7 @@ module Rodauth
 
         jwks = oauth_application_jwks(oauth_application)
 
-        authorization_required unless jwks.any? { |jwk| client_certificate.verify(jwk_import(jwk).keypair) }
+        authorization_required unless jwks.any? { |jwk| client_certificate.verify(jwk_key(jwk)) }
 
         # It relies on a validated certificate chain [RFC5280] and a single subject distinguished name (DN) or a single
         # subject alternative name (SAN) to authenticate the client. Only one subject name value of any type is used for each client.
@@ -70,9 +70,11 @@ module Rodauth
       elsif supports_auth_method?(oauth_application, "self_signed_tls_client_auth")
         jwks = oauth_application_jwks(oauth_application)
 
+        key_as_jwk = jwk_export(client_certificate.public_key)
+
         # The client is successfully authenticated if the certificate that it presented during the handshake
         # matches one of the certificates configured or registered for that particular client.
-        authorization_required unless jwks.any? { |jwk| client_certificate == jwk_import(jwk).keypair }
+        authorization_required unless jwks.any? { |jwk| key_as_jwk.all? { |k, v| jwk[k] == v } }
 
         oauth_application
       else
@@ -85,9 +87,12 @@ module Rodauth
     def jwt_claims(*)
       claims = super
 
-      return claims unless client_certificate && oauth_tls_client_certificate_bound_access_tokens
+      return claims unless client_certificate && (
+        oauth_tls_client_certificate_bound_access_tokens ||
+        oauth_application[oauth_applications_tls_client_certificate_bound_access_tokens_column]
+      )
 
-      jwk = jwk_import(client_certificate)
+      jwk = jwk_import(client_certificate.public_key)
 
       claims[:cnf] = {
         "x5t#S256" => jwk_thumbprint(jwk)

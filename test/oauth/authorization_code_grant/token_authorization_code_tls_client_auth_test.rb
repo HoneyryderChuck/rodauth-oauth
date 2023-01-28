@@ -11,7 +11,7 @@ class RodauthOAuthTokenAuthorizationCodeTlsClientAuthTest < RodaIntegration
     setup_application
 
     post("/token")
-    assert last_response.status == 401
+    verify_response(401)
     assert json_body["error"] == "invalid_client"
   end
 
@@ -24,8 +24,28 @@ class RodauthOAuthTokenAuthorizationCodeTlsClientAuthTest < RodaIntegration
          code: oauth_grant[:code],
          redirect_uri: oauth_grant[:redirect_uri])
 
-    assert last_response.status == 401
+    verify_response(401)
     assert json_body["error"] == "invalid_client"
+  end
+
+  def test_token_authorization_code_self_signed
+    setup_application
+
+    oauth_application = set_oauth_application(
+      token_endpoint_auth_method: "self_signed_tls_client_auth"
+    )
+    oauth_grant = set_oauth_grant(oauth_application: oauth_application)
+
+    post_token(client_id: oauth_application[:client_id],
+               grant_type: "authorization_code",
+               code: oauth_grant[:code],
+               redirect_uri: oauth_grant[:redirect_uri])
+
+    verify_response(200)
+
+    assert db[:oauth_grants].count == 1
+    oauth_grant = db[:oauth_grants].first
+    verify_access_token_response(json_body, oauth_grant)
   end
 
   def test_token_authorization_code_san_dns
@@ -42,8 +62,7 @@ class RodauthOAuthTokenAuthorizationCodeTlsClientAuthTest < RodaIntegration
                code: oauth_grant[:code],
                redirect_uri: oauth_grant[:redirect_uri])
 
-    assert last_response.status == 200
-    assert last_response.headers["Content-Type"] == "application/json"
+    verify_response(200)
 
     assert db[:oauth_grants].count == 1
     oauth_grant = db[:oauth_grants].first
@@ -64,8 +83,7 @@ class RodauthOAuthTokenAuthorizationCodeTlsClientAuthTest < RodaIntegration
                code: oauth_grant[:code],
                redirect_uri: oauth_grant[:redirect_uri])
 
-    assert last_response.status == 200
-    assert last_response.headers["Content-Type"] == "application/json"
+    verify_response(200)
 
     assert db[:oauth_grants].count == 1
     oauth_grant = db[:oauth_grants].first
@@ -86,8 +104,7 @@ class RodauthOAuthTokenAuthorizationCodeTlsClientAuthTest < RodaIntegration
                code: oauth_grant[:code],
                redirect_uri: oauth_grant[:redirect_uri])
 
-    assert last_response.status == 200
-    assert last_response.headers["Content-Type"] == "application/json"
+    verify_response(200)
 
     assert db[:oauth_grants].count == 1
     oauth_grant = db[:oauth_grants].first
@@ -108,8 +125,7 @@ class RodauthOAuthTokenAuthorizationCodeTlsClientAuthTest < RodaIntegration
                code: oauth_grant[:code],
                redirect_uri: oauth_grant[:redirect_uri])
 
-    assert last_response.status == 200
-    assert last_response.headers["Content-Type"] == "application/json"
+    verify_response(200)
 
     assert db[:oauth_grants].count == 1
     oauth_grant = db[:oauth_grants].first
@@ -124,8 +140,7 @@ class RodauthOAuthTokenAuthorizationCodeTlsClientAuthTest < RodaIntegration
                code: oauth_grant[:code],
                redirect_uri: oauth_grant[:redirect_uri])
 
-    assert last_response.status == 200
-    assert last_response.headers["Content-Type"] == "application/json"
+    verify_response(200)
 
     assert db[:oauth_grants].count == 1
 
@@ -137,11 +152,15 @@ class RodauthOAuthTokenAuthorizationCodeTlsClientAuthTest < RodaIntegration
   private
 
   def private_key
-    @private_key ||= OpenSSL::PKey::RSA.generate 2048
+    @private_key ||= OpenSSL::PKey::RSA.generate(2048)
   end
 
   def public_key
     @public_key ||= private_key.public_key
+  end
+
+  def public_jwk
+    @public_jwk ||= JWT::JWK.new(public_key).export.merge(use: "sig", alg: "RS256")
   end
 
   def certificate
@@ -192,7 +211,7 @@ class RodauthOAuthTokenAuthorizationCodeTlsClientAuthTest < RodaIntegration
 
   def set_oauth_application(params = {})
     super({
-      jwks: JSON.dump([JWT::JWK.new(public_key).export.merge(use: "sig", alg: "RS256")]),
+      jwks: JSON.dump([public_jwk]),
       token_endpoint_auth_method: "tls_client_auth",
       tls_client_auth_subject_dn: subject
     }.merge(params))
