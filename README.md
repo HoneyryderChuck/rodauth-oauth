@@ -52,12 +52,11 @@ This gem implements the following RFCs and features of OAuth:
 
 It also implements the [OpenID Connect layer](https://openid.net/connect/) (via the `openid` feature) on top of the OAuth features it provides, including:
 
-* `oidc`
-  * [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html);
-  * [OpenID Connect Discovery](https://openid.net/specs/openid-connect-discovery-1_0-29.html);
-  * [OpenID Multiple Response Types](https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html);
-* `oidc_dynamic_client_registration` - [OpenID Connect Dynamic Client Registration](https://openid.net/specs/openid-connect-registration-1_0.html);
-* `oidc_rp_initiated_logout` - [RP Initiated Logout](https://openid.net/specs/openid-connect-rpinitiated-1_0.html);
+* [OpenID Connect Core](https://gitlab.com/os85/rodauth-oauth/-/wikis/Id-Token-Authentication);
+* [OpenID Connect Discovery](https://gitlab.com/os85/rodauth-oauth/-/wikis/OIDC-Dynamic-Client-Registration);
+* [OpenID Multiple Response Types](https://gitlab.com/os85/rodauth-oauth/-/wikis/Hybrid-flow);
+* [OpenID Connect Dynamic Client Registration](https://gitlab.com/os85/rodauth-oauth/-/wikis/OIDC-Dynamic-Client-Registration);
+* [RP Initiated Logout](https://gitlab.com/os85/rodauth-oauth/-/wikis/RP-Initiated-Logout);
 
 This gem supports also rails (through [rodauth-rails]((https://github.com/janko/rodauth-rails))).
 
