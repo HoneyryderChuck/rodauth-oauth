@@ -144,8 +144,12 @@ module Rodauth
         A128GCM A256GCM A128CBC-HS256 A256CBC-HS512
       ]
 
-      def jwk_export(key)
+      def key_to_jwk(key)
         JSON::JWK.new(key)
+      end
+
+      def jwk_export(key)
+        key_to_jwk(key)
       end
 
       def jwk_import(jwk)
@@ -158,6 +162,7 @@ module Rodauth
       end
 
       def jwk_thumbprint(jwk)
+        jwk = jwk_import(jwk) if jwk.is_a?(Hash)
         jwk.thumbprint
       end
 
@@ -292,8 +297,12 @@ module Rodauth
         auth_value_method :oauth_jwt_jwe_encryption_methods_supported, []
       end
 
+      def key_to_jwk(key)
+        JWT::JWK.new(key)
+      end
+
       def jwk_export(key)
-        JWT::JWK.new(key).export
+        key_to_jwk(key).export
       end
 
       def jwk_import(jwk)
@@ -306,6 +315,7 @@ module Rodauth
       end
 
       def jwk_thumbprint(jwk)
+        jwk = jwk_import(jwk) if jwk.is_a?(Hash)
         JWT::JWK::Thumbprint.new(jwk).generate
       end
 

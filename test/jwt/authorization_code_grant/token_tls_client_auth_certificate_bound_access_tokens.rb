@@ -41,7 +41,7 @@ class RodauthOauthJWTTokenTlsClientAuuthCertificateBoundTest < JWTIntegration
     claims = verify_access_token_response(json_body, oauth_grant, @rsa_public, "RS256")
     assert claims.key?("cnf")
     assert claims["cnf"].key?("x5t#S256")
-    verify_thumbprint(claims["cnf"]["x5t#S256"], public_jwk)
+    assert claims["cnf"]["x5t#S256"] == oauth_grant[:certificate_thumbprint]
   end
 
   def test_oauth_jwt_authorization_code_application_certificate_bound
@@ -52,7 +52,9 @@ class RodauthOauthJWTTokenTlsClientAuuthCertificateBoundTest < JWTIntegration
     oauth_application = set_oauth_application(
       tls_client_certificate_bound_access_tokens: true
     )
-    oauth_grant = set_oauth_grant(oauth_application: oauth_application)
+    oauth_grant = set_oauth_grant(
+      oauth_application: oauth_application
+    )
 
     post_token(client_id: oauth_application[:client_id],
                grant_type: "authorization_code",
@@ -66,7 +68,7 @@ class RodauthOauthJWTTokenTlsClientAuuthCertificateBoundTest < JWTIntegration
     claims = verify_access_token_response(json_body, oauth_grant, @rsa_public, "RS256")
     assert claims.key?("cnf")
     assert claims["cnf"].key?("x5t#S256")
-    verify_thumbprint(claims["cnf"]["x5t#S256"], public_jwk)
+    assert claims["cnf"]["x5t#S256"] == oauth_grant[:certificate_thumbprint]
   end
 
   private
@@ -93,12 +95,9 @@ class RodauthOauthJWTTokenTlsClientAuuthCertificateBoundTest < JWTIntegration
     @public_jwk ||= JWT::JWK.new(public_key).export.merge(use: "sig", alg: "RS256")
   end
 
-  def verify_thumbprint(thumbprint, jwk)
-    th = JWT::JWK.import(jwk).members.sort.to_h
-    th = JSON.dump(th)
-    th = Digest::SHA256.digest(th)
-    th = Base64.urlsafe_encode64(th, padding: false)
-    assert thumbprint == th
+  def generate_thumbprint(key)
+    jwk = JWT::JWK.new(key)
+    JWT::JWK::Thumbprint.new(jwk).generate
   end
 
   def certificate
@@ -159,7 +158,7 @@ class RodauthOauthJWTTokenTlsClientAuuthCertificateBoundTest < JWTIntegration
     env "SSL_CLIENT_A_SIG", certificate.signature_algorithm
     env "SSL_CLIENT_A_KEY", public_key.oid
     env "SSL_CLIENT_CERT", certificate.to_pem
-    env "SSL_CLIENT_VERIFY", "NONE"
+    env "SSL_CLIENT_VERIFY", "SUCCESS"
 
     request_args = {
       client_id: request_args.delete(:client_id) || oauth_application[:client_id]

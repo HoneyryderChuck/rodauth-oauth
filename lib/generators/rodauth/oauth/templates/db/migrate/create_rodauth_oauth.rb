@@ -85,6 +85,9 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.string :user_code, null: true, unique: true
       t.datetime :last_polled_at, null: true
 
+      # :oauth_tls_client_auth
+      t.string :certificate_thumbprint, null: true
+
       # :resource_indicators enabled
       t.string :resource
 

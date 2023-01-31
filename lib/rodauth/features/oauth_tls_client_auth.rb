@@ -19,6 +19,8 @@ module Rodauth
       auth_value_method :"oauth_applications_#{column}_column", column
     end
 
+    auth_value_method :oauth_grants_certificate_thumbprint_column, :certificate_thumbprint
+
     def oauth_token_endpoint_auth_methods_supported
       super | %w[tls_client_auth self_signed_tls_client_auth]
     end
@@ -80,18 +82,23 @@ module Rodauth
       authorization_required
     end
 
-    def jwt_claims(*)
-      claims = super
-
-      return claims unless client_certificate && (
+    def store_token(grant_params, update_params = {})
+      return super unless client_certificate && (
         oauth_tls_client_certificate_bound_access_tokens ||
         oauth_application[oauth_applications_tls_client_certificate_bound_access_tokens_column]
       )
 
-      jwk = jwk_import(client_certificate.public_key)
+      update_params[oauth_grants_certificate_thumbprint_column] = jwk_thumbprint(key_to_jwk(client_certificate.public_key))
+      super
+    end
+
+    def jwt_claims(oauth_grant)
+      claims = super
+
+      return claims unless oauth_grant[oauth_grants_certificate_thumbprint_column]
 
       claims[:cnf] = {
-        "x5t#S256" => jwk_thumbprint(jwk)
+        "x5t#S256" => oauth_grant[oauth_grants_certificate_thumbprint_column]
       }
 
       claims
@@ -118,9 +125,11 @@ module Rodauth
     def client_certificate
       return @client_certificate if defined?(@client_certificate)
 
-      return unless request.env["SSL_CLIENT_CERT"]
+      return unless (pem_cert = request.env["SSL_CLIENT_CERT"])
 
-      @certificate = OpenSSL::X509::Certificate.new(request.env["SSL_CLIENT_CERT"])
+      return if pem_cert.empty?
+
+      @certificate = OpenSSL::X509::Certificate.new(pem_cert)
     end
 
     def client_certificate_sans
