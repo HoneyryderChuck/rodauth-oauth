@@ -39,15 +39,11 @@ module Rodauth
       authorization_required unless oauth_application
 
       if supports_auth_method?(oauth_application, "tls_client_auth")
-        # During authentication, TLS is utilized to validate the client's possession of the private key
-        # corresponding to the public key presented within the certificate in the respective TLS handshake.
+        # It relies on a validated certificate chain [RFC5280]
+        authorization_required unless request.env["SSL_CLIENT_VERIFY"] == "SUCCESS"
 
-        jwks = oauth_application_jwks(oauth_application)
-
-        authorization_required unless jwks.any? { |jwk| client_certificate.verify(jwk_key(jwk)) }
-
-        # It relies on a validated certificate chain [RFC5280] and a single subject distinguished name (DN) or a single
-        # subject alternative name (SAN) to authenticate the client. Only one subject name value of any type is used for each client.
+        # and a single subject distinguished name (DN) or a single subject alternative name (SAN) to
+        # authenticate the client. Only one subject name value of any type is used for each client.
 
         name_matches = if oauth_application[:tls_client_auth_subject_dn]
                          distinguished_name_match?(client_certificate.subject, oauth_application[:tls_client_auth_subject_dn])
@@ -70,11 +66,11 @@ module Rodauth
       elsif supports_auth_method?(oauth_application, "self_signed_tls_client_auth")
         jwks = oauth_application_jwks(oauth_application)
 
-        key_as_jwk = jwk_export(client_certificate.public_key)
+        thumbprint = jwk_thumbprint(key_to_jwk(client_certificate.public_key))
 
         # The client is successfully authenticated if the certificate that it presented during the handshake
         # matches one of the certificates configured or registered for that particular client.
-        authorization_required unless jwks.any? { |jwk| key_as_jwk.all? { |k, v| jwk[k] == v } }
+        authorization_required unless jwks.any? { |jwk| Array(jwk[:x5c]).first == thumbprint }
 
         oauth_application
       else
@@ -104,10 +100,10 @@ module Rodauth
     def json_token_introspect_payload(grant_or_claims)
       claims = super
 
-      return claims unless grant_or_claims || !grant_or_claims["sub"]
+      return claims unless grant_or_claims && grant_or_claims[oauth_grants_certificate_thumbprint_column]
 
       claims[:cnf] = {
-        "x5t#S256" => jwk_thumbprint(jwk)
+        "x5t#S256" => grant_or_claims[oauth_grants_certificate_thumbprint_column]
       }
 
       claims

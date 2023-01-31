@@ -160,7 +160,16 @@ class RodauthOAuthTokenAuthorizationCodeTlsClientAuthTest < RodaIntegration
   end
 
   def public_jwk
-    @public_jwk ||= JWT::JWK.new(public_key).export.merge(use: "sig", alg: "RS256")
+    @public_jwk ||= begin
+      jwk = JWT::JWK.new(public_key).export.merge(use: "sig", alg: "RS256")
+      jwk["x5c"] = [generate_thumbprint(public_key)]
+      jwk
+    end
+  end
+
+  def generate_thumbprint(key)
+    jwk = JWT::JWK.new(key)
+    JWT::JWK::Thumbprint.new(jwk).generate
   end
 
   def certificate
@@ -238,7 +247,7 @@ class RodauthOAuthTokenAuthorizationCodeTlsClientAuthTest < RodaIntegration
     env "SSL_CLIENT_A_SIG", certificate.signature_algorithm
     env "SSL_CLIENT_A_KEY", public_key.oid
     env "SSL_CLIENT_CERT", certificate.to_pem
-    env "SSL_CLIENT_VERIFY", "NONE"
+    env "SSL_CLIENT_VERIFY", "SUCCESS"
 
     request_args = {
       client_id: request_args.delete(:client_id) || oauth_application[:client_id]
