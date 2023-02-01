@@ -169,6 +169,7 @@ class ClientApplication < Roda
           "redirect_uri" => REDIRECT_URI,
           "client_id" => CLIENT_ID,
           "scope" => "profile.read books.read",
+          "response_type" => "code",
           "state" => state
         }.map { |k, v| "#{CGI.escape(k)}=#{CGI.escape(v)}" }.join("&")
 
