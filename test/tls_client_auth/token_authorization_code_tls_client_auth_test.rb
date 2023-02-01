@@ -2,7 +2,7 @@
 
 require "openssl"
 require "test_helper"
-require_relative "./token_authorization_code"
+require_relative "../oauth/authorization_code_grant/token_authorization_code"
 
 class RodauthOAuthTokenAuthorizationCodeTlsClientAuthTest < RodaIntegration
   include RodauthOAuthTokenAuthorizationCodeTest
