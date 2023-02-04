@@ -1,0 +1,16 @@
+= Documentation for OAuth TLS Client Auth feature
+
+The +oauth_tls_client_auth+ feature implements the OAuth 2.0 Mutual-TLS Client Authentication and Certificate-Bound Access Tokens.
+
+https://datatracker.ietf.org/doc/html/rfc8705
+
+== Auth Value Methods
+
+oauth_tls_client_certificate_bound_access_tokens :: Enables certificate-bound access tokens for all applications (<tt>false</tt> by default).
+oauth_applications_tls_client_auth_subject_dn_column :: the db column where the expected subject distinguished name of the client certificate is stored, <tt>:tls_client_auth_subject_dn</tt> by default.
+oauth_applications_tls_client_auth_san_dns_column :: the db column where the expected dnsName SAN entry of the client certificate is stored, <tt>:tls_client_auth_san_dns</tt> by default.
+oauth_applications_tls_client_auth_san_uri_column :: the db column where the expected uniformResourceIdentifier SAN entry of the client certificate is stored, <tt>:tls_client_auth_san_uri</tt> by default.
+oauth_applications_tls_client_auth_san_ip_column :: the db column where the expected iPAddress SAN entry of the client certificate is stored, <tt>:tls_client_auth_san_ip</tt> by default.
+oauth_applications_tls_client_auth_san_email_column :: the db column where the expected rfc822Name SAN entry of the client certificate is stored, <tt>:tls_client_auth_san_email</tt> by default.
+oauth_applications_tls_client_certificate_bound_access_tokens_column :: the db column where the certificate bound access tokens can be turned for the client account is stored, <tt>false</tt> by default.
+oauth_grants_certificate_thumbprint_column :: the db column where the certificate thumbprint is stored to verify the certificate bound access tokens of an oauth grant, <tt>false</tt> by default.
