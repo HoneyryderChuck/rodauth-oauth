@@ -9,6 +9,7 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.string :redirect_uri, null: false
       t.string :client_id, null: false, index: { unique: true }
       t.string :client_secret, null: false, index: { unique: true }
+      t.string :client_registration_token, null: true
       t.string :scopes, null: false
       t.datetime :created_at, null: false, default: -> { "CURRENT_TIMESTAMP" }
 
