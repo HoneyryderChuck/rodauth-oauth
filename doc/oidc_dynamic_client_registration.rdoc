@@ -7,3 +7,5 @@ https://openid.net/specs/openid-connect-registration-1_0.html
 == Value Methods
 
 oauth_applications_application_type_column :: the db column where the oauth application type is stored, <tt>:application_type</tt> by default.
+oauth_applications_client_registration_token_column :: db column where an oauth application client registration token is stored, after being hashed.
+client_registration_uri_route :: the route where the client registration uri is available, and existing client applications can be further manipulated (via GET and PATCH verbs).

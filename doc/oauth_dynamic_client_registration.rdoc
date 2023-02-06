@@ -1,0 +1,8 @@
+
+The +oauth_dynamic_client_registration+ feature adds support for the OAuth 2.0 dynamic client registration protocol.
+
+https://datatracker.ietf.org/doc/html/rfc7591
+
+== Auth Value Methods
+
+oauth_client_registration_required_params :: request params required to be present in the register body for it to succeed.

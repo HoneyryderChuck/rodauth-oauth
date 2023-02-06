@@ -57,9 +57,11 @@ module Rodauth
     end
 
     def validate_client_registration_params
-      oauth_client_registration_required_params.each do |required_param|
-        unless request.params.key?(required_param)
-          register_throw_json_response_error("invalid_client_metadata", register_required_param_message(required_param))
+      if request.post?
+        oauth_client_registration_required_params.each do |required_param|
+          unless request.params.key?(required_param)
+            register_throw_json_response_error("invalid_client_metadata", register_required_param_message(required_param))
+          end
         end
       end
 
@@ -213,25 +215,29 @@ module Rodauth
         "code"
       end
       rescue_from_uniqueness_error do
-        client_id = oauth_unique_id_generator
-        create_params[oauth_applications_client_id_column] = client_id
-        return_params["client_id"] = client_id
-        return_params["client_id_issued_at"] = Time.now.utc.iso8601
-        if create_params.key?(oauth_applications_client_secret_column)
-          set_client_secret(create_params, create_params[oauth_applications_client_secret_column])
-          return_params.delete("client_secret")
-        else
-          client_secret = oauth_unique_id_generator
-          set_client_secret(create_params, client_secret)
-          return_params["client_secret"] = client_secret
-          return_params["client_secret_expires_at"] = 0
-
-          create_params.delete_if { |k, _| !application_columns.include?(k) }
-        end
+        initialize_register_params(create_params, return_params)
+        create_params.delete_if { |k, _| !application_columns.include?(k) }
         applications_ds.insert(create_params)
       end
 
       return_params
+    end
+
+    def initialize_register_params(create_params, return_params)
+      client_id = oauth_unique_id_generator
+      create_params[oauth_applications_client_id_column] = client_id
+      return_params["client_id"] = client_id
+      return_params["client_id_issued_at"] = Time.now.utc.iso8601
+      if create_params.key?(oauth_applications_client_secret_column)
+        set_client_secret(create_params, create_params[oauth_applications_client_secret_column])
+        return_params.delete("client_secret")
+      else
+        client_secret = oauth_unique_id_generator
+        set_client_secret(create_params, client_secret)
+        return_params["client_secret"] = client_secret
+        return_params["client_secret_expires_at"] = 0
+
+      end
     end
 
     def register_throw_json_response_error(code, message)

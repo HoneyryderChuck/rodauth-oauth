@@ -24,6 +24,8 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
                       ))
 
     assert last_response.status == 201
+    oauth_application = db[:oauth_applications].where(client_id: json_body["client_id"]).first
+    verify_oauth_application_attributes(oauth_application, json_body)
   end
 
   def test_oidc_client_registration_native_application_type
@@ -53,6 +55,9 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
                       ))
 
     assert last_response.status == 201
+    oauth_application = db[:oauth_applications].where(client_id: json_body["client_id"]).first
+    verify_oauth_application_attributes(oauth_application, json_body)
+    @json_body = nil
 
     post("/register", valid_registration_params.merge(
                         "application_type" => "native",
@@ -60,6 +65,8 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
                       ))
 
     assert last_response.status == 201
+    oauth_application = db[:oauth_applications].where(client_id: json_body["client_id"]).first
+    verify_oauth_application_attributes(oauth_application, json_body)
   end
 
   def test_oidc_client_registration_web_application_type
@@ -86,6 +93,9 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
                       ))
 
     assert last_response.status == 201
+    oauth_application = db[:oauth_applications].where(client_id: json_body["client_id"]).first
+    verify_oauth_application_attributes(oauth_application, json_body)
+    @json_body = nil
 
     post("/register", valid_registration_params.merge(
                         "application_type" => "web",
@@ -94,6 +104,8 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
                       ))
 
     assert last_response.status == 201
+    oauth_application = db[:oauth_applications].where(client_id: json_body["client_id"]).first
+    verify_oauth_application_attributes(oauth_application, json_body)
   end
 
   def test_oidc_client_registration_subject_type
@@ -114,12 +126,18 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
                       ))
 
     assert last_response.status == 201
+    oauth_application = db[:oauth_applications].where(client_id: json_body["client_id"]).first
+    verify_oauth_application_attributes(oauth_application, json_body)
+    @json_body = nil
 
     post("/register", valid_registration_params.merge(
                         "subject_type" => "public"
                       ))
 
     assert last_response.status == 201
+    oauth_application = db[:oauth_applications].where(client_id: json_body["client_id"]).first
+    verify_oauth_application_attributes(oauth_application, json_body)
+    @json_body = nil
 
     redirect_uris = %w[https://foobar.com/callback https://foobar.com/callback2]
 
@@ -142,6 +160,8 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
                         "sector_identifier_uri" => "https://succ.example.net/file_of_redirect_uris.json"
                       ))
     assert last_response.status == 201
+    oauth_application = db[:oauth_applications].where(client_id: json_body["client_id"]).first
+    verify_oauth_application_attributes(oauth_application, json_body)
   end
 
   def test_oidc_client_registration_request_uris
@@ -162,6 +182,9 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
                       ))
 
     assert last_response.status == 201
+    oauth_application = db[:oauth_applications].where(client_id: json_body["client_id"]).first
+    verify_oauth_application_attributes(oauth_application, json_body)
+    @json_body = nil
 
     post("/register", valid_registration_params)
 
@@ -183,6 +206,8 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
                       ))
 
     assert last_response.status == 201
+    oauth_application = db[:oauth_applications].where(client_id: json_body["client_id"]).first
+    verify_oauth_application_attributes(oauth_application, json_body)
   end
 
   def test_oidc_client_registration_id_token_signed_response
@@ -195,6 +220,9 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
 
     post("/register", valid_registration_params.merge("id_token_signed_response_alg" => "RS256"))
     assert last_response.status == 201
+    oauth_application = db[:oauth_applications].where(client_id: json_body["client_id"]).first
+    verify_oauth_application_attributes(oauth_application, json_body)
+    @json_body = nil
 
     post("/register", valid_registration_params.merge("id_token_encrypted_response_alg" => "smth"))
 
@@ -213,6 +241,8 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
     post("/register", valid_registration_params.merge("id_token_encrypted_response_enc" => "A128GCM"))
 
     assert last_response.status == 201
+    oauth_application = db[:oauth_applications].where(client_id: json_body["client_id"]).first
+    verify_oauth_application_attributes(oauth_application, json_body)
   end
 
   def test_oidc_client_registration_userinfo_signed_response
@@ -226,6 +256,9 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
     post("/register", valid_registration_params.merge("userinfo_signed_response_alg" => "RS256"))
 
     assert last_response.status == 201
+    oauth_application = db[:oauth_applications].where(client_id: json_body["client_id"]).first
+    verify_oauth_application_attributes(oauth_application, json_body)
+    @json_body = nil
 
     post("/register", valid_registration_params.merge("userinfo_encrypted_response_alg" => "smth"))
 
@@ -244,6 +277,8 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
     post("/register", valid_registration_params.merge("userinfo_encrypted_response_enc" => "A128GCM"))
 
     assert last_response.status == 201
+    oauth_application = db[:oauth_applications].where(client_id: json_body["client_id"]).first
+    verify_oauth_application_attributes(oauth_application, json_body)
   end
 
   def test_oidc_client_registration_request_object
@@ -310,6 +345,8 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
   end
 
   def verify_oauth_application_attributes(oauth_application, params)
+    assert !params["client_registration_token"].nil?
+    assert !params["client_registration_uri"].nil?
     assert oauth_application[:redirect_uri] == params["redirect_uris"].join(" ")
     assert oauth_application[:token_endpoint_auth_method] == params["token_endpoint_auth_method"]
     assert oauth_application[:grant_types] == params["grant_types"].join(" ")
