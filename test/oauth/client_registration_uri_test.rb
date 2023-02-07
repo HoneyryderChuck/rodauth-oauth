@@ -48,7 +48,7 @@ class RodauthOauthClientRegistrationTest < RodaIntegration
   end
 
   def oauth_feature
-    :oidc_dynamic_client_registration
+    :oauth_dynamic_client_registration
   end
 
   def setup_application(*args)

@@ -7,42 +7,6 @@ module Rodauth
     depends :oauth_dynamic_client_registration, :oidc
 
     auth_value_method :oauth_applications_application_type_column, :application_type
-    auth_value_method :oauth_applications_client_registration_token_column, :client_registration_token
-    auth_value_method :client_registration_uri_route, "oauth-applications"
-
-    def load_client_registration_uri_routes
-      request.on(client_registration_uri_route) do
-        # CLIENT REGISTRATION URI
-        request.on(String) do |client_id|
-          next unless accepts_json?
-
-          (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v[/\A *Bearer (.*)\Z/, 1]))
-
-          next unless token
-
-          oauth_application = db[oauth_applications_table]
-                              .where(oauth_applications_client_id_column => client_id)
-                              .first
-          next unless oauth_application
-
-          authorization_required unless password_hash_match?(oauth_application[oauth_applications_client_registration_token_column], token)
-
-          request.is do
-            request.get do
-              json_response_oauth_application(oauth_application)
-            end
-            request.on method: :patch do
-              validate_client_registration_params
-              oauth_application = transaction do
-                applications_ds = db[oauth_applications_table]
-                __update_and_return__(applications_ds, @oauth_application_params)
-              end
-              json_response_oauth_application(oauth_application)
-            end
-          end
-        end
-      end
-    end
 
     private
 
@@ -262,42 +226,6 @@ module Rodauth
       create_params[oauth_applications_client_registration_token_column] = secret_hash(client_registration_token)
       return_params["client_registration_token"] = client_registration_token
       return_params["client_registration_uri"] = "#{base_url}/#{client_registration_uri_route}/#{return_params['client_id']}"
-    end
-
-    def json_response_oauth_application(oauth_application)
-      params = methods.map { |k| k.to_s[/\Aoauth_applications_(\w+)_column\z/, 1] }.compact
-
-      body = params.each_with_object({}) do |k, hash|
-        next if %w[id account_id client_id client_secret cliennt_secret_hash].include?(k)
-
-        value = oauth_application[__send__(:"oauth_applications_#{k}_column")]
-
-        next unless value
-
-        case k
-        when "redirect_uri"
-          hash["redirect_uris"] = value.split(" ")
-        when "token_endpoint_auth_method", "grant_types", "response_types", "request_uris", "post_logout_redirect_uris"
-          hash[k] = value.split(" ")
-        when "scopes"
-          hash["scope"] = value
-        when "jwks"
-          hash[k] = value.is_a?(String) ? JSON.parse(value) : value
-        when "homepage_url"
-          hash["client_uri"] = value
-        when "name"
-          hash["client_name"] = value
-        else
-          hash[k] = value
-        end
-      end
-
-      response.status = 200
-      response["Content-Type"] ||= json_response_content_type
-      response["Cache-Control"] = "no-store"
-      response["Pragma"] = "no-cache"
-      json_payload = _json_response_body(body)
-      return_response(json_payload)
     end
   end
 end
