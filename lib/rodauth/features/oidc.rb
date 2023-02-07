@@ -587,14 +587,14 @@ module Rodauth
           additional_info = additional_claims_info[param] || EMPTY_HASH
           value = additional_info["value"] || meth[account, param]
           value = nil if additional_info["values"] && additional_info["values"].include?(value)
-          cl[param] = value if value
+          cl[param] = value unless value.nil?
         end
       elsif claims_locales.nil?
         lambda do |account, param, cl = claims|
           additional_info = additional_claims_info[param] || EMPTY_HASH
           value = additional_info["value"] || meth[account, param, nil]
           value = nil if additional_info["values"] && additional_info["values"].include?(value)
-          cl[param] = value if value
+          cl[param] = value unless value.nil?
         end
       else
         lambda do |account, param, cl = claims|
