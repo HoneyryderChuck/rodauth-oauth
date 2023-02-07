@@ -81,14 +81,6 @@ module Rodauth
       @_jwt_key ||= (oauth_application_jwks(oauth_application) if oauth_application)
     end
 
-    def _jwt_public_key
-      @_jwt_public_key ||= if oauth_application
-                             oauth_application_jwks(oauth_application)
-                           else
-                             _jwt_key
-                           end
-    end
-
     # Resource Server only!
     #
     # returns the jwks set from the authorization server.
