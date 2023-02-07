@@ -96,7 +96,7 @@ module Rodauth
           key = oauth_applications_grant_types_column
         when "response_types"
           if value.is_a?(Array)
-            grant_types = request.params["grant_types"] || oauth_grant_types_supported
+            grant_types = request.params["grant_types"] || %w[authorization_code]
             value = value.each do |response_type|
               unless oauth_response_types_supported.include?(response_type)
                 register_throw_json_response_error("invalid_client_metadata",

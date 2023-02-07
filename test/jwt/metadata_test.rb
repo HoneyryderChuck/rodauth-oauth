@@ -45,4 +45,29 @@ class RodauthOauthJwtServerMetadataTest < JWTIntegration
       assert json_body["token_endpoint_auth_methods_supported"].include?(auth_method)
     end
   end
+
+  def test_oauth_jwt_secured_authorization_request_not_require_uri
+    setup_application(:oauth_jwt_secured_authorization_request, &:load_oauth_server_metadata_route)
+
+    get("/.well-known/oauth-authorization-server")
+
+    assert last_response.status == 200
+    assert json_body["request_parameter_supported"] == true
+    assert json_body["request_uri_parameter_supported"] == true
+    assert json_body["require_request_uri_registration"] == false
+  end
+
+  def test_oauth_jwt_secured_authorization_request_require_uri
+    rodauth do
+      oauth_require_request_uri_registration true
+    end
+    setup_application(:oauth_jwt_secured_authorization_request, &:load_oauth_server_metadata_route)
+
+    get("/.well-known/oauth-authorization-server")
+
+    assert last_response.status == 200
+    assert json_body["request_parameter_supported"] == true
+    assert json_body["request_uri_parameter_supported"] == true
+    assert json_body["require_request_uri_registration"] == true
+  end
 end

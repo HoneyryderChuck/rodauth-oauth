@@ -268,12 +268,18 @@ class RodauthOauthJwtSecuredAuthorizationRequestAuthorizeTest < JWTIntegration
         body: signed_request
       )
 
-    request_uri2 = "https://example2.com/jwts/123"
-    stub_request(:get, request_uri)
+    request_uri2 = "https://example.com/jwts/124"
+    stub_request(:get, request_uri2)
       .to_return(
-        headers: { "Cache-Control" => "max-age=3600", "Content-Type" => "application/oauth-authz-req+jwt" },
+        headers: { "Cache-Control" => "max-age=3600", "Content-Type" => "text/plain" },
         body: signed_request
       )
+
+    request_uri3 = "https://example2.com/jwts/123"
+
+    visit "/authorize?request_uri=#{CGI.escape(request_uri3)}&client_id=#{application[:client_id]}&response_mode=query"
+    assert page.current_url.include?("?error=invalid_request_uri"),
+           "was redirected instead to #{page.current_path}"
 
     visit "/authorize?request_uri=#{CGI.escape(request_uri2)}&client_id=#{application[:client_id]}&response_mode=query"
     assert page.current_url.include?("?error=invalid_request_uri"),
