@@ -288,6 +288,12 @@ module Rodauth
       create_params[oauth_applications_client_id_column] = client_id
       return_params["client_id"] = client_id
       return_params["client_id_issued_at"] = Time.now.utc.iso8601
+
+      client_registration_token = oauth_unique_id_generator
+      create_params[oauth_applications_client_registration_token_column] = secret_hash(client_registration_token)
+      return_params["client_registration_token"] = client_registration_token
+      return_params["client_registration_uri"] = "#{base_url}/#{client_registration_uri_route}/#{return_params['client_id']}"
+
       if create_params.key?(oauth_applications_client_secret_column)
         set_client_secret(create_params, create_params[oauth_applications_client_secret_column])
         return_params.delete("client_secret")
@@ -355,14 +361,6 @@ module Rodauth
           register_invalid_param_message(key)
         )
       end
-    end
-
-    def initialize_register_params(create_params, return_params)
-      super
-      client_registration_token = oauth_unique_id_generator
-      create_params[oauth_applications_client_registration_token_column] = secret_hash(client_registration_token)
-      return_params["client_registration_token"] = client_registration_token
-      return_params["client_registration_uri"] = "#{base_url}/#{client_registration_uri_route}/#{return_params['client_id']}"
     end
 
     def json_response_oauth_application(oauth_application)
