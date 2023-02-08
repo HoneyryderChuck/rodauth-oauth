@@ -112,7 +112,7 @@ module Rodauth
 
           throw_json_response_error(oauth_authorization_required_error_status, "invalid_token") unless oauth_scopes.include?("openid")
 
-          account = db[accounts_table].where(account_id_column => claims["sub"]).first
+          account = account_ds(claims["sub"]).first
 
           throw_json_response_error(oauth_authorization_required_error_status, "invalid_token") unless account
 
