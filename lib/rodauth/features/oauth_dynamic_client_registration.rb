@@ -10,7 +10,7 @@ module Rodauth
 
     auth_value_method :oauth_client_registration_required_params, %w[redirect_uris client_name]
     auth_value_method :oauth_applications_client_registration_token_column, :client_registration_token
-    auth_value_method :client_registration_uri_route, "oauth-applications"
+    auth_value_method :client_registration_uri_route, "register"
 
     PROTECTED_APPLICATION_ATTRIBUTES = %w[account_id client_id].freeze
 
@@ -35,13 +35,35 @@ module Rodauth
             request.get do
               json_response_oauth_application(oauth_application)
             end
-            request.on method: :patch do
+            request.on method: :put do
+              %w[client_id registration_access_token registration_client_uri client_secret_expires_at
+                 client_id_issued_at].each do |prohibited_param|
+                if request.params.key?(prohibited_param)
+                  register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(prohibited_param))
+                end
+              end
               validate_client_registration_params
+
+              # if the client includes the "client_secret" field in the request, the value of this field MUST match the currently
+              # issued client secret for that client.  The client MUST NOT be allowed to overwrite its existing client secret with
+              # its own chosen value.
+              authorization_required if request.params.key?("client_secret") && secret_matches?(oauth_application,
+                                                                                                request.params["client_secret"])
+
               oauth_application = transaction do
                 applications_ds = db[oauth_applications_table]
                 __update_and_return__(applications_ds, @oauth_application_params)
               end
               json_response_oauth_application(oauth_application)
+            end
+
+            request.on method: :delete do
+              applications_ds = db[oauth_applications_table]
+              applications_ds.where(oauth_applications_client_id_column => client_id).delete
+              response.status = 204
+              response["Cache-Control"] = "no-store"
+              response["Pragma"] = "no-cache"
+              response.finish
             end
           end
         end

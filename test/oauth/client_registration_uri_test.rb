@@ -8,28 +8,37 @@ class RodauthOauthClientRegistrationTest < RodaIntegration
   def test_get_oauth_application
     setup_application
 
-    get "/oauth-applications/#{oauth_application[:client_id]}"
+    get "/register/#{oauth_application[:client_id]}"
     assert last_response.status == 200
     assert json_body["client_id"] = oauth_application[:client_id]
     assert json_body["client_name"] = oauth_application[:name]
     verify_oauth_application_attributes(oauth_application, json_body)
   end
 
-  def test_patch_oauth_application
+  def test_put_oauth_application
     setup_application
 
-    patch "/oauth-applications/#{oauth_application[:client_id]}", {
+    put "/register/#{oauth_application[:client_id]}", {
       "client_id" => "NEWID"
     }
     assert last_response.status == 400
 
-    patch "/oauth-applications/#{oauth_application[:client_id]}", {
+    put "/register/#{oauth_application[:client_id]}", {
       "name" => "New Name"
     }
     assert last_response.status == 200
     assert json_body["client_id"] = oauth_application[:client_id]
     assert json_body["name"] = "New Name"
     verify_oauth_application_attributes(oauth_application, json_body)
+  end
+
+  def test_delete_oauth_application
+    setup_application
+
+    delete "/register/#{oauth_application[:client_id]}", {
+      "client_id" => "NEWID"
+    }
+    assert last_response.status == 204
   end
 
   private
