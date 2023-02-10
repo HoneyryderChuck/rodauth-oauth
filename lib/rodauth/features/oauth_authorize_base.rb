@@ -73,7 +73,9 @@ module Rodauth
 
       if (redirect_uri = param_or_nil("redirect_uri"))
         normalized_redirect_uri = normalize_redirect_uri_for_comparison(redirect_uri)
-        redirect_authorize_error("redirect_uri") unless redirect_uris.include?(normalized_redirect_uri)
+        unless redirect_uris.include?(normalized_redirect_uri) || redirect_uris.include?(redirect_uri)
+          redirect_authorize_error("redirect_uri")
+        end
       elsif redirect_uris.size > 1
         redirect_authorize_error("redirect_uri")
       end

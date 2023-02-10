@@ -299,6 +299,44 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
     assert JSON.parse(last_response.body)["require_pushed_authorization_requests"] == false
   end
 
+  def test_oauth_dynamic_client_tls_client_auth
+    rodauth do
+      oauth_application_scopes %w[read write]
+    end
+    setup_application(:oauth_tls_client_auth)
+
+    post("/register", valid_registration_params.merge(
+                        "tls_client_auth_subject_dn" => "smth",
+                        "tls_client_auth_san_dns" => "smth"
+                      ))
+    assert last_response.status == 400
+    assert JSON.parse(last_response.body)["error"] == "invalid_client_metadata"
+
+    post("/register", valid_registration_params.merge("tls_client_auth_subject_dn" => "name"))
+    assert last_response.status == 201
+    assert JSON.parse(last_response.body)["tls_client_auth_subject_dn"] == "name"
+
+    post("/register", valid_registration_params.merge("tls_client_auth_san_dns" => "name"))
+    assert last_response.status == 201
+    assert JSON.parse(last_response.body)["tls_client_auth_san_dns"] == "name"
+
+    post("/register", valid_registration_params.merge("tls_client_auth_san_uri" => "uri:name:bar"))
+    assert last_response.status == 201
+    assert JSON.parse(last_response.body)["tls_client_auth_san_uri"] == "uri:name:bar"
+
+    post("/register", valid_registration_params.merge("tls_client_auth_san_ip" => "169.232.2.1"))
+    assert last_response.status == 201
+    assert JSON.parse(last_response.body)["tls_client_auth_san_ip"] == "169.232.2.1"
+
+    post("/register", valid_registration_params.merge("tls_client_auth_san_email" => "bang@bang.com"))
+    assert last_response.status == 201
+    assert JSON.parse(last_response.body)["tls_client_auth_san_email"] == "bang@bang.com"
+
+    post("/register", valid_registration_params.merge("tls_client_certificate_bound_access_tokens" => true))
+    assert last_response.status == 201
+    assert JSON.parse(last_response.body)["tls_client_certificate_bound_access_tokens"] == true
+  end
+
   private
 
   def setup_application(*)

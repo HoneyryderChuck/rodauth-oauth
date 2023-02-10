@@ -3,24 +3,28 @@
 require "uri"
 require "base64"
 require "json"
-require "net/http"
 require "securerandom"
+require "jwt"
+require "net/http"
 require "roda"
 
-AUTHORIZATION_SERVER = ENV.fetch("AUTHORIZATION_SERVER_URI", "http://localhost:9292")
-RESOURCE_SERVER = ENV.fetch("RESOURCE_SERVER_URI", "http://localhost:9292/books")
+require_relative "./tls_helpers"
+
+AUTHORIZATION_SERVER = ENV.fetch("AUTHORIZATION_SERVER_URI", "https://localhost:9292")
+RESOURCE_SERVER = ENV.fetch("RESOURCE_SERVER_URI", "https://localhost:9292/books")
 REDIRECT_URI = "http://localhost:9293/callback"
 
 if ENV.key?("CLIENT_ID") && ENV.key?("CLIENT_SECRET")
   CLIENT_ID = ENV["CLIENT_ID"]
   CLIENT_SECRET = ENV["CLIENT_SECRET"]
 else
+
   # test application
   TEST_APPLICATION_PARAMS = {
     client_name: "Myself",
     description: "About myself",
     scopes: "profile.read books.read",
-    token_endpoint_auth_method: "client_secret_post",
+    token_endpoint_auth_method: "tls_client_auth",
     grant_types: %w[authorization_code refresh_token],
     response_types: %w[code],
     redirect_uris: [REDIRECT_URI],
@@ -28,12 +32,43 @@ else
     logo_uri: "http://localhost:9293/logo.png",
     tos_uri: "http://localhost:9293/tos",
     policy_uri: "http://localhost:9293/policy",
-    jwks_uri: "http://localhost:9293/jwks"
+    tls_client_auth_subject_dn: "/CN=client"
   }.freeze
+
+  module MTLS
+    module_function
+
+    def enable_mtls(http)
+      http.use_ssl = true
+
+      # http.ca_path = File.join(__dir__, "ca.pem")
+
+      # client conf
+      root_ctx = SelfSignedCert.new("client-root")
+      root_cert = root_ctx.cert
+      root_key = root_ctx.private_key
+      client_ctx = SelfSignedCert.new("client", root_key: root_key, root_cert: root_cert)
+      client_cert = client_ctx.cert
+      client_key = client_ctx.private_key
+      http.cert = client_cert
+      http.key = client_key
+      http.extra_chain_cert = [root_cert]
+
+      # server conf
+      ca_store = OpenSSL::X509::Store.new
+      ca_store.add_file(File.join(__dir__, "server-root-cert.pem"))
+      ca_store.add_file(File.join(__dir__, "server-cert.pem"))
+      http.cert_store = ca_store
+    end
+  end
 
   puts "registering client application...."
   auth_server_uri = URI(AUTHORIZATION_SERVER)
+
   http = Net::HTTP.new(auth_server_uri.host, auth_server_uri.port)
+
+  MTLS.enable_mtls(http)
+
   # get endpoint from metadata
   request = Net::HTTP::Get.new("/.well-known/oauth-authorization-server")
   request["accept"] = "application/json"
@@ -208,7 +243,6 @@ class ClientApplication < Roda
                                   "grant_type" => "authorization_code",
                                   "code" => code,
                                   "client_id" => CLIENT_ID,
-                                  "client_secret" => CLIENT_SECRET,
                                   "redirect_uri" => REDIRECT_URI
                                 })
 
@@ -227,7 +261,6 @@ class ClientApplication < Roda
         begin
           json_request(:post, "#{AUTHORIZATION_SERVER}/revoke", params: {
                          "client_id" => CLIENT_ID,
-                         "client_secret" => CLIENT_SECRET,
                          "token_type_hint" => "access_token",
                          "token" => session["access_token"]
                        })
@@ -255,6 +288,7 @@ class ClientApplication < Roda
   def json_request(meth, uri, headers: {}, params: {})
     uri = URI(uri)
     http = Net::HTTP.new(uri.host, uri.port)
+    MTLS.enable_mtls(http)
     case meth
     when :get
       request = Net::HTTP::Get.new(uri.request_uri)

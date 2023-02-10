@@ -30,11 +30,6 @@ class JWTIntegration < RodaIntegration
     oauth_grant
   end
 
-  def verify_response(status = 200)
-    assert last_response.status == status
-    assert last_response.headers["Content-Type"] == "application/json"
-  end
-
   def verify_access_token_response(data, oauth_grant, secret, algorithm, audience: "CLIENT_ID")
     verify_token_common_response(data)
 

@@ -134,6 +134,18 @@ class RodauthOauthServerMetadataTest < RodaIntegration
     assert json_body["introspection_endpoint"] == "http://example.org/auth/introspect"
   end
 
+  def test_oauth_server_metadata_with_tls_client_auth
+    rodauth do
+      oauth_tls_client_certificate_bound_access_tokens true
+    end
+    setup_application(:oauth_tls_client_auth)
+    get("/.well-known/oauth-authorization-server")
+
+    assert last_response.status == 200
+    assert json_body["token_endpoint_auth_methods_supported"].include?("tls_client_auth")
+    assert json_body["tls_client_certificate_bound_access_tokens"] == true
+  end
+
   private
 
   def setup_application(*args)

@@ -24,7 +24,7 @@ This is an extension to the `rodauth` gem which implements the [OAuth 2.0 framew
 
 This gem implements the following RFCs and features of OAuth:
 
-* `oauth` - [The OAuth 2.0 protocol framework](https://tools.ietf.org/html/rfc6749):
+* `oauth` - [The OAuth 2.0 protocol framework](-/wikis/home#oauth-20-protocol-framework):
   * [Access Token generation](https://tools.ietf.org/html/rfc6749#section-1.4);
   * [Access Token refresh token grant](https://tools.ietf.org/html/rfc6749#section-1.5);
   * `oauth_authorization_code_grant` - [Authorization code grant](https://tools.ietf.org/html/rfc6749#section-1.3);
@@ -36,6 +36,7 @@ This gem implements the following RFCs and features of OAuth:
   * `oauth_pushed_authorization_request` - [Pushed Authorization Request](https://datatracker.ietf.org/doc/html/rfc9126);
   * [Authorization Server Metadata](https://tools.ietf.org/html/rfc8414);
   * `oauth_pkce` - [PKCE](https://tools.ietf.org/html/rfc7636);
+  * `oauth_tls_client_auth` - [Mutual-TLS Client Authentication](https://datatracker.ietf.org/doc/html/rfc8705);
   * `oauth_jwt` - [JWT Access Tokens](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-07);
   * `oauth_jwt_secured_authorization_request` - [JWT Secured Authorization Request](https://tools.ietf.org/html/draft-ietf-oauth-jwsreq-20);
   * `oauth_resource_indicators` - [Resource Indicators](https://datatracker.ietf.org/doc/html/rfc8707);
@@ -51,12 +52,11 @@ This gem implements the following RFCs and features of OAuth:
 
 It also implements the [OpenID Connect layer](https://openid.net/connect/) (via the `openid` feature) on top of the OAuth features it provides, including:
 
-* `oidc`
-  * [OpenID Connect Core](https://openid.net/specs/openid-connect-core-1_0.html);
-  * [OpenID Connect Discovery](https://openid.net/specs/openid-connect-discovery-1_0-29.html);
-  * [OpenID Multiple Response Types](https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html);
-* `oidc_dynamic_client_registration` - [OpenID Connect Dynamic Client Registration](https://openid.net/specs/openid-connect-registration-1_0.html);
-* `oidc_rp_initiated_logout` - [RP Initiated Logout](https://openid.net/specs/openid-connect-rpinitiated-1_0.html);
+* [OpenID Connect Core](https://gitlab.com/os85/rodauth-oauth/-/wikis/Id-Token-Authentication);
+* [OpenID Connect Discovery](https://gitlab.com/os85/rodauth-oauth/-/wikis/OIDC-Dynamic-Client-Registration);
+* [OpenID Multiple Response Types](https://gitlab.com/os85/rodauth-oauth/-/wikis/Hybrid-flow);
+* [OpenID Connect Dynamic Client Registration](https://gitlab.com/os85/rodauth-oauth/-/wikis/OIDC-Dynamic-Client-Registration);
+* [RP Initiated Logout](https://gitlab.com/os85/rodauth-oauth/-/wikis/RP-Initiated-Logout);
 
 This gem supports also rails (through [rodauth-rails]((https://github.com/janko/rodauth-rails))).
 

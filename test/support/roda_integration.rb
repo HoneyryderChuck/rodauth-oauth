@@ -209,6 +209,11 @@ class RodaIntegration < Minitest::Test
     Base64.urlsafe_encode64(Digest::SHA256.digest(token))
   end
 
+  def verify_response(status = 200)
+    assert last_response.status == status
+    assert last_response.headers["Content-Type"] == "application/json"
+  end
+
   def verify_token_common_response(data)
     assert data["token_type"] == "bearer"
     assert !data["expires_in"].nil?

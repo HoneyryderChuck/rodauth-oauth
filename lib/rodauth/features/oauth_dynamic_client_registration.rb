@@ -205,10 +205,30 @@ module Rodauth
             register_throw_json_response_error("invalid_client_metadata",
                                                register_invalid_param_message(key))
           end
-
           request.params[key] = value = convert_to_boolean(key, value)
 
           key = oauth_applications_require_pushed_authorization_requests_column
+        when "tls_client_certificate_bound_access_tokens"
+          property = :oauth_applications_tls_client_certificate_bound_access_tokens_column
+          register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(key)) unless respond_to?(property)
+
+          request.params[key] = value = convert_to_boolean(key, value)
+
+          key = oauth_applications_tls_client_certificate_bound_access_tokens_column
+        when /\Atls_client_auth_/
+          unless respond_to?(:"oauth_applications_#{key}_column")
+            register_throw_json_response_error("invalid_client_metadata",
+                                               register_invalid_param_message(key))
+          end
+
+          #  client using the tls_client_auth authentication method MUST use exactly one of the below metadata
+          # parameters to indicate the certificate subject value that the authorization server is to expect when
+          # authenticating the respective client.
+          if params.any? { |k, _| k.to_s.start_with?("tls_client_auth_") }
+            register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(key))
+          end
+
+          key = __send__(:"oauth_applications_#{key}_column")
         else
           if respond_to?(:"oauth_applications_#{key}_column")
             if PROTECTED_APPLICATION_ATTRIBUTES.include?(key)

@@ -144,8 +144,26 @@ module Rodauth
         A128GCM A256GCM A128CBC-HS256 A256CBC-HS512
       ]
 
-      def jwk_export(key)
+      def key_to_jwk(key)
         JSON::JWK.new(key)
+      end
+
+      def jwk_export(key)
+        key_to_jwk(key)
+      end
+
+      def jwk_import(jwk)
+        JSON::JWK.new(jwk)
+      end
+
+      def jwk_key(jwk)
+        jwk = jwk_import(jwk) unless jwk.is_a?(JSON::JWK)
+        jwk.to_key
+      end
+
+      def jwk_thumbprint(jwk)
+        jwk = jwk_import(jwk) if jwk.is_a?(Hash)
+        jwk.thumbprint
       end
 
       def jwt_encode(payload,
@@ -279,8 +297,26 @@ module Rodauth
         auth_value_method :oauth_jwt_jwe_encryption_methods_supported, []
       end
 
+      def key_to_jwk(key)
+        JWT::JWK.new(key)
+      end
+
       def jwk_export(key)
-        JWT::JWK.new(key).export
+        key_to_jwk(key).export
+      end
+
+      def jwk_import(jwk)
+        JWT::JWK.import(jwk)
+      end
+
+      def jwk_key(jwk)
+        jwk = jwk_import(jwk) unless jwk.is_a?(JWT::JWK)
+        jwk.keypair
+      end
+
+      def jwk_thumbprint(jwk)
+        jwk = jwk_import(jwk) if jwk.is_a?(Hash)
+        JWT::JWK::Thumbprint.new(jwk).generate
       end
 
       def jwt_encode(payload,
@@ -434,6 +470,14 @@ module Rodauth
     else
       # :nocov:
       def jwk_export(_key)
+        raise "#{__method__} is undefined, redefine it or require either \"jwt\" or \"json-jwt\""
+      end
+
+      def jwk_import(_jwk)
+        raise "#{__method__} is undefined, redefine it or require either \"jwt\" or \"json-jwt\""
+      end
+
+      def jwk_thumbprint(_jwk)
         raise "#{__method__} is undefined, redefine it or require either \"jwt\" or \"json-jwt\""
       end
 
