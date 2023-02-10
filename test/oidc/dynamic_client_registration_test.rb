@@ -363,8 +363,8 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
   end
 
   def verify_oauth_application_attributes(oauth_application, params)
-    assert !params["client_registration_token"].nil?
-    assert !params["client_registration_uri"].nil?
+    assert !params["registration_access_token"].nil?
+    assert !params["registration_client_uri"].nil?
     assert oauth_application[:redirect_uri] == params["redirect_uris"].join(" ")
     assert oauth_application[:token_endpoint_auth_method] == params["token_endpoint_auth_method"]
     assert oauth_application[:grant_types] == params["grant_types"].join(" ")

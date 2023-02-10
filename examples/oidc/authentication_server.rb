@@ -35,6 +35,8 @@ else
     String :redirect_uri, null: false
     String :client_id, null: false, unique: true
     String :client_secret, null: false, unique: true
+    String :registration_access_token, null: true
+    String :initiate_login_uri, null: true
     String :scopes, null: false
     # extra params
     String :token_endpoint_auth_method, null: true
@@ -229,6 +231,7 @@ class AuthenticationServer < Roda
   route do |r|
     r.assets
     r.rodauth
+    rodauth.load_registration_client_uri_routes
     rodauth.load_openid_configuration_route
     rodauth.load_webfinger_route
 

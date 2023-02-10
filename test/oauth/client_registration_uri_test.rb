@@ -61,7 +61,7 @@ class RodauthOauthClientRegistrationTest < RodaIntegration
   end
 
   def setup_application(*args)
-    super(*args, &:load_client_registration_uri_routes)
+    super(*args, &:load_registration_client_uri_routes)
     header "Accept", "application/json"
     header "Authorization", "Bearer CLIENT_TOKEN"
   end

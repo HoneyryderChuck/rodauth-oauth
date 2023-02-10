@@ -52,7 +52,7 @@ module OAuthHelpers
       redirect_uri: "https://example.com/callback",
       client_id: "CLIENT_ID",
       client_secret: generate_client_secret("CLIENT_SECRET"),
-      client_registration_token: generate_client_secret("CLIENT_TOKEN"),
+      registration_access_token: generate_client_secret("CLIENT_TOKEN"),
       scopes: test_scopes.join(" ")
     }.merge(params))
     db[:oauth_applications].filter(id: id).first
