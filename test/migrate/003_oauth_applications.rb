@@ -12,6 +12,7 @@ Sequel.migration do
       String :redirect_uri, null: false
       String :client_id, null: false, unique: true
       String :client_secret, null: false, unique: true
+      String :client_registration_token, null: true
       String :scopes, null: false
       # extra params
       String :token_endpoint_auth_method, null: true

@@ -87,9 +87,10 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
   def test_oauth_dynamic_client_response_types
     rodauth do
       oauth_application_scopes %w[read write]
+      oauth_response_types_supported { super() | %w[none] }
     end
 
-    setup_application(:oauth_authorization_code_grant)
+    setup_application(:oauth_authorization_code_grant, :oauth_implicit_grant, :oauth_client_credentials_grant)
     header "Accept", "application/json"
 
     post("/register", valid_registration_params.merge("response_types" => "smthsmth"))
@@ -100,7 +101,15 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
     assert last_response.status == 400
 
+    post("/register", valid_registration_params.merge("response_types" => %w[token]))
+
+    assert last_response.status == 400
+
     post("/register", valid_registration_params.merge("response_types" => %w[code token]))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge("response_types" => %w[none]))
 
     assert last_response.status == 400
 
@@ -108,6 +117,11 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
     assert last_response.status == 201
     assert JSON.parse(last_response.body)["response_types"] == %w[code]
+
+    post("/register", valid_registration_params.merge(grant_types: %w[implicit], "response_types" => %w[token]))
+
+    assert last_response.status == 201
+    assert JSON.parse(last_response.body)["response_types"] == %w[token]
 
     post("/register", valid_registration_params)
     assert last_response.status == 201
@@ -194,7 +208,15 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
     post("/register", valid_registration_params.merge("jwks" => { "a" => "b" }))
     assert last_response.status == 400
-    assert json_body["error"] == "invalid_client_metadata"
+    assert JSON.parse(last_response.body)["error"] == "invalid_client_metadata"
+
+    post("/register", valid_registration_params.merge("jwks_uri" => nil, "jwks" => "bla").compact)
+    assert last_response.status == 400
+    assert JSON.parse(last_response.body)["error"] == "invalid_client_metadata"
+
+    post("/register", valid_registration_params.merge("jwks_uri" => nil, "jwks" => { "a" => "b" }).compact)
+    assert last_response.status == 201
+    assert JSON.parse(last_response.body)["jwks"] == { "a" => "b" }
   end
 
   def test_oauth_dynamic_client_all_params_without_client_secret

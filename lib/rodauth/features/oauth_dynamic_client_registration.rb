@@ -9,16 +9,80 @@ module Rodauth
     before "register"
 
     auth_value_method :oauth_client_registration_required_params, %w[redirect_uris client_name]
+    auth_value_method :oauth_applications_client_registration_token_column, :client_registration_token
+    auth_value_method :client_registration_uri_route, "register"
 
     PROTECTED_APPLICATION_ATTRIBUTES = %w[account_id client_id].freeze
+
+    def load_client_registration_uri_routes
+      request.on(client_registration_uri_route) do
+        # CLIENT REGISTRATION URI
+        request.on(String) do |client_id|
+          next unless accepts_json?
+
+          (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v[/\A *Bearer (.*)\Z/, 1]))
+
+          next unless token
+
+          oauth_application = db[oauth_applications_table]
+                              .where(oauth_applications_client_id_column => client_id)
+                              .first
+          next unless oauth_application
+
+          authorization_required unless password_hash_match?(oauth_application[oauth_applications_client_registration_token_column], token)
+
+          request.is do
+            request.get do
+              json_response_oauth_application(oauth_application)
+            end
+            request.on method: :put do
+              %w[client_id registration_access_token registration_client_uri client_secret_expires_at
+                 client_id_issued_at].each do |prohibited_param|
+                if request.params.key?(prohibited_param)
+                  register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(prohibited_param))
+                end
+              end
+              validate_client_registration_params
+
+              # if the client includes the "client_secret" field in the request, the value of this field MUST match the currently
+              # issued client secret for that client.  The client MUST NOT be allowed to overwrite its existing client secret with
+              # its own chosen value.
+              authorization_required if request.params.key?("client_secret") && secret_matches?(oauth_application,
+                                                                                                request.params["client_secret"])
+
+              oauth_application = transaction do
+                applications_ds = db[oauth_applications_table]
+                __update_and_return__(applications_ds, @oauth_application_params)
+              end
+              json_response_oauth_application(oauth_application)
+            end
+
+            request.on method: :delete do
+              applications_ds = db[oauth_applications_table]
+              applications_ds.where(oauth_applications_client_id_column => client_id).delete
+              response.status = 204
+              response["Cache-Control"] = "no-store"
+              response["Pragma"] = "no-cache"
+              response.finish
+            end
+          end
+        end
+      end
+    end
 
     # /register
     auth_server_route(:register) do |r|
       before_register_route
 
-      validate_client_registration_params
-
       r.post do
+        oauth_client_registration_required_params.each do |required_param|
+          unless request.params.key?(required_param)
+            register_throw_json_response_error("invalid_client_metadata", register_required_param_message(required_param))
+          end
+        end
+
+        validate_client_registration_params
+
         response_params = transaction do
           before_register
           do_register
@@ -57,12 +121,6 @@ module Rodauth
     end
 
     def validate_client_registration_params
-      oauth_client_registration_required_params.each do |required_param|
-        unless request.params.key?(required_param)
-          register_throw_json_response_error("invalid_client_metadata", register_required_param_message(required_param))
-        end
-      end
-
       @oauth_application_params = request.params.each_with_object({}) do |(key, value), params|
         case key
         when "redirect_uris"
@@ -96,7 +154,7 @@ module Rodauth
           key = oauth_applications_grant_types_column
         when "response_types"
           if value.is_a?(Array)
-            grant_types = request.params["grant_types"] || oauth_grant_types_supported
+            grant_types = request.params["grant_types"] || %w[authorization_code]
             value = value.each do |response_type|
               unless oauth_response_types_supported.include?(response_type)
                 register_throw_json_response_error("invalid_client_metadata",
@@ -114,7 +172,7 @@ module Rodauth
           register_throw_json_response_error("invalid_client_metadata", register_invalid_uri_message(value)) unless check_valid_uri?(value)
           case key
           when "client_uri"
-            key = "homepage_url"
+            key = oauth_applications_homepage_url_column
           when "jwks_uri"
             if request.params.key?("jwks")
               register_throw_json_response_error("invalid_client_metadata",
@@ -132,6 +190,7 @@ module Rodauth
           key = oauth_applications_jwks_column
           value = JSON.dump(value)
         when "scope"
+          register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(value)) unless value.is_a?(String)
           scopes = value.split(" ") - oauth_application_scopes
           register_throw_json_response_error("invalid_client_metadata", register_invalid_scopes_message(value)) unless scopes.empty?
           key = oauth_applications_scopes_column
@@ -141,22 +200,17 @@ module Rodauth
           value = value.join(" ")
           key = oauth_applications_contacts_column
         when "client_name"
+          register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(value)) unless value.is_a?(String)
           key = oauth_applications_name_column
         when "require_pushed_authorization_requests"
-          property = :"oauth_applications_#{key}_column"
-          register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(key)) unless respond_to?(property)
+          unless respond_to?(:oauth_applications_require_pushed_authorization_requests_column)
+            register_throw_json_response_error("invalid_client_metadata",
+                                               register_invalid_param_message(key))
+          end
 
-          request.params[key] = value = case value
-                                        when "true" then true
-                                        when "false" then false
-                                        else
-                                          register_throw_json_response_error(
-                                            "invalid_client_metadata",
-                                            register_invalid_param_message(value)
-                                          )
-                                        end
+          request.params[key] = value = convert_to_boolean(key, value)
 
-          key = __send__(property)
+          key = oauth_applications_require_pushed_authorization_requests_column
         else
           if respond_to?(:"oauth_applications_#{key}_column")
             if PROTECTED_APPLICATION_ATTRIBUTES.include?(key)
@@ -198,40 +252,58 @@ module Rodauth
 
       # set defaults
       create_params = @oauth_application_params
+
+      # If omitted, an authorization server MAY register a client with a default set of scopes
       create_params[oauth_applications_scopes_column] ||= return_params["scopes"] = oauth_application_scopes.join(" ")
+
+      # https://datatracker.ietf.org/doc/html/rfc7591#section-2
       if create_params[oauth_applications_grant_types_column] ||= begin
+        # If omitted, the default behavior is that the client will use only the "authorization_code" Grant Type.
         return_params["grant_types"] = %w[authorization_code] # rubocop:disable Lint/AssignmentInCondition
         "authorization_code"
       end
         create_params[oauth_applications_token_endpoint_auth_method_column] ||= begin
+          # If unspecified or omitted, the default is "client_secret_basic", denoting the HTTP Basic
+          # authentication scheme as specified in Section 2.3.1 of OAuth 2.0.
           return_params["token_endpoint_auth_method"] = "client_secret_basic"
           "client_secret_basic"
         end
       end
       create_params[oauth_applications_response_types_column] ||= begin
+        # If omitted, the default is that the client will use only the "code" response type.
         return_params["response_types"] = %w[code]
         "code"
       end
       rescue_from_uniqueness_error do
-        client_id = oauth_unique_id_generator
-        create_params[oauth_applications_client_id_column] = client_id
-        return_params["client_id"] = client_id
-        return_params["client_id_issued_at"] = Time.now.utc.iso8601
-        if create_params.key?(oauth_applications_client_secret_column)
-          set_client_secret(create_params, create_params[oauth_applications_client_secret_column])
-          return_params.delete("client_secret")
-        else
-          client_secret = oauth_unique_id_generator
-          set_client_secret(create_params, client_secret)
-          return_params["client_secret"] = client_secret
-          return_params["client_secret_expires_at"] = 0
-
-          create_params.delete_if { |k, _| !application_columns.include?(k) }
-        end
+        initialize_register_params(create_params, return_params)
+        create_params.delete_if { |k, _| !application_columns.include?(k) }
         applications_ds.insert(create_params)
       end
 
       return_params
+    end
+
+    def initialize_register_params(create_params, return_params)
+      client_id = oauth_unique_id_generator
+      create_params[oauth_applications_client_id_column] = client_id
+      return_params["client_id"] = client_id
+      return_params["client_id_issued_at"] = Time.now.utc.iso8601
+
+      client_registration_token = oauth_unique_id_generator
+      create_params[oauth_applications_client_registration_token_column] = secret_hash(client_registration_token)
+      return_params["client_registration_token"] = client_registration_token
+      return_params["client_registration_uri"] = "#{base_url}/#{client_registration_uri_route}/#{return_params['client_id']}"
+
+      if create_params.key?(oauth_applications_client_secret_column)
+        set_client_secret(create_params, create_params[oauth_applications_client_secret_column])
+        return_params.delete("client_secret")
+      else
+        client_secret = oauth_unique_id_generator
+        set_client_secret(create_params, client_secret)
+        return_params["client_secret"] = client_secret
+        return_params["client_secret_expires_at"] = 0
+
+      end
     end
 
     def register_throw_json_response_error(code, message)
@@ -277,6 +349,54 @@ module Rodauth
     def register_invalid_response_type_for_grant_type_message(response_type, grant_type)
       "The grant type '#{grant_type}' must be registered for the response " \
         "type '#{response_type}' to be allowed."
+    end
+
+    def convert_to_boolean(key, value)
+      case value
+      when "true" then true
+      when "false" then false
+      else
+        register_throw_json_response_error(
+          "invalid_client_metadata",
+          register_invalid_param_message(key)
+        )
+      end
+    end
+
+    def json_response_oauth_application(oauth_application)
+      params = methods.map { |k| k.to_s[/\Aoauth_applications_(\w+)_column\z/, 1] }.compact
+
+      body = params.each_with_object({}) do |k, hash|
+        next if %w[id account_id client_id client_secret cliennt_secret_hash].include?(k)
+
+        value = oauth_application[__send__(:"oauth_applications_#{k}_column")]
+
+        next unless value
+
+        case k
+        when "redirect_uri"
+          hash["redirect_uris"] = value.split(" ")
+        when "token_endpoint_auth_method", "grant_types", "response_types", "request_uris", "post_logout_redirect_uris"
+          hash[k] = value.split(" ")
+        when "scopes"
+          hash["scope"] = value
+        when "jwks"
+          hash[k] = value.is_a?(String) ? JSON.parse(value) : value
+        when "homepage_url"
+          hash["client_uri"] = value
+        when "name"
+          hash["client_name"] = value
+        else
+          hash[k] = value
+        end
+      end
+
+      response.status = 200
+      response["Content-Type"] ||= json_response_content_type
+      response["Cache-Control"] = "no-store"
+      response["Pragma"] = "no-cache"
+      json_payload = _json_response_body(body)
+      return_response(json_payload)
     end
 
     def oauth_server_metadata_body(*)

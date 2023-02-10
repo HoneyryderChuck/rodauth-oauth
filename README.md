@@ -45,7 +45,7 @@ This gem implements the following RFCs and features of OAuth:
   * `oauth_saml_bearer_grant` - [SAML 2.0 Bearer Assertion](https://datatracker.ietf.org/doc/html/rfc7522);
   * `oauth_jwt_bearer_grant` - [JWT Bearer Assertion](https://datatracker.ietf.org/doc/html/rfc7523);
 
-* `oauth_dynamic_client_registration` - [Dynamic Client Registration Protocol](https://datatracker.ietf.org/doc/html/rfc7591);
+* `oauth_dynamic_client_registration` - [Dynamic Client Registration Protocol](https://datatracker.ietf.org/doc/html/rfc7591) and [Dynamic Client Registration Management](https://www.rfc-editor.org/rfc/rfc7592);
 * OAuth application and token management dashboards;
 *  The recommendations for [Native Apps](https://www.rfc-editor.org/rfc/rfc8252);
 
