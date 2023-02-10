@@ -28,6 +28,11 @@ module Rodauth
     translatable_method :oauth_unsupported_response_type_message, "Unsupported response type"
     translatable_method :oauth_authorize_parameter_required, "Invalid or missing '%<parameter>s'"
 
+    auth_value_methods(
+      :resource_owner_params,
+      :oauth_grants_resource_owner_columns
+    )
+
     # /authorize
     auth_server_route(:authorize) do |r|
       require_authorizable_account
@@ -109,13 +114,20 @@ module Rodauth
       !approval_prompt || APPROVAL_PROMPTS.include?(approval_prompt)
     end
 
+    def resource_owner_params
+      { oauth_grants_account_id_column => account_id }
+    end
+
+    def oauth_grants_resource_owner_columns
+      [oauth_grants_account_id_column]
+    end
+
     def try_approval_prompt
       approval_prompt = param_or_nil("approval_prompt")
 
       return unless approval_prompt && approval_prompt == "auto"
 
-      return if db[oauth_grants_table].where(
-        oauth_grants_account_id_column => account_id,
+      return if db[oauth_grants_table].where(resource_owner_params).where(
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
         oauth_grants_redirect_uri_column => redirect_uri,
         oauth_grants_scopes_column => scopes.join(oauth_scope_separator),

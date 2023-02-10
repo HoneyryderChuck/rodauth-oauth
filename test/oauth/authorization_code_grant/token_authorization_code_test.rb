@@ -385,6 +385,51 @@ class RodauthOAuthTokenAuthorizationCodeTest < RodaIntegration
     assert !json_body["expires_in"].nil?
   end
 
+  def test_token_authorization_code_with_sub_account
+    rodauth do
+      resource_owner_params { super().merge(sub_account_id: param_or_nil("sub_account_id")) }
+      only_json? true
+    end
+    setup_application
+    header "Authorization", "Basic #{authorization_header(
+      username: 'foo@example.com',
+      password: '0123456789'
+    )}"
+
+    post("/authorize",
+         client_id: oauth_application[:client_id],
+         response_type: "code",
+         scope: "user.read user.write",
+         sub_account_id: 42,
+         response_mode: "query")
+
+    assert last_response.status == 302
+    assert last_response.headers["location"] =~ /code=([^&]+)/,
+           "was redirected instead to #{page.current_url}"
+
+    code = Regexp.last_match(1)
+
+    oauth_grant = db[:oauth_grants].where(code: code).first
+    assert oauth_grant
+    assert oauth_grant[:sub_account_id] == 42
+
+    header "Authorization", nil
+    post("/token",
+         client_id: oauth_application[:client_id],
+         client_secret: "CLIENT_SECRET",
+         grant_type: "authorization_code",
+         code: code,
+         redirect_uri: oauth_application[:redirect_uri])
+
+    assert last_response.status == 200
+    assert last_response.headers["Content-Type"] == "application/json"
+
+    assert db[:oauth_grants].count == 1
+    oauth_grant = db[:oauth_grants].first
+
+    assert json_body["access_token"] == oauth_grant[:token]
+  end
+
   private
 
   def setup_application

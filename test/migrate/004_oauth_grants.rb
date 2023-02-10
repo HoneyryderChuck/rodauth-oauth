@@ -6,6 +6,9 @@ Sequel.migration do
       primary_key :id, type: Integer
       foreign_key :account_id, :accounts # , null: false unless client credentials, or device code grant
       foreign_key :oauth_application_id, :oauth_applications, null: false
+
+      Integer :sub_account_id, null: true # to test context-based account ownership
+
       String :type, null: true
 
       String :code, null: true
