@@ -9,17 +9,15 @@ module Rodauth
     before "register"
 
     auth_value_method :oauth_client_registration_required_params, %w[redirect_uris client_name]
-    auth_value_method :oauth_applications_client_registration_token_column, :client_registration_token
-    auth_value_method :client_registration_uri_route, "register"
+    auth_value_method :oauth_applications_registration_access_token_column, :registration_access_token
+    auth_value_method :registration_client_uri_route, "register"
 
     PROTECTED_APPLICATION_ATTRIBUTES = %w[account_id client_id].freeze
 
-    def load_client_registration_uri_routes
-      request.on(client_registration_uri_route) do
+    def load_registration_client_uri_routes
+      request.on(registration_client_uri_route) do
         # CLIENT REGISTRATION URI
         request.on(String) do |client_id|
-          next unless accepts_json?
-
           (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v[/\A *Bearer (.*)\Z/, 1]))
 
           next unless token
@@ -29,7 +27,7 @@ module Rodauth
                               .first
           next unless oauth_application
 
-          authorization_required unless password_hash_match?(oauth_application[oauth_applications_client_registration_token_column], token)
+          authorization_required unless password_hash_match?(oauth_application[oauth_applications_registration_access_token_column], token)
 
           request.is do
             request.get do
@@ -289,10 +287,10 @@ module Rodauth
       return_params["client_id"] = client_id
       return_params["client_id_issued_at"] = Time.now.utc.iso8601
 
-      client_registration_token = oauth_unique_id_generator
-      create_params[oauth_applications_client_registration_token_column] = secret_hash(client_registration_token)
-      return_params["client_registration_token"] = client_registration_token
-      return_params["client_registration_uri"] = "#{base_url}/#{client_registration_uri_route}/#{return_params['client_id']}"
+      registration_access_token = oauth_unique_id_generator
+      create_params[oauth_applications_registration_access_token_column] = secret_hash(registration_access_token)
+      return_params["registration_access_token"] = registration_access_token
+      return_params["registration_client_uri"] = "#{base_url}/#{registration_client_uri_route}/#{return_params['client_id']}"
 
       if create_params.key?(oauth_applications_client_secret_column)
         set_client_secret(create_params, create_params[oauth_applications_client_secret_column])
