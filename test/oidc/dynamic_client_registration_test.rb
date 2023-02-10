@@ -108,6 +108,24 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
     verify_oauth_application_attributes(oauth_application, json_body)
   end
 
+  def test_oidc_initiate_login_uri
+    setup_application
+    header "Accept", "application/json"
+
+    post("/register", valid_registration_params.merge(
+                        "initiate_login_uri" => "bla"
+                      ))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge(
+                        "initiate_login_uri" => "https://my.login"
+                      ))
+
+    assert last_response.status == 201
+    assert json_body["initiate_login_uri"] == "https://my.login"
+  end
+
   def test_oidc_client_registration_subject_type
     rodauth do
       oauth_valid_uri_schemes %w[http https]

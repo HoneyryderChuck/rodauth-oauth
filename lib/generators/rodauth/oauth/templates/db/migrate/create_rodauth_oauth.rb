@@ -30,6 +30,7 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       # :oidc_dynamic_client_configuration enabled, extra optional params
       t.string :sector_identifier_uri, null: true
       t.string :application_type, null: true
+      t.string :initiate_login_uri, null: true
 
       # :oidc enabled
       t.string :subject_type, null: true

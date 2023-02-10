@@ -30,6 +30,7 @@ Sequel.migration do
       # oidc extra params
       String :sector_identifier_uri, null: true
       String :application_type, null: true
+      String :initiate_login_uri, null: true
       String :subject_type, null: true
       String :id_token_signed_response_alg, null: true
       String :id_token_encrypted_response_alg, null: true

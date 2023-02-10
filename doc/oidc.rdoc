@@ -17,6 +17,7 @@ oauth_grants_claims_column :: db column where an authorization claims are stored
 
 oauth_applications_application_type_column :: db colummn where the application type is stored.
 oauth_applications_sector_identifier_uri_column :: db colummn where the sector identifier uri is stored.
+oauth_applications_initiate_login_uri_column :: db colummn where the initiate login uri is stored.
 oauth_applications_subject_type_column :: db column where to store the type of subject claim used for the oauth application, <tt>:subject_type</tt> by default.
 oauth_applications_id_token_encrypted_response_alg_column :: db column where to store the encryption algorithm used for the id token for the oauth application, <tt>:id_token_encrypted_response_alg</tt> by default.
 oauth_applications_id_token_encrypted_response_enc_column :: db column where to store the encryption method used for the id token for the oauth application, <tt>:id_token_encrypted_response_enc</tt> by default.

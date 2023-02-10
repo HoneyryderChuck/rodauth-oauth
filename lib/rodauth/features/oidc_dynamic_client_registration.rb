@@ -43,7 +43,11 @@ module Rodauth
         end
       end
 
-      if (value = @oauth_application_params[oauth_applications_sector_identifier_uri_column])
+      if (value = @oauth_application_params[oauth_applications_sector_identifier_uri_column]) && !check_valid_uri?(value)
+        register_throw_json_response_error("invalid_redirect_uri", register_invalid_uri_message(value))
+      end
+
+      if (value = @oauth_application_params[oauth_applications_initiate_login_uri_column])
         uri = URI(value)
 
         unless uri.scheme == "https" || uri.host == "localhost"

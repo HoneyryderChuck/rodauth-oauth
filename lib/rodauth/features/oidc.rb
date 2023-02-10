@@ -68,7 +68,7 @@ module Rodauth
     auth_value_method :oauth_application_scopes, %w[openid]
 
     %i[
-      subject_type application_type sector_identifier_uri
+      subject_type application_type sector_identifier_uri initiate_login_uri
       id_token_signed_response_alg id_token_encrypted_response_alg id_token_encrypted_response_enc
       userinfo_signed_response_alg userinfo_encrypted_response_alg userinfo_encrypted_response_enc
     ].each do |column|
