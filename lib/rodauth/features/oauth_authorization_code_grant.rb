@@ -57,7 +57,7 @@ module Rodauth
     def _do_authorize_code
       create_params = {
         oauth_grants_type_column => "authorization_code",
-        oauth_grants_account_id_column => account_id
+        **resource_owner_params
       }
 
       { "code" => create_oauth_grant(create_params) }

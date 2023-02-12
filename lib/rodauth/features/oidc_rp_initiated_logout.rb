@@ -36,10 +36,9 @@ module Rodauth
 
             oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => claims["aud"]).first
             oauth_grant = db[oauth_grants_table]
-                          .where(
-                            oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-                            oauth_grants_account_id_column => account_id
-                          ).first
+                          .where(resource_owner_params)
+                          .where(oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column])
+                          .first
 
             # check whether ID token belongs to currently logged-in user
             redirect_logout_with_error(oauth_invalid_client_message) unless oauth_grant && claims["sub"] == jwt_subject(oauth_grant,

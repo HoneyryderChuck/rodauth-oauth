@@ -24,7 +24,8 @@ module Rodauth
       :jwt_decode_no_key,
       :generate_jti,
       :oauth_jwt_issuer,
-      :oauth_jwt_audience
+      :oauth_jwt_audience,
+      :resource_owner_params_from_jwt_claims
     )
 
     private
@@ -68,6 +69,10 @@ module Rodauth
       return account_id.to_s if account_id
 
       client_application[oauth_applications_client_id_column]
+    end
+
+    def resource_owner_params_from_jwt_claims(claims)
+      { oauth_grants_account_id_column => claims["sub"] }
     end
 
     def oauth_server_metadata_body(path = nil)

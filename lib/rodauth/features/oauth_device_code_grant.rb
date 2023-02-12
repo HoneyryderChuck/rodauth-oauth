@@ -193,9 +193,8 @@ module Rodauth
 
       # do not clean up device code just yet
       update_params.delete(oauth_grants_code_column)
-
       update_params[oauth_grants_user_code_column] = nil
-      update_params[oauth_grants_account_id_column] = account_id
+      update_params.merge!(resource_params)
 
       super(grant_params, update_params)
     end

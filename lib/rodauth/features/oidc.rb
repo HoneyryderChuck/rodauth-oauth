@@ -112,7 +112,7 @@ module Rodauth
 
           throw_json_response_error(oauth_authorization_required_error_status, "invalid_token") unless oauth_scopes.include?("openid")
 
-          account = db[accounts_table].where(account_id_column => claims["sub"]).first
+          account = account_ds(claims["sub"]).first
 
           throw_json_response_error(oauth_authorization_required_error_status, "invalid_token") unless account
 
@@ -126,7 +126,7 @@ module Rodauth
 
           oauth_grant = valid_oauth_grant_ds(
             oauth_grants_oauth_application_id_column => @oauth_application[oauth_applications_id_column],
-            oauth_grants_account_id_column => account[account_id_column]
+            **resource_owner_params_from_jwt_claims(claims)
           ).first
 
           claims_locales = oauth_grant[oauth_grants_claims_locales_column] if oauth_grant
@@ -333,8 +333,9 @@ module Rodauth
 
         identifier_uri = URI(identifier_uri).host
 
-        account_id = oauth_grant[oauth_grants_account_id_column]
-        Digest::SHA256.hexdigest("#{identifier_uri}#{account_id}#{oauth_jwt_subject_secret}")
+        account_ids = oauth_grant.values_at(oauth_grants_resource_owner_columns)
+        values = [identifier_uri, *account_ids, oauth_jwt_subject_secret]
+        Digest::SHA256.hexdigest(values.join)
       else
         raise StandardError, "unexpected subject (#{subject_type})"
       end
@@ -434,8 +435,8 @@ module Rodauth
     end
 
     def create_oauth_grant_with_token(create_params = {})
+      create_params.merge!(resource_owner_params)
       create_params[oauth_grants_type_column] = "hybrid"
-      create_params[oauth_grants_account_id_column] = account_id
       create_params[oauth_grants_expires_in_column] = Sequel.date_add(Sequel::CURRENT_TIMESTAMP, seconds: oauth_access_token_expires_in)
       authorization_code = create_oauth_grant(create_params)
       access_token = if oauth_jwt_access_tokens
@@ -691,7 +692,7 @@ module Rodauth
 
     def oidc_grant_params
       grant_params = {
-        oauth_grants_account_id_column => account_id,
+        **resource_owner_params,
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
         oauth_grants_scopes_column => scopes.join(oauth_scope_separator)
       }
