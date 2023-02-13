@@ -282,9 +282,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
     assert oauth_grant[:sub_account_id] == 42
 
     header "Authorization", nil
-    post_token(client_id: oauth_application[:client_id],
-               client_secret: "CLIENT_SECRET",
-               grant_type: "authorization_code",
+    post_token(grant_type: "authorization_code",
                code: code,
                redirect_uri: oauth_application[:redirect_uri])
 
