@@ -42,7 +42,10 @@ module Rodauth
 
       if supports_auth_method?(oauth_application, "tls_client_auth")
         # It relies on a validated certificate chain [RFC5280]
-        authorization_required unless request.env["SSL_CLIENT_VERIFY"] == "SUCCESS"
+
+        ssl_verify = request.env["SSL_CLIENT_VERIFY"] || request.env["HTTP_SSL_CLIENT_VERIFY"] || request.env["HTTP_X_SSL_CLIENT_VERIFY"]
+
+        authorization_required unless ssl_verify == "SUCCESS"
 
         # and a single subject distinguished name (DN) or a single subject alternative name (SAN) to
         # authenticate the client. Only one subject name value of any type is used for each client.
@@ -125,7 +128,9 @@ module Rodauth
     def client_certificate
       return @client_certificate if defined?(@client_certificate)
 
-      return unless (pem_cert = request.env["SSL_CLIENT_CERT"])
+      unless (pem_cert = request.env["SSL_CLIENT_CERT"] || request.env["HTTP_SSL_CLIENT_CERT"] || request.env["HTTP_X_SSL_CLIENT_CERT"])
+        return
+      end
 
       return if pem_cert.empty?
 
