@@ -17,6 +17,7 @@ This is an extension to the `rodauth` gem which implements the [OAuth 2.0 framew
 * Config OP
 * Dynamic OP
 * Form Post OP
+* 3rd Party-Init OP
 
 (it also passes the conformance tests for the RP-Initiated Logout OP).
 
