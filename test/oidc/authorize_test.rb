@@ -765,6 +765,44 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     end
   end
 
+  def test_oidc_authorize_post_authorize_self_issued
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
+    rodauth do
+      oauth_jwt_keys("RS256" => jws_key)
+      oauth_jwt_public_keys("RS256" => jws_public_key)
+
+      # this shouldn't be required, but the default test app is setting openid only
+      oauth_application_scopes %w[openid profile email address phone]
+    end
+    setup_application(:oidc_self_issued)
+    login
+
+    redirect_uri = "https://example.com/callback"
+    client_parameters = JSON.dump({
+                                    name: "Self Issued Foo"
+                                  })
+
+    # show the authorization form
+    visit "/authorize?client_id=#{redirect_uri}&registration=#{CGI.escape(client_parameters)}&scope=openid&response_type=id_token&nonce=NONCE"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+
+    assert page.html.include?("The application Self Issued Foo would like to access your data")
+    check "openid"
+
+    # submit authorization request
+    click_button "Authorize"
+
+    assert page.current_url =~ /#{oauth_application[:redirect_uri]}#id_token=([^&]+)/,
+           "was redirected instead to #{page.current_url}"
+    verify_id_token(Regexp.last_match(1), db[:oauth_grants].first, signing_key: jws_public_key, signing_algo: "RS256") do |claims|
+      assert !claims["sub_jwk"].nil?
+      assert claims["iss"] == "https://self-issued.me"
+      assert claims["sub"] == Base64.urlsafe_encode64(JWT::JWK::Thumbprint.new(JWT::JWK.new(claims["sub_jwk"])).generate, padding: false)
+    end
+  end
+
   private
 
   def setup_application(*)
