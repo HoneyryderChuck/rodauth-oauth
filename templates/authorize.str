@@ -88,6 +88,7 @@
     #{"<input type=\"hidden\" name=\"claims_locales\" value=\"#{rodauth.param("claims_locales")}\"/>" if rodauth.features.include?(:oidc) && rodauth.param_or_nil("claims_locales")}
     #{"<input type=\"hidden\" name=\"claims\" value=\"#{h(rodauth.param("claims"))}\"/>" if rodauth.features.include?(:oidc) && rodauth.param_or_nil("claims")}
     #{"<input type=\"hidden\" name=\"acr_values\" value=\"#{rodauth.param("acr_values")}\"/>" if rodauth.features.include?(:oidc) && rodauth.param_or_nil("acr_values")}
+    #{"<input type=\"hidden\" name=\"registration\" value=\"#{h(rodauth.param("registration"))}\"/>" if rodauth.features.include?(:oidc_self_issued) && rodauth.param_or_nil("registration")}
     #{
       if rodauth.features.include?(:oauth_resource_indicators) && rodauth.resource_indicators
         rodauth.resource_indicators.map do |resource|

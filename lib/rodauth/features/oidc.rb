@@ -89,6 +89,12 @@ module Rodauth
     auth_value_method :oauth_prompt_login_interval, 5 * 60 * 60 # 5 minutes
 
     auth_value_methods(
+      :userinfo_signing_alg_values_supported,
+      :userinfo_encryption_alg_values_supported,
+      :userinfo_encryption_enc_values_supported,
+      :request_object_signing_alg_values_supported,
+      :request_object_encryption_alg_values_supported,
+      :request_object_encryption_enc_values_supported,
       :oauth_acr_values_supported,
       :get_oidc_account_last_login_at,
       :oidc_authorize_on_prompt_none?,
@@ -231,6 +237,30 @@ module Rodauth
 
         super
       end
+    end
+
+    def userinfo_signing_alg_values_supported
+      oauth_jwt_jws_algorithms_supported
+    end
+
+    def userinfo_encryption_alg_values_supported
+      oauth_jwt_jwe_algorithms_supported
+    end
+
+    def userinfo_encryption_enc_values_supported
+      oauth_jwt_jwe_encryption_methods_supported
+    end
+
+    def request_object_signing_alg_values_supported
+      oauth_jwt_jws_algorithms_supported
+    end
+
+    def request_object_encryption_alg_values_supported
+      oauth_jwt_jwe_algorithms_supported
+    end
+
+    def request_object_encryption_enc_values_supported
+      oauth_jwt_jwe_encryption_methods_supported
     end
 
     def oauth_acr_values_supported
@@ -463,24 +493,7 @@ module Rodauth
       signing_algorithm = oauth_application[oauth_applications_id_token_signed_response_alg_column] ||
                           oauth_jwt_keys.keys.first
 
-      id_token_claims = jwt_claims(oauth_grant)
-
-      id_token_claims[:nonce] = oauth_grant[oauth_grants_nonce_column] if oauth_grant[oauth_grants_nonce_column]
-
-      id_token_claims[:acr] = oauth_grant[oauth_grants_acr_column] if oauth_grant[oauth_grants_acr_column]
-
-      # Time when the End-User authentication occurred.
-      id_token_claims[:auth_time] = get_oidc_account_last_login_at(oauth_grant[oauth_grants_account_id_column]).to_i
-
-      # Access Token hash value.
-      if (access_token = oauth_grant[oauth_grants_token_column])
-        id_token_claims[:at_hash] = id_token_hash(access_token, signing_algorithm)
-      end
-
-      # code hash value.
-      if (code = oauth_grant[oauth_grants_code_column])
-        id_token_claims[:c_hash] = id_token_hash(code, signing_algorithm)
-      end
+      id_claims = id_token_claims(oauth_grant, signing_algorithm)
 
       account = db[accounts_table].where(account_id_column => oauth_grant[oauth_grants_account_id_column]).first
 
@@ -500,7 +513,7 @@ module Rodauth
 
       # 5.4 - However, when no Access Token is issued (which is the case for the response_type value id_token),
       # the resulting Claims are returned in the ID Token.
-      fill_with_account_claims(id_token_claims, account, oauth_scopes, param_or_nil("claims_locales")) if include_claims
+      fill_with_account_claims(id_claims, account, oauth_scopes, param_or_nil("claims_locales")) if include_claims
 
       params = {
         jwks: oauth_application_jwks(oauth_application),
@@ -509,7 +522,30 @@ module Rodauth
         encryption_method: oauth_application[oauth_applications_id_token_encrypted_response_enc_column]
       }.compact
 
-      oauth_grant[:id_token] = jwt_encode(id_token_claims, **params)
+      oauth_grant[:id_token] = jwt_encode(id_claims, **params)
+    end
+
+    def id_token_claims(oauth_grant, signing_algorithm)
+      claims = jwt_claims(oauth_grant)
+
+      claims[:nonce] = oauth_grant[oauth_grants_nonce_column] if oauth_grant[oauth_grants_nonce_column]
+
+      claims[:acr] = oauth_grant[oauth_grants_acr_column] if oauth_grant[oauth_grants_acr_column]
+
+      # Time when the End-User authentication occurred.
+      claims[:auth_time] = get_oidc_account_last_login_at(oauth_grant[oauth_grants_account_id_column]).to_i
+
+      # Access Token hash value.
+      if (access_token = oauth_grant[oauth_grants_token_column])
+        claims[:at_hash] = id_token_hash(access_token, signing_algorithm)
+      end
+
+      # code hash value.
+      if (code = oauth_grant[oauth_grants_code_column])
+        claims[:c_hash] = id_token_hash(code, signing_algorithm)
+      end
+
+      claims
     end
 
     # aka fill_with_standard_claims
@@ -694,7 +730,8 @@ module Rodauth
       grant_params = {
         **resource_owner_params,
         oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column],
-        oauth_grants_scopes_column => scopes.join(oauth_scope_separator)
+        oauth_grants_scopes_column => scopes.join(oauth_scope_separator),
+        oauth_grants_redirect_uri_column => param_or_nil("redirect_uri")
       }
       if (nonce = param_or_nil("nonce"))
         grant_params[oauth_grants_nonce_column] = nonce

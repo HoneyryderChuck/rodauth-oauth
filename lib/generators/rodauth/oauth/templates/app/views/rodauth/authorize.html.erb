@@ -75,6 +75,9 @@
       <% if params[:acr_values] %>
         <%= hidden_field_tag :acr_values,  params[:acr_values] %>
       <% end %>
+      <% if params[:registration] %>
+        <%= hidden_field_tag :registration,  params[:registration] %>
+      <% end %>
     <% end %>
   </div>
  <p class="text-center">

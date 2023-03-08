@@ -10,7 +10,7 @@ module Rodauth
 
     private
 
-    def validate_client_registration_params
+    def validate_client_registration_params(*)
       super
 
       if (value = @oauth_application_params[oauth_applications_application_type_column])
@@ -174,6 +174,8 @@ module Rodauth
         register_throw_json_response_error("invalid_client_metadata",
                                            register_invalid_client_metadata_message("userinfo_encrypted_response_enc", value))
       end
+
+      @oauth_application_params
     end
 
     def validate_client_registration_response_type(response_type, grant_types)
