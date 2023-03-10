@@ -158,6 +158,70 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
     assert !json_body.key?("foo")
   end
 
+  def test_oidc_userinfo_aggregated_claims
+    rodauth do
+      oidc_aggregated_claim_names %w[address phone_number email]
+      oidc_distributed_claim_names %w[payment_info shipping_address credit_score]
+      get_oidc_param do |account, claim|
+        case claim
+        when :name
+          "James"
+        when :nickname
+          "Snoop"
+        else
+          account[claim]
+        end
+      end
+      get_aggregated_claim_source do |_account, claim|
+        case claim
+        when "address", "phone_number"
+          "jwt_header.jwt_part2.jwt_part3"
+        when "email"
+          { "email_provider" => { "JWT" => "jwt_header.jwt_part4.jwt_part5" } }
+        end
+      end
+      get_distributed_claim_source do |_account, claim|
+        case claim
+        when "payment_info", "shipping_address"
+          "https://bank.example.com/claim_source"
+        when "credit_score"
+          {
+            "score_provider" => {
+              "endpoint" => "https://creditagency.example.com/claims_here",
+              "access_token" => "ksj3n283dke"
+            }
+          }
+        end
+      end
+    end
+    setup_application
+
+    access_token = generate_access_token(oauth_grant(scopes: "openid profile"))
+    login(access_token)
+
+    @json_body = nil
+    # valid token, and now we're getting somewhere
+    get("/userinfo")
+
+    assert last_response.status == 200
+    assert json_body.key?("sub")
+    assert json_body.key?("name")
+    assert json_body["name"] == "James"
+    assert json_body.key?("_claims_names")
+    assert json_body.key?("_claims_sources")
+
+    assert json_body["_claims_names"]["address"] == "src1"
+    assert json_body["_claims_names"]["phone_number"] == "src1"
+    assert json_body["_claims_sources"]["src1"] == { "JWT" => "jwt_header.jwt_part2.jwt_part3" }
+    assert json_body["_claims_names"]["email"] == "email_provider"
+    assert json_body["_claims_sources"]["email_provider"] == { "JWT" => "jwt_header.jwt_part4.jwt_part5" }
+    assert json_body["_claims_names"]["payment_info"] == "src2"
+    assert json_body["_claims_names"]["shipping_address"] == "src2"
+    assert json_body["_claims_sources"]["src2"] == { "endpoint" => "https://bank.example.com/claim_source" }
+    assert json_body["_claims_names"]["credit_score"] == "score_provider"
+    assert json_body["_claims_sources"]["score_provider"] == { "endpoint" => "https://creditagency.example.com/claims_here", "access_token" => "ksj3n283dke" }
+  end
+
   def test_oidc_userinfo_signed_response_alg
     jws_rs256_key = OpenSSL::PKey::RSA.generate(2048)
     jws_rs512_key = OpenSSL::PKey::RSA.generate(2048)

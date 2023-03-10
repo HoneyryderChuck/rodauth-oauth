@@ -627,6 +627,87 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     end
   end
 
+  def test_oidc_authorize_post_authorize_id_token_aggregated_distributed_claims
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
+    rodauth do
+      oauth_jwt_keys("RS256" => jws_key)
+      oidc_aggregated_claim_names %w[address phone_number email]
+      oidc_distributed_claim_names %w[payment_info shipping_address credit_score]
+      get_oidc_param do |account, claim|
+        case claim
+        when :name
+          "James"
+        when :nickname
+          "Snoop"
+        else
+          account[claim]
+        end
+      end
+      get_aggregated_claim_source do |_account, claim|
+        case claim
+        when "address", "phone_number"
+          "jwt_header.jwt_part2.jwt_part3"
+        when "email"
+          { "email_provider" => { "JWT" => "jwt_header.jwt_part4.jwt_part5" } }
+        end
+      end
+      get_distributed_claim_source do |_account, claim|
+        case claim
+        when "payment_info", "shipping_address"
+          "https://bank.example.com/claim_source"
+        when "credit_score"
+          {
+            "score_provider" => {
+              "endpoint" => "https://creditagency.example.com/claims_here",
+              "access_token" => "ksj3n283dke"
+            }
+          }
+        end
+      end
+    end
+    setup_application(:oauth_implicit_grant)
+    login
+
+    application = oauth_application(scopes: "openid profile")
+
+    # show the authorization form
+    visit "/authorize?client_id=#{application[:client_id]}&scope=openid&response_type=id_token&nonce=NONCE"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    check "openid"
+    check "profile"
+
+    # submit authorization request
+    click_button "Authorize"
+
+    assert page.current_url =~ /#{oauth_application[:redirect_uri]}#id_token=([^&]+)/,
+           "was redirected instead to #{page.current_url}"
+
+    verify_id_token(
+      Regexp.last_match(1),
+      db[:oauth_grants].first,
+      signing_key: jws_public_key,
+      signing_algo: "RS256"
+    ) do |idtoken_claims|
+      assert idtoken_claims.key?("name")
+      assert json_body["name"] == "James"
+      assert json_body.key?("_claims_names")
+      assert json_body.key?("_claims_sources")
+
+      assert json_body["_claims_names"]["address"] == "src1"
+      assert json_body["_claims_names"]["phone_number"] == "src1"
+      assert json_body["_claims_sources"]["src1"] == { "JWT" => "jwt_header.jwt_part2.jwt_part3" }
+      assert json_body["_claims_names"]["email"] == "email_provider"
+      assert json_body["_claims_sources"]["email_provider"] == { "JWT" => "jwt_header.jwt_part4.jwt_part5" }
+      assert json_body["_claims_names"]["payment_info"] == "src2"
+      assert json_body["_claims_names"]["shipping_address"] == "src2"
+      assert json_body["_claims_sources"]["src2"] == { "endpoint" => "https://bank.example.com/claim_source" }
+      assert json_body["_claims_names"]["credit_score"] == "score_provider"
+      assert json_body["_claims_sources"]["score_provider"] == { "endpoint" => "https://creditagency.example.com/claims_here", "access_token" => "ksj3n283dke" }
+    end
+  end
+
   unless RUBY_ENGINE == "truffleruby"
     def test_oidc_authorize_post_authorize_max_age
       setup_application
