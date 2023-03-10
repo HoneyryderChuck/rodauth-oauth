@@ -68,6 +68,10 @@ task :check_method_doc do
     docs[File.basename(f).sub(/\.rdoc\z/, "")] = meths unless meths.empty?
   end
   require "rodauth/oauth"
+  begin
+    require "jwt"
+  rescue LoadError
+  end
   docs.each do |f, doc_meths|
     require "./lib/rodauth/features/#{f}"
     feature = Rodauth::FEATURES[f.to_sym]

@@ -118,8 +118,8 @@ module Rodauth
       }
     end
 
-    def validate_client_registration_params
-      @oauth_application_params = request.params.each_with_object({}) do |(key, value), params|
+    def validate_client_registration_params(request_params = request.params)
+      @oauth_application_params = request_params.each_with_object({}) do |(key, value), params|
         case key
         when "redirect_uris"
           if value.is_a?(Array)
@@ -152,7 +152,7 @@ module Rodauth
           key = oauth_applications_grant_types_column
         when "response_types"
           if value.is_a?(Array)
-            grant_types = request.params["grant_types"] || %w[authorization_code]
+            grant_types = request_params["grant_types"] || %w[authorization_code]
             value = value.each do |response_type|
               unless oauth_response_types_supported.include?(response_type)
                 register_throw_json_response_error("invalid_client_metadata",
@@ -172,7 +172,7 @@ module Rodauth
           when "client_uri"
             key = oauth_applications_homepage_url_column
           when "jwks_uri"
-            if request.params.key?("jwks")
+            if request_params.key?("jwks")
               register_throw_json_response_error("invalid_client_metadata",
                                                  register_invalid_jwks_param_message(key, "jwks"))
             end
@@ -180,7 +180,7 @@ module Rodauth
           key = __send__(:"oauth_applications_#{key}_column")
         when "jwks"
           register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(value)) unless value.is_a?(Hash)
-          if request.params.key?("jwks_uri")
+          if request_params.key?("jwks_uri")
             register_throw_json_response_error("invalid_client_metadata",
                                                register_invalid_jwks_param_message(key, "jwks_uri"))
           end
@@ -205,14 +205,14 @@ module Rodauth
             register_throw_json_response_error("invalid_client_metadata",
                                                register_invalid_param_message(key))
           end
-          request.params[key] = value = convert_to_boolean(key, value)
+          request_params[key] = value = convert_to_boolean(key, value)
 
           key = oauth_applications_require_pushed_authorization_requests_column
         when "tls_client_certificate_bound_access_tokens"
           property = :oauth_applications_tls_client_certificate_bound_access_tokens_column
           register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(key)) unless respond_to?(property)
 
-          request.params[key] = value = convert_to_boolean(key, value)
+          request_params[key] = value = convert_to_boolean(key, value)
 
           key = oauth_applications_tls_client_certificate_bound_access_tokens_column
         when /\Atls_client_auth_/

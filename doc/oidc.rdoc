@@ -4,8 +4,6 @@ The +oidc+ feature builds on top of the oauth_jwt feature to implement an OpenID
 
 == Value Methods
 
-oauth_acr_values_supported :: list of ACR values supported by the provider
-
 oauth_jwt_subject_type :: JWT subject claim type, <tt>"public"</tt> by default.
 oauth_jwt_subject_secret :: hashing secret to use when subject claim type is "pairwise", <tt>nil</tt> by default.
 
@@ -31,6 +29,15 @@ oauth_invalid_scope_message :: overwrites the default to <tt>"The Access Token e
 userinfo_route :: the route for the userinfo action, defaults to +userinfo+.
 
 == Auth methods
+
+userinfo_signing_alg_values_supported :: Supported JWS algorithms for signing userinfo response (when JWT-serialized).
+userinfo_encryption_alg_values_supported :: Supported JWE algorithms for encrypting userinfo response (when JWT-serialized).
+userinfo_encryption_enc_values_supported :: Supported JWE encryption methods for encrypting userinfo response (when JWT-serialized).
+request_object_signing_alg_values_supported :: Supported JWS algorithms for signing request objects sent to the provider.
+request_object_encryption_alg_values_supported :: Supported JWE algorithms for encrypting request objects sent to the provider.
+request_object_encryption_enc_values_supported :: Supported JWE encryption methods for encrypting request objects sent to the provider.
+
+oauth_acr_values_supported :: list of ACR values supported by the provider
 
 get_oidc_param :: returns the value for an OpenID connect claim (such as "email", "name", "phone_number", etc...)
 get_additional_param :: sets the values for additional scopes.
