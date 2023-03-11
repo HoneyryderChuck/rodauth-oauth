@@ -88,6 +88,9 @@ module Rodauth
     auth_value_method :oauth_prompt_login_cookie_options, {}.freeze
     auth_value_method :oauth_prompt_login_interval, 5 * 60 * 60 # 5 minutes
 
+    auth_value_method :oidc_aggregated_claim_names, []
+    auth_value_method :oidc_distributed_claim_names, []
+
     auth_value_methods(
       :userinfo_signing_alg_values_supported,
       :userinfo_encryption_alg_values_supported,
@@ -100,6 +103,8 @@ module Rodauth
       :oidc_authorize_on_prompt_none?,
       :get_oidc_param,
       :get_additional_param,
+      :get_aggregated_claim_source,
+      :get_distributed_claim_source,
       :require_acr_value_phr,
       :require_acr_value_phrh,
       :require_acr_value,
@@ -146,6 +151,8 @@ module Rodauth
 
           # 5.4 - The Claims requested by the profile, email, address, and phone scope values are returned from the UserInfo Endpoint
           fill_with_account_claims(oidc_claims, account, oauth_scopes, claims_locales)
+
+          fill_with_aggregated_and_distributed_claims(oidc_claims, account) unless oauth_scopes == %w[openid]
 
           if (algo = @oauth_application[oauth_applications_userinfo_signed_response_alg_column])
             params = {
@@ -614,6 +621,81 @@ module Rodauth
         end
       else
         warn "`get_additional_param(account, claim)` must be implemented to use oidc scopes."
+      end
+    end
+
+    def fill_with_aggregated_and_distributed_claims(claims, account)
+      return if oidc_aggregated_claim_names.empty? && oidc_distributed_claim_names.empty?
+
+      src_inc = 1
+
+      claims["_claim_names"] ||= {}
+      claims["_claim_sources"] ||= {}
+
+      unless oidc_aggregated_claim_names.empty? || respond_to?(:get_aggregated_claim_source)
+        warn "`get_aggregated_claim_source(account, claim_name)` must be implemented to use aggregated_claims."
+        return
+      end
+
+      oidc_aggregated_claim_names.each do |claim_name|
+        source = get_aggregated_claim_source(account, claim_name)
+
+        source = { "JWT" => source } if source.is_a?(String)
+
+        raise StandardError, "unsupported source for claim `#{claim_name}`" unless source.is_a?(Hash) && source.size == 1
+
+        unless source.key?("JWT")
+          key, source = source.each_pair.first
+          raise "invalid source" unless source.is_a?(Hash) && source.size == 1 && source.keys.include?("JWT")
+
+          claims["_claim_names"][claim_name] = key
+          claims["_claim_sources"][key] = source
+          next
+        end
+
+        key = claims["_claim_sources"].key(source)
+
+        unless key
+          key = "src#{src_inc}"
+          key = "src#{src_inc += 1}" while claims["_claim_sources"].key?(key)
+          claims["_claim_sources"][key] = source
+        end
+
+        claims["_claim_names"][claim_name] = key
+      end
+
+      unless oidc_distributed_claim_names.empty? || respond_to?(:get_distributed_claim_source)
+        warn "`get_distributed_claim_source(account, claim_name)` must be implemented to use distributed_claims."
+        return
+      end
+
+      oidc_distributed_claim_names.each do |claim_name|
+        source = get_distributed_claim_source(account, claim_name)
+
+        source = { "endpoint" => source } if source.is_a?(String)
+
+        raise StandardError, "unsupported source for claim `#{claim_name}`" unless source.is_a?(Hash)
+
+        if source.key?("endpoint")
+          raise "invalid source" unless (1..2).include?(source.size) && source.keys.include?("endpoint")
+        else
+          key, source = source.each_pair.first
+          raise "invalid source" unless source.is_a?(Hash) && (1..2).include?(source.size) && source.keys.include?("endpoint")
+
+          claims["_claim_names"][claim_name] = key
+          claims["_claim_sources"][key] = source
+          next
+        end
+
+        key = claims["_claim_sources"].key(source)
+
+        unless key
+          key = "src#{src_inc}"
+          key = "src#{src_inc += 1}" while claims["_claim_sources"].key?(key)
+          claims["_claim_sources"][key] = source
+        end
+
+        claims["_claim_names"][claim_name] = key
       end
     end
 

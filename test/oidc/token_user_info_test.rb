@@ -207,19 +207,19 @@ class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
     assert json_body.key?("sub")
     assert json_body.key?("name")
     assert json_body["name"] == "James"
-    assert json_body.key?("_claims_names")
-    assert json_body.key?("_claims_sources")
+    assert json_body.key?("_claim_names")
+    assert json_body.key?("_claim_sources")
 
-    assert json_body["_claims_names"]["address"] == "src1"
-    assert json_body["_claims_names"]["phone_number"] == "src1"
-    assert json_body["_claims_sources"]["src1"] == { "JWT" => "jwt_header.jwt_part2.jwt_part3" }
-    assert json_body["_claims_names"]["email"] == "email_provider"
-    assert json_body["_claims_sources"]["email_provider"] == { "JWT" => "jwt_header.jwt_part4.jwt_part5" }
-    assert json_body["_claims_names"]["payment_info"] == "src2"
-    assert json_body["_claims_names"]["shipping_address"] == "src2"
-    assert json_body["_claims_sources"]["src2"] == { "endpoint" => "https://bank.example.com/claim_source" }
-    assert json_body["_claims_names"]["credit_score"] == "score_provider"
-    assert json_body["_claims_sources"]["score_provider"] == { "endpoint" => "https://creditagency.example.com/claims_here", "access_token" => "ksj3n283dke" }
+    assert json_body["_claim_names"]["address"] == "src1"
+    assert json_body["_claim_names"]["phone_number"] == "src1"
+    assert json_body["_claim_sources"]["src1"] == { "JWT" => "jwt_header.jwt_part2.jwt_part3" }
+    assert json_body["_claim_names"]["email"] == "email_provider"
+    assert json_body["_claim_sources"]["email_provider"] == { "JWT" => "jwt_header.jwt_part4.jwt_part5" }
+    assert json_body["_claim_names"]["payment_info"] == "src2"
+    assert json_body["_claim_names"]["shipping_address"] == "src2"
+    assert json_body["_claim_sources"]["src2"] == { "endpoint" => "https://bank.example.com/claim_source" }
+    assert json_body["_claim_names"]["credit_score"] == "score_provider"
+    assert json_body["_claim_sources"]["score_provider"] == { "endpoint" => "https://creditagency.example.com/claims_here", "access_token" => "ksj3n283dke" }
   end
 
   def test_oidc_userinfo_signed_response_alg
