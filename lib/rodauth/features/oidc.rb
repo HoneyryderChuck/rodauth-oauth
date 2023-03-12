@@ -98,6 +98,7 @@ module Rodauth
       :oauth_acr_values_supported,
       :get_oidc_account_last_login_at,
       :oidc_authorize_on_prompt_none?,
+      :fill_with_account_claims,
       :get_oidc_param,
       :get_additional_param,
       :require_acr_value_phr,

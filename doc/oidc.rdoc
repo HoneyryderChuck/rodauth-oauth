@@ -39,6 +39,7 @@ request_object_encryption_enc_values_supported :: Supported JWE encryption metho
 
 oauth_acr_values_supported :: list of ACR values supported by the provider
 
+fill_with_account_claims :: adds normals claims ("name", "given_name"...); can be overriden to add aggregated and distributed claims.
 get_oidc_param :: returns the value for an OpenID connect claim (such as "email", "name", "phone_number", etc...)
 get_additional_param :: sets the values for additional scopes.
 get_oidc_account_last_login_at :: returns the timestamp for an account's last login (used to get the `"auth_time"` OIDC claim)
