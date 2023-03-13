@@ -94,8 +94,8 @@ module Rodauth
       redirect_response_error("invalid_scope") if (request.post? || param_or_nil("scope")) && !check_valid_scopes?
     end
 
-    def check_valid_scopes?(sc = scopes)
-      super(sc - %w[offline_access])
+    def check_valid_scopes?(scp = scopes)
+      super(scp - %w[offline_access])
     end
 
     def check_valid_response_type?
