@@ -305,19 +305,14 @@ module Rodauth
 
       sc = scopes
 
-      if sc && sc.include?("offline_access")
-
+      # MUST ensure that the prompt parameter contains consent
+      # MUST ignore the offline_access request unless the Client
+      # is using a response_type value that would result in an
+      # Authorization Code
+      if sc && sc.include?("offline_access") && !(param_or_nil("prompt") == "consent" && (
+                (response_type = param_or_nil("response_type")) && response_type.split(" ").include?("code")
+              ))
         sc.delete("offline_access")
-
-        # MUST ensure that the prompt parameter contains consent
-        # MUST ignore the offline_access request unless the Client
-        # is using a response_type value that would result in an
-        # Authorization Code
-        if param_or_nil("prompt") == "consent" && (
-          (response_type = param_or_nil("response_type")) && response_type.split(" ").include?("code")
-        )
-          request.params["access_type"] = "offline"
-        end
 
         request.params["scope"] = sc.join(" ")
       end
@@ -745,6 +740,12 @@ module Rodauth
         grant_params[oauth_grants_claims_column] = claims
       end
       grant_params
+    end
+
+    def generate_token(grant_params = {}, should_generate_refresh_token = true)
+      scopes = grant_params[oauth_grants_scopes_column].split(oauth_scope_separator)
+
+      super(grant_params, scopes.include?("offline_access") && should_generate_refresh_token)
     end
 
     def authorize_response(params, mode)

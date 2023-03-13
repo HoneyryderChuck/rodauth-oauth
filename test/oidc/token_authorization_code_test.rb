@@ -20,6 +20,9 @@ class RodauthOAuthOidcTokenAuthorizationCodeTest < OIDCIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
+    assert !json_body["access_token"].nil?
+    assert json_body["refresh_token"].nil?
+
     assert db[:oauth_grants].count == 1
 
     oauth_grant = db[:oauth_grants].first
@@ -45,6 +48,7 @@ class RodauthOAuthOidcTokenAuthorizationCodeTest < OIDCIntegration
 
     oauth_grant = verify_oauth_grant
 
+    assert last_response.status == 200
     payload = verify_access_token_response(json_body, oauth_grant, "SECRET", "HS256")
     # by default the subject type is public
     assert payload["sub"] != account[:id]
@@ -54,7 +58,32 @@ class RodauthOAuthOidcTokenAuthorizationCodeTest < OIDCIntegration
 
     # valid token, and now we're getting somewhere
     get("/private")
+    assert json_body["refresh_token"].nil?
+  end
+
+  def test_token_authorization_code_with_offline_access
+    setup_application
+
+    grant = oauth_grant(nonce: "NONCE", scopes: "openid offline_access")
+
+    post("/token",
+         client_id: oauth_application[:client_id],
+         client_secret: "CLIENT_SECRET",
+         grant_type: "authorization_code",
+         code: grant[:code],
+         redirect_uri: grant[:redirect_uri])
+
     assert last_response.status == 200
+    assert last_response.headers["Content-Type"] == "application/json"
+
+    assert !json_body["access_token"].nil?
+    assert !json_body["refresh_token"].nil?
+
+    assert db[:oauth_grants].count == 1
+
+    oauth_grant = db[:oauth_grants].first
+
+    assert oauth_grant[:nonce] == "NONCE", "nonce should be passed to token"
   end
 
   private

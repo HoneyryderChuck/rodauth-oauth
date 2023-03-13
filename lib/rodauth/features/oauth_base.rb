@@ -841,10 +841,10 @@ module Rodauth
       throw_json_response_error(oauth_authorization_required_error_status, "invalid_client")
     end
 
-    def check_valid_scopes?
-      return false unless scopes
+    def check_valid_scopes?(sc = scopes)
+      return false unless sc
 
-      (scopes - oauth_application[oauth_applications_scopes_column].split(oauth_scope_separator)).empty?
+      (sc - oauth_application[oauth_applications_scopes_column].split(oauth_scope_separator)).empty?
     end
 
     def check_valid_uri?(uri)
