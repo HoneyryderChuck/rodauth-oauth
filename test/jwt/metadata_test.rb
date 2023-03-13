@@ -70,4 +70,39 @@ class RodauthOauthJwtServerMetadataTest < JWTIntegration
     assert json_body["request_uri_parameter_supported"] == true
     assert json_body["require_request_uri_registration"] == true
   end
+
+  def test_oauth_jwt_secured_authorization_response_mode
+    rodauth do
+      authorization_signing_alg_values_supported %w[RS256]
+    end
+
+    setup_application(:oauth_jwt_secured_authorization_response_mode, :oauth_authorization_code_grant, :oauth_implicit_grant,
+                      &:load_oauth_server_metadata_route)
+
+    get("/.well-known/oauth-authorization-server")
+
+    assert last_response.status == 200
+
+    %w[query.jwt fragment.jwt form_post.jwt jwt].each do |mode|
+      assert json_body["response_modes_supported"].include?(mode)
+    end
+
+    assert json_body["authorization_signing_alg_values_supported"] == %w[RS256]
+    assert json_body.key?("authorization_encryption_alg_values_supported")
+    assert json_body.key?("authorization_encryption_enc_values_supported")
+  end
+
+  def test_oauth_jwt_secured_authorization_response_mode_no_implicit
+    setup_application(:oauth_jwt_secured_authorization_response_mode, :oauth_authorization_code_grant,
+                      &:load_oauth_server_metadata_route)
+
+    get("/.well-known/oauth-authorization-server")
+
+    assert last_response.status == 200
+
+    %w[query.jwt form_post.jwt jwt].each do |mode|
+      assert json_body["response_modes_supported"].include?(mode)
+    end
+    assert !json_body["response_modes_supported"].include?("fragment.jwt")
+  end
 end
