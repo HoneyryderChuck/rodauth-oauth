@@ -50,7 +50,7 @@ else
     String :tls_client_auth_san_email, null: true
     TrueClass :tls_client_certificate_bound_access_tokens, default: false
   end
-  DB.create_table :oauth_grants do |_t|
+  DB.create_table :oauth_grants do
     primary_key :id, type: Integer
     foreign_key :account_id, :accounts, null: false
     foreign_key :oauth_application_id, :oauth_applications, null: false

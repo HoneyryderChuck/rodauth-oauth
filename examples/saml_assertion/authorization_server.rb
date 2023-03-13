@@ -27,7 +27,7 @@ else
     String :client_secret, null: false, unique: true
     String :scopes, null: false
   end
-  DB.create_table :oauth_grants do |_t|
+  DB.create_table :oauth_grants do
     primary_key :id, type: Integer
     foreign_key :account_id, :accounts
     foreign_key :oauth_application_id, :oauth_applications, null: false

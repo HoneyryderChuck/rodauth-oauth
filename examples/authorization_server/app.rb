@@ -41,7 +41,7 @@ else
     String :software_id, null: true
     String :software_version, null: true
   end
-  DB.create_table :oauth_grants do |_t|
+  DB.create_table :oauth_grants do
     primary_key :id, type: Integer
     foreign_key :account_id, :accounts, null: false
     foreign_key :oauth_application_id, :oauth_applications, null: false
