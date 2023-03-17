@@ -206,7 +206,6 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
                         "authorization_encrypted_response_alg" => "RSA-OAEP"
                       ))
 
-    puts json_body
     assert last_response.status == 201
     oauth_application = db[:oauth_applications].where(client_id: json_body["client_id"]).first
     verify_oauth_application_attributes(oauth_application, json_body)

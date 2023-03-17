@@ -762,31 +762,31 @@ module Rodauth
         throw_json_response_error(status_code, error_code)
       else
         redirect_url = URI.parse(redirect_url)
-        query_params = []
+        params = []
 
-        query_params << if respond_to?(:"oauth_#{error_code}_error_code")
-                          ["error", send(:"oauth_#{error_code}_error_code")]
-                        else
-                          ["error", error_code]
-                        end
+        params << if respond_to?(:"oauth_#{error_code}_error_code")
+                    ["error", send(:"oauth_#{error_code}_error_code")]
+                  else
+                    ["error", error_code]
+                  end
 
         if respond_to?(:"oauth_#{error_code}_message")
           message = send(:"oauth_#{error_code}_message")
-          query_params << ["error_description", CGI.escape(message)]
+          params << ["error_description", CGI.escape(message)]
         end
 
         state = param_or_nil("state")
 
-        query_params << ["state", state] if state
+        params << ["state", state] if state
 
-        _redirect_response_error(redirect_url, query_params)
+        _redirect_response_error(redirect_url, params)
       end
     end
 
-    def _redirect_response_error(redirect_url, query_params)
-      query_params = query_params.map { |k, v| "#{k}=#{v}" }
-      query_params << redirect_url.query if redirect_url.query
-      redirect_url.query = query_params.join("&")
+    def _redirect_response_error(redirect_url, params)
+      params = params.map { |k, v| "#{k}=#{v}" }
+      params << redirect_url.query if redirect_url.query
+      redirect_url.query = params.join("&")
       redirect(redirect_url.to_s)
     end
 

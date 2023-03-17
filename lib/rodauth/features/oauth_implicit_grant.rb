@@ -20,6 +20,24 @@ module Rodauth
 
     private
 
+    def validate_authorize_params
+      super
+
+      response_mode = param_or_nil("response_mode")
+
+      return unless response_mode
+
+      response_type = param_or_nil("response_type")
+
+      return unless response_type == "token"
+
+      redirect_response_error("invalid_request") unless oauth_response_modes_for_token_supported.include?(response_mode)
+    end
+
+    def oauth_response_modes_for_token_supported
+      %w[fragment]
+    end
+
     def do_authorize(response_params = {}, response_mode = param_or_nil("response_mode"))
       response_type = param("response_type")
       return super unless response_type == "token" && supported_response_type?(response_type)
@@ -48,13 +66,13 @@ module Rodauth
       generate_token(grant_params, false)
     end
 
-    def _redirect_response_error(redirect_url, query_params)
+    def _redirect_response_error(redirect_url, params)
       response_types = param("response_type").split(/ +/)
 
       return super if response_types.empty? || response_types == %w[code]
 
-      query_params = query_params.map { |k, v| "#{k}=#{v}" }
-      redirect_url.fragment = query_params.join("&")
+      params = params.map { |k, v| "#{k}=#{v}" }
+      redirect_url.fragment = params.join("&")
       redirect(redirect_url.to_s)
     end
 
@@ -62,7 +80,7 @@ module Rodauth
       return super unless mode == "fragment"
 
       redirect_url = URI.parse(redirect_uri)
-      params = params.map { |k, v| "#{k}=#{v}" }
+      params = [URI.encode_www_form(params)]
       params << redirect_url.query if redirect_url.query
       redirect_url.fragment = params.join("&")
       redirect(redirect_url.to_s)

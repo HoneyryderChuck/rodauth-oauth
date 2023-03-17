@@ -92,6 +92,10 @@ module Rodauth
       try_approval_prompt if use_oauth_access_type? && request.get?
 
       redirect_response_error("invalid_scope") if (request.post? || param_or_nil("scope")) && !check_valid_scopes?
+
+      response_mode = param_or_nil("response_mode")
+
+      redirect_response_error("invalid_request") unless response_mode.nil? || oauth_response_modes_supported.include?(response_mode)
     end
 
     def check_valid_scopes?(scp = scopes)

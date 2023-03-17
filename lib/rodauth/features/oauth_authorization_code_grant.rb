@@ -27,7 +27,19 @@ module Rodauth
 
       response_mode = param_or_nil("response_mode")
 
-      redirect_response_error("invalid_request") if response_mode && !oauth_response_modes_supported.include?(response_mode)
+      return unless response_mode
+
+      redirect_response_error("invalid_request") unless oauth_response_modes_supported.include?(response_mode)
+
+      response_type = param_or_nil("response_type")
+
+      return unless response_type.nil? || response_type == "code"
+
+      redirect_response_error("invalid_request") unless oauth_response_modes_for_code_supported.include?(response_mode)
+    end
+
+    def oauth_response_modes_for_code_supported
+      %w[query form_post]
     end
 
     def validate_token_params
@@ -67,53 +79,63 @@ module Rodauth
       redirect_url = URI.parse(redirect_uri)
       case mode
       when "query"
-        params = params.map { |k, v| "#{CGI.escape(k)}=#{CGI.escape(v)}" }
+        params = [URI.encode_www_form(params)]
         params << redirect_url.query if redirect_url.query
         redirect_url.query = params.join("&")
         redirect(redirect_url.to_s)
       when "form_post"
-        scope.view layout: false, inline: <<-FORM
-          <html>
-            <head><title>Authorized</title></head>
-            <body onload="javascript:document.forms[0].submit()">
-              <form method="post" action="#{redirect_uri}">
-                #{
-                  params.map do |name, value|
-                    "<input type=\"hidden\" name=\"#{scope.h(name)}\" value=\"#{scope.h(value)}\" />"
-                  end.join
-                }
-                <input type="submit" class="btn btn-outline-primary" value="#{scope.h(oauth_authorize_post_button)}"/>
-              </form>
-            </body>
-          </html>
-        FORM
+        inline_html = form_post_response_html(redirect_uri) do
+          params.map do |name, value|
+            "<input type=\"hidden\" name=\"#{scope.h(name)}\" value=\"#{scope.h(value)}\" />"
+          end.join
+        end
+        scope.view layout: false, inline: inline_html
       end
     end
 
-    def _redirect_response_error(redirect_url, query_params)
+    def _redirect_response_error(redirect_url, params)
       response_mode = param_or_nil("response_mode") || oauth_response_mode
 
       case response_mode
       when "form_post"
         response["Content-Type"] = "text/html"
-        response.write <<-FORM
-          <html>
-            <head><title></title></head>
-            <body onload="javascript:document.forms[0].submit()">
-              <form method="post" action="#{redirect_uri}">
-                #{
-                  query_params.map do |name, value|
-                    "<input type=\"hidden\" name=\"#{name}\" value=\"#{scope.h(value)}\" />"
-                  end.join
-                }
-              </form>
-            </body>
-          </html>
-        FORM
+        error_body = form_post_error_response_html(redirect_url) do
+          params.map do |name, value|
+            "<input type=\"hidden\" name=\"#{name}\" value=\"#{scope.h(value)}\" />"
+          end.join
+        end
+        response.write(error_body)
         request.halt
       else
         super
       end
+    end
+
+    def form_post_response_html(url)
+      <<-FORM
+        <html>
+          <head><title>Authorized</title></head>
+          <body onload="javascript:document.forms[0].submit()">
+            <form method="post" action="#{url}">
+              #{yield}
+              <input type="submit" class="btn btn-outline-primary" value="#{scope.h(oauth_authorize_post_button)}"/>
+            </form>
+          </body>
+        </html>
+      FORM
+    end
+
+    def form_post_error_response_html(url)
+      <<-FORM
+        <html>
+          <head><title></title></head>
+          <body onload="javascript:document.forms[0].submit()">
+            <form method="post" action="#{url}">
+              #{yield}
+            </form>
+          </body>
+        </html>
+      FORM
     end
 
     def create_token(grant_type)

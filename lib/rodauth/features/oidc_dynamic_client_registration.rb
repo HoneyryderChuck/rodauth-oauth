@@ -175,6 +175,42 @@ module Rodauth
                                            register_invalid_client_metadata_message("userinfo_encrypted_response_enc", value))
       end
 
+      if features.include?(:oauth_jwt_secured_authorization_response_mode)
+        if defined?(oauth_applications_authorization_signed_response_alg_column) &&
+           (value = @oauth_application_params[oauth_applications_authorization_signed_response_alg_column]) &&
+           (!oauth_jwt_jws_algorithms_supported.include?(value) || value == "none")
+          register_throw_json_response_error("invalid_client_metadata",
+                                             register_invalid_client_metadata_message("authorization_signed_response_alg", value))
+        end
+
+        if defined?(oauth_applications_authorization_encrypted_response_alg_column) &&
+           (value = @oauth_application_params[oauth_applications_authorization_encrypted_response_alg_column]) &&
+           !oauth_jwt_jwe_algorithms_supported.include?(value)
+          register_throw_json_response_error("invalid_client_metadata",
+                                             register_invalid_client_metadata_message("authorization_encrypted_response_alg", value))
+        end
+
+        if defined?(oauth_applications_authorization_encrypted_response_enc_column)
+          if (value = @oauth_application_params[oauth_applications_authorization_encrypted_response_enc_column])
+
+            unless @oauth_application_params[oauth_applications_authorization_encrypted_response_alg_column]
+              # When authorization_encrypted_response_enc is included, authorization_encrypted_response_alg MUST also be provided.
+              register_throw_json_response_error("invalid_client_metadata",
+                                                 register_invalid_client_metadata_message("authorization_encrypted_response_alg", value))
+
+            end
+
+            unless oauth_jwt_jwe_encryption_methods_supported.include?(value)
+              register_throw_json_response_error("invalid_client_metadata",
+                                                 register_invalid_client_metadata_message("authorization_encrypted_response_enc", value))
+            end
+          elsif @oauth_application_params[oauth_applications_authorization_encrypted_response_alg_column]
+            # If authorization_encrypted_response_alg is specified, the default for this value is A128CBC-HS256.
+            @oauth_application_params[oauth_applications_authorization_encrypted_response_enc_column] = "A128CBC-HS256"
+          end
+        end
+      end
+
       @oauth_application_params
     end
 

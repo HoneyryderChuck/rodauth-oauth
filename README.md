@@ -40,6 +40,7 @@ This gem implements the following RFCs and features of OAuth:
   * `oauth_tls_client_auth` - [Mutual-TLS Client Authentication](https://datatracker.ietf.org/doc/html/rfc8705);
   * `oauth_jwt` - [JWT Access Tokens](https://tools.ietf.org/html/draft-ietf-oauth-access-token-jwt-07);
   * `oauth_jwt_secured_authorization_request` - [JWT Secured Authorization Request](https://tools.ietf.org/html/draft-ietf-oauth-jwsreq-20);
+  * `oauth_jwt_secured_authorization_response_mode` - [JWT Secured Authorization Response_mode](https://openid.net/specs/openid-financial-api-jarm.html);
   * `oauth_resource_indicators` - [Resource Indicators](https://datatracker.ietf.org/doc/html/rfc8707);
   * Access Type (Token refresh online and offline);
 * `oauth_http_mac` - [MAC Authentication Scheme](https://tools.ietf.org/html/draft-hammer-oauth-v2-mac-token-02);

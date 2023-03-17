@@ -23,9 +23,7 @@ module Rodauth
       classes += " disabled" if current || !page
       classes += " active" if current
       if page
-        params = request.GET.merge("page" => page).map do |k, v|
-          v ? "#{CGI.escape(String(k))}=#{CGI.escape(String(v))}" : CGI.escape(String(k))
-        end.join("&")
+        params = URI.encode_www_form(request.GET.merge("page" => page))
 
         href = "#{request.path}?#{params}"
 

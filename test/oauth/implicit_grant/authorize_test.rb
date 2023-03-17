@@ -4,18 +4,12 @@ require "test_helper"
 
 class RodauthOauthImplicitGrantAuthorizeTest < RodaIntegration
   def test_authorize_post_authorize_with_error_in_fragment
-    setup_application(:oauth_implicit_grant)
+    setup_application(:oauth_authorization_code_grant, :oauth_implicit_grant)
 
     login
 
     # show the authorization form
     visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=token&response_mode=query&state=STATE"
-    assert page.current_path == "/authorize",
-           "was redirected instead to #{page.current_path}"
-    check "user.read"
-
-    # submit authorization request
-    click_button "Authorize"
 
     assert page.current_url.include?("#error=invalid_request&state=STATE"),
            "was redirected instead to #{page.current_url}"
