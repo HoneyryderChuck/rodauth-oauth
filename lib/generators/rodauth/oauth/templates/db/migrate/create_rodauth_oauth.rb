@@ -1,7 +1,7 @@
 class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
   def change
     create_table :oauth_applications do |t|
-      t.integer :account_id
+      t.bigint :account_id
       t.foreign_key :accounts, column: :account_id
       t.string :name, null: false
       t.string :description, null: true
@@ -11,7 +11,7 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.string :client_secret, null: false, index: { unique: true }
       t.string :registration_access_token, null: true
       t.string :scopes, null: false
-      t.datetime :created_at, null: false, default: -> { "CURRENT_TIMESTAMP" }
+      t.datetime :created_at, null: false, default: -> { "CURRENT_TIMESTAMP(6)" }
 
       # :oauth_dynamic_client_configuration enabled, extra optional params
       t.string :token_endpoint_auth_method, null: true
@@ -61,20 +61,20 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
     end
 
     create_table :oauth_grants do |t|
-      t.integer :account_id
+      t.bigint :account_id
       t.foreign_key :accounts, column: :account_id
-      t.integer :oauth_application_id
+      t.bigint :oauth_application_id
       t.foreign_key :oauth_applications, column: :oauth_application_id
       t.string :type, null: true
       t.string :code, null: true
       t.index(%i[oauth_application_id code], unique: true)
-      t.string :token, unique: true
-      t.string :refresh_token, unique: true
+      t.string :token, index: { unique: true }
+      t.string :refresh_token, index: { unique: true }
       t.datetime :expires_in, null: false
       t.string :redirect_uri
       t.datetime :revoked_at
       t.string :scopes, null: false
-      t.datetime :created_at, null: false, default: -> { "CURRENT_TIMESTAMP" }
+      t.datetime :created_at, null: false, default: -> { "CURRENT_TIMESTAMP(6)" }
       t.string :access_type, null: false, default: "offline"
 
       # :oauth_pkce enabled
@@ -82,7 +82,7 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.string :code_challenge_method
 
       # :oauth_device_code_grant enabled
-      t.string :user_code, null: true, unique: true
+      t.string :user_code, null: true, index: { unique: true }
       t.datetime :last_polled_at, null: true
 
       # :oauth_tls_client_auth
@@ -99,7 +99,7 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
     end
 
     create_table :oauth_pushed_requests do |t|
-      t.integer :oauth_application_id
+      t.bigint :oauth_application_id
       t.foreign_key :oauth_applications, column: :oauth_application_id
       t.string :params, null: false
       t.datetime :expires_in, null: false
