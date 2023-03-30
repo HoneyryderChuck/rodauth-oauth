@@ -12,7 +12,7 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
       oauth_application_scopes %w[openid email]
       oauth_jwt_keys("RS256" => rsa_private)
     end
-    setup_application(:oauth_implicit_grant)
+    setup_application
     get("/.well-known/openid-configuration")
 
     assert last_response.status == 200
@@ -25,11 +25,11 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
     assert json_body["jwks_uri"] == "http://example.org/jwks"
     assert json_body["scopes_supported"] == %w[openid email]
     assert json_body["response_types_supported"] == [
-      "code", "id_token", "none",
+      "code", "token", "id_token", "none",
       "code id_token",
       "code token",
       "id_token token",
-      "code id_token token", "token"
+      "code id_token token"
     ]
     assert json_body["response_modes_supported"] == %w[query form_post fragment]
     assert json_body["grant_types_supported"] == %w[refresh_token authorization_code implicit]

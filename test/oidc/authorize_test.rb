@@ -26,17 +26,6 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
            "was redirected instead to #{page.current_url}"
   end
 
-  def test_oidc_authorize_post_authorize_no_implicit_grant
-    setup_application
-    login
-
-    # show the authorization form
-    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=token"
-
-    assert page.current_url.include?("?error=unsupported_response_type"),
-           "was redirected instead to #{page.current_url}"
-  end
-
   def test_oidc_authorize_post_authorize_with_implicit_grant
     jws_key = OpenSSL::PKey::RSA.generate(2048)
     jws_public_key = jws_key.public_key
@@ -44,7 +33,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
       oauth_jwt_keys("RS256" => jws_key)
       oauth_jwt_public_keys("RS256" => jws_public_key)
     end
-    setup_application(:oauth_implicit_grant)
+    setup_application
 
     login
 
@@ -72,7 +61,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
       oauth_jwt_keys("RS256" => jws_key)
       oauth_jwt_public_keys("RS256" => jws_public_key)
     end
-    setup_application(:oauth_implicit_grant)
+    setup_application
     login
 
     # show the authorization form
@@ -118,7 +107,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
       oauth_jwt_keys("RS256" => jws_key)
       oauth_jwt_public_keys("RS256" => jws_public_key)
     end
-    setup_application(:oauth_implicit_grant)
+    setup_application
     login
 
     # show the authorization form
@@ -143,7 +132,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     rodauth do
       oauth_jwt_keys("RS256" => jws_key)
     end
-    setup_application(:oauth_implicit_grant)
+    setup_application
     login
 
     # show the authorization form
@@ -171,7 +160,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
       oauth_jwt_keys("RS256" => jws_key)
       oauth_jwt_public_keys("RS256" => jws_public_key)
     end
-    setup_application(:oauth_implicit_grant)
+    setup_application
     login
 
     # show the authorization form
@@ -196,7 +185,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
       oauth_jwt_keys("RS256" => jws_key)
       oauth_jwt_public_keys("RS256" => jws_public_key)
     end
-    setup_application(:oauth_implicit_grant)
+    setup_application
     login
 
     # show the authorization form
@@ -255,7 +244,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
   end
 
   def test_oidc_authorize_post_authorize_offline_access
-    setup_application(:oauth_implicit_grant)
+    setup_application
     login
 
     oauth_application = set_oauth_application(scopes: "openid")
@@ -390,7 +379,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     rodauth do
       oauth_jwt_keys("RS256" => jws_rs256_key, "RS512" => jws_rs512_key)
     end
-    setup_application(:oauth_implicit_grant)
+    setup_application
     login
 
     application = oauth_application(id_token_signed_response_alg: "RS512")
@@ -418,7 +407,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     rodauth do
       oauth_jwt_keys("RS256" => jws_key)
     end
-    setup_application(:oauth_implicit_grant)
+    setup_application
     login
 
     application = oauth_application(
@@ -485,7 +474,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
         end
       end
     end
-    setup_application(:oauth_implicit_grant)
+    setup_application
     login
 
     oauth_application(scopes: "openid name")
@@ -528,7 +517,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
         end
       end
     end
-    setup_application(:oauth_implicit_grant)
+    setup_application
     login
 
     oauth_application(scopes: "openid name")
@@ -586,7 +575,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
         end
       end
     end
-    setup_application(:oauth_implicit_grant)
+    setup_application
     login
 
     oauth_application(scopes: "openid name")
@@ -663,7 +652,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
       enable :otp
       two_factor_auth_return_to_requested_location? true
     end
-    setup_application(:oauth_implicit_grant)
+    setup_application
     login
 
     # Set OTP
@@ -717,7 +706,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
         two_factor_auth_return_to_requested_location? true
         hmac_secret "12345678"
       end
-      setup_application(:oauth_implicit_grant)
+      setup_application
 
       webauthn_client = WebAuthn::FakeClient.new("http://www.example.com")
       visit "/login"

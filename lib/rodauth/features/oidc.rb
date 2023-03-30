@@ -63,7 +63,7 @@ module Rodauth
       id_token_signing_alg_values_supported
     ].freeze
 
-    depends :account_expiration, :oauth_jwt, :oauth_jwt_jwks, :oauth_authorization_code_grant
+    depends :account_expiration, :oauth_jwt, :oauth_jwt_jwks, :oauth_authorization_code_grant, :oauth_implicit_grant
 
     auth_value_method :oauth_application_scopes, %w[openid]
 
@@ -659,10 +659,9 @@ module Rodauth
 
     def check_valid_response_type?
       case param_or_nil("response_type")
-      when "none", "id_token", "code id_token" # multiple
+      when "none", "id_token", "code id_token", # multiple
+           "code token", "id_token token", "code id_token token"
         true
-      when "code token", "id_token token", "code id_token token"
-        supports_token_response_type?
       else
         super
       end
@@ -674,10 +673,6 @@ module Rodauth
       param("response_type") == "none"
     end
 
-    def supports_token_response_type?
-      features.include?(:oauth_implicit_grant)
-    end
-
     def do_authorize(response_params = {}, response_mode = param_or_nil("response_mode"))
       response_type = param("response_type")
       case response_type
@@ -686,8 +681,6 @@ module Rodauth
         generate_id_token(grant_params, true)
         response_params.replace("id_token" => grant_params[:id_token])
       when "code token"
-        redirect_response_error("invalid_request") unless supports_token_response_type?
-
         response_params.replace(create_oauth_grant_with_token)
       when "code id_token"
         params = _do_authorize_code
@@ -698,16 +691,12 @@ module Rodauth
           "code" => params["code"]
         )
       when "id_token token"
-        redirect_response_error("invalid_request") unless supports_token_response_type?
-
         grant_params = oidc_grant_params.merge(oauth_grants_type_column => "hybrid")
         oauth_grant = _do_authorize_token(grant_params)
         generate_id_token(oauth_grant)
 
         response_params.replace(json_access_token_payload(oauth_grant))
       when "code id_token token"
-        redirect_response_error("invalid_request") unless supports_token_response_type?
-
         params = create_oauth_grant_with_token
         oauth_grant = valid_oauth_grant_ds.where(oauth_grants_code_column => params["code"]).first
         oauth_grant[oauth_grants_token_column] = params["access_token"]

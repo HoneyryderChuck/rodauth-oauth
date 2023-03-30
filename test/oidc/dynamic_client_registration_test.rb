@@ -8,7 +8,7 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
   include WebMock::API
 
   def test_oidc_client_registration_response_type_id_token
-    setup_application(:oauth_implicit_grant)
+    setup_application
     header "Accept", "application/json"
 
     post("/register", valid_registration_params.merge(
@@ -73,7 +73,7 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
     rodauth do
       oauth_valid_uri_schemes %w[http https]
     end
-    setup_application(:oauth_implicit_grant)
+    setup_application
     header "Accept", "application/json"
 
     post("/register", valid_registration_params.merge(

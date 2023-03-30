@@ -4,7 +4,7 @@ require "rodauth/oauth"
 
 module Rodauth
   Feature.define(:oidc_self_issued, :OidcSelfIssued) do
-    depends :oidc, :oauth_implicit_grant, :oidc_dynamic_client_registration
+    depends :oidc, :oidc_dynamic_client_registration
 
     auth_value_method :oauth_application_scopes, %w[openid profile email address phone]
     auth_value_method :oauth_jwt_jws_algorithms_supported, %w[RS256]
