@@ -64,6 +64,9 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     setup_application
     login
 
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=id_token&state=STATE&nonce=NONCE&response_mode=query"
+    assert current_url.include?("#error=invalid_request")
+
     # show the authorization form
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=id_token&state=STATE&nonce=NONCE"
     assert page.current_path == "/authorize",
@@ -110,6 +113,9 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     setup_application
     login
 
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code+token&response_mode=query"
+    assert current_url.include?("#error=invalid_request")
+
     # show the authorization form
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code+token"
     assert page.current_path == "/authorize",
@@ -134,6 +140,9 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     end
     setup_application
     login
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code+id_token&nonce=NONCE&response_mode=query"
+    assert current_url.include?("#error=invalid_request")
 
     # show the authorization form
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code+id_token&nonce=NONCE"
@@ -163,6 +172,9 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     setup_application
     login
 
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=id_token+token&nonce=NONCE&response_mode=query"
+    assert current_url.include?("#error=invalid_request")
+
     # show the authorization form
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=id_token+token&nonce=NONCE"
     assert page.current_path == "/authorize",
@@ -187,6 +199,9 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     end
     setup_application
     login
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code+id_token+token&nonce=NONCE&response_mode=query"
+    assert current_url.include?("#error=invalid_request")
 
     # show the authorization form
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code+id_token+token&nonce=NONCE"

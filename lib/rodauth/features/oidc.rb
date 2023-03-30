@@ -319,10 +319,19 @@ module Rodauth
 
       super
 
-      return unless (response_type = param_or_nil("response_type"))
-      return unless response_type.include?("id_token")
+      response_type = param_or_nil("response_type")
 
-      redirect_response_error("invalid_request") unless param_or_nil("nonce")
+      is_id_token_response_type = response_type.include?("id_token")
+
+      redirect_response_error("invalid_request") if is_id_token_response_type && !param_or_nil("nonce")
+
+      return unless is_id_token_response_type || response_type == "code token"
+
+      response_mode = param_or_nil("response_mode")
+
+      # id_token: The default Response Mode for this Response Type is the fragment encoding and the query encoding MUST NOT be used.
+
+      redirect_response_error("invalid_request") unless response_mode.nil? || response_mode == "fragment"
     end
 
     def require_authorizable_account
