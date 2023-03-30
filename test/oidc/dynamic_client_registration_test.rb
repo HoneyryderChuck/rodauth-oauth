@@ -182,6 +182,39 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
     verify_oauth_application_attributes(oauth_application, json_body)
   end
 
+  def test_oidc_client_registration_jarm
+    setup_application(:oauth_jwt_secured_authorization_response_mode, :oauth_authorization_code_grant)
+    header "Accept", "application/json"
+
+    post("/register", valid_registration_params.merge("authorization_encryption_alg_values_supported" => "smth"))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge("authorization_encryption_alg_values_supported" => "none"))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge(
+                        "authorization_signed_response_alg" => "RS256",
+                        "authorization_encrypted_response_enc" => "A128CBC-HS256"
+                      ))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge(
+                        "authorization_signed_response_alg" => "RS256",
+                        "authorization_encrypted_response_alg" => "RSA-OAEP"
+                      ))
+
+    assert last_response.status == 201
+    oauth_application = db[:oauth_applications].where(client_id: json_body["client_id"]).first
+    verify_oauth_application_attributes(oauth_application, json_body)
+    assert oauth_application[:authorization_signed_response_alg] == "RS256"
+    assert oauth_application[:authorization_encrypted_response_alg] == "RSA-OAEP"
+    assert oauth_application[:authorization_encrypted_response_enc] == "A128CBC-HS256"
+    @json_body = nil
+  end
+
   def test_oidc_client_registration_request_uris
     rodauth do
       oauth_require_request_uri_registration true

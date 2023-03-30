@@ -1,0 +1,17 @@
+= Documentation for OAuth JWT Secured Authorization Response Mode feature
+
+The +oauth_jwt_secured_authorization_response_mode+ feature implements support for the JWT-Secured Authorization Response Mode (JARM)
+
+https://openid.net/specs/openid-financial-api-jarm.html
+
+== Value Methods
+
+oauth_authorization_response_mode_expires_in :: The number of seconds an authorization response mode JWT remains valid, <tt>5 minutes</tt> by default.
+
+oauth_applications_authorization_signed_response_alg_column :: db column where to store the signing algorithm used for the authorization response mode JWT for a oauth application, <tt>:authorization_signed_response_alg</tt> by default.
+oauth_applications_authorization_encrypted_response_alg_column :: db column where to store the encryption algorithm for the authorization response mode JWT for a oauth application, <tt>:authorization_encrypted_response_alg</tt> by default.
+oauth_applications_authorization_encrypted_response_enc_column :: db column where to store the encryption method used for the authorization response mode JWT for a oauth application, <tt>:authorization_encrypted_response_enc</tt> by default.
+
+authorization_signing_alg_values_supported :: Supported JWS algorithms for signing authorization response mode JWT tokens.
+authorization_encryption_alg_values_supported :: Supported JWE algorithms for authorization response mode JWT tokens.
+authorization_encryption_enc_values_supported :: Supported JWE encryption methods for authorization response mode JWT tokens.

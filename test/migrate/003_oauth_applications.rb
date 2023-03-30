@@ -57,6 +57,10 @@ Sequel.migration do
       String :jwt_public_key, type: :text
       # RP-initiated logout
       String :post_logout_redirect_uris
+      # oauth_jwt_secured_authorization_response_mode
+      String :authorization_signed_response_alg, null: true
+      String :authorization_encrypted_response_alg, null: true
+      String :authorization_encrypted_response_enc, null: true
     end
   end
 
