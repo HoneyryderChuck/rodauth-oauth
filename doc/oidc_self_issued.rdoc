@@ -1,0 +1,3 @@
+The +oidc_self_issuedd+ feature implements Self-Issued OpenID Provider mode.
+
+https://openid.net/specs/openid-connect-core-1_0.html#SelfIssued
