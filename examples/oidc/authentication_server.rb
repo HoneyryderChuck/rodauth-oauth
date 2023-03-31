@@ -177,8 +177,7 @@ class AuthenticationServer < Roda
   plugin :rodauth, json: true do
     db DB
     enable :login, :logout, :create_account, :oidc,
-           :oauth_implicit_grant, :oauth_client_credentials_grant,
-           :oauth_pkce, :oauth_token_introspection,
+           :oauth_client_credentials_grant, :oauth_pkce, :oauth_token_introspection,
            :oidc_dynamic_client_registration, :oauth_jwt_bearer_grant, :oauth_jwt_secured_authorization_request,
            :oidc_rp_initiated_logout
 

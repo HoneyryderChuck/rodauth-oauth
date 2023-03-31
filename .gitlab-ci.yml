@@ -257,6 +257,7 @@ docs:
     paths:
       - rdoc/
       - wiki/
+      - data/
       - coverage/
   # only:
   #   - master

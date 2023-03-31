@@ -86,8 +86,22 @@ task :check_method_doc do
   puts "#{docs.values.flatten.length} total documented configuration methods"
 end
 
+desc "Builds jekyll data"
+task :prepare_jekyll_data do
+  require "yaml"
+
+  FileUtils.mkdir_p("data")
+  `git tag -l`.lines(chomp: true)
+              .map { |v| v[1..-1] }
+              .sort_by(&Gem::Version.method(:new))
+              .reverse
+              .map { |v| { "name" => v, "path" => "#{v.tr('.', '_')}_md.html" } }
+              .then { |v| YAML.dump(v) }
+              .then { |output| File.write("data/versions.yml", output) }
+end
+
 desc "Builds Homepage"
-task prepare_website: [:website_rdoc] do
+task prepare_website: %i[website_rdoc prepare_jekyll_data] do
   require "fileutils"
   FileUtils.rm_rf("wiki")
   system("git clone https://gitlab.com/os85/rodauth-oauth.wiki.git wiki")
