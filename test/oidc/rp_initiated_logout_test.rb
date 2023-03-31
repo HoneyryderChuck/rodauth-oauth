@@ -8,7 +8,7 @@ class RodauthOAuthOIDCRpInitiatedLogoutTest < OIDCIntegration
   def test_oidc_rp_initiated_logout
     client_application = oauth_application(post_logout_redirect_uris: "https://example.com/logout")
 
-    setup_application(:oauth_implicit_grant)
+    setup_application
     login
 
     id_token = generate_id_token(client_application)
@@ -21,7 +21,7 @@ class RodauthOAuthOIDCRpInitiatedLogoutTest < OIDCIntegration
   def test_oidc_rp_initiated_logout_from_post_logout_param
     client_application = oauth_application(post_logout_redirect_uris: "https://example.com/logout")
 
-    setup_application(:oauth_implicit_grant)
+    setup_application
     login
 
     id_token = generate_id_token(client_application)
@@ -34,7 +34,7 @@ class RodauthOAuthOIDCRpInitiatedLogoutTest < OIDCIntegration
   def test_oidc_rp_initiated_logout_from_post_logout_param_multiple_urls
     client_application = oauth_application(post_logout_redirect_uris: "https://example.com/logout https://example.com/callback")
 
-    setup_application(:oauth_implicit_grant)
+    setup_application
     login
 
     id_token = generate_id_token(client_application)
@@ -47,7 +47,7 @@ class RodauthOAuthOIDCRpInitiatedLogoutTest < OIDCIntegration
   def test_oidc_rp_initiated_logout_with_state
     client_application = oauth_application(post_logout_redirect_uris: "https://example.com/logout")
 
-    setup_application(:oauth_implicit_grant)
+    setup_application
     login
 
     id_token = generate_id_token(client_application)
