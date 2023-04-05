@@ -76,8 +76,7 @@ module Rodauth
       when "plain"
         challenge == verifier
       when "S256"
-        generated_challenge = Base64.urlsafe_encode64(Digest::SHA256.digest(verifier))
-        generated_challenge.delete_suffix!("=") while generated_challenge.end_with?("=")
+        generated_challenge = Base64.urlsafe_encode64(Digest::SHA256.digest(verifier), padding: false)
 
         challenge == generated_challenge
       else
