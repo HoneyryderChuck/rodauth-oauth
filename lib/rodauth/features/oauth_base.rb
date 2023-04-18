@@ -350,7 +350,7 @@ module Rodauth
     # parse client id and secret
     #
     def require_oauth_application
-      @oauth_application = if (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v[/\A *Basic (.*)\Z/, 1]))
+      @oauth_application = if (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v.split(' ').first.strip.downcase == 'basic' && v.sub(/basic /i, '').strip))
                              # client_secret_basic
                              require_oauth_application_from_client_secret_basic(token)
                            elsif (client_id = param_or_nil("client_id"))
@@ -370,21 +370,23 @@ module Rodauth
       client_id, client_secret = Base64.decode64(token).split(/:/, 2)
       authorization_required unless client_id
       oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => client_id).first
-      authorization_required unless supports_auth_method?(oauth_application,
-                                                          "client_secret_basic") && secret_matches?(oauth_application, client_secret)
+      authorization_required unless oauth_application && supports_auth_method?(oauth_application,
+                                                                               "client_secret_basic") && secret_matches?(oauth_application,
+                                                                                                                         client_secret)
       oauth_application
     end
 
     def require_oauth_application_from_client_secret_post(client_id, client_secret)
       oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => client_id).first
-      authorization_required unless supports_auth_method?(oauth_application,
-                                                          "client_secret_post") && secret_matches?(oauth_application, client_secret)
+      authorization_required unless oauth_application && supports_auth_method?(oauth_application,
+                                                                               "client_secret_post") && secret_matches?(oauth_application,
+                                                                                                                        client_secret)
       oauth_application
     end
 
     def require_oauth_application_from_none(client_id)
       oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => client_id).first
-      authorization_required unless supports_auth_method?(oauth_application, "none")
+      authorization_required unless oauth_application && supports_auth_method?(oauth_application, "none")
       oauth_application
     end
 
