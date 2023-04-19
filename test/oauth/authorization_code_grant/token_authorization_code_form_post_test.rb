@@ -56,11 +56,11 @@ class RodauthOAuthTokenAuthorizationCodeFormPostTest < RodaIntegration
     setup_application
 
     post("/token",
-      client_id: "INVALID_CLIENT_ID",
-      client_secret:  oauth_application[:client_secret],
-      grant_type: "authorization_code",
-      code: oauth_grant[:code],
-      redirect_uri: oauth_grant[:redirect_uri])
+         client_id: "INVALID_CLIENT_ID",
+         client_secret: oauth_application[:client_secret],
+         grant_type: "authorization_code",
+         code: oauth_grant[:code],
+         redirect_uri: oauth_grant[:redirect_uri])
 
     verify_response(401)
     assert json_body["error"] == "invalid_client"

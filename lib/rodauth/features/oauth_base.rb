@@ -350,7 +350,9 @@ module Rodauth
     # parse client id and secret
     #
     def require_oauth_application
-      @oauth_application = if (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v.split(' ').first.strip.downcase == 'basic' && v.sub(/basic /i, '').strip))
+      @oauth_application = if (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v.split(" ").first.strip.downcase == "basic" && v.sub(
+        /basic /i, ""
+      ).strip))
                              # client_secret_basic
                              require_oauth_application_from_client_secret_basic(token)
                            elsif (client_id = param_or_nil("client_id"))
