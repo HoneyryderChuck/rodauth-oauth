@@ -350,7 +350,7 @@ module Rodauth
     # parse client id and secret
     #
     def require_oauth_application
-      @oauth_application = if (token = fetch_token_from_http_basic_auth)
+      @oauth_application = if (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v[/\A *Basic (.*)\Z/, 1]))
                              # client_secret_basic
                              require_oauth_application_from_client_secret_basic(token)
                            elsif (client_id = param_or_nil("client_id"))
@@ -370,7 +370,7 @@ module Rodauth
       client_id, client_secret = Base64.decode64(token).split(/:/, 2)
       authorization_required unless client_id
       oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => client_id).first
-      authorization_required unless oauth_application && supports_auth_method?(oauth_application,
+      authorization_required unless supports_auth_method?(oauth_application,
                                                                                "client_secret_basic") && secret_matches?(oauth_application,
                                                                                                                          client_secret)
       oauth_application
@@ -378,7 +378,7 @@ module Rodauth
 
     def require_oauth_application_from_client_secret_post(client_id, client_secret)
       oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => client_id).first
-      authorization_required unless oauth_application && supports_auth_method?(oauth_application,
+      authorization_required unless supports_auth_method?(oauth_application,
                                                                                "client_secret_post") && secret_matches?(oauth_application,
                                                                                                                         client_secret)
       oauth_application
@@ -386,11 +386,13 @@ module Rodauth
 
     def require_oauth_application_from_none(client_id)
       oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => client_id).first
-      authorization_required unless oauth_application && supports_auth_method?(oauth_application, "none")
+      authorization_required unless supports_auth_method?(oauth_application, "none")
       oauth_application
     end
 
     def supports_auth_method?(oauth_application, auth_method)
+      return false unless oauth_application
+
       supported_auth_methods = if oauth_application[oauth_applications_token_endpoint_auth_method_column]
                                  oauth_application[oauth_applications_token_endpoint_auth_method_column].split(/ +/)
                                else
@@ -864,16 +866,6 @@ module Rodauth
       auth_url.path = "/.well-known/oauth-authorization-server"
 
       http_request_with_cache(auth_url)
-    end
-
-    def fetch_token_from_http_basic_auth
-      auth = request.env["HTTP_AUTHORIZATION"]
-      return unless auth
-
-      scheme = auth.split(" ").first.strip.downcase
-      return unless scheme == "basic"
-
-      auth.sub(/basic/i, "").strip
     end
   end
 end
