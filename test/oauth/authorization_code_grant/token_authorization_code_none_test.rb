@@ -14,6 +14,15 @@ class RodauthOAuthTokenAuthorizationCodeNoneTest < RodaIntegration
     assert json_body["error"] == "invalid_client"
   end
 
+  def test_token_authorization_code_invalid_client_id
+    setup_application
+
+    post("/token",
+         client_id: "INVALID_CLIENT_ID")
+    verify_response(401)
+    assert json_body["error"] == "invalid_client"
+  end
+
   private
 
   def set_oauth_application(params = {})

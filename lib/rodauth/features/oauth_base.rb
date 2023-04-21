@@ -389,6 +389,8 @@ module Rodauth
     end
 
     def supports_auth_method?(oauth_application, auth_method)
+      return false unless oauth_application
+
       supported_auth_methods = if oauth_application[oauth_applications_token_endpoint_auth_method_column]
                                  oauth_application[oauth_applications_token_endpoint_auth_method_column].split(/ +/)
                                else
