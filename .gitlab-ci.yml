@@ -242,7 +242,7 @@ coverage:
     paths:
       - "coverage/"
 
-docs:
+pages:
   stage: deploy
   needs:
     - coverage
@@ -253,12 +253,15 @@ docs:
     - gem install hanna-nouveau
   script:
     - rake prepare_website
+    - mkdir -p public/
+    - cp -r coverage/ public/
   artifacts:
     paths:
       - rdoc/
       - wiki/
       - data/
       - coverage/
+      - public/
   # only:
   #   - master
 
