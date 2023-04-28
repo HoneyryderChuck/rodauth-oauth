@@ -30,6 +30,25 @@ class RodauthOAuthTokenAuthorizationCodeClientSecretBasicTest < RodaIntegration
     verify_response(200)
   end
 
+  def test_token_authorization_code_invalid_client_id
+    setup_application
+    oauth_app = oauth_application(token_endpoint_auth_method: "client_secret_basic")
+    oauth_grant = set_oauth_grant(oauth_application: oauth_app)
+
+    header "Authorization", "Basic #{authorization_header(
+      username: 'INVALID_CLIENT_ID',
+      password: oauth_app[:client_secret]
+    )}"
+
+    post("/token",
+         grant_type: "authorization_code",
+         code: oauth_grant[:code],
+         redirect_uri: oauth_grant[:redirect_uri])
+
+    verify_response(401)
+    assert json_body["error"] == "invalid_client"
+  end
+
   private
 
   def post_token(request_args)

@@ -13,7 +13,7 @@ class SelfSignedCert
                    end
 
     @cert = if File.exist?(cert_path(name))
-              OpenSSL::X509::Certificate.new(File.read((cert_path(name))))
+              OpenSSL::X509::Certificate.new(File.read(cert_path(name)))
             else
               public_key = @private_key.public_key
               cert = OpenSSL::X509::Certificate.new
