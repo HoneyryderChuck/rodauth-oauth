@@ -29,15 +29,15 @@ DB = begin
              uri.password = nil
              Sequel.connect("jdbc:#{uri}")
            else
-             Sequel.connect(ENV["DATABASE_URL"])
+             Sequel.connect(ENV["DATABASE_URL"], pool_timeout: 20)
            end
          elsif ENV["DATABASE_URL"].match(/sqlite3(.*)/)
-           Sequel.connect("sqlite#{Regexp.last_match(1)}")
+           Sequel.connect("sqlite#{Regexp.last_match(1)}", pool_timeout: 20)
          else
            Sequel.connect(ENV["DATABASE_URL"])
          end
        else
-         Sequel.sqlite
+         Sequel.sqlite(pool_timeout: 20)
        end
   # seeing weird pool timeout errors from sequel, only in CI
   ENV.delete("PARALLEL") if RUBY_ENGINE == "truffleruby"
@@ -232,5 +232,5 @@ class RodaIntegration < Minitest::Test
     assert data["refresh_token"] == oauth_grant[:refresh_token]
   end
 
-  parallelize_me! if ENV.key?("PARALLEL")
+  parallelize_me! if ENV.key?("PARALLEL") && ENV["PARALLEL"] == "1"
 end
