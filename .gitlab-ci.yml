@@ -29,7 +29,7 @@ cache:
   - apt-get update && apt-get install -y shared-mime-info libsqlite3-dev libmariadb-dev-compat mariadb-client libmariadb-dev postgresql-client libpq-dev
 
 .test: &test
-- "DATABASE_URL=sqlite3::memory:?pool_timeout=20 bundle exec rake test:ci"
+- "DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
 - "DATABASE_URL=postgresql://oauth:password@postgres/oauth bundle exec rake test"
 # concurrency limited with mysql, to avoid deadlock messages
 - "DATABASE_URL=mysql2://root:password@mysql/oauth bundle exec rake test"
@@ -37,7 +37,7 @@ cache:
 - "DATABASE_URL=postgresql://oauth:password@postgres/oauth-unique ONLY_ONE_TOKEN=1 bundle exec rake test"
 - "DATABASE_URL=mysql2://root:password@mysql/oauthunique ONLY_ONE_TOKEN=1 bundle exec rake test"
 # JWT supported libs
-- "JWT_LIB=json/jwt DATABASE_URL=sqlite3::memory:?pool_timeout=20 bundle exec rake test"
+- "JWT_LIB=json/jwt DATABASE_URL=sqlite3::memory: bundle exec rake test"
 
 .jtest: &jtest
 - "DATABASE_URL=sqlite3::memory: bundle exec rake test"
