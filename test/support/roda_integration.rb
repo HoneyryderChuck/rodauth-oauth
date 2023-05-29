@@ -232,5 +232,5 @@ class RodaIntegration < Minitest::Test
     assert data["refresh_token"] == oauth_grant[:refresh_token]
   end
 
-  parallelize_me! if ENV.key?("PARALLEL")
+  parallelize_me! if ENV.key?("PARALLEL") && ENV["PARALLEL"] == "1"
 end
