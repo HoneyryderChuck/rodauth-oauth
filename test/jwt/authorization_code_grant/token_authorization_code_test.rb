@@ -121,10 +121,9 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
   unless RUBY_ENGINE == "jruby"
     def test_oauth_jwt_authorization_code_jws_ecdsa_p256
-      ecdsa_key = OpenSSL::PKey::EC.new "prime256v1"
-      ecdsa_key.generate_key
-      ecdsa_public = OpenSSL::PKey::EC.new ecdsa_key
-      ecdsa_public.private_key = nil
+      ecdsa_key = OpenSSL::PKey::EC.generate("prime256v1")
+      # OpenSSL 3.0 does not allow construction of public key via another object as before, it is now immutable
+      ecdsa_public = ecdsa_key # .public_key
 
       rodauth do
         oauth_jwt_keys("ES256" => ecdsa_key)
