@@ -37,10 +37,10 @@
         </div>
       <% end %>
     <% end %>
-    <%= hidden_field_tag :client_id, params[:client_id] %>
-    <% %i[access_type response_type response_mode state redirect_uri].each do |oauth_param| %>
-      <% if params[oauth_param] %>
-        <%= hidden_field_tag oauth_param,  params[oauth_param] %>
+    <%= hidden_field_tag :client_id, rodauth.raw_param("client_id") %>
+    <% %w[access_type response_type response_mode state redirect_uri].each do |oauth_param| %>
+      <% if rodauth.raw_param(oauth_param) %>
+        <%= hidden_field_tag oauth_param, rodauth.raw_param(oauth_param) %>
       <% end %>
     <% end %>
     <% if rodauth.features.include?(:oauth_resource_indicators) && rodauth.resource_indicators %>
@@ -49,39 +49,39 @@
       <% end %>
     <% end %>
     <% if rodauth.features.include?(:oauth_pkce) %>
-      <% if params[:code_challenge] %>
-        <%= hidden_field_tag :code_challenge,  params[:code_challenge] %>
+      <% if rodauth.raw_param("code_challenge") %>
+        <%= hidden_field_tag :code_challenge, rodauth.raw_param("code_challenge") %>
       <% end %>
-      <% if params[:code_challenge_method] %>
-        <%= hidden_field_tag :code_challenge_method,  params[:code_challenge_method] %>
+      <% if rodauth.raw_param("code_challenge_method") %>
+        <%= hidden_field_tag :code_challenge_method, rodauth.raw_param("code_challenge_method") %>
       <% end %>
     <% end %>
     <% if rodauth.features.include?(:oidc) %>
-      <% if params[:prompt] %>
-        <%= hidden_field_tag :prompt,  params[:prompt] %>
+      <% if rodauth.raw_param("prompt") %>
+        <%= hidden_field_tag :prompt, rodauth.raw_param("prompt") %>
       <% end %>
-      <% if params[:nonce] %>
-        <%= hidden_field_tag :nonce,  params[:nonce] %>
+      <% if rodauth.raw_param("nonce") %>
+        <%= hidden_field_tag :nonce, rodauth.raw_param("nonce") %>
       <% end %>
-      <% if params[:ui_locales] %>
-        <%= hidden_field_tag :ui_locales,  params[:ui_locales] %>
+      <% if rodauth.raw_param("ui_locales") %>
+        <%= hidden_field_tag :ui_locales, rodauth.raw_param("ui_locales") %>
       <% end %>
-      <% if params[:claims_locales] %>
-        <%= hidden_field_tag :claims_locales,  params[:claims_locales] %>
+      <% if rodauth.raw_param("claims_locales") %>
+        <%= hidden_field_tag :claims_locales, rodauth.raw_param("claims_locales") %>
       <% end %>
-      <% if params[:claims] %>
-        <%= hidden_field_tag :claims,  sanitize(params[:claims]) %>
+      <% if rodauth.raw_param("claims") %>
+        <%= hidden_field_tag :claims, sanitize(rodauth.raw_param("claims")) %>
       <% end %>
-      <% if params[:acr_values] %>
-        <%= hidden_field_tag :acr_values,  params[:acr_values] %>
+      <% if rodauth.raw_param("acr_values") %>
+        <%= hidden_field_tag :acr_values, rodauth.raw_param("acr_values") %>
       <% end %>
-      <% if params[:registration] %>
-        <%= hidden_field_tag :registration,  params[:registration] %>
+      <% if rodauth.raw_param("registration") %>
+        <%= hidden_field_tag :registration, rodauth.raw_param("registration") %>
       <% end %>
     <% end %>
   </div>
  <p class="text-center">
     <%= submit_tag rodauth.oauth_authorize_button, class: "btn btn-outline-primary" %>
-    <%= link_to rodauth.oauth_cancel_button, "#{rodauth.redirect_uri}?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request#{"&state=\#{CGI.escape(rodauth.state)}" if params[:state] }", class: "btn btn-outline-danger" %>
+    <%= link_to rodauth.oauth_cancel_button, "#{rodauth.redirect_uri}?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request#{"&state=\#{CGI.escape(rodauth.state)}" if rodauth.raw_param("state") }", class: "btn btn-outline-danger" %>
   </p>
 <% end %>
