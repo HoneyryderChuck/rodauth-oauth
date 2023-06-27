@@ -7,7 +7,7 @@ require "net/http"
 require "bcrypt"
 require "digest/sha1"
 require "jwt"
-require_relative "./tls_helpers"
+require_relative "tls_helpers"
 
 if (url = ENV.delete("DATABASE_URL"))
   DB = Sequel.connect(url)

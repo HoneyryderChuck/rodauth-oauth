@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require_relative "./token_authorization_code"
+require_relative "token_authorization_code"
 
 class RodauthOAuthTokenAuthorizationCodeFormPostTest < RodaIntegration
   include RodauthOAuthTokenAuthorizationCodeTest

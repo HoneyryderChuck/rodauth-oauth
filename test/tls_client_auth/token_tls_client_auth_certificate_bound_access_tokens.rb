@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require_relative "./tls_helpers"
+require_relative "tls_helpers"
 
 class RodauthOauthJWTTokenTlsClientAuuthCertificateBoundTest < JWTIntegration
   include Rack::Test::Methods

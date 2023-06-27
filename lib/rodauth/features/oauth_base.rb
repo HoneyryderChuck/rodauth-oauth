@@ -367,7 +367,7 @@ module Rodauth
     end
 
     def require_oauth_application_from_client_secret_basic(token)
-      client_id, client_secret = Base64.decode64(token).split(/:/, 2)
+      client_id, client_secret = Base64.decode64(token).split(":", 2)
       authorization_required unless client_id
       oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => client_id).first
       authorization_required unless supports_auth_method?(oauth_application,

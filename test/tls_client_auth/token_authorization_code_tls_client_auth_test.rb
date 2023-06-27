@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "test_helper"
-require_relative "./tls_helpers"
+require_relative "tls_helpers"
 require_relative "../oauth/authorization_code_grant/token_authorization_code"
 
 class RodauthOAuthTokenAuthorizationCodeTlsClientAuthTest < RodaIntegration

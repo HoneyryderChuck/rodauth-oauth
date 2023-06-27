@@ -8,7 +8,7 @@ require "jwt"
 require "net/http"
 require "roda"
 
-require_relative "./tls_helpers"
+require_relative "tls_helpers"
 
 AUTHORIZATION_SERVER = ENV.fetch("AUTHORIZATION_SERVER_URI", "https://localhost:9292")
 RESOURCE_SERVER = ENV.fetch("RESOURCE_SERVER_URI", "https://localhost:9292/books")
