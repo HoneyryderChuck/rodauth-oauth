@@ -90,8 +90,8 @@ Or install it yourself as:
 
 ## Articles
 
-* [How to use rodauth-oauth with rails and rodauth](https://honeyryderchuck.gitlab.io/httpx/2021/03/15/oidc-provider-on-rails-using-rodauth-oauth.html)
-* [How to use rodauth-oauth with rails and without rodauth](https://honeyryderchuck.gitlab.io/httpx/2021/09/08/using-rodauth-oauth-in-rails-without-rodauth-based-auth.html)
+* [How to use rodauth-oauth with rails and rodauth](https://honeyryderchuck.gitlab.io/2021/03/15/oidc-provider-on-rails-using-rodauth-oauth.html)
+* [How to use rodauth-oauth with rails and without rodauth](https://honeyryderchuck.gitlab.io/2021/09/08/using-rodauth-oauth-in-rails-without-rodauth-based-auth.html)
 
 ## Usage
 
