@@ -118,6 +118,7 @@ module Rodauth
           request.params[k.to_s] = v
         end
 
+        request.params.delete("request_uri")
       elsif oauth_require_pushed_authorization_requests ||
             (oauth_application && oauth_application[oauth_applications_require_pushed_authorization_requests_column])
         redirect_authorize_error("request_uri")

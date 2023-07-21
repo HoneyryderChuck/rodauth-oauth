@@ -35,6 +35,25 @@ class RodauthOauthJwtPushedAuthorizationRequestParTest < JWTIntegration
 
     assert json_body["request_uri"] == "urn:ietf:params:oauth:request_uri:#{request[:code]}"
     assert json_body["expires_in"] == 90
+
+    # show the authorization form
+    login_form
+    visit "/authorize?client_id=#{application[:client_id]}&request_uri=urn:ietf:params:oauth:request_uri:#{request[:code]}"
+    assert_includes page.html, "name=\"response_type\" value=\"code\""
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    check "user.read"
+
+    # submit authorization request
+    click_button "Authorize"
+
+    assert db[:oauth_grants].count == 1,
+           "no grant has been created"
+
+    oauth_grant = db[:oauth_grants].first
+
+    assert page.current_url == "#{application[:redirect_uri]}?code=#{oauth_grant[:code]}&state=ABCDEF",
+           "was redirected instead to #{page.current_url}"
   end
 
   private
@@ -76,6 +95,7 @@ class RodauthOauthJwtPushedAuthorizationRequestParTest < JWTIntegration
     token
   end
 
+  alias login_form login
   # overriding to implement the client/secret basic authorization
   def login
     header "Authorization", "Basic #{authorization_header(
@@ -85,6 +105,6 @@ class RodauthOauthJwtPushedAuthorizationRequestParTest < JWTIntegration
   end
 
   def oauth_feature
-    %i[oauth_authorization_code_grant oauth_pushed_authorization_request oauth_jwt_secured_authorization_request]
+    %i[oauth_authorization_code_grant oauth_jwt_secured_authorization_request oauth_pushed_authorization_request]
   end
 end
