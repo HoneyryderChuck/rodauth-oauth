@@ -189,14 +189,16 @@ module Rodauth
         jwt = jwt.sign(jwk, signing_algorithm)
         jwt.kid = jwk.thumbprint
 
+        return jwt.to_s unless encryption_algorithm && encryption_method
+
         if jwks && (jwk = jwks.find { |k| k[:use] == "enc" && k[:alg] == encryption_algorithm && k[:enc] == encryption_method })
           jwk = JSON::JWK.new(jwk)
           jwe = jwt.encrypt(jwk, encryption_algorithm.to_sym, encryption_method.to_sym)
           jwe.to_s
         elsif jwe_key
           jwe_key = jwe_key.first if jwe_key.is_a?(Array)
-          algorithm = encryption_algorithm.to_sym if encryption_algorithm
-          meth = encryption_method.to_sym if encryption_method
+          algorithm = encryption_algorithm.to_sym
+          meth = encryption_method.to_sym
           jwt.encrypt(jwe_key, algorithm, meth)
         else
           jwt.to_s
