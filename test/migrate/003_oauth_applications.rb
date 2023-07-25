@@ -43,6 +43,7 @@ Sequel.migration do
       String :request_object_encryption_alg, null: true
       String :request_object_encryption_enc, null: true
       String :request_uris, null: true
+      TrueClass :require_signed_request_object, null: true
       # for oauth_pushed_authorization_request
       TrueClass :require_pushed_authorization_requests, null: false, default: false
 

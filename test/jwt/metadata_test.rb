@@ -55,6 +55,7 @@ class RodauthOauthJwtServerMetadataTest < JWTIntegration
     assert json_body["request_parameter_supported"] == true
     assert json_body["request_uri_parameter_supported"] == true
     assert json_body["require_request_uri_registration"] == false
+    assert json_body["require_signed_request_object"] == false
   end
 
   def test_oauth_jwt_secured_authorization_request_require_uri
@@ -69,6 +70,22 @@ class RodauthOauthJwtServerMetadataTest < JWTIntegration
     assert json_body["request_parameter_supported"] == true
     assert json_body["request_uri_parameter_supported"] == true
     assert json_body["require_request_uri_registration"] == true
+    assert json_body["require_signed_request_object"] == false
+  end
+
+  def test_oauth_jwt_secured_authorization_require_signed_request_object
+    rodauth do
+      oauth_require_signed_request_object true
+    end
+    setup_application(:oauth_jwt_secured_authorization_request, &:load_oauth_server_metadata_route)
+
+    get("/.well-known/oauth-authorization-server")
+
+    assert last_response.status == 200
+    assert json_body["request_parameter_supported"] == true
+    assert json_body["request_uri_parameter_supported"] == true
+    assert json_body["require_request_uri_registration"] == false
+    assert json_body["require_signed_request_object"] == true
   end
 
   def test_oauth_jwt_secured_authorization_response_mode

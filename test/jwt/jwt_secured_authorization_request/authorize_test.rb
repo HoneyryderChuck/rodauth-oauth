@@ -33,6 +33,74 @@ class RodauthOauthJwtSecuredAuthorizationRequestAuthorizeTest < JWTIntegration
            "was redirected instead to #{page.current_url}"
   end
 
+  def test_jwt_authorize_with_unsigned_request_allowed
+    rodauth do
+      oauth_request_object_signing_alg_allow_none true
+      oauth_require_signed_request_object false
+      oauth_response_mode "query"
+    end
+    setup_application
+    login
+
+    signed_request = generate_signed_request(oauth_application, signing_algorithm: "none")
+
+    visit "/authorize?request=#{signed_request}&client_id=#{oauth_application[:client_id]}"
+    check "user.read"
+    click_button "Authorize"
+
+    assert page.current_url.include?("code="),
+           "was redirected instead to #{page.current_url}"
+  end
+
+  def test_jwt_authorize_with_unsigned_request_not_allowed
+    rodauth do
+      oauth_request_object_signing_alg_allow_none true
+      oauth_require_signed_request_object true
+      oauth_response_mode "query"
+    end
+    setup_application
+    login
+
+    signed_request = generate_signed_request(oauth_application, signing_algorithm: "none")
+
+    visit "/authorize?request=#{signed_request}&client_id=#{oauth_application[:client_id]}"
+
+    assert page.current_url.include?("?error=invalid_request_object"),
+           "was redirected instead to #{page.current_url}"
+  end
+
+  def test_jwt_authorize_with_unsigned_request_application_not_allowed
+    rodauth do
+      oauth_request_object_signing_alg_allow_none true
+      oauth_require_signed_request_object false
+      oauth_response_mode "query"
+    end
+    setup_application
+    login
+
+    application = oauth_application(require_signed_request_object: true)
+
+    signed_request = generate_signed_request(application, signing_algorithm: "none")
+
+    visit "/authorize?request=#{signed_request}&client_id=#{application[:client_id]}"
+
+    assert page.current_url.include?("?error=invalid_request_object"),
+           "was redirected instead to #{page.current_url}"
+  end
+
+  def test_jwt_authorize_with_non_jar_request_not_allowed
+    rodauth do
+      oauth_require_signed_request_object true
+      oauth_response_mode "query"
+    end
+    setup_application
+    login
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code&scope=user.read+user.write&response_type=code"
+    assert page.current_url.include?("?error=invalid_request_object"),
+           "was redirected instead to #{page.current_url}"
+  end
+
   def test_jwt_authorize_with_signed_request_jwks
     setup_application
     login
