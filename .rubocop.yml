@@ -180,6 +180,9 @@ Style/FetchEnvVar:
 Style/SlicingWithRange:
   Enabled: false
 
+Style/ArgumentsForwarding:
+  Enabled: false
+
 Metrics/ClassLength:
   Max: 1500
 
