@@ -9,13 +9,15 @@ module Rodauth
     depends :oauth_authorize_base, :oauth_jwt_base
 
     auth_value_method :oauth_require_request_uri_registration, false
+    auth_value_method :oauth_require_signed_request_object, false
     auth_value_method :oauth_request_object_signing_alg_allow_none, false
 
-    auth_value_method :oauth_applications_request_uris_column, :request_uris
-
-    auth_value_method :oauth_applications_request_object_signing_alg_column, :request_object_signing_alg
-    auth_value_method :oauth_applications_request_object_encryption_alg_column, :request_object_encryption_alg
-    auth_value_method :oauth_applications_request_object_encryption_enc_column, :request_object_encryption_enc
+    %i[
+      request_uris require_signed_request_object request_object_signing_alg
+      request_object_encryption_alg request_object_encryption_enc
+    ].each do |column|
+      auth_value_method :"oauth_applications_#{column}_column", column
+    end
 
     translatable_method :oauth_invalid_request_object_message, "request object is invalid"
 
@@ -30,7 +32,13 @@ module Rodauth
 
       request_uri = param_or_nil("request_uri")
 
-      return super unless (request_object || request_uri) && oauth_application
+      unless (request_object || request_uri) && oauth_application
+        if request.path == authorize_path && request.get? && require_signed_request_object?
+          redirect_response_error("invalid_request_object")
+        end
+
+        return super
+      end
 
       if request_uri
         request_uri = CGI.unescape(request_uri)
@@ -84,6 +92,14 @@ module Rodauth
       request_uris.nil? || request_uris.split(oauth_scope_separator).one? { |uri| request_uri.start_with?(uri) }
     end
 
+    def require_signed_request_object?
+      return @require_signed_request_object if defined?(@require_signed_request_object)
+
+      @require_signed_request_object = (oauth_application[oauth_applications_require_signed_request_object_column] if oauth_application)
+      @require_signed_request_object = oauth_require_signed_request_object if @require_signed_request_object.nil?
+      @require_signed_request_object
+    end
+
     def decode_request_object(request_object)
       request_sig_enc_opts = {
         jws_algorithm: oauth_application[oauth_applications_request_object_signing_alg_column],
@@ -94,6 +110,8 @@ module Rodauth
       request_sig_enc_opts[:jws_algorithm] ||= "none" if oauth_request_object_signing_alg_allow_none
 
       if request_sig_enc_opts[:jws_algorithm] == "none"
+        redirect_response_error("invalid_request_object") if require_signed_request_object?
+
         jwks = nil
       elsif (jwks = oauth_application_jwks(oauth_application))
         jwks = JSON.parse(jwks, symbolize_names: true) if jwks.is_a?(String)
@@ -118,6 +136,7 @@ module Rodauth
         data[:request_parameter_supported] = true
         data[:request_uri_parameter_supported] = true
         data[:require_request_uri_registration] = oauth_require_request_uri_registration
+        data[:require_signed_request_object] = oauth_require_signed_request_object
       end
     end
   end

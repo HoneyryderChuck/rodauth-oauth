@@ -248,6 +248,8 @@ module Rodauth
                      jws
                    elsif jws_key
                      JSON::JWT.decode(token, jws_key)
+                   else
+                     JSON::JWT.decode(token, nil, jws_algorithm)
                    end
                  elsif (jwks = auth_server_jwks_set)
                    JSON::JWT.decode(token, JSON::JWK::Set.new(jwks))
@@ -430,6 +432,8 @@ module Rodauth
                      end
                    elsif jws_key
                      JWT.decode(token, jws_key, true, algorithms: [jws_algorithm], **verify_claims_params).first
+                   else
+                     JWT.decode(token, jws_key, false, **verify_claims_params).first
                    end
                  elsif (jwks = auth_server_jwks_set)
                    algorithms = jwks[:keys].select { |k| k[:use] == "sig" }.map { |k| k[:alg] }

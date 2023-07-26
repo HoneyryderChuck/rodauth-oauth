@@ -65,31 +65,36 @@ module Rodauth
       # The request_uri authorization request parameter is one exception, and it MUST NOT be provided.
       redirect_response_error("invalid_request") if param_or_nil("request_uri")
 
-      if (request_object = param_or_nil("request")) && features.include?(:oauth_jwt_secured_authorization_request)
-        claims = decode_request_object(request_object)
+      if features.include?(:oauth_jwt_secured_authorization_request)
 
-        # https://datatracker.ietf.org/doc/html/rfc9126#section-3-5.3
-        # reject the request if the authenticated client_id does not match the client_id claim in the Request Object
-        if (client_id = claims["client_id"]) && (client_id != oauth_application[oauth_applications_client_id_column])
+        if (request_object = param_or_nil("request"))
+          claims = decode_request_object(request_object)
+
+          # https://datatracker.ietf.org/doc/html/rfc9126#section-3-5.3
+          # reject the request if the authenticated client_id does not match the client_id claim in the Request Object
+          if (client_id = claims["client_id"]) && (client_id != oauth_application[oauth_applications_client_id_column])
+            redirect_response_error("invalid_request_object")
+          end
+
+          # requiring the iss claim to match the client_id is at the discretion of the authorization server
+          if oauth_require_pushed_authorization_request_iss_request_object &&
+             (iss = claims.delete("iss")) &&
+             iss != oauth_application[oauth_applications_client_id_column]
+            redirect_response_error("invalid_request_object")
+          end
+
+          if (aud = claims.delete("aud")) && !verify_aud(aud, oauth_jwt_issuer)
+            redirect_response_error("invalid_request_object")
+          end
+
+          claims.delete("exp")
+          request.params.delete("request")
+
+          claims.each do |k, v|
+            request.params[k.to_s] = v
+          end
+        elsif require_signed_request_object?
           redirect_response_error("invalid_request_object")
-        end
-
-        # requiring the iss claim to match the client_id is at the discretion of the authorization server
-        if oauth_require_pushed_authorization_request_iss_request_object &&
-           (iss = claims.delete("iss")) &&
-           iss != oauth_application[oauth_applications_client_id_column]
-          redirect_response_error("invalid_request_object")
-        end
-
-        if (aud = claims.delete("aud")) && !verify_aud(aud, oauth_jwt_issuer)
-          redirect_response_error("invalid_request_object")
-        end
-
-        claims.delete("exp")
-        request.params.delete("request")
-
-        claims.each do |k, v|
-          request.params[k.to_s] = v
         end
       end
 
@@ -119,6 +124,9 @@ module Rodauth
         end
 
         request.params.delete("request_uri")
+
+        # we're removing the request_uri here, so the checkup for signed reqest has to be invalidated.
+        @require_signed_request_object = false
       elsif oauth_require_pushed_authorization_requests ||
             (oauth_application && oauth_application[oauth_applications_require_pushed_authorization_requests_column])
         redirect_authorize_error("request_uri")

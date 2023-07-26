@@ -46,6 +46,7 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.string :request_object_encryption_alg, null: true
       t.string :request_object_encryption_enc, null: true
       t.string :request_uris, null: true
+      t.boolean :require_signed_request_object, null: true
       t.boolean :require_pushed_authorization_requests, null: false, default: false
 
       # :oauth_tls_client_auth

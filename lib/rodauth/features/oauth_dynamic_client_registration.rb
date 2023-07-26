@@ -200,6 +200,14 @@ module Rodauth
         when "client_name"
           register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(value)) unless value.is_a?(String)
           key = oauth_applications_name_column
+        when "require_signed_request_object"
+          unless respond_to?(:oauth_applications_require_signed_request_object_column)
+            register_throw_json_response_error("invalid_client_metadata",
+                                               register_invalid_param_message(key))
+          end
+          request_params[key] = value = convert_to_boolean(key, value)
+
+          key = oauth_applications_require_signed_request_object_column
         when "require_pushed_authorization_requests"
           unless respond_to?(:oauth_applications_require_pushed_authorization_requests_column)
             register_throw_json_response_error("invalid_client_metadata",
