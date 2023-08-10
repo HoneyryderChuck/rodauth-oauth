@@ -4,7 +4,7 @@
   <% end %>
   <% application_uri = rodauth.oauth_application[rodauth.oauth_applications_homepage_url_column] %>
   <% application_name = application_uri ? link_to(rodauth.oauth_application[rodauth.oauth_applications_name_column], application_uri) : rodauth.oauth_application[rodauth.oauth_applications_name_column] %>
-  <p class="lead"><%= rodauth.authorize_page_lead(name: application_name).html_safe %></p>
+  <p class="lead"><%= rodauth.authorize_page_lead(name: application_name) %></p>
 
   <div class="list-group">
     <% if rodauth.oauth_application[rodauth.oauth_applications_tos_uri_column] %>
@@ -37,10 +37,10 @@
         </div>
       <% end %>
     <% end %>
-    <%= hidden_field_tag :client_id, rodauth.raw_param("client_id") %>
+    <%= hidden_field_tag :client_id, rodauth.param_or_nil("client_id") %>
     <% %w[access_type response_type response_mode state redirect_uri].each do |oauth_param| %>
-      <% if rodauth.raw_param(oauth_param) %>
-        <%= hidden_field_tag oauth_param, rodauth.raw_param(oauth_param) %>
+      <% if rodauth.param_or_nil(oauth_param) %>
+        <%= hidden_field_tag oauth_param, rodauth.param_or_nil(oauth_param) %>
       <% end %>
     <% end %>
     <% if rodauth.features.include?(:oauth_resource_indicators) && rodauth.resource_indicators %>
@@ -49,39 +49,39 @@
       <% end %>
     <% end %>
     <% if rodauth.features.include?(:oauth_pkce) %>
-      <% if rodauth.raw_param("code_challenge") %>
-        <%= hidden_field_tag :code_challenge, rodauth.raw_param("code_challenge") %>
+      <% if rodauth.param_or_nil("code_challenge") %>
+        <%= hidden_field_tag :code_challenge, rodauth.param_or_nil("code_challenge") %>
       <% end %>
-      <% if rodauth.raw_param("code_challenge_method") %>
-        <%= hidden_field_tag :code_challenge_method, rodauth.raw_param("code_challenge_method") %>
+      <% if rodauth.param_or_nil("code_challenge_method") %>
+        <%= hidden_field_tag :code_challenge_method, rodauth.param_or_nil("code_challenge_method") %>
       <% end %>
     <% end %>
     <% if rodauth.features.include?(:oidc) %>
-      <% if rodauth.raw_param("prompt") %>
-        <%= hidden_field_tag :prompt, rodauth.raw_param("prompt") %>
+      <% if rodauth.param_or_nil("prompt") %>
+        <%= hidden_field_tag :prompt, rodauth.param_or_nil("prompt") %>
       <% end %>
-      <% if rodauth.raw_param("nonce") %>
-        <%= hidden_field_tag :nonce, rodauth.raw_param("nonce") %>
+      <% if rodauth.param_or_nil("nonce") %>
+        <%= hidden_field_tag :nonce, rodauth.param_or_nil("nonce") %>
       <% end %>
-      <% if rodauth.raw_param("ui_locales") %>
-        <%= hidden_field_tag :ui_locales, rodauth.raw_param("ui_locales") %>
+      <% if rodauth.param_or_nil("ui_locales") %>
+        <%= hidden_field_tag :ui_locales, rodauth.param_or_nil("ui_locales") %>
       <% end %>
-      <% if rodauth.raw_param("claims_locales") %>
-        <%= hidden_field_tag :claims_locales, rodauth.raw_param("claims_locales") %>
+      <% if rodauth.param_or_nil("claims_locales") %>
+        <%= hidden_field_tag :claims_locales, rodauth.param_or_nil("claims_locales") %>
       <% end %>
-      <% if rodauth.raw_param("claims") %>
-        <%= hidden_field_tag :claims, sanitize(rodauth.raw_param("claims")) %>
+      <% if rodauth.param_or_nil("claims") %>
+        <%= hidden_field_tag :claims, sanitize(rodauth.param_or_nil("claims")) %>
       <% end %>
-      <% if rodauth.raw_param("acr_values") %>
-        <%= hidden_field_tag :acr_values, rodauth.raw_param("acr_values") %>
+      <% if rodauth.param_or_nil("acr_values") %>
+        <%= hidden_field_tag :acr_values, rodauth.param_or_nil("acr_values") %>
       <% end %>
-      <% if rodauth.raw_param("registration") %>
-        <%= hidden_field_tag :registration, rodauth.raw_param("registration") %>
+      <% if rodauth.param_or_nil("registration") %>
+        <%= hidden_field_tag :registration, rodauth.param_or_nil("registration") %>
       <% end %>
     <% end %>
   </div>
  <p class="text-center">
     <%= submit_tag rodauth.oauth_authorize_button, class: "btn btn-outline-primary" %>
-    <%= link_to rodauth.oauth_cancel_button, "#{rodauth.redirect_uri}?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request#{"&state=\#{CGI.escape(rodauth.state)}" if rodauth.raw_param("state") }", class: "btn btn-outline-danger" %>
+    <%= link_to rodauth.oauth_cancel_button, "#{rodauth.redirect_uri}?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request#{"&state=\#{CGI.escape(rodauth.state)}" if rodauth.param_or_nil("state") }", class: "btn btn-outline-danger" %>
   </p>
 <% end %>
