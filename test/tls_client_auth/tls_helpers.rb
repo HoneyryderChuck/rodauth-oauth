@@ -101,7 +101,7 @@ module RodauthOAuthTlsHelpers
     env "SSL_CLIENT_V_END", certificate.not_after.httpdate
     env "SSL_CLIENT_V_REMAIN", (certificate.not_after - certificate.not_before) / 60 / 60 / 24
     env "SSL_CLIENT_A_SIG", certificate.signature_algorithm
-    env "SSL_CLIENT_A_KEY", public_key.oid
+    env "SSL_CLIENT_A_KEY", public_key.oid unless RUBY_ENGINE == "jruby"
     env "SSL_CLIENT_CERT", certificate.to_pem
     env "SSL_CLIENT_VERIFY", "SUCCESS"
   end
