@@ -43,7 +43,6 @@ This gem implements the following RFCs and features of OAuth:
   * `oauth_jwt_secured_authorization_response_mode` - [JWT Secured Authorization Response_mode](https://openid.net/specs/openid-financial-api-jarm.html);
   * `oauth_resource_indicators` - [Resource Indicators](https://datatracker.ietf.org/doc/html/rfc8707);
   * Access Type (Token refresh online and offline);
-* `oauth_http_mac` - [MAC Authentication Scheme](https://tools.ietf.org/html/draft-hammer-oauth-v2-mac-token-02);
 * `oauth_assertion_base` - [Assertion Framework](https://datatracker.ietf.org/doc/html/rfc7521);
   * `oauth_saml_bearer_grant` - [SAML 2.0 Bearer Assertion](https://datatracker.ietf.org/doc/html/rfc7522);
   * `oauth_jwt_bearer_grant` - [JWT Bearer Assertion](https://datatracker.ietf.org/doc/html/rfc7523);
@@ -83,8 +82,8 @@ Or install it yourself as:
 ## Resources
 |               |                                                             |
 | ------------- | ----------------------------------------------------------- |
-| Website       | https://os85.gitlab.io/rodauth-oauth/            |
-| Documentation | https://os85.gitlab.io/rodauth-oauth/rdoc/       |
+| Website       | https://honeyryderchuck.gitlab.io/rodauth-oauth/            |
+| Documentation | https://honeyryderchuck.gitlab.io/rodauth-oauth/rdoc/       |
 | Wiki          | https://gitlab.com/os85/rodauth-oauth/wikis/home |
 | CI            | https://gitlab.com/os85/rodauth-oauth/pipelines  |
 
