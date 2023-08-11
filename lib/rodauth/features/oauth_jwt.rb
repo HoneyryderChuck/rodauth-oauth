@@ -99,7 +99,7 @@ module Rodauth
     end
 
     def _generate_access_token(*)
-      return super unless oauth_jwt_access_tokens
+      super unless oauth_jwt_access_tokens
     end
 
     def jwt_claims(oauth_grant)

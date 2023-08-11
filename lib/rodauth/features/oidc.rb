@@ -222,7 +222,7 @@ module Rodauth
     def current_oauth_account
       subject_type = current_oauth_application[oauth_applications_subject_type_column] || oauth_jwt_subject_type
 
-      return super unless subject_type == "pairwise"
+      super unless subject_type == "pairwise"
     end
 
     private

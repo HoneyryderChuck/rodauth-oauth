@@ -173,7 +173,7 @@ module Rodauth
           oauth_grants_user_code_column => param("user_code")
         ).update(oauth_grants_user_code_column => nil, oauth_grants_type_column => "device_code")
 
-        return unless rs.positive?
+        rs if rs.positive?
       else
         super
       end
