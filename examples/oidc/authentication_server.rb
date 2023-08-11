@@ -66,10 +66,6 @@ else
     String :request_object_encryption_enc, null: true
     String :request_uris, null: true
 
-    # DPoP
-    String :dpop_signing_alg_values_supported, null: true
-    String :dpop_bound_access_tokens, null: true
-
     # JWT/OIDC per application signing verification
     String :jwt_public_key, type: :text
     # RP-initiated logout

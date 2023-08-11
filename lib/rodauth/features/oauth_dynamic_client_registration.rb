@@ -23,8 +23,8 @@ module Rodauth
           next unless token
 
           oauth_application = db[oauth_applications_table]
-                                .where(oauth_applications_client_id_column => client_id)
-                                .first
+                              .where(oauth_applications_client_id_column => client_id)
+                              .first
           next unless oauth_application
 
           authorization_required unless password_hash_match?(oauth_application[oauth_applications_registration_access_token_column], token)
@@ -200,14 +200,6 @@ module Rodauth
         when "client_name"
           register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(value)) unless value.is_a?(String)
           key = oauth_applications_name_column
-        when "dpop_bound_access_tokens"
-          unless respond_to?(:oauth_applications_dpop_bound_access_tokens_column)
-            register_throw_json_response_error("invalid_client_metadata",
-                                               register_invalid_param_message(key))
-          end
-          request_params[key] = value = convert_to_boolean(key, value)
-
-          key = oauth_applications_dpop_bound_access_tokens_column
         when "require_signed_request_object"
           unless respond_to?(:oauth_applications_require_signed_request_object_column)
             register_throw_json_response_error("invalid_client_metadata",
@@ -292,22 +284,22 @@ module Rodauth
 
       # https://datatracker.ietf.org/doc/html/rfc7591#section-2
       if create_params[oauth_applications_grant_types_column] ||= begin
-                                                                    # If omitted, the default behavior is that the client will use only the "authorization_code" Grant Type.
-                                                                    return_params["grant_types"] = %w[authorization_code] # rubocop:disable Lint/AssignmentInCondition
-                                                                    "authorization_code"
-                                                                  end
+        # If omitted, the default behavior is that the client will use only the "authorization_code" Grant Type.
+        return_params["grant_types"] = %w[authorization_code] # rubocop:disable Lint/AssignmentInCondition
+        "authorization_code"
+      end
         create_params[oauth_applications_token_endpoint_auth_method_column] ||= begin
-                                                                                  # If unspecified or omitted, the default is "client_secret_basic", denoting the HTTP Basic
-                                                                                  # authentication scheme as specified in Section 2.3.1 of OAuth 2.0.
-                                                                                  return_params["token_endpoint_auth_method"] = "client_secret_basic"
-                                                                                  "client_secret_basic"
-                                                                                end
+          # If unspecified or omitted, the default is "client_secret_basic", denoting the HTTP Basic
+          # authentication scheme as specified in Section 2.3.1 of OAuth 2.0.
+          return_params["token_endpoint_auth_method"] = "client_secret_basic"
+          "client_secret_basic"
+        end
       end
       create_params[oauth_applications_response_types_column] ||= begin
-                                                                    # If omitted, the default is that the client will use only the "code" response type.
-                                                                    return_params["response_types"] = %w[code]
-                                                                    "code"
-                                                                  end
+        # If omitted, the default is that the client will use only the "code" response type.
+        return_params["response_types"] = %w[code]
+        "code"
+      end
       rescue_from_uniqueness_error do
         initialize_register_params(create_params, return_params)
         create_params.delete_if { |k, _| !application_columns.include?(k) }
