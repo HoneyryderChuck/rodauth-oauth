@@ -1,0 +1,12 @@
+= Documentation for OAuth DPoP feature
+
+The oauth_dpop feature implements the OAuth 2.0 Demonstrating Proof-of-Possession at the Application Layer (DPoP) protocol.
+
+== Value Methods
+oauth_applications_dpop_signing_alg_column :: db column where to store the signing algorithm used for the DPoP JWT for the oauth application, <tt>:dpop_signing_alg</tt> by default.
+oauth_applications_dpop_bound_access_tokens_column :: the db column storing whether dpop is required for the oauth application, <tt>:dpop_bound_access_tokens?</tt> by default.
+
+dpop_bound_access_tokens Boolean value specifying whether the client always uses DPoP for token requests. <tt>false</tt> by default
+dpop_signing_alg_values_supported :: Supported JWS algorithms for signing DPoP headers.
+
+oauth_invalid_dpop_proof_message :: error description for the "invalid_dpop_proof" OAuth error code, <tt>"Invalid DPoP key binding"</tt> by default.
