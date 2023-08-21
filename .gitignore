@@ -15,3 +15,5 @@ www/.sass-cache
 www/wiki
 .jekyll-cache
 /examples/mtls/*.pem
+.DS_STORE
+.idea

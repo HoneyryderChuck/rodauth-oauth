@@ -47,6 +47,9 @@ Sequel.migration do
       # for oauth_pushed_authorization_request
       TrueClass :require_pushed_authorization_requests, null: false, default: false
 
+      # for oauth_dpop
+      TrueClass :dpop_bound_access_tokens, null: true, default: false
+
       # for oauth_tls_client_auth
       String :tls_client_auth_subject_dn, null: true
       String :tls_client_auth_san_dns, null: true

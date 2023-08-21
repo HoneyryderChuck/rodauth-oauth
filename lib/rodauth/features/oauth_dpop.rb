@@ -8,7 +8,9 @@ module Rodauth
     depends :oauth_base, :oauth_jwt_base
     VALID_ALG_CLAIMS = %w[RS PS ES HS].freeze
 
-    auth_value_method :oauth_dpop_bound_access_tokens, true
+    auth_value_method :oauth_dpop_bound_access_tokens, false
+    auth_value_method :oauth_dpop_bound_authorization_requests, false
+    auth_value_method :oauth_dpop_bound_par_requests, false
     auth_value_method :oauth_use_dpop_nonce, false
     auth_value_method :oauth_dpop_signing_alg_values_supported,
                       %w[
@@ -34,14 +36,15 @@ module Rodauth
     auth_value_method :max_param_bytesize, nil if Rodauth::VERSION >= "2.26.0"
 
     %i[
-      dpop_signing_alg_values_supported
       dpop_bound_access_tokens
+      dpop_bound_authorization_requests
+      dpop_bound_par_requests
       use_dpop_nonce
     ].each do |column|
       auth_value_method :"oauth_applications_#{column}_column", column
     end
 
-    %i[jkt dpop_jwk_hash token_hash_column].each do |column|
+    %i[jkt dpop_jwk_hash token_hash].each do |column|
       auth_value_method :"oauth_grants_#{column}_column", column
     end
 
@@ -52,20 +55,47 @@ module Rodauth
       return @dpop_bound_access_tokens if defined?(@dpop_bound_access_tokens)
 
       @dpop_bound_access_tokens =
-        (
-          if oauth_application
-            oauth_application[
-              oauth_applications_dpop_bound_access_tokens_column
-            ]
-          end
-        )
+        (if oauth_application
+          oauth_application[
+            oauth_applications_dpop_bound_access_tokens_column
+          ]
+        end)
       @dpop_bound_access_tokens =
         oauth_dpop_bound_access_tokens if @dpop_bound_access_tokens.nil?
       @dpop_bound_access_tokens
     end
 
-    def require_dpop_proof
-    end
+    # WIP: Implement dpop for authz and par requests
+    # def dpop_bound_authorization_requests?
+    #   return @dpop_bound_authorization_requests if defined?(@dpop_bound_authorization_requests)
+
+    #   @dpop_bound_authorization_requests =
+    #     (if oauth_application
+    #       oauth_application[
+    #         oauth_applications_dpop_bound_authorization_requests_column
+    #       ]
+    #     end)
+    #   @dpop_bound_authorization_requests =
+    #     oauth_dpop_bound_authorization_requests if @dpop_bound_authorization_requests.nil?
+    #   @dpop_bound_authorization_requests
+    # end
+
+    # def dpop_bound_par_requests?
+    #   return @dpop_bound_par_requests if defined?(@dpop_bound_par_requests)
+
+    #   @dpop_bound_par_requests =
+    #     (if oauth_application
+    #       oauth_application[
+    #         oauth_applications_dpop_bound_par_requests_column
+    #       ]
+    #     end)
+    #   @dpop_bound_par_requests =
+    #     oauth_dpop_bound_par_requests if @dpop_bound_par_requests.nil?
+    #   @dpop_bound_par_requests
+    # end
+
+    # def require_dpop_proof
+    # end
 
     # Utility Methods
     def extract_jwt_headers(jwt)
@@ -91,10 +121,6 @@ module Rodauth
       request.env["HTTP_#{key.upcase}"].to_s
     end
 
-    def jwt_decode_alg
-      oauth_dpop_signing_alg_values_supported || "ES256"
-    end
-
     # DPoP Processing Methods
     def process_token_request
       catch_error do
@@ -107,8 +133,7 @@ module Rodauth
     end
 
     def decoded_dpop_proof
-      @decoded_dpop_proof ||=
-        begin
+      @decoded_dpop_proof ||= begin
           decode_dpop_proof(header_value_or_nil("DPoP"))
         end
     end
@@ -146,11 +171,9 @@ module Rodauth
       return @use_dpop_nonce if defined?(@use_dpop_nonce)
 
       @use_dpop_nonce =
-        (
-          if oauth_application
-            oauth_application[oauth_applications_use_dpop_nonce_column]
-          end
-        )
+        (if oauth_application
+          oauth_application[oauth_applications_use_dpop_nonce_column]
+        end)
       @use_dpop_nonce = oauth_use_dpop_nonce if @use_dpop_nonce.nil?
       @use_dpop_nonce
     end
@@ -187,7 +210,7 @@ module Rodauth
         -> { validate_nonce(payload["nonce"]) if payload["nonce"] },
         -> { validate_jwt_iat(payload["iat"]) },
         -> { validate_access_token_binding(payload["ath"], header["jwk"]) },
-        -> { validate_jti(payload["jti"], payload["iat"]) }
+        -> { validate_jti(payload["jti"], payload["iat"]) },
       ].each(&:call)
     rescue => e
       logger.error("#{e.message}")
@@ -369,6 +392,12 @@ module Rodauth
         oauth_grants_refresh_token_hash_column
       )
       super_result
+    end
+
+    def oauth_server_metadata_body(*)
+      super.tap do |data|
+        data[:dpop_signing_alg_values_supported] = oauth_dpop_signing_alg_values_supported
+      end
     end
   end
 end

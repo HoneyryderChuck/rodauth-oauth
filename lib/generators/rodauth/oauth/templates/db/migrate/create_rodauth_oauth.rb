@@ -50,8 +50,9 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.boolean :require_pushed_authorization_requests, null: false, default: false
 
       #DPoP
-      t.string :dpop_signing_alg_values_supported, null: true
       t.string :dpop_bound_access_tokens, null: true
+      t.string :dpop_bound_authorization_requests, null: true
+      t.string :dpop_bound_par_requests, null: true
 
       # :oauth_tls_client_auth
       t.string :tls_client_auth_subject_dn, null: true

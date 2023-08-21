@@ -280,6 +280,25 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
     assert JSON.parse(last_response.body)["token_endpoint_auth_method"] == "client_secret_basic"
   end
 
+  def test_oauth_dynamic_client_dpop_bound_access_tokens
+    rodauth do
+      oauth_application_scopes %w[read write]
+    end
+    setup_application(:oauth_dpop)
+
+    post("/register", valid_registration_params.merge("dpop_bound_access_tokens" => ";)"))
+    assert last_response.status == 400
+    assert JSON.parse(last_response.body)["error"] == "invalid_client_metadata"
+
+    post("/register", valid_registration_params.merge("dpop_bound_access_tokens" => true))
+    assert last_response.status == 201
+    assert JSON.parse(last_response.body)["dpop_bound_access_tokens"] == true
+
+    post("/register", valid_registration_params.merge("dpop_bound_access_tokens" => false))
+    assert last_response.status == 201
+    assert JSON.parse(last_response.body)["dpop_bound_access_tokens"] == false
+  end
+
   def test_oauth_dynamic_client_require_signed_request_object
     rodauth do
       oauth_application_scopes %w[read write]
@@ -325,9 +344,9 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
     setup_application(:oauth_tls_client_auth)
 
     post("/register", valid_registration_params.merge(
-                        "tls_client_auth_subject_dn" => "smth",
-                        "tls_client_auth_san_dns" => "smth"
-                      ))
+      "tls_client_auth_subject_dn" => "smth",
+      "tls_client_auth_san_dns" => "smth",
+    ))
     assert last_response.status == 400
     assert JSON.parse(last_response.body)["error"] == "invalid_client_metadata"
 
@@ -360,7 +379,7 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
   def setup_application(*)
     rodauth do
-      before_register {} # no auth
+      before_register { } # no auth
     end
     super
   end
@@ -381,7 +400,7 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
       "policy_uri" => "https://foobar.com/policy",
       "jwks_uri" => "https://foobar.com/jwks",
       "software_id" => "12",
-      "software_version" => "XHR-123"
+      "software_version" => "XHR-123",
     }
   end
 end
