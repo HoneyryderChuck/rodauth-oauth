@@ -49,7 +49,7 @@ gem "ruby-saml"
 gem "saml_idp"
 gem "xmlenc"
 
-gem "rodauth-select-account", "~> 0.0.2"
+gem "rodauth-select-account", "~> 0.1.2"
 gem "rubocop"
 gem "rubocop-performance"
 gem "simplecov"

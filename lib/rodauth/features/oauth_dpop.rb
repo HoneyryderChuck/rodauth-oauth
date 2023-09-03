@@ -2,6 +2,7 @@
 
 require "rodauth/oauth"
 require "logger"
+require "json/jwt"
 
 module Rodauth
   Feature.define(:oauth_dpop, :OauthDPoP) do
@@ -10,6 +11,7 @@ module Rodauth
 
     auth_value_method :oauth_dpop_bound_access_tokens, false
     auth_value_method :oauth_dpop_bound_authorization_requests, false
+    auth_value_method :oauth_dpop_required_error_status, 401
     auth_value_method :oauth_dpop_bound_par_requests, false
     auth_value_method :oauth_use_dpop_nonce, false
     auth_value_method :oauth_dpop_signing_alg_values_supported,
@@ -35,12 +37,11 @@ module Rodauth
 
     auth_value_method :max_param_bytesize, nil if Rodauth::VERSION >= "2.26.0"
 
-    %i[
-      dpop_bound_access_tokens
-      dpop_bound_authorization_requests
-      dpop_bound_par_requests
-      use_dpop_nonce
-    ].each do |column|
+    # dpop_bound_authorization_requests WIP: Implement DPoP bound authorization requests
+    # dpop_bound_par_requests WIP: Implement DPoP bound pushed authorization requests
+    # use_dpop_nonce WIP: Implement DPoP nonce feature
+    # The above to be added to the oauth_applications table
+    %i[dpop_bound_access_tokens].each do |column|
       auth_value_method :"oauth_applications_#{column}_column", column
     end
 
@@ -55,14 +56,29 @@ module Rodauth
       return @dpop_bound_access_tokens if defined?(@dpop_bound_access_tokens)
 
       @dpop_bound_access_tokens =
-        (if oauth_application
-          oauth_application[
-            oauth_applications_dpop_bound_access_tokens_column
-          ]
-        end)
+        (
+          if oauth_application
+            oauth_application[
+              oauth_applications_dpop_bound_access_tokens_column
+            ]
+          end
+        )
       @dpop_bound_access_tokens =
         oauth_dpop_bound_access_tokens if @dpop_bound_access_tokens.nil?
       @dpop_bound_access_tokens
+    end
+
+    # def oauth_dpop_bound_access_tokens
+    #   unless oauth_dpop_bound_access_tokens && header_value_or_nil("DPoP")
+    #     dpop_required
+    #   end
+    # end
+
+    def dpop_required
+      throw_json_response_error(
+        oauth_dpop_required_error_status,
+        "invalid_dpop_proof"
+      )
     end
 
     # WIP: Implement dpop for authz and par requests
@@ -110,9 +126,9 @@ module Rodauth
     def generate_expected_jti(iat)
       time_now = iat
       logger.debug("iat: #{iat}")
-      logger.debug("jwt_iss: #{oauth_jwt_issuer}")
+      logger.debug("jwt_iss: #{authorization_server_url}")
 
-      input_string = "#{oauth_jwt_issuer}:#{time_now}"
+      input_string = "#{authorization_server_url}:#{time_now}"
 
       Digest::SHA256.hexdigest(input_string)
     end
@@ -133,14 +149,15 @@ module Rodauth
     end
 
     def decoded_dpop_proof
-      @decoded_dpop_proof ||= begin
+      @decoded_dpop_proof ||=
+        begin
           decode_dpop_proof(header_value_or_nil("DPoP"))
         end
     end
 
     def decode_dpop_proof(dpop)
       jwk = extract_jwt_headers(dpop)["jwk"]
-      raise_error("Failed to decode DPoP header") unless jwk
+      # raise_error("Failed to decode DPoP header") unless jwk
 
       public_key = JSON::JWK.new(jwk).to_key
       decoded_jwt =
@@ -158,30 +175,40 @@ module Rodauth
         logger.error(
           "Unexpected return value from JWT decoding: #{decoded_jwt.inspect}"
         )
-        raise "Failed to decode JWT"
+        # raise "Failed to decode JWT"
       end
 
       decoded_jwt
     rescue => e
       logger.error("Failed to decode DPoP header: #{e.message}")
-      raise e
+      # raise e
     end
 
-    def use_dpop_nonce?
-      return @use_dpop_nonce if defined?(@use_dpop_nonce)
+    # def use_dpop_nonce?
+    #   return @use_dpop_nonce if defined?(@use_dpop_nonce)
 
-      @use_dpop_nonce =
-        (if oauth_application
-          oauth_application[oauth_applications_use_dpop_nonce_column]
-        end)
-      @use_dpop_nonce = oauth_use_dpop_nonce if @use_dpop_nonce.nil?
-      @use_dpop_nonce
-    end
+    #   @use_dpop_nonce =
+    #     (
+    #       if oauth_application
+    #         oauth_application[oauth_applications_use_dpop_nonce_column]
+    #       end
+    #     )
+    #   @use_dpop_nonce = oauth_use_dpop_nonce if @use_dpop_nonce.nil?
+    #   @use_dpop_nonce
+    # end
 
     def validate_token_params
       logger.info("Started validation of token params")
+
       dpop = header_value_or_nil("DPoP")
       logger.info("DPoP header: #{dpop}")
+      if dpop.empty?
+        logger.error("No DPoP header detected")
+        redirect_response_error("invalid_dpop_proof")
+      end
+      # if oauth_dpop_bound_access_tokens && !dpop
+      #   redirect_response_error("invalid_dpop_proof")
+      # end
 
       claims = decoded_dpop_proof
       logger.debug("Beggining to validate claims: #{claims}")
@@ -210,7 +237,7 @@ module Rodauth
         -> { validate_nonce(payload["nonce"]) if payload["nonce"] },
         -> { validate_jwt_iat(payload["iat"]) },
         -> { validate_access_token_binding(payload["ath"], header["jwk"]) },
-        -> { validate_jti(payload["jti"], payload["iat"]) },
+        -> { validate_jti(payload["jti"], payload["iat"]) }
       ].each(&:call)
     rescue => e
       logger.error("#{e.message}")
@@ -245,7 +272,7 @@ module Rodauth
     def validate_jwk_claim_and_verify_signature(jwk, dpop_proof, alg)
       logger.debug("Validating JWK claim and verifying signature")
 
-      raise_error('Invalid "jwk" claim') unless jwk && jwk.is_a?(Hash)
+      # raise_error('Invalid "jwk" claim') unless jwk && jwk.is_a?(Hash)
 
       # Check if JWK contains the necessary components
       unless jwk["kty"] == "EC" && jwk["x"] && jwk["y"]
@@ -296,6 +323,8 @@ module Rodauth
     end
 
     def validate_jwk_does_not_contain_private_key(jwk)
+      logger.debug("Validating that 'jwk' does not contain private key")
+
       private_key_attributes = %w[d p q dp dq qi]
       if private_key_attributes.any? { |attr| jwk.key?(attr) }
         logger.error("JWK contains private key components")
@@ -361,7 +390,9 @@ module Rodauth
 
       jwk = claims[1]["jwk"]
       jwk_hash = generate_jwk_hash(jwk)
+      jkt = Base64.encode64(jwk_hash).tr("=", "")
       params[:dpop_jwk_hash] = jwk_hash
+      params[:cnf] = { jkt: jkt }
 
       if respond_to?(hash_column, true)
         params[hash_column] = generate_token_hash(token)
@@ -396,7 +427,9 @@ module Rodauth
 
     def oauth_server_metadata_body(*)
       super.tap do |data|
-        data[:dpop_signing_alg_values_supported] = oauth_dpop_signing_alg_values_supported
+        data[
+          :dpop_signing_alg_values_supported
+        ] = oauth_dpop_signing_alg_values_supported
       end
     end
   end
