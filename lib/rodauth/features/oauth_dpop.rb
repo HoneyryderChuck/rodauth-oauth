@@ -355,16 +355,70 @@ module Rodauth
     end
 
     def validate_access_token_binding(claims_ath, claims_jwk)
-      return unless request.path != token_path
-      access_token = retrieve_access_token_from_request # TODO: Implement this
-      unless claims_ath == generate_token_hash(access_token)
-        logger.error("Access token hash mismatch detected")
-        redirect_response_error('Invalid "ath" claim')
+      # List of paths that do not require the "ath" claim
+      exempted_paths = %w[/par /authorize /token]
+
+      access_token = retrieve_access_token_from_request
+
+      # If no access token is retrieved, it's an error.
+      unless access_token
+        logger.error("Missing or invalid DPoP token in Authorization header")
+        redirect_response_error("Invalid DPoP token")
+        return
       end
 
-      unless access_token.embedded_jwk_hash == generate_jwk_hash(claims_jwk)
-        logger.error("Access token not bound to DPoP public key")
-        redirect_response_error("Invalid token binding")
+      unless exempted_paths.include?(request.path)
+        # Ensure that "ath" claim is present and valid
+        unless claims_ath
+          logger.error('"ath" claim is missing')
+          redirect_response_error('Missing "ath" claim')
+          return
+        end
+
+        unless claims_ath == generate_token_hash(access_token)
+          logger.error("Access token hash mismatch detected")
+          redirect_response_error('Invalid "ath" claim')
+          return
+        end
+
+        # Validate that the access token is correctly bound to the DPoP public key
+        unless access_token.embedded_jwk_hash == generate_jwk_hash(claims_jwk)
+          logger.error("Access token not bound to DPoP public key")
+          redirect_response_error("Invalid token binding")
+          return
+        end
+      end
+    end
+
+    def retrieve_access_token_from_request
+      # Extract the Authorization header
+      auth_header = request.env["HTTP_AUTHORIZATION"]
+
+      # If the header isn't present, respond with an error
+      unless auth_header
+        logger.error("Missing Authorization header")
+        redirect_response_error("Missing Authorization header")
+        return nil
+      end
+
+      # Split the header to separate the scheme ("DPoP") and the token
+      scheme, token = auth_header.split
+
+      # Check for "DPoP" scheme
+      if scheme && scheme.downcase == "dpop"
+        # Validate the token against the token68 syntax
+        if token && token.match?(%r{\A[A-Za-z0-9\-._~+/]+=*\z})
+          return token
+        else
+          logger.error("Invalid DPoP token format")
+          redirect_response_error("Invalid DPoP token format")
+          return nil
+        end
+      else
+        # Handle cases where the Authorization header does not use the DPoP scheme
+        logger.error("Invalid Authorization scheme: expected DPoP")
+        redirect_response_error("Invalid Authorization scheme: expected DPoP")
+        return nil
       end
     end
 
