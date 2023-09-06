@@ -41,44 +41,22 @@ module Rodauth
     # dpop_bound_par_requests WIP: Implement DPoP bound pushed authorization requests
     # use_dpop_nonce WIP: Implement DPoP nonce feature
     # The above to be added to the oauth_applications table
-    %i[dpop_bound_access_tokens].each do |column|
-      auth_value_method :"oauth_applications_#{column}_column", column
-    end
 
-    %i[jkt dpop_jwk_hash token_hash].each do |column|
+    %i[jkt dpop_jwk_hash token token_hash].each do |column|
       auth_value_method :"oauth_grants_#{column}_column", column
     end
 
     private
 
     # DPoP Bound Access Token Methods
-    def dpop_bound_access_tokens?
-      return @dpop_bound_access_tokens if defined?(@dpop_bound_access_tokens)
-
-      @dpop_bound_access_tokens =
-        (
-          if oauth_application
-            oauth_application[
-              oauth_applications_dpop_bound_access_tokens_column
-            ]
-          end
-        )
-      @dpop_bound_access_tokens =
-        oauth_dpop_bound_access_tokens if @dpop_bound_access_tokens.nil?
-      @dpop_bound_access_tokens
+    def oauth_dpop_bound_access_tokens
+      dpop = header_value_or_nil("DPoP")
+      dpop_present = dpop && !dpop.empty?
+      dpop_required unless dpop_present
     end
 
-    # def oauth_dpop_bound_access_tokens
-    #   unless oauth_dpop_bound_access_tokens && header_value_or_nil("DPoP")
-    #     dpop_required
-    #   end
-    # end
-
     def dpop_required
-      throw_json_response_error(
-        oauth_dpop_required_error_status,
-        "invalid_dpop_proof"
-      )
+      redirect_response_error("invalid_dpop_proof")
     end
 
     # WIP: Implement dpop for authz and par requests
@@ -149,10 +127,7 @@ module Rodauth
     end
 
     def decoded_dpop_proof
-      @decoded_dpop_proof ||=
-        begin
-          decode_dpop_proof(header_value_or_nil("DPoP"))
-        end
+      @decoded_dpop_proof ||= decode_dpop_proof(header_value_or_nil("DPoP"))
     end
 
     def decode_dpop_proof(dpop)
@@ -202,13 +177,12 @@ module Rodauth
 
       dpop = header_value_or_nil("DPoP")
       logger.info("DPoP header: #{dpop}")
-      if dpop.empty?
+      if dpop && dpop.empty?
         logger.error("No DPoP header detected")
         redirect_response_error("invalid_dpop_proof")
+      elsif oauth_dpop_bound_access_tokens && !dpop
+        redirect_response_error("invalid_dpop_proof")
       end
-      # if oauth_dpop_bound_access_tokens && !dpop
-      #   redirect_response_error("invalid_dpop_proof")
-      # end
 
       claims = decoded_dpop_proof
       logger.debug("Beggining to validate claims: #{claims}")
@@ -403,7 +377,7 @@ module Rodauth
       token
     end
 
-    def _generate_access_token(params = {})
+    def _generate_jwt_access_token(params = {})
       logger.info("Generating access token...")
       super_result = super
       _generate_token(
@@ -414,7 +388,7 @@ module Rodauth
       super_result
     end
 
-    def _generate_refresh_token(params)
+    def _generate_jwt_refresh_token(params)
       logger.info("Generating refresh token...")
       super_result = super
       _generate_token(
