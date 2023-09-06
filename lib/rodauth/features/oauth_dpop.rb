@@ -240,22 +240,31 @@ module Rodauth
     end
 
     def validate_alg_claim(alg)
-      logger.debug("Debugging #{alg}")
-      return if valid_alg_claim?(alg)
+      # Check if alg is not provided or if it's set to "none"
+      if alg.nil? || alg.downcase == "none"
+        logger.error(
+          'Invalid "alg" claim detected: alg is either missing or set to "none"'
+        )
+        redirect_response_error('Invalid "alg" claim')
+      end
 
-      logger.error('Invalid "alg" claim detected')
-      redirect_response_error('Invalid "alg" claim')
+      # Check if alg does not start with any of the VALID_ALG_CLAIMS
+      unless VALID_ALG_CLAIMS.any? { |claim| alg.start_with?(claim) }
+        logger.error(
+          "Invalid \"alg\" claim detected: #{alg} is not one of the valid claims"
+        )
+        redirect_response_error('Invalid "alg" claim')
+      end
+
+      # If we reach here, the alg is valid. No action is needed.
     end
 
-    def valid_alg_claim?(alg)
-      alg && !alg.eql?("none") &&
-        VALID_ALG_CLAIMS.any? { |claim| alg.start_with?(claim) }
-    end
-
-    def validate_jwk_claim_and_verify_signature(jwk, dpop_proof, alg)
+    def validate_jwk_claim_and_verify_signature(jwk, dpop_proof, alg = "ES256")
       logger.debug("Validating JWK claim and verifying signature")
 
-      # raise_error('Invalid "jwk" claim') unless jwk && jwk.is_a?(Hash)
+      unless jwk && jwk.is_a?(Hash)
+        redirect_response_error("invalid_dpop_proof")
+      end
 
       # Check if JWK contains the necessary components
       unless jwk["kty"] == "EC" && jwk["x"] && jwk["y"]
@@ -299,10 +308,24 @@ module Rodauth
 
     def validate_htm_and_htu_claims(htm, htu)
       logger.debug("Validating 'htm' and 'htu' claims")
-      unless htm == request.request_method
+
+      # Check if htm matches the request method
+      unless htm && htm.upcase == request.request_method.upcase
+        logger.error(
+          "Invalid 'htm' claim detected: expected #{request.request_method.upcase} but got #{htm}"
+        )
         redirect_response_error('Invalid "htm" claim')
       end
-      redirect_response_error('Invalid "htu" claim') unless htu == request.url
+
+      # Check if htu matches the request URL
+      unless htu && htu == request.url
+        logger.error(
+          "Invalid 'htu' claim detected: expected #{request.url} but got #{htu}"
+        )
+        redirect_response_error('Invalid "htu" claim')
+      end
+
+      # If we reach here, both claims are valid. No action is needed.
     end
 
     def validate_jwk_does_not_contain_private_key(jwk)
