@@ -119,6 +119,45 @@ class RodauthOAuthDPoPTest < JWTIntegration
     assert json_body["error"]
   end
 
+  def test_token_introspection_with_dpop_bound_token
+    # Assuming the token is DPoP-bound
+    token = generate_dpop_proof
+    post_introspect_request(token)
+
+    assert_equal 200, last_response.status, "Expected a 200 OK status"
+
+    response_body = JSON.parse(last_response.body)
+    assert response_body["active"], "Expected token to be active"
+    assert response_body.key?("cnf"),
+           "Expected introspection response to include 'cnf' key"
+    assert_equal "sample_jkt_value",
+                 response_body["cnf"]["jkt"],
+                 "Expected 'jkt' member to be 'sample_jkt_value'"
+  end
+
+  def test_token_introspection_without_dpop_bound_token
+    # Assuming the token is not DPoP-bound
+    token = generate_dpop_proof(remove_jwk: true) # You might want to adjust the generation method for a non-DPoP token
+    post_introspect_request(token)
+
+    assert_equal 200, last_response.status, "Expected a 200 OK status"
+
+    response_body = JSON.parse(last_response.body)
+    assert response_body["active"], "Expected token to be active"
+    refute response_body.key?("cnf"),
+           "Did not expect introspection response to include 'cnf' key"
+  end
+
+  private
+
+  def post_introspect_request(token)
+    post "/introspect",
+         {
+           token: token,
+           token_type_hint: "access_token" # You can also test for "refresh_token" if needed
+         }
+  end
+
   private
 
   def setup_application(*)
@@ -139,15 +178,8 @@ class RodauthOAuthDPoPTest < JWTIntegration
                password: "CLIENT_SECRET"
              )
            }"
-    header "DPoP", generate_dpop_proof
-    post(
-      "/token",
-      client_id: oauth_application[:client_id],
-      client_secret: "CLIENT_SECRET",
-      grant_type: "authorization_code",
-      code: grant[:code],
-      redirect_uri: grant[:redirect_uri]
-    )
+    header "DPoP", generate_dpop_proof()
+    post_token_request
 
     puts "json_body: #{json_body}"
 

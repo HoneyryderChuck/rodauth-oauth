@@ -209,7 +209,7 @@ module Rodauth
         -> { validate_typ_claim(header["typ"]) },
         -> { validate_alg_claim(header["alg"]) },
         -> { validate_jwk_does_not_contain_private_key(header["jwk"]) },
-        -> do
+        lambda do
           validate_jwk_claim_and_verify_signature(
             header["jwk"],
             dpop_proof,
@@ -219,7 +219,11 @@ module Rodauth
         -> { validate_htm_and_htu_claims(payload["htm"], payload["htu"]) },
         -> { validate_nonce(payload["nonce"]) if payload["nonce"] },
         -> { validate_jwt_iat(payload["iat"]) },
-        -> { validate_access_token_binding(payload["ath"], header["jwk"]) },
+        lambda do
+          if payload["ath"].present?
+            validate_access_token_binding(payload["ath"], header["jwk"])
+          end
+        end,
         -> { validate_jti(payload["jti"], payload["iat"]) }
       ].each(&:call)
     rescue => e
@@ -357,6 +361,7 @@ module Rodauth
     def validate_access_token_binding(claims_ath, claims_jwk)
       # List of paths that do not require the "ath" claim
       exempted_paths = %w[/par /authorize /token]
+      logger.info("Validating request path: #{request.path}")
 
       access_token = retrieve_access_token_from_request
 
@@ -450,9 +455,9 @@ module Rodauth
 
       jwk = claims[1]["jwk"]
       jwk_hash = generate_jwk_hash(jwk)
-      jkt = Base64.encode64(jwk_hash).tr("=", "")
+      base64url_jkt = [jwk_hash].pack("H*").urlsafe_encode64.tr("=", "")
       params[:dpop_jwk_hash] = jwk_hash
-      params[:cnf] = { jkt: jkt }
+      params[:cnf] = { jkt: base64url_jkt }
 
       if respond_to?(hash_column, true)
         params[hash_column] = generate_token_hash(token)
@@ -483,6 +488,18 @@ module Rodauth
         oauth_grants_refresh_token_hash_column
       )
       super_result
+    end
+
+    def json_token_introspect_payload(grant_or_claims)
+      introspection_response = super
+
+      # Check if the token is DPoP-bound by looking for the cnf claim
+      if grant_or_claims["cnf"] && grant_or_claims["cnf"]["jkt"]
+        # Add the cnf claim with the jkt member to the introspection response
+        introspection_response[:cnf] = { jkt: grant_or_claims["cnf"]["jkt"] }
+      end
+
+      introspection_response
     end
 
     def oauth_server_metadata_body(*)
