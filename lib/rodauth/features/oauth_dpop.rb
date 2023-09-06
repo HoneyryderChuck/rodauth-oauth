@@ -112,7 +112,16 @@ module Rodauth
     end
 
     def header_value_or_nil(key)
-      request.env["HTTP_#{key.upcase}"].to_s
+      # Look up the header in a case-insensitive manner.
+      header_value =
+        request.env.find { |k, _| k.casecmp?("HTTP_#{key.upcase}") }&.last
+
+      # Strip any leading or trailing whitespace.
+      header_value&.strip!
+
+      # Return nil if the header is blank.
+      redirect_response_error("invalid_dpop_proof") if header_value&.empty?
+      header_value unless header_value&.empty?
     end
 
     # DPoP Processing Methods

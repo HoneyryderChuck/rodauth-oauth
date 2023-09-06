@@ -29,27 +29,22 @@ class RodauthOAuthDPoPTest < JWTIntegration
     rodauth { oauth_dpop_bound_access_tokens true }
     setup_application
 
-    access_token = generate_access_token(oauth_grant(scopes: "openid"))
-    login(access_token)
+    token = generate_access_token(oauth_grant(scopes: "openid"))
+    login(token)
 
     @json_body = nil
 
     # Access the protected resource with the token
-    headers = {
-      "Authorization" => "Bearer #{access_token}",
-      "DPoP" => access_token
-    }
+    headers = { "Authorization" => "Bearer #{token}" }
     get "/private", {}, headers
 
-    assert last_response.status == 200
+    assert_equal 200, last_response.status
     # Additional assertions related to the response data can be added here
   end
 
   def test_fail_generation_without_dpop_when_dpop_bound_is_true
     rodauth { oauth_dpop_bound_access_tokens true }
     setup_application
-    # Assuming you can set dpop_bound_access_tokens via a method or change in configuration
-    # rodauth.oauth_dpop_bound_access_tokens true # Pseudo-method, replace with a real method
 
     post(
       "/token",
@@ -60,9 +55,6 @@ class RodauthOAuthDPoPTest < JWTIntegration
       redirect_uri: oauth_grant[:redirect_uri]
     )
 
-    verify_response
-
-    puts "STATUS: #{last_response.status}"
     assert last_response.status == 400 || last_response.status == 401
 
     assert json_body["error"]
@@ -81,7 +73,6 @@ class RodauthOAuthDPoPTest < JWTIntegration
   end
 
   def generate_access_token(grant)
-    header "DPoP", generate_dpop_proof("example.org")
     header "Authorization",
            "Basic #{
              authorization_header(
@@ -89,6 +80,7 @@ class RodauthOAuthDPoPTest < JWTIntegration
                password: "CLIENT_SECRET"
              )
            }"
+    header "DPoP", generate_dpop_proof("http://example.org")
     post(
       "/token",
       client_id: oauth_application[:client_id],
@@ -97,6 +89,8 @@ class RodauthOAuthDPoPTest < JWTIntegration
       code: grant[:code],
       redirect_uri: grant[:redirect_uri]
     )
+
+    puts "json_body: #{json_body}"
 
     puts "access_token: #{json_body["access_token"]}"
     json_body["access_token"]
