@@ -6,7 +6,7 @@ require "json/jwt"
 
 module Rodauth
   Feature.define(:oauth_dpop, :OauthDPoP) do
-    depends :oauth_base, :oauth_jwt_base
+    depends :oauth_base, :oauth_authorize_base, :oauth_jwt_base
     VALID_ALG_CLAIMS = %w[RS PS ES HS].freeze
 
     auth_value_method :oauth_dpop_bound_access_tokens, false
@@ -42,7 +42,11 @@ module Rodauth
     # use_dpop_nonce WIP: Implement DPoP nonce feature
     # The above to be added to the oauth_applications table
 
-    %i[jkt dpop_jwk_hash token token_hash].each do |column|
+    %i[dpop_jkt].each do |column|
+      auth_value_method :"oauth_applications_#{column}_column", column
+    end
+
+    %i[dpop_jkt dpop_jwk_hash token token_hash].each do |column|
       auth_value_method :"oauth_grants_#{column}_column", column
     end
 
@@ -455,9 +459,11 @@ module Rodauth
 
       jwk = claims[1]["jwk"]
       jwk_hash = generate_jwk_hash(jwk)
-      base64url_jkt = [jwk_hash].pack("H*").Base64.urlsafe_encode64.tr("=", "")
+      base64url_dpop_jkt =
+        Base64.urlsafe_encode64([jwk_hash].pack("H*")).tr("=", "")
+
       params[:dpop_jwk_hash] = jwk_hash
-      params[:cnf] = { jkt: base64url_jkt }
+      params[:cnf] = { dpop_jkt: base64url_dpop_jkt }
 
       if respond_to?(hash_column, true)
         params[hash_column] = generate_token_hash(token)
@@ -494,9 +500,11 @@ module Rodauth
       introspection_response = super
 
       # Check if the token is DPoP-bound by looking for the cnf claim
-      if grant_or_claims["cnf"] && grant_or_claims["cnf"]["jkt"]
-        # Add the cnf claim with the jkt member to the introspection response
-        introspection_response[:cnf] = { jkt: grant_or_claims["cnf"]["jkt"] }
+      if grant_or_claims["cnf"] && grant_or_claims["cnf"]["dpop_jkt"]
+        # Add the cnf claim with the dpop_jkt member to the introspection response
+        introspection_response[:cnf] = {
+          dpop_jkt: grant_or_claims["cnf"]["dpop_jkt"]
+        }
       end
 
       introspection_response

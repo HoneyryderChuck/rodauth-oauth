@@ -90,6 +90,8 @@ class RodauthOAuthDPoPTest < JWTIntegration
     headers = { "Authorization" => "Bearer #{token}" }
     get "/resource", {}, headers
 
+    puts "last_response.body_resource: #{last_response.body}"
+
     assert_equal 200, last_response.status
     # Additional assertions related to the response data can be added here
   end

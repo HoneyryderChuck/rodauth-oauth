@@ -45,7 +45,9 @@ Sequel.migration do
       String :request_uris, null: true
       TrueClass :require_signed_request_object, null: true
       # for oauth_pushed_authorization_request
-      TrueClass :require_pushed_authorization_requests, null: false, default: false
+      TrueClass :require_pushed_authorization_requests,
+                null: false,
+                default: false
 
       # for oauth_dpop
       TrueClass :dpop_bound_access_tokens, null: true, default: false
@@ -71,10 +73,10 @@ Sequel.migration do
       String :authorization_signed_response_alg, null: true
       String :authorization_encrypted_response_alg, null: true
       String :authorization_encrypted_response_enc, null: true
+      # dpop
+      String :dpop_jkt, null: true
     end
   end
 
-  down do
-    drop_table(:oauth_applications)
-  end
+  down { drop_table(:oauth_applications) }
 end

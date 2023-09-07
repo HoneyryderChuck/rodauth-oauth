@@ -45,7 +45,7 @@ Sequel.migration do
       String :claims_locales
       String :claims
       # dpop
-      String :jkt
+      String :dpop_jkt
       String :dpop_jwk_hash
     end
   end
