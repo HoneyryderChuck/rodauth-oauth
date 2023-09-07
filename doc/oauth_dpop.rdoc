@@ -1,12 +1,30 @@
 = Documentation for OAuth DPoP feature
 
-The oauth_dpop feature implements the OAuth 2.0 Demonstrating Proof-of-Possession at the Application Layer (DPoP) protocol.
+The `oauth_dpop` feature implements the OAuth 2.0 Demonstrating Proof-of-Possession at the Application Layer (DPoP) protocol.
 
 == Value Methods
-oauth_applications_dpop_signing_alg_column :: db column where to store the signing algorithm used for the DPoP JWT for the oauth application, <tt>:dpop_signing_alg</tt> by default.
-oauth_applications_dpop_bound_access_tokens_column :: the db column storing whether dpop is required for the oauth application, <tt>:dpop_bound_access_tokens?</tt> by default.
 
-dpop_bound_access_tokens Boolean value specifying whether the client always uses DPoP for token requests. <tt>false</tt> by default
-dpop_signing_alg_values_supported :: Supported JWS algorithms for signing DPoP headers.
+- `oauth_applications_dpop_bound_access_tokens` :: Boolean value specifying whether the client always uses DPoP for token requests. Defaults to `false`.
+- `oauth_applications_dpop_bound_authorization_requests` :: Boolean value indicating if the DPoP should be bound to authorization requests. Defaults to `false`.
+- `oauth_applications_dpop_bound_par_requests` :: Boolean value indicating if the DPoP should be bound to pushed authorization requests. Defaults to `false`.
+- `oauth_use_dpop_nonce` :: Boolean value indicating if a nonce should be used for DPoP. Defaults to `false`.
+- `oauth_dpop_signing_alg_values_supported` :: Supported JWS algorithms for signing DPoP headers. Defaults to an array of algorithms including `HS256`, `HS384`, and more.
+- `logger` :: Logger instance used for logging. Defaults to `Logger.new(STDOUT)`.
 
-oauth_invalid_dpop_proof_message :: error description for the "invalid_dpop_proof" OAuth error code, <tt>"Invalid DPoP key binding"</tt> by default.
+Translatable methods:
+- `oauth_invalid_dpop_proof_message` :: Error description for the "invalid_dpop_proof" OAuth error code. Defaults to "Invalid DPoP key binding".
+
+DB Columns:
+- `oauth_applications_dpop_jkt_column` :: DB column for storing DPoP JKT for the oauth application.
+- `oauth_grants_dpop_jkt_column` :: DB column for storing DPoP JKT for the oauth grants.
+- `oauth_grants_dpop_jwk_hash` :: DB column for storing DPoP JWK hash for the oauth grants.
+- `oauth_grants_token` :: DB column for storing token for the oauth grants.
+- `oauth_grants_token_hash` :: DB column for storing token hash for the oauth grants.
+
+== Notes
+- Utility methods like `extract_jwt_headers`, `generate_jwk_hash`, and more are used for processing and validating DPoP headers and tokens.
+- The `process_token_request` method handles the token request processing and validation.
+- The `validate_token_params` method is responsible for validating the DPoP token parameters.
+- Token generation methods `_generate_jwt_access_token` and `_generate_jwt_refresh_token` are responsible for generating JWT access and refresh tokens, respectively.
+- The `oauth_server_metadata_body` method extends the server metadata with DPoP signing algorithms supported.
+
