@@ -455,7 +455,7 @@ module Rodauth
 
       jwk = claims[1]["jwk"]
       jwk_hash = generate_jwk_hash(jwk)
-      base64url_jkt = [jwk_hash].pack("H*").urlsafe_encode64.tr("=", "")
+      base64url_jkt = [jwk_hash].pack("H*").Base64.urlsafe_encode64.tr("=", "")
       params[:dpop_jwk_hash] = jwk_hash
       params[:cnf] = { jkt: base64url_jkt }
 
