@@ -81,16 +81,15 @@ class RodauthOAuthDPoPTest < JWTIntegration
     rodauth { oauth_dpop_bound_access_tokens true }
     setup_application
 
-    token = generate_access_token(oauth_grant(scopes: "openid"))
-    login(token)
-
-    # @json_body = nil
+    header "DPoP", generate_dpop_proof
+    header "Authorization", authorization_basic_header
+    post_token_request
+    token = json_body["access_token"]
 
     # Access the protected resource with the token
-    headers = { "Authorization" => "Bearer #{token}" }
-    get "/resource", {}, headers
+    header "Authorization", "Bearer #{token}"
 
-    puts "last_response.body_resource: #{last_response.body}"
+    get("/private")
 
     assert_equal 200, last_response.status
     # Additional assertions related to the response data can be added here
@@ -100,14 +99,7 @@ class RodauthOAuthDPoPTest < JWTIntegration
     rodauth { oauth_dpop_bound_access_tokens true }
     setup_application
 
-    post(
-      "/token",
-      client_id: oauth_application[:client_id],
-      client_secret: "CLIENT_SECRET",
-      grant_type: "authorization_code",
-      code: oauth_grant[:code],
-      redirect_uri: oauth_grant[:redirect_uri]
-    )
+    post_token_request
 
     assert last_response.status == 400 || last_response.status == 401
 
@@ -116,28 +108,29 @@ class RodauthOAuthDPoPTest < JWTIntegration
 
   def test_token_introspection_with_dpop_bound_token
     rodauth { oauth_dpop_bound_access_tokens true }
-    setup_application
+    setup_application(:oauth_token_introspection)
 
     header "DPoP", generate_dpop_proof
+    header "Authorization", authorization_basic_header
     token = generate_access_token(oauth_grant(scopes: "openid"))
-    puts "token: #{token}"
 
-    post_introspect_request(token)
+    verify_response
+
+    # valid token, and now we're getting somewhere
+    post(
+      "/introspect",
+      { token: json_body["access_token"], token_type_hint: "access_token" }
+    )
+
+    @json_body = nil
+    verify_response
 
     assert_equal 200, last_response.status, "Expected a 200 OK status"
-
-    # response_body = JSON.parse(last_response.body)
-    # assert response_body["active"], "Expected token to be active"
-    # assert response_body.key?("cnf"),
-    #        "Expected introspection response to include 'cnf' key"
-    # assert_equal "sample_jkt_value",
-    #              response_body["cnf"]["jkt"],
-    #              "Expected 'jkt' member to be 'sample_jkt_value'"
   end
 
   def test_token_introspection_without_dpop_bound_token
     rodauth { oauth_dpop_bound_access_tokens true }
-    setup_application
+    setup_application(:oauth_token_introspection)
 
     token = generate_access_token(oauth_grant(scopes: "openid"))
 
@@ -149,20 +142,12 @@ class RodauthOAuthDPoPTest < JWTIntegration
   private
 
   def post_introspect_request(token)
-    header "Authorization",
-           "Basic #{
-             authorization_header(
-               username: oauth_application[:client_id],
-               password: "CLIENT_SECRET"
-             )
-           }"
+    header "Authorization", authorization_basic_header
     post "/introspect",
          {
            token: token,
            token_type_hint: "access_token" # You can also test for "refresh_token" if needed
          }
-
-    puts "last_response.body: #{last_response.body}"
   end
 
   private
@@ -173,52 +158,34 @@ class RodauthOAuthDPoPTest < JWTIntegration
     header "Accept", "application/json"
   end
 
+  def authorization_basic_header
+    client_id = oauth_application[:client_id]
+    header = Base64.strict_encode64("#{client_id}:CLIENT_SECRET")
+    "Basic #{header}"
+  end
+
   def oauth_feature
     %i[oauth_authorization_code_grant oauth_dpop]
   end
 
   def generate_access_token(grant)
-    header "Authorization",
-           "Basic #{
-             authorization_header(
-               username: oauth_application[:client_id],
-               password: "CLIENT_SECRET"
-             )
-           }"
+    header "Authorization", authorization_basic_header
     # header "DPoP", generate_dpop_proof
     post_token_request
 
-    puts "json_body: #{json_body}"
-
-    puts "access_token: #{json_body["access_token"]}"
     json_body["access_token"]
   end
 
   def generate_refresh_token(grant)
-    header "Authorization",
-           "Basic #{
-             authorization_header(
-               username: oauth_application[:client_id],
-               password: "CLIENT_SECRET"
-             )
-           }"
+    header "Authorization", authorization_basic_header
     header "DPoP", generate_dpop_proof
     post_token_request
 
-    puts "json_body: #{json_body}"
-
-    puts "refresh_token: #{json_body["refresh_token"]}"
     json_body["refresh_token"]
   end
 
   def login(_token)
-    header "Authorization",
-           "Basic #{
-             authorization_header(
-               username: oauth_application[:client_id],
-               password: "CLIENT_SECRET"
-             )
-           }"
+    header "Authorization", authorization_basic_header
   end
 
   def generate_dpop_proof(
