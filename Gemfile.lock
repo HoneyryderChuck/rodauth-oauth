@@ -89,7 +89,6 @@ GEM
     jwe (0.4.0)
     jwt (2.7.1)
     language_server-protocol (3.17.0.3)
-    logger (1.5.3)
     mail (2.8.1)
       mini_mime (>= 0.1.1)
       net-imap
@@ -313,7 +312,6 @@ DEPENDENCIES
   json-schema
   jwe
   jwt
-  logger
   minitest (~> 5.0)
   minitest-hooks
   mysql2
@@ -328,8 +326,8 @@ DEPENDENCIES
   rake (~> 12.3)
   rbs
   roda
-  rodauth (>= 2.0.0)
-  rodauth-i18n (>= 0.2.0)
+  rodauth (>= 2.31.0)
+  rodauth-i18n (>= 0.7.1)
   rodauth-oauth!
   rodauth-select-account (~> 0.1.2)
   rotp

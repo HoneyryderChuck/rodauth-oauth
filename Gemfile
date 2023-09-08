@@ -29,7 +29,7 @@ gem "jwe"
 # direct dependencies
 gem "json-jwt"
 gem "jwt"
-gem "rodauth", ">= 2.0.0"
+gem "rodauth", ">= 2.31.0"
 gem "sequel"
 
 # Demo-only
@@ -42,7 +42,7 @@ gem "minitest-hooks"
 gem "rack-test"
 gem "webmock"
 
-gem "rodauth-i18n", ">= 0.2.0"
+gem "rodauth-i18n", ">= 0.7.1"
 gem "rotp"
 gem "rqrcode"
 gem "ruby-saml"

@@ -42,7 +42,7 @@ module Rodauth
     # use_dpop_nonce WIP: Implement DPoP nonce feature
     # The above to be added to the oauth_applications table
 
-    %i[dpop_jkt].each do |column|
+    %i[dpop_jkt dpop_bound_access_tokens].each do |column|
       auth_value_method :"oauth_applications_#{column}_column", column
     end
 
