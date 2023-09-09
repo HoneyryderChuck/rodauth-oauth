@@ -14,6 +14,7 @@ module Rodauth
     auth_value_method :oauth_dpop_required_error_status, 401
     auth_value_method :oauth_dpop_bound_par_requests, false
     auth_value_method :oauth_use_dpop_nonce, false
+    auth_value_method :oauth_token_type, "dpop"
     auth_value_method :oauth_dpop_signing_alg_values_supported,
                       %w[
                         HS256
@@ -31,9 +32,6 @@ module Rodauth
                         ES256K
                       ]
     auth_value_method :logger, Logger.new(STDOUT)
-
-    translatable_method :oauth_invalid_dpop_proof_message,
-                        "Invalid DPoP key binding"
 
     auth_value_method :max_param_bytesize, nil if Rodauth::VERSION >= "2.26.0"
 
@@ -206,6 +204,14 @@ module Rodauth
       super
     end
 
+    def validate_authorize_params
+      super
+      dpop_jkt = param_or_nil("dpop_jkt")
+      redirect_response_error("invalid_dpop_proof") unless dpop_jkt
+
+      validate_authorize_dpop_jkt_claim(dpop_jkt)
+    end
+
     def validate_dpop_proof_claims(claims, dpop_proof)
       payload, header = claims
 
@@ -228,6 +234,7 @@ module Rodauth
             validate_access_token_binding(payload["ath"], header["jwk"])
           end
         end,
+        -> { validate_token_dpop_jkt_claim(header["jkt"]) if header["jkt"] },
         -> { validate_jti(payload["jti"], payload["iat"]) }
       ].each(&:call)
     rescue => e
@@ -311,6 +318,33 @@ module Rodauth
       rescue JWT::DecodeError => e
         logger.error("Failed to verify JWT: #{e.message}")
         redirect_response_error("Invalid JWT signature")
+      end
+    end
+
+    def validate_authorize_dpop_jkt_claim(dpop_jkt)
+      # Check if the path is either "/authorize" or "/par"
+      unless %w[/authorize /par].include?(request.path)
+        logger.info(
+          "Path '#{request.path}' skipped, dpop_jkt validation only applies to /authorize and /par."
+        )
+        return
+      end
+
+      # If dpop_jkt matches what's stored in the oauth_application
+      if dpop_jkt == oauth_application[oauth_applications_dpop_jkt_column]
+        logger.info("dpop_jkt validated successfully.")
+      else
+        logger.error("Mismatch in dpop_jkt values. Redirecting with error.")
+        redirect_response_error("invalid_dpop_proof")
+      end
+    end
+
+    def validate_token_dpop_jkt_claim(jwk)
+      jwk_thumbprint = jwk_thumbprint(jwk)
+
+      unless jwk_thumbprint ==
+               oauth_application[oauth_applications_dpop_jkt_column]
+        redirect_response_error("invalid_dpop_proof")
       end
     end
 
@@ -508,6 +542,34 @@ module Rodauth
       end
 
       introspection_response
+    end
+
+    def base64url_encode(str)
+      Base64.urlsafe_encode64(str).tr("=", "")
+    end
+
+    def jwk_thumbprint(jwk)
+      # Step 1: Extract and order necessary fields
+      case jwk["kty"]
+      when "RSA"
+        canonical = { kty: jwk["kty"], n: jwk["n"], e: jwk["e"] }
+      when "EC"
+        canonical = {
+          kty: jwk["kty"],
+          crv: jwk["crv"],
+          x: jwk["x"],
+          y: jwk["y"]
+        }
+        # Add other key types as needed
+      else
+        raise "Unsupported key type: #{jwk["kty"]}"
+      end
+
+      # Step 2: Hash the canonical string
+      sha256 = OpenSSL::Digest::SHA256.digest(canonical.to_json)
+
+      # Step 3: Base64url encode
+      base64url_encode(sha256)
     end
 
     def oauth_server_metadata_body(*)

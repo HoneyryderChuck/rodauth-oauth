@@ -87,7 +87,7 @@ class RodauthOAuthDPoPTest < JWTIntegration
     token = json_body["access_token"]
 
     # Access the protected resource with the token
-    header "Authorization", "Bearer #{token}"
+    header "Authorization", "DPoP #{token}"
 
     get("/private")
 
@@ -139,16 +139,151 @@ class RodauthOAuthDPoPTest < JWTIntegration
     refute_equal 200, last_response.status, "Expected a 200 OK status"
   end
 
-  private
+  # def test_token_introspection_with_cnf_claim
+  #   rodauth { oauth_dpop_bound_access_tokens true }
+  #   setup_application(:oauth_token_introspection)
 
-  def post_introspect_request(token)
-    header "Authorization", authorization_basic_header
-    post "/introspect",
-         {
-           token: token,
-           token_type_hint: "access_token" # You can also test for "refresh_token" if needed
-         }
-  end
+  #   header "DPoP", generate_dpop_proof
+  #   header "Authorization", authorization_basic_header
+  #   post_token_request
+  #   token = json_body["access_token"]
+
+  #   post("/introspect", { token: token, token_type_hint: "access_token" })
+
+  #   introspection_response = JSON.parse(last_response.body)
+  #   cnf_claim = introspection_response["cnf"]
+
+  #   refute_nil cnf_claim,
+  #              "Expected CNF claim to be present in the introspection response"
+  #   assert_equal "5XxXKo3HxKmAM7j8dplnwEtOji0YDSHJCaQY0e021FA",
+  #                cnf_claim,
+  #                "Unexpected CNF claim value"
+  # end
+
+  # def test_authorize_with_dpop_proof_and_valid_jkt
+  #   rodauth { oauth_dpop_bound_access_tokens true }
+
+  #   dpop_token =
+  #     "eyJ0eXAiOiJkcG9wK2p3dCIsImFsZyI6IkVTMjU2IiwiandrIjp7Imt0eSI6IkVDIiwidXNlIjoic2lnIiwiY3J2IjoiUC0yNTYiLCJ4IjoiNzRoOXY4ZC0tUkZDYXpEVmUycF9nbVZqbHlDZFVLMzM1NG1UTVpEODljZyIsInkiOiJLTkFQYzhQbGFjY28yWWotLXNjTWIyVERGRVFSRFhsWjFsVWM0OFJzV2VvIn19.eyJqdGkiOiI1ZTg0ZTA4Y2JkOTkxZDYwMjczMzljNDljNjlkMWYzNjc1MTY4M2ZlN2VhMjFiYmZjYmYxNzMyMmY3OTA0YTg3IiwiaHRtIjoiUE9TVCIsImh0dSI6Ins6aHRtPT5cIlBPU1RcIiwgOmh0dT0 -
+  #       XCJodHRwOi8vZXhhbXBsZS5vcmcvYXV0aG9yaXplXCJ9L3Rva2VuIiwiaWF0IjoxNjk0MjIyMDc2fQ.Vxj4PrmTpp3OCp_8sRMWFP3zbhDcx0q7mZNA_ZzFIk3cFWQclQ4TbrHGWIfS5yLqh6c4HAVEow7FDh3hXZxbnQ"
+  #   jwk = {
+  #     "kty" => "EC",
+  #     "use" => "sig",
+  #     "crv" => "P-256",
+  #     "x" => "RIZdsJuqQs4gapgn6pYaDlo_7_S_LCTI4ecf1P20IDY",
+  #     "y" => "5f0FHum-vFeyygLomELhFgiCjC2NWZObO42tg5bYI48"
+  #   }
+
+  #   dpop_jkt = "hvSwCJlzMPU7_lpvFVFXXBED9wBH35hNqYvRCH2LreU"
+
+  #   visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code&" \
+  #           "dpop_jkt=#{dpop_jkt}"
+
+  #   login(visit: false)
+  #   visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code&" \
+  #           "dpop_jkt=#{dpop_jkt}"
+
+  #   header "DPoP", dpop_token
+  #   header "Authorization", authorization_basic_header
+  #   post_token_request
+  # end
+
+  # def test_authorize_failure_without_dpop_jkt
+  #   rodauth { check_csrf? false }
+  #   setup_application
+
+  #   header "Authorization", authorization_basic_header
+
+  #   post(
+  #     "/authorize",
+  #     client_id: oauth_application[:client_id],
+  #     response_type: "code",
+  #     redirect_uri: "http://example.org/callback"
+  #   )
+
+  #   refute_equal 302, last_response.status # Expecting a failure here.
+  # end
+
+  # def test_authorize_failure_with_invalid_dpop_jkt
+  #   rodauth { check_csrf? false }
+
+  #   setup_application
+
+  #   header "Authorization", authorization_basic_header
+
+  #   post(
+  #     "/authorize",
+  #     client_id: oauth_application[:client_id],
+  #     response_type: "code",
+  #     redirect_uri: "http://example.org/callback",
+  #     dpop_jkt: "invalid_jkt"
+  #   )
+
+  #   refute_equal 302, last_response.status # Expecting a failure here.
+  # end
+
+  # def test_par_with_dpop_proof_and_valid_jkt
+  #   rodauth { check_csrf? false }
+
+  #   setup_application
+
+  #   dpop_token = generate_dpop_proof(htm: "POST", htu: "http://example.org/par")
+  #   payload, header = JWT.decode(dpop_token, nil, false)
+  #   puts "par_header: #{header}"
+  #   jwk = header["jwk"]
+
+  #   puts "par_jwk: #{jwk}"
+
+  #   dpop_jkt = compute_jwk_thumbprint(jwk)
+
+  #   header "Authorization", authorization_basic_header
+
+  #   post(
+  #     "/par",
+  #     client_id: oauth_application[:client_id],
+  #     response_type: "code",
+  #     redirect_uri: "http://example.org/callback",
+  #     scope: "openid",
+  #     dpop_jkt: dpop_jkt
+  #   )
+
+  #   assert_equal 200, last_response.status
+  # end
+
+  # def test_par_failure_without_dpop_jkt
+  #   rodauth { check_csrf? false }
+
+  #   setup_application
+
+  #   header "Authorization", authorization_basic_header
+
+  #   post(
+  #     "/par",
+  #     client_id: oauth_application[:client_id],
+  #     response_type: "code",
+  #     redirect_uri: "http://example.org/callback"
+  #   )
+
+  #   refute_equal 200, last_response.status # Expecting a failure here.
+  # end
+
+  # def test_par_failure_with_invalid_dpop_jkt
+  #   rodauth { check_csrf? false }
+
+  #   setup_application
+
+  #   header "Authorization", authorization_basic_header
+
+  #   post(
+  #     "/par",
+  #     client_id: oauth_application[:client_id],
+  #     response_type: "code",
+  #     redirect_uri: "http://example.org/callback",
+  #     dpop_jkt: "invalid_jkt"
+  #   )
+
+  #   refute_equal 200, last_response.status
+  # end
 
   private
 
@@ -168,6 +303,25 @@ class RodauthOAuthDPoPTest < JWTIntegration
     %i[oauth_authorization_code_grant oauth_dpop]
   end
 
+  def compute_jwk_thumbprint(jwk)
+    # Ensure that the JWK is of type EC
+    puts "jwk_thumbprint_jwk: #{jwk}"
+    puts "jwk_thumbprint_jwk_type: #{jwk["kty"]}"
+    puts "jwk_thumbprint_jwk_crv: #{jwk["crv"]}"
+    raise "Invalid JWK type" unless jwk["kty"] == "EC"
+
+    # Extract required fields for EC JWK and convert to JSON
+    jwk_json = {
+      "kty" => jwk["kty"],
+      "crv" => jwk["crv"],
+      "x" => jwk["x"],
+      "y" => jwk["y"]
+    }.to_json
+
+    # Compute the thumbprint
+    Base64.urlsafe_encode64(Digest::SHA256.digest(jwk_json), padding: false)
+  end
+
   def generate_access_token(grant)
     header "Authorization", authorization_basic_header
     # header "DPoP", generate_dpop_proof
@@ -184,9 +338,9 @@ class RodauthOAuthDPoPTest < JWTIntegration
     json_body["refresh_token"]
   end
 
-  def login(_token)
-    header "Authorization", authorization_basic_header
-  end
+  # def login(_token)
+  #   header "Authorization", authorization_basic_header
+  # end
 
   def generate_dpop_proof(
     iss = "http://example.org",
@@ -229,7 +383,7 @@ class RodauthOAuthDPoPTest < JWTIntegration
     }
 
     header.delete(:jwk) if remove_jwk
-    header[:jwk][:kty] = "invalid" if invalid_jwk
+    header["jwk"]["kty"] = "invalid" if invalid_jwk
 
     # DPoP JWT Payload
     payload = {
@@ -259,5 +413,14 @@ class RodauthOAuthDPoPTest < JWTIntegration
       code: oauth_grant[:code],
       redirect_uri: oauth_grant[:redirect_uri]
     )
+
+    def post_introspect_request(token)
+      header "Authorization", authorization_basic_header
+      post "/introspect",
+           {
+             token: token,
+             token_type_hint: "access_token" # You can also test for "refresh_token" if needed
+           }
+    end
   end
 end
