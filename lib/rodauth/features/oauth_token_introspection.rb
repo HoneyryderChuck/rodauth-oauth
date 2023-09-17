@@ -66,7 +66,7 @@ module Rodauth
           scope: grant_or_claims["scope"],
           client_id: grant_or_claims["client_id"],
           username: resource_owner_identifier(grant_or_claims),
-          token_type: "access_token",
+          token_type: oauth_token_type.capitalize,
           exp: grant_or_claims["exp"],
           iat: grant_or_claims["iat"],
           nbf: grant_or_claims["nbf"],
