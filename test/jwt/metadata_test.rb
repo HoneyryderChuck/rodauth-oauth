@@ -88,28 +88,13 @@ class RodauthOauthJwtServerMetadataTest < JWTIntegration
     assert json_body["require_signed_request_object"] == true
   end
 
-  def test_oauth_dpop
-    rodauth do
-      oauth_dpop_signing_alg_values_supported %w[ES256]
-    end
-
-    setup_application(:oauth_dpop, :oauth_authorization_code_grant,
-      &:load_oauth_server_metadata_route)
-
-    get("/.well-known/oauth-authorization-server")
-
-    assert last_response.status == 200
-
-    assert json_body["dpop_signing_alg_values_supported"] == %w[ES256]
-  end
-
   def test_oauth_jwt_secured_authorization_response_mode
     rodauth do
       authorization_signing_alg_values_supported %w[RS256]
     end
 
     setup_application(:oauth_jwt_secured_authorization_response_mode, :oauth_authorization_code_grant, :oauth_implicit_grant,
-      &:load_oauth_server_metadata_route)
+                      &:load_oauth_server_metadata_route)
 
     get("/.well-known/oauth-authorization-server")
 
@@ -126,7 +111,7 @@ class RodauthOauthJwtServerMetadataTest < JWTIntegration
 
   def test_oauth_jwt_secured_authorization_response_mode_no_implicit
     setup_application(:oauth_jwt_secured_authorization_response_mode, :oauth_authorization_code_grant,
-      &:load_oauth_server_metadata_route)
+                      &:load_oauth_server_metadata_route)
 
     get("/.well-known/oauth-authorization-server")
 

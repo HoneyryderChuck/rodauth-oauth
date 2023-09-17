@@ -112,9 +112,7 @@ module Rodauth
 
       return claims unless grant_or_claims && grant_or_claims[oauth_grants_certificate_thumbprint_column]
 
-      claims[:cnf] = {
-        "x5t#S256" => grant_or_claims[oauth_grants_certificate_thumbprint_column]
-      }
+      (claims[:cnf] ||= {})["x5t#S256"] = grant_or_claims[oauth_grants_certificate_thumbprint_column]
 
       claims
     end

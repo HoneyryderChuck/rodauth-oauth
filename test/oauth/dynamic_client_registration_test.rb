@@ -105,12 +105,12 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
     )
     assert last_response.status == 201
     assert JSON.parse(last_response.body)["grant_types"] ==
-             %w[authorization_code refresh_token]
+           %w[authorization_code refresh_token]
 
     post("/register", valid_registration_params)
     assert last_response.status == 201
     assert JSON.parse(last_response.body)["grant_types"] ==
-             %w[authorization_code]
+           %w[authorization_code]
   end
 
   def test_oauth_dynamic_client_response_types
@@ -242,7 +242,7 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
       )
       assert last_response.status == 400
       assert JSON.parse(last_response.body)["error"] ==
-               "invalid_client_metadata"
+             "invalid_client_metadata"
     end
   end
 
@@ -350,12 +350,12 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
     )
     assert last_response.status == 201
     assert JSON.parse(last_response.body)["token_endpoint_auth_method"] ==
-             "client_secret_post"
+           "client_secret_post"
 
     post("/register", valid_registration_params)
     assert last_response.status == 201
     assert JSON.parse(last_response.body)["token_endpoint_auth_method"] ==
-             "client_secret_basic"
+           "client_secret_basic"
   end
 
   def test_oauth_dynamic_client_dpop_bound_access_tokens
@@ -401,7 +401,7 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
     )
     assert last_response.status == 201
     assert JSON.parse(last_response.body)["require_signed_request_object"] ==
-             true
+           true
 
     post(
       "/register",
@@ -409,7 +409,7 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
     )
     assert last_response.status == 201
     assert JSON.parse(last_response.body)["require_signed_request_object"] ==
-             false
+           false
   end
 
   def test_oauth_dynamic_client_require_pushed_authorization_requests
@@ -468,7 +468,7 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
     )
     assert last_response.status == 201
     assert JSON.parse(last_response.body)["tls_client_auth_subject_dn"] ==
-             "name"
+           "name"
 
     post(
       "/register",
@@ -485,7 +485,7 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
     )
     assert last_response.status == 201
     assert JSON.parse(last_response.body)["tls_client_auth_san_uri"] ==
-             "uri:name:bar"
+           "uri:name:bar"
 
     post(
       "/register",
@@ -493,7 +493,7 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
     )
     assert last_response.status == 201
     assert JSON.parse(last_response.body)["tls_client_auth_san_ip"] ==
-             "169.232.2.1"
+           "169.232.2.1"
 
     post(
       "/register",
@@ -503,7 +503,7 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
     )
     assert last_response.status == 201
     assert JSON.parse(last_response.body)["tls_client_auth_san_email"] ==
-             "bang@bang.com"
+           "bang@bang.com"
 
     post(
       "/register",

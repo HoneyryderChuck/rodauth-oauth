@@ -50,23 +50,22 @@ module Rodauth
 
       return @authorization_token if defined?(@authorization_token)
 
-      @authorization_token = begin
-        access_token = fetch_access_token
-
-        return unless access_token
-
-        jwt_claims = jwt_decode(access_token)
-
-        return unless jwt_claims
-
-        return unless jwt_claims["sub"]
-
-        return unless jwt_claims["aud"]
-
-        jwt_claims
-      end
+      @authorization_token = decode_access_token
     end
 
+    def decode_access_token(access_token = fetch_access_token)
+      return unless access_token
+
+      jwt_claims = jwt_decode(access_token)
+
+      return unless jwt_claims
+
+      return unless jwt_claims["sub"]
+
+      return unless jwt_claims["aud"]
+
+      jwt_claims
+    end
     # /token
 
     def create_token_from_token(_grant, update_params)

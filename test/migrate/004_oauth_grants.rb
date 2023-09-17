@@ -24,9 +24,7 @@ Sequel.migration do
       String :redirect_uri
       Time :revoked_at
       String :scopes, null: false
-      if ENV.key?("ONLY_ONE_TOKEN")
-        index %i[oauth_application_id account_id scopes], unique: true
-      end
+      index %i[oauth_application_id account_id scopes], unique: true if ENV.key?("ONLY_ONE_TOKEN")
       # if using access_types
       String :access_type, null: false, default: "offline"
       # if using PKCE flow
@@ -46,7 +44,6 @@ Sequel.migration do
       String :claims
       # dpop
       String :dpop_jkt
-      String :dpop_jwk_hash
     end
   end
 

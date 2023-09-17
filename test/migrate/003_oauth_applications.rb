@@ -50,7 +50,7 @@ Sequel.migration do
                 default: false
 
       # for oauth_dpop
-      TrueClass :dpop_bound_access_tokens, null: true, default: false
+      TrueClass :dpop_bound_access_tokens, null: false, default: false
 
       # for oauth_tls_client_auth
       String :tls_client_auth_subject_dn, null: true
@@ -73,8 +73,6 @@ Sequel.migration do
       String :authorization_signed_response_alg, null: true
       String :authorization_encrypted_response_alg, null: true
       String :authorization_encrypted_response_enc, null: true
-      # dpop
-      String :dpop_jkt, null: true
     end
   end
 
