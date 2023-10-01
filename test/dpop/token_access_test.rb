@@ -6,10 +6,7 @@ class RodauthOAuthDpopTokenAccessTest < DPoPIntegration
   include Rack::Test::Methods
 
   def test_dpop_access_protected_resource_without_dpop_token
-    ecdsa_key = OpenSSL::PKey::EC.generate("prime256v1")
-    ecdsa_key.generate_key
     rodauth do
-      oauth_jwt_keys("ES256" => ecdsa_key)
       oauth_dpop_bound_access_tokens true
     end
     setup_application
@@ -22,14 +19,11 @@ class RodauthOAuthDpopTokenAccessTest < DPoPIntegration
   end
 
   def test_dpop_access_protected_resource_with_dpop_token_as_bearer
-    ecdsa_key = OpenSSL::PKey::EC.generate("prime256v1")
-    ecdsa_key.generate_key
-    rodauth do
-      oauth_jwt_keys("ES256" => ecdsa_key)
-    end
+    dpop_key = OpenSSL::PKey::RSA.generate(2048)
+    dpop_public_key = dpop_key.public_key
     setup_application
 
-    header "DPoP", generate_dpop_proof(ecdsa_key)
+    header "DPoP", generate_dpop_proof(dpop_key, public_key: dpop_public_key)
     post(
       "/token",
       client_id: oauth_application[:client_id],
@@ -41,9 +35,11 @@ class RodauthOAuthDpopTokenAccessTest < DPoPIntegration
     assert last_response.status == 200
     access_token = json_body["access_token"]
 
+    verify_access_token(access_token, oauth_grant, bound_dpop_key: dpop_public_key)
+
     # Access the protected resource with the token
     header "DPoP",
-           generate_dpop_proof(ecdsa_key, request_method: "GET", request_uri: "http://example.org/private", access_token: access_token)
+           generate_dpop_proof(dpop_key, request_method: "GET", request_uri: "http://example.org/private", access_token: access_token)
     header "Authorization", "Bearer #{access_token}"
 
     get("/private")
@@ -52,14 +48,11 @@ class RodauthOAuthDpopTokenAccessTest < DPoPIntegration
   end
 
   def test_dpop_access_protected_resource_with_dpop_token_and_bearer
-    ecdsa_key = OpenSSL::PKey::EC.generate("prime256v1")
-    ecdsa_key.generate_key
-    rodauth do
-      oauth_jwt_keys("ES256" => ecdsa_key)
-    end
+    dpop_key = OpenSSL::PKey::RSA.generate(2048)
+    dpop_public_key = dpop_key.public_key
     setup_application
 
-    header "DPoP", generate_dpop_proof(ecdsa_key)
+    header "DPoP", generate_dpop_proof(dpop_key, public_key: dpop_public_key)
     post(
       "/token",
       client_id: oauth_application[:client_id],
@@ -70,10 +63,12 @@ class RodauthOAuthDpopTokenAccessTest < DPoPIntegration
     )
     assert last_response.status == 200
     access_token = json_body["access_token"]
+    verify_access_token(access_token, oauth_grant, bound_dpop_key: dpop_public_key)
 
     # Access the protected resource with the token
     header "DPoP",
-           generate_dpop_proof(ecdsa_key, request_method: "GET", request_uri: "http://example.org/private", access_token: access_token)
+           generate_dpop_proof(dpop_key, public_key: dpop_public_key, request_method: "GET", request_uri: "http://example.org/private",
+                                         access_token: access_token)
     header "Authorization", "DPoP #{access_token}"
     header "Authorization", "Bearer TOKEN"
 
@@ -83,15 +78,14 @@ class RodauthOAuthDpopTokenAccessTest < DPoPIntegration
   end
 
   def test_dpop_access_protected_resource_with_dpop_token
-    ecdsa_key = OpenSSL::PKey::EC.generate("prime256v1")
-    ecdsa_key.generate_key
+    dpop_key = OpenSSL::PKey::RSA.generate(2048)
+    dpop_public_key = dpop_key.public_key
     rodauth do
-      oauth_jwt_keys("ES256" => ecdsa_key)
       oauth_dpop_bound_access_tokens true
     end
     setup_application
 
-    header "DPoP", generate_dpop_proof(ecdsa_key)
+    header "DPoP", generate_dpop_proof(dpop_key, public_key: dpop_public_key)
     post(
       "/token",
       client_id: oauth_application[:client_id],
@@ -102,10 +96,11 @@ class RodauthOAuthDpopTokenAccessTest < DPoPIntegration
     )
     assert last_response.status == 200
     access_token = json_body["access_token"]
+    verify_access_token(access_token, oauth_grant, bound_dpop_key: dpop_public_key)
 
     # Access the protected resource with the token
     header "DPoP",
-           generate_dpop_proof(ecdsa_key, request_method: "GET", request_uri: "http://example.org/private", access_token: access_token)
+           generate_dpop_proof(dpop_key, request_method: "GET", request_uri: "http://example.org/private", access_token: access_token)
     header "Authorization", "DPoP #{access_token}"
 
     get("/private")

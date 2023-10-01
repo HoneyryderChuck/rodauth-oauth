@@ -96,9 +96,7 @@ module Rodauth
 
     def validate_dpop_token(dpop)
       # 4.3.2
-      @dpop_claims = jwt_decode(dpop, verify_iss: false, verify_aud: false, verify_jti: false,
-                                      verify_headers: method(:verify_dpop_jwt_headers))
-
+      @dpop_claims = dpop_decode(dpop)
       redirect_response_error("invalid_dpop_proof") unless @dpop_claims
 
       validate_dpop_jwt_claims(@dpop_claims)
@@ -107,6 +105,24 @@ module Rodauth
       validate_nonce(@dpop_claims)
 
       @dpop_claims
+    end
+
+    def dpop_decode(dpop)
+      # decode first without verifying!
+      _, headers = jwt_decode_no_key(dpop)
+
+      redirect_response_error("invalid_dpop_proof") unless verify_dpop_jwt_headers(headers)
+
+      dpop_jwk = headers["jwk"]
+
+      jwt_decode(
+        dpop,
+        jws_key: jwk_key(dpop_jwk),
+        jws_algorithm: headers["alg"],
+        verify_iss: false,
+        verify_aud: false,
+        verify_jti: false
+      )
     end
 
     def verify_dpop_jwt_headers(headers)

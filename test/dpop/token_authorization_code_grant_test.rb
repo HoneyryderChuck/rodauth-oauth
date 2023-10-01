@@ -7,12 +7,10 @@ class RodauthOAuthDpopTokenAuthorizationCodeTest < DPoPIntegration
   include Rack::Test::Methods
 
   def test_dpop_jwt_header_invalid_typ
-    ecdsa_key = OpenSSL::PKey::EC.generate("prime256v1")
-    ecdsa_key.generate_key
-    rodauth { oauth_jwt_keys("ES256" => ecdsa_key) }
+    dpop_key = OpenSSL::PKey::RSA.generate(2048)
     setup_application
 
-    dpop_with_invalid_typ = generate_dpop_proof(ecdsa_key, typ: "invalid")
+    dpop_with_invalid_typ = generate_dpop_proof(dpop_key, typ: "invalid")
     header "DPoP", dpop_with_invalid_typ
     post(
       "/token",
@@ -29,12 +27,10 @@ class RodauthOAuthDpopTokenAuthorizationCodeTest < DPoPIntegration
   end
 
   def test_dpop_jwt_header_invalid_alg
-    ecdsa_key = OpenSSL::PKey::EC.generate("prime256v1")
-    ecdsa_key.generate_key
-    rodauth { oauth_jwt_keys("ES256" => ecdsa_key) }
+    dpop_key = OpenSSL::PKey::RSA.generate(2048)
     setup_application
 
-    dpop_with_invalid_alg = generate_dpop_proof(ecdsa_key, alg: "none")
+    dpop_with_invalid_alg = generate_dpop_proof(dpop_key, alg: "none")
     header "DPoP", dpop_with_invalid_alg
     post(
       "/token",
@@ -52,13 +48,11 @@ class RodauthOAuthDpopTokenAuthorizationCodeTest < DPoPIntegration
 
   # JWK Validation Test
   def test_dpop_private_jwk
-    ecdsa_key = OpenSSL::PKey::EC.generate("prime256v1")
-    ecdsa_key.generate_key
-    rodauth { oauth_jwt_keys("ES256" => ecdsa_key) }
+    dpop_key = OpenSSL::PKey::RSA.generate(2048)
     setup_application
 
     # Construct DPoP proof with an invalid JWK
-    header "DPoP", generate_dpop_proof(ecdsa_key, private_jwk: true)
+    header "DPoP", generate_dpop_proof(dpop_key, public_key: dpop_key, private_jwk: true)
     post(
       "/token",
       client_id: oauth_application[:client_id],
@@ -75,13 +69,11 @@ class RodauthOAuthDpopTokenAuthorizationCodeTest < DPoPIntegration
 
   # JWT Signature Validation Test
   def test_dpop_jwt_invalid_signature
-    ecdsa_key = OpenSSL::PKey::EC.generate("prime256v1")
-    ecdsa_key.generate_key
-    rodauth { oauth_jwt_keys("ES256" => ecdsa_key) }
+    dpop_key = OpenSSL::PKey::RSA.generate(2048)
     setup_application
 
     # Construct DPoP proof with an incorrect signature
-    header "DPoP", generate_dpop_proof(ecdsa_key, bad_signature: true)
+    header "DPoP", generate_dpop_proof(dpop_key, bad_signature: true)
     post(
       "/token",
       client_id: oauth_application[:client_id],
@@ -98,13 +90,11 @@ class RodauthOAuthDpopTokenAuthorizationCodeTest < DPoPIntegration
 
   # HTM and HTU Claims Validation Test
   def test_dpop_jwt_invalid_htm
-    ecdsa_key = OpenSSL::PKey::EC.generate("prime256v1")
-    ecdsa_key.generate_key
-    rodauth { oauth_jwt_keys("ES256" => ecdsa_key) }
+    dpop_key = OpenSSL::PKey::RSA.generate(2048)
     setup_application
 
     # Construct DPoP proof with incorrect htm
-    header "DPoP", generate_dpop_proof(ecdsa_key, htm: "GET")
+    header "DPoP", generate_dpop_proof(dpop_key, htm: "GET")
     post(
       "/token",
       client_id: oauth_application[:client_id],
@@ -120,13 +110,11 @@ class RodauthOAuthDpopTokenAuthorizationCodeTest < DPoPIntegration
   end
 
   def test_dpop_jwt_invalid_htu
-    ecdsa_key = OpenSSL::PKey::EC.generate("prime256v1")
-    ecdsa_key.generate_key
-    rodauth { oauth_jwt_keys("ES256" => ecdsa_key) }
+    dpop_key = OpenSSL::PKey::RSA.generate(2048)
     setup_application
 
     # Construct DPoP proof with incorrect htu
-    header "DPoP", generate_dpop_proof(ecdsa_key, htu: "http://example.org/wrong")
+    header "DPoP", generate_dpop_proof(dpop_key, htu: "http://example.org/wrong")
     post(
       "/token",
       client_id: oauth_application[:client_id],
@@ -142,10 +130,8 @@ class RodauthOAuthDpopTokenAuthorizationCodeTest < DPoPIntegration
   end
 
   def test_fail_generation_without_dpop_when_dpop_bound_is_true
-    ecdsa_key = OpenSSL::PKey::EC.generate("prime256v1")
-    ecdsa_key.generate_key
+    # dpop_key = OpenSSL::PKey::RSA.generate(2048)
     rodauth do
-      oauth_jwt_keys("ES256" => ecdsa_key)
       oauth_dpop_bound_access_tokens true
     end
     setup_application
@@ -171,13 +157,14 @@ class RodauthOAuthDpopTokenAuthorizationCodeTest < DPoPIntegration
   end
 
   def test_dpop_access_token_generation_with_dpop_proof
-    ecdsa_key = OpenSSL::PKey::EC.generate("prime256v1")
-    ecdsa_key.generate_key
-    rodauth { oauth_jwt_keys("ES256" => ecdsa_key) }
+    dpop_key = OpenSSL::PKey::RSA.generate(2048)
+    dpop_public_key = dpop_key.public_key
     setup_application
 
+    header "DPoP", generate_dpop_proof(dpop_key, public_key: dpop_public_key)
+
     # Make a request with DPoP headers to generate an access token
-    header "DPoP", generate_dpop_proof(ecdsa_key)
+    header "DPoP", generate_dpop_proof(dpop_key)
     post(
       "/token",
       client_id: oauth_application[:client_id],
@@ -188,20 +175,18 @@ class RodauthOAuthDpopTokenAuthorizationCodeTest < DPoPIntegration
     )
 
     assert_equal 200, last_response.status
-    refute_nil json_body["access_token"]
+    verify_access_token(json_body["access_token"], oauth_grant, bound_dpop_key: dpop_public_key)
   end
 
   def test_dpop_token_generation_with_nonce
-    ecdsa_key = OpenSSL::PKey::EC.generate("prime256v1")
-    ecdsa_key.generate_key
+    dpop_key = OpenSSL::PKey::RSA.generate(2048)
     rodauth do
       oauth_dpop_use_nonce true
-      oauth_jwt_keys("ES256" => ecdsa_key)
     end
+    dpop_public_key = dpop_key.public_key
     setup_application
 
-    # Make a request with DPoP headers to generate an access token
-    header "DPoP", generate_dpop_proof(ecdsa_key)
+    header "DPoP", generate_dpop_proof(dpop_key, public_key: dpop_public_key)
     post(
       "/token",
       client_id: oauth_application[:client_id],
@@ -219,7 +204,7 @@ class RodauthOAuthDpopTokenAuthorizationCodeTest < DPoPIntegration
     @json_body = nil
 
     # Make a request with DPoP headers to generate an access token
-    header "DPoP", generate_dpop_proof(ecdsa_key, nonce: nonce)
+    header "DPoP", generate_dpop_proof(dpop_key, nonce: nonce)
     post(
       "/token",
       client_id: oauth_application[:client_id],
@@ -230,6 +215,6 @@ class RodauthOAuthDpopTokenAuthorizationCodeTest < DPoPIntegration
     )
 
     assert last_response.status == 200
-    refute_nil json_body["access_token"]
+    verify_access_token(json_body["access_token"], oauth_grant, bound_dpop_key: dpop_public_key)
   end
 end

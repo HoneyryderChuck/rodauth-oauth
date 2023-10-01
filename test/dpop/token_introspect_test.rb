@@ -6,14 +6,11 @@ class RodauthOAuthDpopTokenIntrospectTest < DPoPIntegration
   include Rack::Test::Methods
 
   def test_token_introspection_with_dpop_bound_token
-    ecdsa_key = OpenSSL::PKey::EC.generate("prime256v1")
-    ecdsa_key.generate_key
-    rodauth do
-      oauth_jwt_keys("ES256" => ecdsa_key)
-    end
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
     setup_application
 
-    header "DPoP", generate_dpop_proof(ecdsa_key)
+    header "DPoP", generate_dpop_proof(jws_key, public_key: jws_public_key)
     post(
       "/token",
       client_id: oauth_application[:client_id],
@@ -41,7 +38,7 @@ class RodauthOAuthDpopTokenIntrospectTest < DPoPIntegration
 
     assert json_body["active"] == true
     assert json_body.key?("cnf")
-    assert json_body["cnf"]["jkt"] == generate_thumbprint(ecdsa_key)
+    assert json_body["cnf"]["jkt"] == generate_thumbprint(jws_public_key)
   end
 
   private

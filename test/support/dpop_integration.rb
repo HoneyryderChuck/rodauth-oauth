@@ -10,17 +10,23 @@ class DPoPIntegration < JWTIntegration
   end
 
   def setup_application(*)
+    signing_key = OpenSSL::PKey::RSA.generate(2048)
+    rodauth do
+      oauth_jwt_keys("RS256" => signing_key)
+    end
+    @signing_key = signing_key
     super
     header "Accept", "application/json"
   end
 
   def generate_dpop_proof(
     key,
+    public_key: key.public_key,
     access_token: nil,
     nonce: nil,
     aud: "http://example.org",
     typ: "dpop+jwt",
-    alg: "ES256",
+    alg: "RS256",
     private_jwk: false,
     bad_signature: false,
     request_method: "POST",
@@ -35,7 +41,7 @@ class DPoPIntegration < JWTIntegration
     # Generate key pair
 
     # DPoP JWT Header
-    jwk = JWT::JWK.new(key)
+    jwk = JWT::JWK.new(public_key)
     header = {
       typ: typ,
       alg: alg,
@@ -53,20 +59,21 @@ class DPoPIntegration < JWTIntegration
     payload[:nonce] = nonce if nonce
     payload[:ath] = Base64.urlsafe_encode64(Digest::SHA256.digest(access_token), padding: false) if access_token
 
-    if bad_signature
-      wrong_key = OpenSSL::PKey::EC.new("prime256v1")
-      wrong_key.generate_key
-      dpop_token = JWT.encode(payload, wrong_key, alg, header)
-    else
-      dpop_token = JWT.encode(payload, key, alg, header)
-    end
+    key = OpenSSL::PKey::RSA.generate(2048) if bad_signature
 
-    dpop_token
+    JWT.encode(payload, key, alg, header)
   end
 
   def generate_thumbprint(key, include_private: false)
     jwk = JWT::JWK.new(key)
     jwk = JWT::JWK.import(jwk.export(include_private: include_private))
     JWT::JWK::Thumbprint.new(jwk).generate
+  end
+
+  def verify_access_token(data, oauth_grant, bound_dpop_key:, signing_key: @signing_key, signing_algo: "RS256")
+    claims = super(data, oauth_grant, signing_key: signing_key, signing_algo: signing_algo)
+
+    assert claims.key?("cnf")
+    assert claims["cnf"]["jkt"] == generate_thumbprint(bound_dpop_key)
   end
 end
