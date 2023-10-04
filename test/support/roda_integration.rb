@@ -34,7 +34,7 @@ DB = begin
          elsif ENV["DATABASE_URL"].match(/sqlite3(.*)/)
            Sequel.connect("sqlite#{Regexp.last_match(1)}", pool_timeout: 20)
          else
-           Sequel.connect(ENV["DATABASE_URL"])
+           Sequel.connect(ENV["DATABASE_URL"], pool_timeout: 20)
          end
        else
          Sequel.sqlite(pool_timeout: 20)

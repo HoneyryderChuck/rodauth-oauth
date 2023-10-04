@@ -18,6 +18,7 @@ pt:
     oauth_grants_page_title: "As minhas concessões Oauth"
     device_verification_page_title: "Verificação de dispositivo"
     device_search_page_title: "Pesquisa de dispositivo"
+    check_session_page_title: "Verificação de Sessão"
     oauth_management_pagination_previous_button: "Anterior"
     oauth_management_pagination_next_button: "Próxima"
     oauth_grants_type_label: "Tipo de concessão"
