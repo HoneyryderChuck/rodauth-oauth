@@ -18,6 +18,7 @@ en:
     oauth_grants_page_title: "My Oauth Grants"
     device_verification_page_title: "Device Verification"
     device_search_page_title: "Device Search"
+    check_session_page_title: "Check Session"
     oauth_management_pagination_previous_button: "Previous"
     oauth_management_pagination_next_button: "Next"
     oauth_grants_type_label: "Grant Type"

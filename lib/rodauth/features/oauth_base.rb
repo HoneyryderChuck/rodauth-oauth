@@ -764,32 +764,35 @@ module Rodauth
         throw_json_response_error(status_code, error_code)
       else
         redirect_url = URI.parse(redirect_url)
-        params = []
-
-        params << if respond_to?(:"oauth_#{error_code}_error_code")
-                    ["error", send(:"oauth_#{error_code}_error_code")]
-                  else
-                    ["error", error_code]
-                  end
-
-        if respond_to?(:"oauth_#{error_code}_message")
-          message = send(:"oauth_#{error_code}_message")
-          params << ["error_description", CGI.escape(message)]
-        end
-
+        params = response_error_params(error_code)
         state = param_or_nil("state")
-
-        params << ["state", state] if state
-
+        params["state"] = state if state
         _redirect_response_error(redirect_url, params)
       end
     end
 
     def _redirect_response_error(redirect_url, params)
-      params = params.map { |k, v| "#{k}=#{v}" }
-      params << redirect_url.query if redirect_url.query
-      redirect_url.query = params.join("&")
+      params = URI.encode_www_form(params)
+      if redirect_url.query
+        params << "&" unless params.empty?
+        params << redirect_url.query
+      end
+      redirect_url.query = params
       redirect(redirect_url.to_s)
+    end
+
+    def response_error_params(error_code, message = nil)
+      code = if respond_to?(:"oauth_#{error_code}_error_code")
+               send(:"oauth_#{error_code}_error_code")
+             else
+               error_code
+             end
+      payload = { "error" => code }
+      error_description = message
+      error_description ||= send(:"oauth_#{error_code}_message") if respond_to?(:"oauth_#{error_code}_message")
+      payload["error_description"] = error_description if error_description
+
+      payload
     end
 
     def json_response_success(body, cache = false)
@@ -809,13 +812,7 @@ module Rodauth
 
     def throw_json_response_error(status, error_code, message = nil)
       set_response_error_status(status)
-      code = if respond_to?(:"oauth_#{error_code}_error_code")
-               send(:"oauth_#{error_code}_error_code")
-             else
-               error_code
-             end
-      payload = { "error" => code }
-      payload["error_description"] = message || (send(:"oauth_#{error_code}_message") if respond_to?(:"oauth_#{error_code}_message"))
+      payload = response_error_params(error_code, message)
       json_payload = _json_response_body(payload)
       response["Content-Type"] ||= json_response_content_type
       response["WWW-Authenticate"] = oauth_token_type.upcase if status == 401

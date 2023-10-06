@@ -57,6 +57,7 @@ It also implements the [OpenID Connect layer](https://openid.net/connect/) (via 
 * [OpenID Connect Discovery](https://gitlab.com/os85/rodauth-oauth/-/wikis/OIDC-Dynamic-Client-Registration);
 * [OpenID Multiple Response Types](https://gitlab.com/os85/rodauth-oauth/-/wikis/Hybrid-flow);
 * [OpenID Connect Dynamic Client Registration](https://gitlab.com/os85/rodauth-oauth/-/wikis/OIDC-Dynamic-Client-Registration);
+* [Session Management](https://gitlab.com/os85/rodauth-oauth/-/wikis/Session-Management);
 * [RP Initiated Logout](https://gitlab.com/os85/rodauth-oauth/-/wikis/RP-Initiated-Logout);
 
 This gem supports also rails (through [rodauth-rails]((https://github.com/janko/rodauth-rails))).

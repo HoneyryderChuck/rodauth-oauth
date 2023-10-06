@@ -51,6 +51,7 @@ module Rodauth
       require_request_uri_registration
       op_policy_uri
       op_tos_uri
+      check_session_iframe
     ].freeze
 
     REQUIRED_METADATA_KEYS = %i[
