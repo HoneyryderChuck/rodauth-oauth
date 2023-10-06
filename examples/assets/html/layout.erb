@@ -42,6 +42,9 @@
       <% if flash['error'] %>
         <div class="alert alert-danger"><p><%= flash['error'] %></p></div>
       <% end %>
+      <% if flash['frontchannel_logout'] %>
+        <%= h(flash['frontchannel_logout']) %>
+      <% end %>
       <div class="main px-3 py-3 pt-md-5 pb-md-4 mx-auto">
         <h1 class="display-4"><%= @page_title %></h1>
         <%= yield %>

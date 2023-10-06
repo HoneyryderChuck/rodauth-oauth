@@ -8,7 +8,9 @@ pt:
     device_verification_notice_flash: "O dispositivo foi verificado com sucesso"
     user_code_not_found_error_flash: "Não existe nenhum dispositivo a ser autorizado com o código de usuário inserido"
     authorize_page_title: "Autorizar"
+    frontchannel_logout_page_title: "Saindo"
     authorize_page_lead: "O aplicativo %{name} gostaria de aceder aos seus dados."
+    oauth_frontchannel_logout_redirecting_lead: "Redireccionando.."
     authorize_error_page_title: Erro de autorização
     oauth_cancel_button: "Cancelar"
     oauth_applications_page_title: "Aplicativos OAuth"
@@ -42,6 +44,8 @@ pt:
     oauth_grant_user_code_label: "Código do usuário"
     oauth_grant_user_jws_jwk_label: "Chaves JSON Web"
     oauth_grant_user_jwt_public_key_label: "Chave pública"
+    oauth_frontchannel_logout_redirecting_label: "por favor clique %{link} se o seu navegador não lhe redireccionar em alguns segundos."
+    oauth_frontchannel_logout_link_label: "aqui"
     oauth_application_button: "Registar"
     oauth_authorize_button: "Autorizar"
     oauth_grant_revoke_button: "Revogar"

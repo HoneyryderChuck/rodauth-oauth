@@ -94,6 +94,17 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
     assert json_body["end_session_endpoint"] == "http://example.org/oidc-logout"
   end
 
+  def test_oidc_metadata_openid_configuration_frontchannel_logout
+    setup_application(:oidc_frontchannel_logout)
+
+    get("/.well-known/openid-configuration")
+
+    assert last_response.status == 200
+
+    assert json_body["frontchannel_logout_supported"] == true
+    assert json_body["frontchannel_logout_session_supported"] == true
+  end
+
   private
 
   def setup_application(*args)

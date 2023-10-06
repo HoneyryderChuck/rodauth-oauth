@@ -58,6 +58,9 @@ Sequel.migration do
       String :jwt_public_key, type: :text
       # RP-initiated logout
       String :post_logout_redirect_uris
+      # frontchannel logout
+      String :frontchannel_logout_uri
+      TrueClass :frontchannel_logout_session_required, default: false
       # oauth_jwt_secured_authorization_response_mode
       String :authorization_signed_response_alg, null: true
       String :authorization_encrypted_response_alg, null: true
