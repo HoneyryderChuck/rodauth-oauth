@@ -63,6 +63,10 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       # frontchannel logout
       t.string :frontchannel_logout_uri
       t.boolean :frontchannel_logout_session_required, default: false
+
+      # backchannel logout
+      t.string :backchannel_logout_uri
+      t.boolean :backchannel_logout_session_required, default: false
     end
 
     create_table :oauth_grants do |t|

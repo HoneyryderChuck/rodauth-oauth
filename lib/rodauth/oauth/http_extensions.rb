@@ -32,7 +32,7 @@ module Rodauth
         yield request if block_given?
 
         response = http.request(request)
-        authorization_required unless response.code.to_i == 200
+        authorization_required unless (200..299).include?(response.code.to_i)
         response
       end
 

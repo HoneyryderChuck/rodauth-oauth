@@ -61,6 +61,9 @@ Sequel.migration do
       # frontchannel logout
       String :frontchannel_logout_uri
       TrueClass :frontchannel_logout_session_required, default: false
+      # backchannel logout
+      String :backchannel_logout_uri
+      TrueClass :backchannel_logout_session_required, default: false
       # oauth_jwt_secured_authorization_response_mode
       String :authorization_signed_response_alg, null: true
       String :authorization_encrypted_response_alg, null: true

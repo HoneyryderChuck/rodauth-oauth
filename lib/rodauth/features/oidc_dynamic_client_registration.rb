@@ -157,6 +157,18 @@ module Rodauth
         end
       end
 
+      if features.include?(:oidc_backchannel_logout)
+        if (value = @oauth_application_params[oauth_applications_backchannel_logout_uri_column]) && !check_valid_no_fragment_uri?(value)
+          register_throw_json_response_error("invalid_client_metadata",
+                                             register_invalid_uri_message(value))
+        end
+
+        if (value = @oauth_application_params[oauth_applications_backchannel_logout_session_required_column])
+          @oauth_application_params[oauth_applications_backchannel_logout_session_required_column] =
+            convert_to_boolean("backchannel_logout_session_required", value)
+        end
+      end
+
       if (value = @oauth_application_params[oauth_applications_id_token_encrypted_response_alg_column]) &&
          !oauth_jwt_jwe_algorithms_supported.include?(value)
         register_throw_json_response_error("invalid_client_metadata",

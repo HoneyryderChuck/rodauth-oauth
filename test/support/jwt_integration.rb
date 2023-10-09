@@ -37,18 +37,24 @@ class JWTIntegration < RodaIntegration
     verify_access_token(data["access_token"], oauth_grant, signing_key: secret, signing_algo: algorithm, audience: audience)
   end
 
-  def verify_access_token(data, oauth_grant, signing_key:, signing_algo:, audience: "CLIENT_ID")
+  def verify_jwt_token(data, signing_key, signing_algo, decryption_key: nil)
+    data = JWE.decrypt(data, decryption_key) if decryption_key
     claims, headers = JWT.decode(data, signing_key, true, algorithms: [signing_algo])
     assert headers["alg"] == signing_algo
+    [claims, headers]
+  end
+
+  def verify_access_token(data, oauth_grant, signing_key:, signing_algo:, audience: "CLIENT_ID")
+    claims, = verify_jwt_token(data, signing_key, signing_algo)
 
     assert claims.key?("client_id")
     assert claims["client_id"] == "CLIENT_ID"
     assert claims["scope"] == oauth_grant[:scopes]
-    verify_jwt_claims(claims, oauth_grant, audience: audience)
+    verify_access_token_claims(claims, oauth_grant, audience: audience)
     claims
   end
 
-  def verify_jwt_claims(claims, _oauth_grant, audience: claims["client_id"])
+  def verify_access_token_claims(claims, _oauth_grant, audience: claims["client_id"])
     assert claims.key?("iss")
     assert claims["iss"] == example_origin
     assert claims.key?("sub")
