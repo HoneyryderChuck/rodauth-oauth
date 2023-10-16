@@ -753,7 +753,7 @@ module Rodauth
       }
     end
 
-    def redirect_response_error(error_code, redirect_url = redirect_uri || request.referer || default_redirect)
+    def redirect_response_error(error_code, message = nil)
       if accepts_json?
         status_code = if respond_to?(:"oauth_#{error_code}_response_status")
                         send(:"oauth_#{error_code}_response_status")
@@ -761,10 +761,11 @@ module Rodauth
                         oauth_invalid_response_status
                       end
 
-        throw_json_response_error(status_code, error_code)
+        throw_json_response_error(status_code, error_code, message)
       else
+        redirect_url = redirect_uri || request.referer || default_redirect
         redirect_url = URI.parse(redirect_url)
-        params = response_error_params(error_code)
+        params = response_error_params(error_code, message)
         state = param_or_nil("state")
         params["state"] = state if state
         _redirect_response_error(redirect_url, params)

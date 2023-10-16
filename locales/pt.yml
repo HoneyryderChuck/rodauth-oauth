@@ -73,3 +73,6 @@ pt:
     oauth_invalid_scope_message: "O Token de acesso expirou"
     oauth_authorize_parameter_required: "'%{parameter}' inválido ou em falta"
     oauth_invalid_post_logout_redirect_uri_message: "URI de redireccionamento pós-logout inválido"
+    oauth_saml_assertion_not_base64_message: "A asserção SAML tem que estar no formato base64"
+    oauth_saml_assertion_single_issuer_message: "A asserção SAML tem que ter um único emissor"
+    oauth_saml_settings_not_found_message: "Nenhuma configuração SAML encontrada para o emissor"

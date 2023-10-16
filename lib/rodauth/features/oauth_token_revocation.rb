@@ -50,7 +50,7 @@ module Rodauth
           end
         end
 
-        redirect_response_error("invalid_request", request.referer || "/")
+        redirect_response_error("invalid_request")
       end
     end
 

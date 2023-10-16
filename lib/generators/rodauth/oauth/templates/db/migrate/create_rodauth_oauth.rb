@@ -115,5 +115,17 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.datetime :expires_in, null: false
       t.index %i[oauth_application_id code], unique: true
     end
+
+    create_table :oauth_saml_settings do |t|
+      t.bigint :oauth_application_id
+      t.foreign_key :oauth_applications, column: :oauth_application_id
+      t.text :idp_cert, null: true
+      t.text :idp_cert_fingerprint, null: true
+      t.string :idp_cert_fingerprint_algorithm, null: true
+      t.boolean :check_idp_cert_expiration, null: true
+      t.text :name_identifier_format, null: true
+      t.string :audience, null: true
+      t.string :issuer, null: false, unique: true
+    end
   end
 end
