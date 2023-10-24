@@ -631,6 +631,50 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     end
   end
 
+  def test_oidc_authorize_post_authorize_code_id_token_claims_scope
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
+    rodauth do
+      oauth_jwt_keys("RS256" => jws_key)
+      get_oidc_param do |_account, claim|
+        case claim
+        when :email
+          "james@example.org"
+        when :email_verified
+          true
+        end
+      end
+    end
+    setup_application
+    login
+
+    oauth_application(scopes: "openid email")
+
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid email&" \
+          "response_type=code id_token&nonce=NONCE"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    check "openid"
+    check "email"
+    # submit authorization request
+    click_button "Authorize"
+    assert page.current_url =~ /#{oauth_application[:redirect_uri]}#id_token=([^&]+)&code=([^&]+)/,
+           "was redirected instead to #{page.current_url}"
+
+    grant = db[:oauth_grants].first
+    assert grant[:claims].nil?
+
+    verify_id_token(
+      Regexp.last_match(1),
+      db[:oauth_grants].first,
+      signing_key: jws_public_key,
+      signing_algo: "RS256"
+    ) do |idtoken_claims|
+      assert idtoken_claims["email"] == "james@example.org"
+      assert idtoken_claims["email_verified"]
+    end
+  end
+
   unless RUBY_ENGINE == "truffleruby"
     def test_oidc_authorize_post_authorize_max_age
       setup_application
