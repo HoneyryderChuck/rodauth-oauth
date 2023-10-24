@@ -89,7 +89,7 @@ module Rodauth
 
       visited_sites = session[visited_sites_key] || []
 
-      sid = compute_hmac(session_value.to_s) if requires_backchannel_logout_session?(oauth_application)
+      sid = compute_hmac(compute_hmac(request.env["HTTP_COOKIE"])) if requires_backchannel_logout_session?(oauth_application)
 
       claims[:sid] = sid if sid
 
