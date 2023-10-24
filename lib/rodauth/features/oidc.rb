@@ -517,7 +517,12 @@ module Rodauth
         end
       end
 
-      # 5.4 - However, when no Access Token is issued (which is the case for the response_type value id_token),
+      # OpenID Connect Core 1.0's 5.4 Requesting Claims using Scope Values:
+      # If standard claims (profile, email, etc) are requested as scope values in the Authorization Request,
+      # include in the response.
+      include_claims ||= (OIDC_SCOPES_MAP.keys & oauth_scopes).any?
+
+      # However, when no Access Token is issued (which is the case for the response_type value id_token),
       # the resulting Claims are returned in the ID Token.
       fill_with_account_claims(id_claims, account, oauth_scopes, param_or_nil("claims_locales")) if include_claims
 
