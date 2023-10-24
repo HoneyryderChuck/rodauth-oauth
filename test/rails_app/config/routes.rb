@@ -8,4 +8,6 @@ Rails.application.routes.draw do
     get :callback
     get :private
   end
+
+  match "*unmatched", to: "application#not_found", via: :all
 end

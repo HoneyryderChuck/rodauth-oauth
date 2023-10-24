@@ -1,0 +1,17 @@
+<div class="mb-3">
+  <h1>#{rodauth.oauth_frontchannel_logout_redirecting_lead}</h1>
+  <p>
+    #{
+      rodauth.oauth_frontchannel_logout_redirecting_label(
+        link: "<a src=\"#{rodauth.logout_redirect}\">" \
+              "#{rodauth.oauth_frontchannel_logout_redirecting_link_label}</a>"
+    )
+    }
+  </p>
+  #{
+    rodauth.frontchannel_logout_urls.map do |logout_url|
+      "<iframe src=\"#{logout_url}\"></iframe>"
+    end.join
+   }
+</div>
+<meta http-equiv="refresh" content="5; URL=#{rodauth.logout_redirect}" />

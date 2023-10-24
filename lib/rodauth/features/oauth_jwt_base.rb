@@ -173,6 +173,7 @@ module Rodauth
 
       def jwt_encode(payload,
                      jwks: nil,
+                     headers: {},
                      encryption_algorithm: oauth_jwt_jwe_keys.keys.dig(0, 0),
                      encryption_method: oauth_jwt_jwe_keys.keys.dig(0, 1),
                      jwe_key: oauth_jwt_jwe_keys[[encryption_algorithm,
@@ -186,8 +187,16 @@ module Rodauth
 
         jwk = JSON::JWK.new(key || "")
 
+        # update headers
+        headers.each_key do |k|
+          if jwt.respond_to?(:"#{k}=")
+            jwt.send(:"#{k}=", headers[k])
+            headers.delete(k)
+          end
+        end
+        jwt.header.merge(headers) unless headers.empty?
+
         jwt = jwt.sign(jwk, signing_algorithm)
-        jwt.kid = jwk.thumbprint
 
         return jwt.to_s unless encryption_algorithm && encryption_method
 
@@ -329,8 +338,8 @@ module Rodauth
       end
 
       def jwt_encode(payload,
-                     signing_algorithm: oauth_jwt_keys.keys.first, **)
-        headers = {}
+                     signing_algorithm: oauth_jwt_keys.keys.first,
+                     headers: {}, **)
 
         key = oauth_jwt_keys[signing_algorithm] || _jwt_key
         key = key.first if key.is_a?(Array)

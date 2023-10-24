@@ -52,6 +52,10 @@ module Rodauth
       op_policy_uri
       op_tos_uri
       check_session_iframe
+      frontchannel_logout_supported
+      frontchannel_logout_session_supported
+      backchannel_logout_supported
+      backchannel_logout_session_supported
     ].freeze
 
     REQUIRED_METADATA_KEYS = %i[

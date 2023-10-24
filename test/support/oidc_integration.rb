@@ -32,19 +32,25 @@ class OIDCIntegration < JWTIntegration
   end
 
   def verify_id_token(data, oauth_grant, signing_key:, signing_algo: "RS256", decryption_key: nil)
-    data = JWE.decrypt(data, decryption_key) if decryption_key
-    claims, headers = JWT.decode(data, signing_key, true, { "algorithm" => signing_algo })
-
-    assert headers["alg"] == signing_algo
+    claims, = verify_jwt_token(data, signing_key, signing_algo, decryption_key: decryption_key)
     verify_id_token_claims(claims, oauth_grant) if oauth_grant
     yield claims if block_given?
     claims
   end
 
   def verify_id_token_claims(claims, oauth_grant)
-    verify_jwt_claims(claims, oauth_grant)
+    verify_access_token_claims(claims, oauth_grant)
 
     assert claims["nonce"] == oauth_grant[:nonce]
     assert claims.key?("auth_time")
+  end
+
+  def verify_logout_token(data, oauth_grant, signing_key:, signing_algo: "RS256", decryption_key: nil)
+    claims, headers = verify_jwt_token(data, signing_key, signing_algo, decryption_key: decryption_key)
+    verify_id_token_claims(claims, oauth_grant) if oauth_grant
+    assert headers["typ"] == "logout+jwt"
+    assert claims["events"] == "http://schemas.openid.net/event/backchannel-logout"
+    yield claims if block_given?
+    claims
   end
 end

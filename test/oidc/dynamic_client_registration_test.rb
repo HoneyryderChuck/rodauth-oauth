@@ -261,6 +261,62 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
     verify_oauth_application_attributes(oauth_application, json_body)
   end
 
+  def test_oidc_client_registration_frontchannel_logout
+    setup_application(:oidc_frontchannel_logout)
+    header "Accept", "application/json"
+
+    post("/register", valid_registration_params.merge(
+                        "frontchannel_logout_uri" => "bla"
+                      ))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge(
+                        "frontchannel_logout_uri" => "https://logout.com#foo=bar"
+                      ))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge(
+                        "frontchannel_logout_uri" => "https://logout.com?foo=bar",
+                        "frontchannel_logout_session_required" => true
+                      ))
+
+    assert last_response.status == 201
+    oauth_application = db[:oauth_applications].where(client_id: json_body["client_id"]).first
+    verify_oauth_application_attributes(oauth_application, json_body)
+    assert oauth_application[:frontchannel_logout_uri] == "https://logout.com?foo=bar"
+    assert oauth_application[:frontchannel_logout_session_required] == true
+  end
+
+  def test_oidc_client_registration_backchannel_logout
+    setup_application(:oidc_backchannel_logout)
+    header "Accept", "application/json"
+
+    post("/register", valid_registration_params.merge(
+                        "backchannel_logout_uri" => "bla"
+                      ))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge(
+                        "backchannel_logout_uri" => "https://logout.com#foo=bar"
+                      ))
+
+    assert last_response.status == 400
+
+    post("/register", valid_registration_params.merge(
+                        "backchannel_logout_uri" => "https://logout.com?foo=bar",
+                        "backchannel_logout_session_required" => true
+                      ))
+
+    assert last_response.status == 201
+    oauth_application = db[:oauth_applications].where(client_id: json_body["client_id"]).first
+    verify_oauth_application_attributes(oauth_application, json_body)
+    assert oauth_application[:backchannel_logout_uri] == "https://logout.com?foo=bar"
+    assert oauth_application[:backchannel_logout_session_required] == true
+  end
+
   def test_oidc_client_registration_id_token_signed_response
     setup_application
     header "Accept", "application/json"
