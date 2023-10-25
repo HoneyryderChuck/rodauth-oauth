@@ -206,7 +206,7 @@ class ClientApplication < Roda
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
             <title>iFrame RP Page</title>
           </head>
-          <body onload="javascript:setTimer()">
+          <body>
             <iframe id="op" height="0" width="0" src="#{METADATA[:check_session_iframe]}"></iframe>
             <script type="text/javascript">
           var client_id = "#{CLIENT_ID}";
@@ -218,7 +218,11 @@ class ClientApplication < Roda
           var timerID;
 
           function check_session()   {
-            var win = document.getElementById("op").contentWindow;
+            var elem = document.getElementById("op");
+            if (!(elem instanceof HTMLIFrameElement)) return;
+
+            var win = elem.contentWindow;
+
             win.postMessage(mes, targetOrigin);
           }
 
@@ -227,10 +231,7 @@ class ClientApplication < Roda
             timerID = setInterval(check_session, 2 * 1000);
           }
 
-          window.addEventListener("message", receiveMessage, false);
-
           function receiveMessage(e) {
-            console.log("event: ", e);
             if (e.origin !== targetOrigin) {
               return;
             }
@@ -241,6 +242,9 @@ class ClientApplication < Roda
               alert("session aborted in OP! logout!");
             }
           }
+
+          window.addEventListener("message", receiveMessage, false);
+          window.addEventListener("DOMContentLoaded", setTimer);
             </script>
           </body>
         </html>
