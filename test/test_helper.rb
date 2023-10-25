@@ -111,6 +111,23 @@ module OAuthHelpers
     ).first
   end
 
+  def set_oauth_saml_setting(params = {})
+    application = params.delete(:oauth_application) || oauth_application
+    params = {
+      oauth_application_id: application[:id],
+      issuer: "http://example.com",
+      idp_cert_fingerprint: SamlIdpConfig.certificate_fingerprint,
+      idp_cert_fingerprint_algorithm: "http://www.w3.org/2000/09/xmldsig#sha256",
+      name_identifier_format: "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
+    }.merge(params)
+
+    db[:oauth_saml_settings].insert(params)
+    db[:oauth_saml_settings].where(
+      oauth_application_id: params[:oauth_application_id],
+      issuer: params[:issuer]
+    ).first
+  end
+
   def authorization_header(opts = {})
     Base64.urlsafe_encode64 "#{opts.delete(:username) || 'foo@example.com'}:#{opts.delete(:password) || '0123456789'}"
   end

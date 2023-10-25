@@ -6,14 +6,27 @@ https://datatracker.ietf.org/doc/html/rfc7522
 
 == Auth Value Methods
 
-oauth_saml_cert :: SAML Identity Provider certificate
-oauth_saml_cert_fingerprint :: SAML Identity Provider certificate fingerprint
-oauth_saml_cert_fingerprint_algorithm :: SAML Identity Provider certificate fingerprint algorithm (<tt>nil</tt> by default).
 oauth_saml_name_identifier_format :: SAML Identity Provider name ID format.
-oauth_saml_security_authn_requests_signed :: Enable signature on AuthNRequest (<tt>false</tt> by default).
-oauth_saml_security_metadata_signed :: Enable signature on Metadata (<tt>false</tt> by default).
-oauth_saml_security_digest_method :: Service Provider signature method  (<tt>"http://www.w3.org/2000/09/xmldsig#sha1"</tt> by default)
-oauth_saml_security_signature_method ::  Service Provider digest method  (<tt>"http://www.w3.org/2000/09/xmldsig#rsa-sha1"</tt> by default)
+oauth_saml_idp_cert_check_expiration :: Enables SAML assertion idp cert expiration check (<tt>true</tt> by default).
+
+oauth_saml_assertion_not_base64_message :: error description when the SAML assertion isn't base64 encoded.
+oauth_saml_assertion_single_issuer_message :: error description when the SAML assertion contains multiple issuers (or none).
+oauth_saml_settings_not_found_message :: error description when no SAML settings were found for the given issuer.
+
+oauth_saml_settings_table :: the db table where SAML settings are stored, <tt>:oauth_saml_settings</tt> by default.
+oauth_saml_settings_id_column :: the db column where the SAML settings primary key is stored, <tt>:id</tt> by default.
+oauth_saml_settings_oauth_application_id_column :: the db column where the SAML settings oauth application id is stored, <tt>:oauth_application_id</tt> by default.
+oauth_saml_settings_audience_column :: the db column where the SAML settings audience is stored, <tt>:audience</tt> by default.
+oauth_saml_settings_idp_cert_column :: the db column where the SAML settings idp certificate is stored, <tt>:idp_cert</tt> by default.
+oauth_saml_settings_idp_cert_fingerprint_algorithm_column :: the db column where the SAML settings idp certificate fingerprint algorithm is stored, <tt>:idp_cert_fingerprint_algorithm</tt> by default.
+oauth_saml_settings_idp_cert_fingerprint_column :: the db column where the SAML settings idp certificate fingerprint is stored, <tt>:idp_cert_fingerprint</tt> by default.
+oauth_saml_settings_idp_cert_check_expiration_column :: the db column where the SAML setting to check idp certificate expiration is stored, <tt>:check_idp_cert_expiration</tt> by default.
+oauth_saml_settings_issuer_column :: the db column where the SAML settings issuer is stored, <tt>:issuer</tt> by default.
+oauth_saml_settings_name_identifier_format_column :: the db column where the SAML settings name identifier format is stored, <tt>:name_identifier_format</tt> by default.
+
+oauth_saml_bearer_grant documented methods that don't exist: oauth_saml_cert, oauth_saml_cert_fingerprint, oauth_saml_cert_fingerprint_algorithm, oauth_saml_security_authn_requests_signed, oauth_saml_security_digest_method, oauth_saml_security_metadata_signed, oauth_saml_security_signature_method
+
+== Auth methods
 
 require_oauth_application_from_saml2_bearer_assertion_issuer :: loads the oauth application from the SAML assertion issuer (client authorization).
 require_oauth_application_from_saml2_bearer_assertion_subject :: loads the oauth application from the SAML assertion subject (client authentication).

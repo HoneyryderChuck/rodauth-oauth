@@ -1,13 +1,31 @@
 # frozen_string_literal: true
 
+require "logger"
 require "saml_idp"
 require "onelogin/ruby-saml"
 require_relative File.join(__dir__, "roda_integration")
+require_relative File.join(__dir__, "../tls_client_auth/tls_helpers")
+
+OneLogin::RubySaml::Logging.logger = Logger.new($stderr, level: Logger::DEBUG) if ENV.key?("RODAUTH_DEBUG")
+
+module SamlIdpConfig
+  extend RodauthOAuthTlsHelpers
+
+  class << self
+    public :certificate, :private_key
+  end
+
+  module_function
+
+  def certificate_fingerprint
+    SamlIdp::Fingerprint.certificate_digest(certificate, :sha256)
+  end
+end
 
 SamlIdp.configure do |config|
   service_providers = {
     "http://example.com" => {
-      fingerprint: SamlIdp::Default::FINGERPRINT,
+      fingerprint: SamlIdpConfig.certificate_fingerprint,
       metadata_url: "http://example.com/saml/metadata",
 
       # We now validate AssertionConsumerServiceURL will match the MetadataURL set above.
@@ -15,6 +33,11 @@ SamlIdp.configure do |config|
       response_hosts: ["example.com"]
     }
   }
+
+  config.x509_certificate = SamlIdpConfig.certificate
+  config.secret_key = SamlIdpConfig.private_key
+  config.algorithm = :sha256
+  config.logger = Logger.new($stderr, level: Logger::DEBUG) if ENV.key?("RODAUTH_DEBUG")
 
   # Find ServiceProvider metadata_url and fingerprint based on our settings
   config.service_provider.finder = lambda { |issuer_or_entity_id|
@@ -82,25 +105,30 @@ class SAMLIntegration < RodaIntegration
   def saml_assertion(principal)
     ENV["ruby-saml/testing"] = "true"
     auth_request = OneLogin::RubySaml::Authrequest.new
-    auth_request_url = URI(auth_request.create(saml_settings("http://example.com/callback")))
+    saml_setting = set_oauth_saml_setting(oauth_application: oauth_application, idp_cert: SamlIdpConfig.certificate.to_pem)
+    settings = generate_saml_settings(saml_setting)
+    settings.assertion_consumer_service_url = "http://example.com/callback"
+    settings.idp_sso_target_url = "http://example.com/saml-login"
+    settings.assertion_consumer_logout_service_url = "http://foo.example.com/saml-logout"
+
+    auth_request_url = URI(auth_request.create(settings))
     auth_request_params = URI.decode_www_form(auth_request_url.query).to_h
     saml_request = SamlIdp::Request.from_deflated_request(auth_request_params["SAMLRequest"])
     encode_authn_response(
       principal,
       request_id: saml_request.request_id,
       audience_uri: "http://example.org/token",
-      acs_url: saml_request.acs_url
+      acs_url: "http://example.org/token"
     )
   end
 
-  def saml_settings(saml_acs_url)
+  def generate_saml_settings(saml_setting)
     settings = OneLogin::RubySaml::Settings.new
-    settings.assertion_consumer_service_url = saml_acs_url
-    settings.issuer = oauth_application[:homepage_url]
-    settings.idp_sso_target_url = "http://example.com/saml-login"
-    settings.assertion_consumer_logout_service_url = "http://foo.example.com/saml-logout"
-    settings.idp_cert_fingerprint = SamlIdp::Default::FINGERPRINT
-    settings.name_identifier_format = SamlIdp::Default::NAME_ID_FORMAT
+    settings.issuer = saml_setting[:issuer]
+    settings.idp_cert = saml_setting[:idp_cert]
+    settings.idp_cert_fingerprint = saml_setting[:idp_cert_fingerprint]
+    settings.idp_cert_fingerprint_algorithm = saml_setting[:idp_cert_fingerprint_algorithm]
+    settings.name_identifier_format = saml_setting[:name_identifier_format]
     settings
   end
 
@@ -125,6 +153,10 @@ class SAMLIntegration < RodaIntegration
       nil,
       nil
     )
+    response.x509_certificate = SamlIdp.config.x509_certificate
+    response.algorithm = SamlIdp.config.algorithm
+    response.signed_message_opts = true
+    response.secret_key = SamlIdp.config.secret_key
     response.build
   end
 end

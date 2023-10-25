@@ -7,17 +7,26 @@ module Rodauth
   Feature.define(:oauth_saml_bearer_grant, :OauthSamlBearerGrant) do
     depends :oauth_assertion_base
 
-    auth_value_method :oauth_saml_cert_fingerprint, "9E:65:2E:03:06:8D:80:F2:86:C7:6C:77:A1:D9:14:97:0A:4D:F4:4D"
-    auth_value_method :oauth_saml_cert, nil
-    auth_value_method :oauth_saml_cert_fingerprint_algorithm, nil
     auth_value_method :oauth_saml_name_identifier_format, "urn:oasis:names:tc:SAML:1.1:nameid-format:emailAddress"
-
-    auth_value_method :oauth_saml_security_authn_requests_signed, true
-    auth_value_method :oauth_saml_security_metadata_signed, true
-    auth_value_method :oauth_saml_security_digest_method, XMLSecurity::Document::SHA1
-    auth_value_method :oauth_saml_security_signature_method, XMLSecurity::Document::RSA_SHA1
+    auth_value_method :oauth_saml_idp_cert_check_expiration, true
 
     auth_value_method :max_param_bytesize, nil if Rodauth::VERSION >= "2.26.0"
+
+    auth_value_method :oauth_saml_settings_table, :oauth_saml_settings
+    %i[
+      id oauth_application_id
+      idp_cert idp_cert_fingerprint idp_cert_fingerprint_algorithm
+      name_identifier_format
+      issuer
+      audience
+      idp_cert_check_expiration
+    ].each do |column|
+      auth_value_method :"oauth_saml_settings_#{column}_column", column
+    end
+
+    translatable_method :oauth_saml_assertion_not_base64_message, "SAML assertion must be in base64 format"
+    translatable_method :oauth_saml_assertion_single_issuer_message, "SAML assertion must have a single issuer"
+    translatable_method :oauth_saml_settings_not_found_message, "No SAML settings found for issuer"
 
     auth_value_methods(
       :require_oauth_application_from_saml2_bearer_assertion_issuer,
@@ -32,72 +41,95 @@ module Rodauth
     private
 
     def require_oauth_application_from_saml2_bearer_assertion_issuer(assertion)
-      saml = saml_assertion(assertion)
+      parse_saml_assertion(assertion)
 
-      return unless saml
+      return unless @saml_settings
 
       db[oauth_applications_table].where(
-        oauth_applications_homepage_url_column => saml.issuers
+        oauth_applications_id_column => @saml_settings[oauth_saml_settings_oauth_application_id_column]
       ).first
     end
 
     def require_oauth_application_from_saml2_bearer_assertion_subject(assertion)
-      saml = saml_assertion(assertion)
+      parse_saml_assertion(assertion)
 
-      return unless saml
+      return unless @assertion
 
+      # 3.3.8 - For client authentication, the Subject MUST be the "client_id" of the OAuth client.
       db[oauth_applications_table].where(
-        oauth_applications_client_id_column => saml.nameid
+        oauth_applications_client_id_column => @assertion.nameid
       ).first
     end
 
     def account_from_saml2_bearer_assertion(assertion)
-      saml = saml_assertion(assertion)
+      parse_saml_assertion(assertion)
 
-      return unless saml
+      return unless @assertion
 
-      account_from_bearer_assertion_subject(saml.nameid)
+      account_from_bearer_assertion_subject(@assertion.nameid)
     end
 
-    def saml_assertion(assertion)
+    def generate_saml_settings(saml_settings)
       settings = OneLogin::RubySaml::Settings.new
-      settings.idp_cert = oauth_saml_cert
-      settings.idp_cert_fingerprint = oauth_saml_cert_fingerprint
-      settings.idp_cert_fingerprint_algorithm = oauth_saml_cert_fingerprint_algorithm
-      settings.name_identifier_format = oauth_saml_name_identifier_format
-      settings.security[:authn_requests_signed] = oauth_saml_security_authn_requests_signed
-      settings.security[:metadata_signed] = oauth_saml_security_metadata_signed
-      settings.security[:digest_method] = oauth_saml_security_digest_method
-      settings.security[:signature_method] = oauth_saml_security_signature_method
 
-      response = OneLogin::RubySaml::Response.new(assertion, settings: settings, skip_recipient_check: true)
+      # issuer
+      settings.idp_entity_id = saml_settings[oauth_saml_settings_issuer_column]
 
+      # audience
+      settings.sp_entity_id = saml_settings[oauth_saml_settings_audience_column] || token_url
+
+      # recipient
+      settings.assertion_consumer_service_url = token_url
+
+      settings.idp_cert = saml_settings[oauth_saml_settings_idp_cert_column]
+      settings.idp_cert_fingerprint = saml_settings[oauth_saml_settings_idp_cert_fingerprint_column]
+      settings.idp_cert_fingerprint_algorithm = saml_settings[oauth_saml_settings_idp_cert_fingerprint_algorithm_column]
+
+      if settings.idp_cert
+        check_idp_cert_expiration = saml_settings[oauth_saml_settings_idp_cert_check_expiration_column]
+        check_idp_cert_expiration = oauth_saml_idp_cert_check_expiration if check_idp_cert_expiration.nil?
+        settings.security[:check_idp_cert_expiration] = check_idp_cert_expiration
+      end
+      settings.security[:strict_audience_validation] = true
+      settings.security[:want_name_id] = true
+
+      settings.name_identifier_format = saml_settings[oauth_saml_settings_name_identifier_format_column] ||
+                                        oauth_saml_name_identifier_format
+      settings
+    end
+
+    # rubocop:disable Naming/MemoizedInstanceVariableName
+    def parse_saml_assertion(assertion)
+      return @assertion if defined?(@assertion)
+
+      response = OneLogin::RubySaml::Response.new(assertion)
+
+      # The SAML Assertion XML data MUST be encoded using base64url
+      redirect_response_error("invalid_grant", oauth_saml_assertion_not_base64_message) unless response.send(:base64_encoded?, assertion)
+
+      # 1. The Assertion's <Issuer> element MUST contain a unique identifier
+      # for the entity that issued the Assertion.
+      redirect_response_error("invalid_grant", oauth_saml_assertion_single_issuer_message) unless response.issuers.size == 1
+
+      @saml_settings = db[oauth_saml_settings_table].where(
+        oauth_saml_settings_issuer_column => response.issuers.first
+      ).first
+
+      redirect_response_error("invalid_grant", oauth_saml_settings_not_found_message) unless @saml_settings
+
+      response.settings = generate_saml_settings(@saml_settings)
+
+      # 2. The Assertion MUST contain a <Conditions> element ...
       # 3. he Assertion MUST have an expiry that limits the time window ...
       # 4. The Assertion MUST have an expiry that limits the time window ...
       # 5. The <Subject> element MUST contain at least one ...
       # 6. The authorization server MUST reject the entire Assertion if the ...
       # 7. If the Assertion issuer directly authenticated the subject, ...
-      redirect_response_error("invalid_grant") unless response.is_valid?
+      redirect_response_error("invalid_grant", response.errors.join("; ")) unless response.is_valid?
 
-      # In order to issue an access token response as described in OAuth 2.0
-      # [RFC6749] or to rely on an Assertion for client authentication, the
-      # authorization server MUST validate the Assertion according to the
-      # criteria below.
-
-      # 1. The Assertion's <Issuer> element MUST contain a unique identifier
-      # for the entity that issued the Assertion.
-      redirect_response_error("invalid_grant") unless response.issuers.size == 1
-
-      # 2. in addition to the URI references
-      # discussed there, the token endpoint URL of the authorization
-      # server MAY be used as a URI that identifies the authorization
-      # server as an intended audience.  The authorization server MUST
-      # reject any Assertion that does not contain its own identity as
-      # the intended audience.
-      redirect_response_error("invalid_grant") if response.audiences && !response.audiences.include?(token_url)
-
-      response
+      @assertion = response
     end
+    # rubocop:enable Naming/MemoizedInstanceVariableName
 
     def oauth_server_metadata_body(*)
       super.tap do |data|
