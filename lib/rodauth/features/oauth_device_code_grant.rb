@@ -35,7 +35,7 @@ module Rodauth
     end
     translatable_method :oauth_grant_user_code_label, "User code"
 
-    auth_value_methods(
+    auth_methods(
       :generate_user_code
     )
 

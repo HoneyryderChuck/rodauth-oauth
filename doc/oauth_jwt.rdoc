@@ -4,6 +4,10 @@ The +oauth_jwt+ feature implements the JWT profile for OAuth 2.0 access tokens.
 
 https://datatracker.ietf.org/doc/html/rfc9068
 
-== Value Methods
+== Auth Value Methods
 
 * oauth_jwt_access_tokens :: defines whether to encode access tokens as JWT <tt>true</tt> by default.
+
+== Auth Methods
+
+* jwt_claims :: returns the claims hash to add in JWT tokens payload.

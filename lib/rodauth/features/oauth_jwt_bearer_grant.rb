@@ -8,7 +8,7 @@ module Rodauth
 
     auth_value_method :max_param_bytesize, nil if Rodauth::VERSION >= "2.26.0"
 
-    auth_value_methods(
+    auth_methods(
       :require_oauth_application_from_jwt_bearer_assertion_issuer,
       :require_oauth_application_from_jwt_bearer_assertion_subject,
       :account_from_jwt_bearer_assertion

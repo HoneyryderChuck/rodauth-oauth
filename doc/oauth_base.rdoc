@@ -86,8 +86,6 @@ oauth_metadata_op_tos_uri :: OAuth terms of service, <tt>nil</tt> by default.
 is_authorization_server? :: flag to signal whether it's an authorization server, <tt>true</tt> by default.
 
 token_route :: the route for token generation, defaults to +token+.
-before_token_route :: Run arbitrary code before the token route.
-before_token :: Run arbitrary code before generating an access token.
 
 oauth_unique_id_generation_retries :: max retries for token generation.
 oauth_reuse_access_token :: when true, it'll reuse the same access token for a given account/client application for each new verified grant.
@@ -100,15 +98,18 @@ oauth_cancel_button :: button label which cancels the device verification.
 http_request :: performs a GET http request to the given URL (or a POST with url-encoded body, if form data is passed)
 http_request_cache :: store where http requests get cached according to the HTTP cache rules.
 
-== Auth methods
+authorization_server_url :: returns the authorization server origin URL.
+oauth_grants_unique_columns :: uniqueness index to use in ON CONFLICT queries (when supported).
 
+== Auth Methods
+
+before_token_route :: Run arbitrary code before the token route.
+before_token :: Run arbitrary code before generating an access token.
 fetch_access_token :: retrieves the access token from the request (defaults to fetching from the "Authorization" header).
 secret_matches? :: verifies if provided secret matches the application's client secret.
 secret_hash :: calculates the hash  of a given client secret.
 generate_token_hash :: hashes an access token (when the token hash is stored in the db).
-authorization_server_url :: returns the authorization server origin URL.
 oauth_unique_id_generator :: generates random base64 strings, used for raw access tokens, client IDs, etc.
-oauth_grants_unique_columns :: uniqueness index to use in ON CONFLICT queries (when supported).
 require_authorizable_account :: requires the account to be logged in by default (calls `require_account`), can be overriden to add more functionality (i.e. requiring 2FA before authorization).
 oauth_account_ds :: returns a dataset filtered for an account id (overriden in rails to use Active Record <tt>Account</tt> model)
 oauth_application_ds :: returns a dataset filtered for an oauth application id (overriden in rails to use Active Record <tt>OAuthApplication</tt> model)

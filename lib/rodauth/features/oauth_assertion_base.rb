@@ -6,7 +6,7 @@ module Rodauth
   Feature.define(:oauth_assertion_base, :OauthAssertionBase) do
     depends :oauth_base
 
-    auth_value_methods(
+    auth_methods(
       :assertion_grant_type?,
       :client_assertion_type?,
       :assertion_grant_type,

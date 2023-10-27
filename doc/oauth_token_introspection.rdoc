@@ -7,9 +7,10 @@ https://tools.ietf.org/html/rfc7662
 == Auth Value Methods
 
 introspect_route :: the route for introspecting access tokens, defaults to +introspect+.
-before_introspect_route :: Run arbitrary code before the introspect route.
-before_introspect :: Run arbitrary code before introspecting a tokne.
 
 == Auth methods
+
+before_introspect_route :: Run arbitrary code before the introspect route.
+before_introspect :: Run arbitrary code before introspecting a tokne.
 
 resource_owner_identifier :: function which returns the owner identifier from the grant record (or JWT claims).

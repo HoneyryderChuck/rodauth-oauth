@@ -9,6 +9,9 @@ The +oauth_dynamic_client_registration+ feature adds support for the OAuth 2.0 d
 oauth_client_registration_required_params :: request params required to be present in the register body for it to succeed.
 oauth_applications_registration_access_token_column :: db column where an oauth application registration access token is stored, after being hashed.
 registration_client_uri_route :: the route where the client registration uri is available, and existing client applications can be further manipulated (via GET and PATCH verbs).
+register_route :: the route for registering dynamic clients, defaults to +register+.
+
+== Auth Methods
+
 before_register :: Run arbitrary code before registering a new client application.
 before_register_route :: Run arbitrary code before the register route.
-register_route :: the route for registering dynamic clients, defaults to +register+.

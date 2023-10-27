@@ -11,6 +11,8 @@ oauth_oidc_user_agent_state_cookie_options :: cookie options for the user agent 
 oauth_oidc_user_agent_state_cookie_expires_in :: expiration time for the user agent state cookie (1 year by default)
 oauth_oidc_user_agent_state_js :: additional javascript to inject in the OP iframe payload before session state calculation (and where one can do additional checks to the incoming message).
 
+check_session_page_title :: Title for the Check Session Iframe doc.
+
 == Auth methods
 
 oauth_oidc_session_management_salt :: generates random strings to salt the session state with.
@@ -18,4 +20,3 @@ oauth_oidc_session_management_salt :: generates random strings to salt the sessi
 check_session_route :: the route for the check session iframe, defaults to +check-session+.
 before_check_session_route :: Run arbitrary code before the check session iframe route.
 check_session_view ::  The HTML of the check session iframe.
-check_session_page_title :: Title for the Check Session Iframe doc.

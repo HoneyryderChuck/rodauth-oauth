@@ -7,7 +7,7 @@ module Rodauth
   Feature.define(:oauth_jwt_jwks, :OauthJwtJwks) do
     depends :oauth_jwt_base
 
-    auth_value_methods(:jwks_set)
+    auth_methods(:jwks_set)
 
     auth_server_route(:jwks) do |r|
       before_jwks_route

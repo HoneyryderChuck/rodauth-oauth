@@ -18,7 +18,7 @@ module Rodauth
 
     auth_value_method :oauth_jwt_jwe_copyright, nil
 
-    auth_value_methods(
+    auth_methods(
       :jwt_encode,
       :jwt_decode,
       :jwt_decode_no_key,

@@ -6,7 +6,6 @@ The +oauth_grant_management+ feature provides OAuth Token Management interfaces,
 
 oauth_grants_route :: the route for accessing oauth grants, defaults to +oauth-grants+.
 oauth_grants_path :: returns URL path for oauth grants.
-oauth_grant_path ::  returns URL path for an oauth grant.
 oauth_grants_id_pattern :: pattern matcher to retrieve the oauth grant ID from the URL, <tt>Integer</tt> by default (must respond to "match").
 oauth_grants_page_title :: Title for the client OAuth grants page.
 oauth_grants_view :: The HTML of the Oauth grants dashboard for the logged in account.
@@ -21,3 +20,7 @@ oauth_grants_type_label :: Label for the oauth grant type.
 oauth_grant_revoke_button :: Label for the grant revoke button.
 
 oauth_no_grants_text :: Lead text when grants list is empty.
+
+== Auth Methods
+
+oauth_grant_path ::  returns URL path for an oauth grant.

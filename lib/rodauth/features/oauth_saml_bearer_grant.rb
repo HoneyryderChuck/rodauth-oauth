@@ -28,7 +28,7 @@ module Rodauth
     translatable_method :oauth_saml_assertion_single_issuer_message, "SAML assertion must have a single issuer"
     translatable_method :oauth_saml_settings_not_found_message, "No SAML settings found for issuer"
 
-    auth_value_methods(
+    auth_methods(
       :require_oauth_application_from_saml2_bearer_assertion_issuer,
       :require_oauth_application_from_saml2_bearer_assertion_subject,
       :account_from_saml2_bearer_assertion

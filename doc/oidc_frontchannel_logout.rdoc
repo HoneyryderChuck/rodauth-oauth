@@ -8,10 +8,13 @@ https://openid.net/specs/openid-connect-frontchannel-1_0.html
 
 visited_sites_key :: The key in the session hash storing the OIDC visited sites to logout from (+:visited_sites+ by default).
 frontchannel_logout_page_title :: Page title for the frontchannel logout redirection page.
-frontchannel_logout_view :: The HTML of the frontchannel logout redirection page.
 oauth_frontchannel_logout_redirecting_lead :: Lead text for the frontchannel logout redirection page.
 oauth_frontchannel_logout_redirecting_label :: Label for the frontchannel logout redirection page.
 oauth_frontchannel_logout_redirecting_link_label :: Label for the link in in the rontchannel logout label text.
 frontchannel_logout_session_supported :: whether to send +iss+ and +sid+ in the ID token and logout urls (+true+ by default).
 oauth_applications_frontchannel_logout_uri_column :: The column where the oauth application frontchannel logout URI is stored (+:frontchannel_logout_uri+ by default).
 oauth_applications_frontchannel_logout_session_required_column :: The column where the oauth application request to send +iss+ and +sid+ in the ID token and logout urls is stored (+:frontchannel_logout_session_required+ by default).
+
+== Auth Methods
+
+frontchannel_logout_view :: The HTML of the frontchannel logout redirection page.
