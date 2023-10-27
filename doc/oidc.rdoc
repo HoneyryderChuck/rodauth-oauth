@@ -1,6 +1,10 @@
 = Documentation for Open ID Connect feature
 
-The +oidc+ feature builds on top of the oauth_jwt feature to implement an OpenID Connect identity provider.
+The +oidc+ feature implements the functionality required from an OpenID Connect identity provider.
+
+https://openid.net/specs/openid-connect-core-1_0.html
+
+This feature depends on the rodauth account_expiration feature, as well as the oauth_jwt, oauth_jwt_jwks, oauth_authorization_code_grant and oauth_implicit_grant features.
 
 == Value Methods
 

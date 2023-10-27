@@ -2,6 +2,8 @@
 
 The +oauth_grant_management+ feature provides OAuth Token Management interfaces, so users are able to view and revoke their oauth grants.
 
+This feature depends on the oauth_base feature.
+
 == Auth Value Methods
 
 oauth_grants_route :: the route for accessing oauth grants, defaults to +oauth-grants+.

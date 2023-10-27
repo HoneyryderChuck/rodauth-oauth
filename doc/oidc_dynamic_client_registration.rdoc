@@ -4,6 +4,8 @@ The +oidc_dynamic_client_registration+ feature adds support for the client regis
 
 https://openid.net/specs/openid-connect-registration-1_0.html
 
+This feature depends on the oauth_dynamic_client_registration and oidc features.
+
 == Value Methods
 
 oauth_applications_application_type_column :: the db column where the oauth application type is stored, <tt>:application_type</tt> by default.

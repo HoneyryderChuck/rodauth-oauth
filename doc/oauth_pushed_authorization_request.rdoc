@@ -4,6 +4,8 @@ The +oauth_pushed_authorization_request+ feature implements support for the Push
 
 https://datatracker.ietf.org/doc/html/rfc9126
 
+This feature depends on the oauth_authorize_base feature.
+
 == Auth Value Methods
 
 par_route :: the route for creating pushed auth requests, defaults to +par+.

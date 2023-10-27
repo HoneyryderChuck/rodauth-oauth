@@ -4,6 +4,8 @@ The +oauth_token_revocation+ feature implements the OAuth 2.0 Token Revocation.
 
 https://datatracker.ietf.org/doc/html/rfc7009
 
+This feature depends on the oauth_base feature.
+
 == Auth Value Methods
 
 revoke_route :: the route for revoking access tokens, defaults to +revoke+.

@@ -4,6 +4,8 @@ The +oidc_session_management+ feature supports the OpenID Connect Session Manage
 
 https://openid.net/specs/openid-connect-session-1_0.html
 
+This feature depends on the oidc feature.
+
 == Value Methods
 
 oauth_oidc_user_agent_state_cookie_key :: cookie key where the user agent state is stored.

@@ -4,6 +4,8 @@ The +oauth_jwt+ feature implements the JWT profile for OAuth 2.0 access tokens.
 
 https://datatracker.ietf.org/doc/html/rfc9068
 
+This feature depends on the oauth_jwt_base and oauth_jwt_jwks feature.
+
 == Auth Value Methods
 
 * oauth_jwt_access_tokens :: defines whether to encode access tokens as JWT <tt>true</tt> by default.

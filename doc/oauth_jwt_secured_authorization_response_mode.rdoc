@@ -4,6 +4,8 @@ The +oauth_jwt_secured_authorization_response_mode+ feature implements support f
 
 https://openid.net/specs/openid-financial-api-jarm.html
 
+This feature depends on the oauth_authorize_base and oauth_jwt_base features.
+
 == Value Methods
 
 oauth_authorization_response_mode_expires_in :: The number of seconds an authorization response mode JWT remains valid, <tt>5 minutes</tt> by default.

@@ -1,10 +1,20 @@
 = Documentation for OAuthBase feature
 
-The +oauth_base+ feature implements all basic functionality in order to set up an authorization server, which can emit and verify tokens.
+The +oauth_base+ feature implements all basic functionality in order to set up an authorization server and verify OAuth tokens.
+
+It sets up the token URL, used to generate OAuth access tokens.
 
 https://datatracker.ietf.org/doc/html/rfc6749
 
-It alternatively can set up a resource server.
+In your routing block, you can require OAuth token based authorization via:
+
+    rodauth.require_oauth_authorization
+
+    # or
+
+    rodauth.require_oauth_authorization("books.read") # scope-based authorization
+
+It also implements the refresh token grant flow.
 
 == Auth Value Methods
 

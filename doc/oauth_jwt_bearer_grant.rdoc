@@ -4,6 +4,8 @@ The +oauth_jwt_bearer_grant+ feature implements the OAuth 2.0 JWT Profile for Cl
 
 https://datatracker.ietf.org/doc/html/rfc7523
 
+This feature depends on the oauth_jwt and oauth_assertion_base features.
+
 == Auth Methods
 
 require_oauth_application_from_jwt_bearer_assertion_issuer :: loads the oauth application from the JWT assertion issuer (client authorization).

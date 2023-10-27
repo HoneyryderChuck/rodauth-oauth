@@ -2,6 +2,8 @@
 
 The +oauth_application_management+ feature provides OAuth Client Application Management interfaces, so users are able to create/read/edit their own applications.
 
+This feature depends on the oauth_base feature.
+
 == Auth Value Methods
 
 oauth_application_required_params :: fields required when submitting a new client application, <tt>%w[name description scopes homepage_url redirect_uri client_secret]</tt> by default.

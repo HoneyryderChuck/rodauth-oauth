@@ -4,6 +4,9 @@ The +oauth_pkce+ feature implements the OAuth 2.0 Proof Key for Code Exchange au
 
 https://tools.ietf.org/html/rfc7636
 
+
+This feature depends on the oauth_authorization_code_grant feature.
+
 == Auth Value Methods
 
 oauth_require_pkce :: Enforces usage of PKCE, <tt>true</tt> by default.

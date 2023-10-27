@@ -4,6 +4,8 @@ The +oauth_token_introspection+ feature implements the OAuth 2.0 Token Introspec
 
 https://tools.ietf.org/html/rfc7662
 
+This feature depends on the oauth_base feature.
+
 == Auth Value Methods
 
 introspect_route :: the route for introspecting access tokens, defaults to +introspect+.

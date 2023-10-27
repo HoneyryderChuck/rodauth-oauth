@@ -2,6 +2,8 @@
 
 The +oauth_jwt_jwks+ feature provides an endpoint, "/jwks", where the provider set of public JSON Web Keys is exposed.
 
+This feature depends on the oauth_jwt_base feature.
+
 == Auth Methods
 
 jwks_set :: returns the JWK set to expose over JSON.

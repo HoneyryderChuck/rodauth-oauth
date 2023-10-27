@@ -4,6 +4,8 @@ The +oidc_frontchannel_logout+ feature supports the OpenID Connect Frontchannel 
 
 https://openid.net/specs/openid-connect-frontchannel-1_0.html
 
+This feature depends on the rodauth logout feature, as well as the oidc feature.
+
 == Value Methods
 
 visited_sites_key :: The key in the session hash storing the OIDC visited sites to logout from (+:visited_sites+ by default).
