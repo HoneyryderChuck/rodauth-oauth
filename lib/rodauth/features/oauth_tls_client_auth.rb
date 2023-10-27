@@ -7,7 +7,7 @@ require "rodauth/oauth"
 
 module Rodauth
   Feature.define(:oauth_tls_client_auth, :OauthTlsClientAuth) do
-    depends :oauth_jwt_base
+    depends :oauth_base
 
     auth_value_method :oauth_tls_client_certificate_bound_access_tokens, false
 

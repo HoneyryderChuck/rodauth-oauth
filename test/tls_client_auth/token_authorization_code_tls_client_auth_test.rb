@@ -163,6 +163,6 @@ class RodauthOAuthTokenAuthorizationCodeTlsClientAuthTest < RodaIntegration
   end
 
   def oauth_feature
-    %i[oauth_authorization_code_grant oauth_tls_client_auth]
+    %i[oauth_jwt_base oauth_authorization_code_grant oauth_tls_client_auth]
   end
 end
