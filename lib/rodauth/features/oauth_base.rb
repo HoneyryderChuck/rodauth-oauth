@@ -109,13 +109,16 @@ module Rodauth
     auth_value_method :oauth_metadata_op_tos_uri, nil
 
     auth_value_methods(
+      :authorization_server_url,
+      :oauth_grants_unique_columns
+    )
+
+    auth_methods(
       :fetch_access_token,
       :secret_hash,
       :generate_token_hash,
       :secret_matches?,
-      :authorization_server_url,
       :oauth_unique_id_generator,
-      :oauth_grants_unique_columns,
       :require_authorizable_account,
       :oauth_account_ds,
       :oauth_application_ds

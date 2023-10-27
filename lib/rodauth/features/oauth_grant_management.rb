@@ -21,7 +21,7 @@ module Rodauth
     auth_value_method :oauth_grants_id_pattern, Integer
     auth_value_method :oauth_grants_per_page, 20
 
-    auth_value_methods(
+    auth_methods(
       :oauth_grant_path
     )
 

@@ -1,6 +1,10 @@
 = Documentation for Open ID Connect feature
 
-The +oidc+ feature builds on top of the oauth_jwt feature to implement an OpenID Connect identity provider.
+The +oidc+ feature implements the functionality required from an OpenID Connect identity provider.
+
+https://openid.net/specs/openid-connect-core-1_0.html
+
+This feature depends on the rodauth account_expiration feature, as well as the oauth_jwt, oauth_jwt_jwks, oauth_authorization_code_grant and oauth_implicit_grant features.
 
 == Value Methods
 
@@ -28,8 +32,6 @@ oauth_invalid_scope_message :: overwrites the default to <tt>"The Access Token e
 
 userinfo_route :: the route for the userinfo action, defaults to +userinfo+.
 
-== Auth methods
-
 userinfo_signing_alg_values_supported :: Supported JWS algorithms for signing userinfo response (when JWT-serialized).
 userinfo_encryption_alg_values_supported :: Supported JWE algorithms for encrypting userinfo response (when JWT-serialized).
 userinfo_encryption_enc_values_supported :: Supported JWE encryption methods for encrypting userinfo response (when JWT-serialized).
@@ -39,15 +41,17 @@ request_object_encryption_enc_values_supported :: Supported JWE encryption metho
 
 oauth_acr_values_supported :: list of ACR values supported by the provider
 
+oauth_prompt_login_cookie_key :: try prompt cookie key.
+oauth_prompt_login_cookie_options :: prompt cookie options.
+oauth_prompt_login_interval :: prompt cookie lifetime.
+
+== Auth methods
+
 fill_with_account_claims :: adds normals claims ("name", "given_name"...); can be overriden to add aggregated and distributed claims.
 get_oidc_param :: returns the value for an OpenID connect claim (such as "email", "name", "phone_number", etc...)
 get_additional_param :: sets the values for additional scopes.
 get_oidc_account_last_login_at :: returns the timestamp for an account's last login (used to get the `"auth_time"` OIDC claim)
 oidc_authorize_on_prompt_none? :: whether to allow authorization when "prompt=none", <tt>false</tt> by default.
-
-oauth_prompt_login_cookie_key :: try prompt cookie key.
-oauth_prompt_login_cookie_options :: prompt cookie options.
-oauth_prompt_login_interval :: prompt cookie lifetime.
 
 require_acr_value_phr :: called before authorization request if "phr" in acr values, will request 2-factor authentication if any such `rodauth` feature is loaded.
 require_acr_value_phrh :: called before authorization request if "phrh" in acr values, will request webauthn authentication if `webauthn` feature from rodauth is loaded.

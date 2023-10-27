@@ -4,7 +4,12 @@ The +oauth_resource_server+ feature streamlines the support for an OAuth Resourc
 
 https://www.rfc-editor.org/rfc/rfc6749#section-1.1
 
+This feature depends on the oauth_token_introspection feature.
+
 == Auth Value Methods
 
 is_authorization_server? :: flag to signal whether it's an authorization server, <tt>false</tt> when this feature is used.
+
+== Auth Methods
+
 before_introspection_request :: called before introspecting on a given access token (resource server only).

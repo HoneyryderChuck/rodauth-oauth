@@ -1,10 +1,14 @@
 = Documentation for OAuth SAML Assertion Base feature
 
-The +oauth_assertion_base+ feature implements the Assertion Framework for OAuth 2.0 Client Authentication and Authorization Grants.
+The +oauth_assertion_base+ feature provides functionality which implements the Assertion Framework for OAuth 2.0 Client Authentication and Authorization Grants.
+
+This functionality is used by the oauth_saml_bearer_grant and the oauth_jwt_bearer_grant features.
 
 https://datatracker.ietf.org/doc/html/rfc7521
 
-== Auth Value Methods
+This feature depends on the oauth_authorize_base feature.
+
+== Auth Methods
 
 assertion_grant_type? :: checks whether the current request has an assertion-based grant type.
 client_assertion_type? :: checks whether the current request has a client assertion.

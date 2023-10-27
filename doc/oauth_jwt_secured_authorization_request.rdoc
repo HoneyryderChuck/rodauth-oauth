@@ -4,6 +4,8 @@ The +oauth_jwt_secured_authorization_request+ feature implements support for the
 
 https://datatracker.ietf.org/doc/html/rfc9101
 
+This feature depends on the oauth_authorize_base and oauth_jwt_base features.
+
 == Value Methods
 
 oauth_require_request_uri_registration :: whether client applications are required to define "request_uris", <tt>false</tt> by default.

@@ -100,7 +100,10 @@ module Rodauth
       :request_object_signing_alg_values_supported,
       :request_object_encryption_alg_values_supported,
       :request_object_encryption_enc_values_supported,
-      :oauth_acr_values_supported,
+      :oauth_acr_values_supported
+    )
+
+    auth_methods(
       :get_oidc_account_last_login_at,
       :oidc_authorize_on_prompt_none?,
       :fill_with_account_claims,

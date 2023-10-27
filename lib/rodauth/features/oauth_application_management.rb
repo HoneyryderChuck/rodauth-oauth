@@ -57,7 +57,7 @@ module Rodauth
     translatable_method :oauth_no_applications_text, "No oauth applications yet!"
     translatable_method :oauth_no_grants_text, "No oauth grants yet!"
 
-    auth_value_methods(
+    auth_methods(
       :oauth_application_path
     )
 

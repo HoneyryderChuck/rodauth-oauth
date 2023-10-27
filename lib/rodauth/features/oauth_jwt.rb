@@ -9,7 +9,7 @@ module Rodauth
 
     auth_value_method :oauth_jwt_access_tokens, true
 
-    auth_value_methods(:jwt_claims)
+    auth_methods(:jwt_claims)
 
     def require_oauth_authorization(*scopes)
       return super unless oauth_jwt_access_tokens

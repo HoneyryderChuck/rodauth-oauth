@@ -2,6 +2,8 @@
 
 The +oauth_application_management+ feature provides OAuth Client Application Management interfaces, so users are able to create/read/edit their own applications.
 
+This feature depends on the oauth_base feature.
+
 == Auth Value Methods
 
 oauth_application_required_params :: fields required when submitting a new client application, <tt>%w[name description scopes homepage_url redirect_uri client_secret]</tt> by default.
@@ -13,7 +15,6 @@ oauth_application_description_param: form parameter for a client application des
 oauth_application_scopes_param: form parameter for a client application scopes, <tt>scopes</tt> by default.
 oauth_application_homepage_url_param: form parameter for a client application homepage URL, <tt>homepage_url</tt> by default.
 oauth_applications_id_pattern :: pattern matcher to retrieve the client application ID from the URL, <tt>Integer</tt> by default (must respond to "match").
-oauth_application_path :: URL sub-path used for a client application view.
 oauth_applications_oauth_grants_path :: URL sub-path used for a client application's oauth grants views, <tt>"oauth-tokens"</tt> by default
 invalid_url_message :: error description for the "invalid_url" OAuth error code, <tt>"Invalid URL"</tt> by default.
 null_error_message :: error description for the "null_error" OAuth error code, <tt>"is not filled"</tt> by default.
@@ -56,15 +57,19 @@ oauth_application_redirect_uri_param :: Form input for the oauth application red
 oauth_application_scopes_param :: Form input for the oauth application scopes.
 
 oauth_applications_route :: the route for accessing oauth applications, defaults to +oauth-applications+.
-before_create_oauth_application :: Run arbitrary code before creating an oauth application (through the application endpoint).
-after_create_oauth_application :: Run arbitrary code after creating an oauth application (through the application endpoint).
-oauth_applications_view :: The HTML of the Oauth applications dashboard.
-oauth_application_view :: The HTML of an Oauth application page.
-new_oauth_application_view :: The HTML of a new Oauth application form.
-oauth_application_oauth_grants_view :: The HTML of the Oauth application grants dashboard.
 
 create_oauth_application_error_flash :: The flash error to display when there were submission errors creating an Oauth application.
 create_oauth_application_notice_flash :: The flash message to display when an Oauth application is created successfully.
 
 oauth_no_applications_text :: Lead text when applications list is empty.
 oauth_no_grants_text :: Lead text when grants list is empty.
+
+== Auth Methods
+
+oauth_application_path :: URL sub-path used for a client application view.
+before_create_oauth_application :: Run arbitrary code before creating an oauth application (through the application endpoint).
+after_create_oauth_application :: Run arbitrary code after creating an oauth application (through the application endpoint).
+oauth_applications_view :: The HTML of the Oauth applications dashboard.
+oauth_application_view :: The HTML of an Oauth application page.
+new_oauth_application_view :: The HTML of a new Oauth application form.
+oauth_application_oauth_grants_view :: The HTML of the Oauth application grants dashboard.

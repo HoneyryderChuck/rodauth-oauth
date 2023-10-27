@@ -4,6 +4,8 @@ The +oauth_tls_client_auth+ feature implements the OAuth 2.0 Mutual-TLS Client A
 
 https://datatracker.ietf.org/doc/html/rfc8705
 
+This feature depends on the oauth_base feature. If the oauth_jwt_base feature is in use (if you require certificate-bound access tokens, for example), it must be loaded after it.
+
 == Auth Value Methods
 
 oauth_tls_client_certificate_bound_access_tokens :: Enables certificate-bound access tokens for all applications (<tt>false</tt> by default).

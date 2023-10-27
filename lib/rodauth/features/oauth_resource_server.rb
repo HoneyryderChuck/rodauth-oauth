@@ -8,7 +8,7 @@ module Rodauth
 
     auth_value_method :is_authorization_server?, false
 
-    auth_value_methods(
+    auth_methods(
       :before_introspection_request
     )
 

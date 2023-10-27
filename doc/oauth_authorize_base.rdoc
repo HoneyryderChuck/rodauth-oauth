@@ -1,6 +1,10 @@
 = Documentation for OAuth Authorization Base feature
 
-The +oauth_authorization_base+ provides common feature for OAuth grants requiring user grant authorization (Authorization Code, Device Code).
+The +oauth_authorization_base+ provides common functionality shared by OAuth grant implementations (oauth_authorization_code_grant, oauth_implicit_grant or oauth_device_code_grant, to name a few).
+
+It implements the Authorization Request form page.
+
+This feature depends on the oauth_base feature.
 
 == Auth Value Methods
 
@@ -8,11 +12,6 @@ oauth_authorize_button :: Label of Authorize form button.
 oauth_authorize_post_button :: Label of post-authorize form button.
 
 authorize_route :: the route for the authorize action, defaults to +authorize+.
-before_authorize_route :: Run arbitrary code before the authorize route.
-before_authorize :: Run arbitrary code before executing an "authorize" endpoint.
-after_authorize :: Run arbitrary code after authorizing a request.
-authorize_view :: The HTML of the Authorize form.
-authorize_error_view :: The HTML of the Authorize error page.
 
 authorize_page_title :: Title of authorize form page.
 authorize_error_page_title :: Title of the authorize error page.
@@ -28,5 +27,12 @@ oauth_applications_tos_uri_label :: Form label for the oauth application Terms o
 oauth_unsupported_response_type_message :: Error message for the <tt>unsupported_response_type</tt> error code.
 oauth_authorize_parameter_required :: Error message for required params missing from the authorization request.
 
+== Auth Methods
+
 oauth_grants_resource_owner_columns :: db columns which identify a resource owner in the grants table.
 resource_owner_params :: conditionals to filter grants by a given logged in resource owner.
+before_authorize_route :: Run arbitrary code before the authorize route.
+before_authorize :: Run arbitrary code before executing an "authorize" endpoint.
+after_authorize :: Run arbitrary code after authorizing a request.
+authorize_view :: The HTML of the Authorize form.
+authorize_error_view :: The HTML of the Authorize error page.

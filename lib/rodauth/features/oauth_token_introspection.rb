@@ -9,7 +9,7 @@ module Rodauth
 
     before "introspect"
 
-    auth_value_methods(
+    auth_methods(
       :resource_owner_identifier
     )
 

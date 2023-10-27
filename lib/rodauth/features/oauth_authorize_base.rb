@@ -28,7 +28,7 @@ module Rodauth
     translatable_method :oauth_unsupported_response_type_message, "Unsupported response type"
     translatable_method :oauth_authorize_parameter_required, "Invalid or missing '%<parameter>s'"
 
-    auth_value_methods(
+    auth_methods(
       :resource_owner_params,
       :oauth_grants_resource_owner_columns
     )

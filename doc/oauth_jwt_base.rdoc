@@ -1,6 +1,8 @@
 = Documentation for OAuth JWT Base feature
 
-The +oauth_jwt_base+ feature provides functions for dealing with JWT (signing, encryption, encoding/decoding).
+The +oauth_jwt_base+ feature overrides functionality from the oauth_base feature to enable the generation, signing, encryption and verification of JWT tokens as OAuth access tokens.
+
+This feature depends on the oauth_base feature.
 
 == Value Methods
 
@@ -15,7 +17,7 @@ oauth_jwt_jws_algorithms_supported :: Supported JWS algorithms for signing JWT t
 oauth_jwt_jwe_algorithms_supported :: Supported JWE algorithms for encrypting JWT tokens.
 oauth_jwt_jwe_encryption_methods_supported :: Supported JWE encryption methods for encrypting JWT tokens.
 
-== Auth methods
+== Auth Methods
 
 jwt_encode :: encodes a given JWT token.
 jwt_decode :: decodes a given JWT token.

@@ -4,6 +4,8 @@ The +oauth_saml_bearer_grant+ feature implements the OAuth 2.0 SAML Profile for 
 
 https://datatracker.ietf.org/doc/html/rfc7522
 
+This feature depends on the oauth_assertion_base feature.
+
 == Auth Value Methods
 
 oauth_saml_name_identifier_format :: SAML Identity Provider name ID format.
