@@ -19,7 +19,7 @@ module Rodauth
         catch_error do
           validate_oidc_logout_params
 
-          oauth_application = nil
+          claims = oauth_application = nil
 
           if (id_token_hint = param_or_nil("id_token_hint"))
             #
@@ -59,6 +59,8 @@ module Rodauth
 
           if (post_logout_redirect_uri = param_or_nil("post_logout_redirect_uri"))
             error_message = catch(:default_logout_redirect) do
+              throw(:default_logout_redirect, oauth_invalid_client_message) unless claims
+
               oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => claims["client_id"]).first
 
               throw(:default_logout_redirect, oauth_invalid_client_message) unless oauth_application
