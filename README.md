@@ -51,16 +51,17 @@ This gem implements the following RFCs and features of OAuth:
 * OAuth application and token management dashboards;
 *  The recommendations for [Native Apps](https://www.rfc-editor.org/rfc/rfc8252);
 
-It also implements the [OpenID Connect layer](https://openid.net/connect/) (via the `openid` feature) on top of the OAuth features it provides, including:
+It also implements several components of [OpenID Connect](https://openid.net/connect/) on top of the OAuth features it provides, including:
 
-* [OpenID Connect Core](https://gitlab.com/os85/rodauth-oauth/-/wikis/Id-Token-Authentication);
-* [OpenID Connect Discovery](https://gitlab.com/os85/rodauth-oauth/-/wikis/OIDC-Dynamic-Client-Registration);
-* [OpenID Multiple Response Types](https://gitlab.com/os85/rodauth-oauth/-/wikis/Hybrid-flow);
-* [OpenID Connect Dynamic Client Registration](https://gitlab.com/os85/rodauth-oauth/-/wikis/OIDC-Dynamic-Client-Registration);
-* [Session Management](https://gitlab.com/os85/rodauth-oauth/-/wikis/Session-Management);
-* [RP Initiated Logout](https://gitlab.com/os85/rodauth-oauth/-/wikis/RP-Initiated-Logout);
-* [Frontchannel Logout](https://gitlab.com/os85/rodauth-oauth/-/wikis/Frontchannel-Logout);
-* [Backchannel Logout](https://gitlab.com/os85/rodauth-oauth/-/wikis/Backchannel-Logout);
+* `oidc` - [OpenID Connect Core](https://gitlab.com/os85/rodauth-oauth/-/wikis/Id-Token-Authentication);
+  * `oidc_self_issued` - [Self-Issued OpenID Provider](https://openid.net/specs/openid-connect-core-1_0.html#SelfIssued)
+  * [OpenID Multiple Response Types](https://gitlab.com/os85/rodauth-oauth/-/wikis/Hybrid-flow);
+  * [OpenID Connect Discovery](https://gitlab.com/os85/rodauth-oauth/-/wikis/OIDC-Dynamic-Client-Registration);
+* `oidc_dynamic_client_registration` - [OpenID Connect Dynamic Client Registration](https://gitlab.com/os85/rodauth-oauth/-/wikis/OIDC-Dynamic-Client-Registration);
+* `oidc_session_management` - [Session Management](https://gitlab.com/os85/rodauth-oauth/-/wikis/Session-Management);
+* `oidc_rp_initiated_logout` - [RP Initiated Logout](https://gitlab.com/os85/rodauth-oauth/-/wikis/RP-Initiated-Logout);
+* `oidc_frontchannel_logout` - [Frontchannel Logout](https://gitlab.com/os85/rodauth-oauth/-/wikis/Frontchannel-Logout);
+* `oidc_backchannel_logout` - [Backchannel Logout](https://gitlab.com/os85/rodauth-oauth/-/wikis/Backchannel-Logout);
 
 This gem supports also rails (through [rodauth-rails]((https://github.com/janko/rodauth-rails))).
 
