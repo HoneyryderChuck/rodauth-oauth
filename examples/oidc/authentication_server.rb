@@ -21,14 +21,14 @@ else
   end
   # Used by the account expiration feature
   DB.create_table(:account_activity_times) do
-    foreign_key :id, :accounts, primary_key: true, type: :Bignum
+    foreign_key :id, :accounts, primary_key: true, type: :Bignum, on_delete: :cascade
     DateTime :last_activity_at, null: false
     DateTime :last_login_at, null: false
     DateTime :expired_at
   end
   DB.create_table(:oauth_applications) do
     primary_key :id, type: Integer
-    foreign_key :account_id, :accounts, null: true
+    foreign_key :account_id, :accounts, null: true, on_delete: :cascade
     String :name, null: false
     String :description, null: true
     String :homepage_url, null: true
@@ -73,8 +73,8 @@ else
   end
   DB.create_table :oauth_grants do
     primary_key :id, type: Integer
-    foreign_key :account_id, :accounts, null: false
-    foreign_key :oauth_application_id, :oauth_applications, null: false
+    foreign_key :account_id, :accounts, null: false, on_delete: :cascade
+    foreign_key :oauth_application_id, :oauth_applications, null: false, on_delete: :cascade
     String :type, null: false
     String :code, null: true
     String :token, token: true, unique: true
@@ -177,9 +177,9 @@ class AuthenticationServer < Roda
   plugin :rodauth, json: true do
     db DB
     enable :login, :logout, :create_account, :oidc, :oidc_session_management,
+           :oidc_rp_initiated_logout, :oidc_frontchannel_logout, :oidc_backchannel_logout,
            :oauth_client_credentials_grant, :oauth_pkce, :oauth_token_introspection,
-           :oidc_dynamic_client_registration, :oauth_jwt_bearer_grant, :oauth_jwt_secured_authorization_request,
-           :oidc_rp_initiated_logout
+           :oidc_dynamic_client_registration, :oauth_jwt_bearer_grant, :oauth_jwt_secured_authorization_request
 
     login_return_to_requested_location? true
     account_password_hash_column :ph
