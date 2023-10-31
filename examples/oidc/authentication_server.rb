@@ -70,6 +70,12 @@ else
     String :jwt_public_key, type: :text
     # RP-initiated logout
     String :post_logout_redirect_uris
+    # frontchannel logout
+    String :frontchannel_logout_uri
+    TrueClass :frontchannel_logout_session_required, default: false
+    # backchannel logout
+    String :backchannel_logout_uri
+    TrueClass :backchannel_logout_session_required, default: false
   end
   DB.create_table :oauth_grants do
     primary_key :id, type: Integer
@@ -180,6 +186,8 @@ class AuthenticationServer < Roda
            :oidc_rp_initiated_logout, :oidc_frontchannel_logout, :oidc_backchannel_logout,
            :oauth_client_credentials_grant, :oauth_pkce, :oauth_token_introspection,
            :oidc_dynamic_client_registration, :oauth_jwt_bearer_grant, :oauth_jwt_secured_authorization_request
+
+    hmac_secret "SECRET"
 
     login_return_to_requested_location? true
     account_password_hash_column :ph
