@@ -57,6 +57,19 @@ class RodauthOAuthOIDCRpInitiatedLogoutTest < OIDCIntegration
            "was redirected instead to #{page.current_url}"
   end
 
+  def test_oidc_rp_initiated_logout_from_post_logout_param_id_token
+    client_application = oauth_application(post_logout_redirect_uris: "https://example.com/logout")
+
+    setup_application
+    login
+
+    id_token = generate_id_token(client_application, "id_token")
+
+    visit "/oidc-logout?id_token_hint=#{id_token}&post_logout_redirect_uri=https://example.com/logout"
+    assert page.current_url == "https://example.com/logout",
+           "was redirected instead to #{page.current_url}"
+  end
+
   private
 
   def setup_application(*args)
@@ -66,8 +79,8 @@ class RodauthOAuthOIDCRpInitiatedLogoutTest < OIDCIntegration
     super(:oidc_rp_initiated_logout, *args)
   end
 
-  def generate_id_token(application = oauth_application)
-    visit "/authorize?client_id=#{application[:client_id]}&scope=openid&response_type=code+id_token&nonce=NONCE"
+  def generate_id_token(application = oauth_application, response_type = "code+id_token")
+    visit "/authorize?client_id=#{application[:client_id]}&scope=openid&response_type=#{response_type}&nonce=NONCE"
     check "openid"
     click_button "Authorize"
     assert page.current_url.start_with?("https://example.com/callback"),

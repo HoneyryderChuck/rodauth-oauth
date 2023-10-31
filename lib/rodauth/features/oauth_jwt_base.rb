@@ -63,12 +63,8 @@ module Rodauth
       end
     end
 
-    def jwt_subject(oauth_grant, client_application = oauth_application)
-      account_id = oauth_grant[oauth_grants_account_id_column]
-
-      return account_id.to_s if account_id
-
-      client_application[oauth_applications_client_id_column]
+    def jwt_subject(account_unique_id, client_application = oauth_application)
+      (account_unique_id || client_application[oauth_applications_client_id_column]).to_s
     end
 
     def resource_owner_params_from_jwt_claims(claims)

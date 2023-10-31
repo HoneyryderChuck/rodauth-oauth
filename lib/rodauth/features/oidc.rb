@@ -352,7 +352,7 @@ module Rodauth
       get_activity_timestamp(account_id, account_activity_last_activity_column)
     end
 
-    def jwt_subject(oauth_grant, client_application = oauth_application)
+    def jwt_subject(account_unique_id, client_application = oauth_application)
       subject_type = client_application[oauth_applications_subject_type_column] || oauth_jwt_subject_type
 
       case subject_type
@@ -376,8 +376,7 @@ module Rodauth
 
         identifier_uri = URI(identifier_uri).host
 
-        account_ids = oauth_grant.values_at(oauth_grants_resource_owner_columns)
-        values = [identifier_uri, *account_ids, oauth_jwt_subject_secret]
+        values = [identifier_uri, account_unique_id, oauth_jwt_subject_secret]
         Digest::SHA256.hexdigest(values.join)
       else
         raise StandardError, "unexpected subject (#{subject_type})"

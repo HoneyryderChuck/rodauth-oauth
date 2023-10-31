@@ -117,7 +117,7 @@ module Rodauth
         # owner is involved, such as the client credentials grant, the value
         # of "sub" SHOULD correspond to an identifier the authorization
         # server uses to indicate the client application.
-        sub: jwt_subject(oauth_grant),
+        sub: jwt_subject(oauth_grant[oauth_grants_account_id_column]),
         client_id: oauth_application[oauth_applications_client_id_column],
 
         exp: issued_at + oauth_access_token_expires_in,

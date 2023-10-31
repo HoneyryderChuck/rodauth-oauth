@@ -40,9 +40,15 @@ module Rodauth
                           .where(oauth_grants_oauth_application_id_column => oauth_application[oauth_applications_id_column])
                           .first
 
+            unique_account_id = if oauth_grant
+                                  oauth_grant[oauth_grants_account_id_column]
+                                else
+                                  account_id
+                                end
+
             # check whether ID token belongs to currently logged-in user
-            redirect_logout_with_error(oauth_invalid_client_message) unless oauth_grant && claims["sub"] == jwt_subject(oauth_grant,
-                                                                                                                        oauth_application)
+            redirect_logout_with_error(oauth_invalid_client_message) unless claims["sub"] == jwt_subject(unique_account_id,
+                                                                                                         oauth_application)
 
             # When an id_token_hint parameter is present, the OP MUST validate that it was the issuer of the ID Token.
             redirect_logout_with_error(oauth_invalid_client_message) unless claims && claims["iss"] == oauth_jwt_issuer
