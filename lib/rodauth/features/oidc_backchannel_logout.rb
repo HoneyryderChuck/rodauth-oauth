@@ -56,7 +56,9 @@ module Rodauth
         iat: issued_at, # issued at
         exp: issued_at + oauth_logout_token_expires_in,
         aud: oauth_application[oauth_applications_client_id_column],
-        events: "http://schemas.openid.net/event/backchannel-logout"
+        events: {
+          "http://schemas.openid.net/event/backchannel-logout": {}
+        }
       }
 
       logout_claims[:sid] = sid if sid
@@ -91,7 +93,10 @@ module Rodauth
 
       visited_sites = session[visited_sites_key] || []
 
-      sid = compute_hmac(compute_hmac(request.env["HTTP_COOKIE"])) if requires_backchannel_logout_session?(oauth_application)
+      session_id = ((oauth_grant && oauth_grant[oauth_grants_code_column]) || request.env["HTTP_COOKIE"]).to_s
+
+
+      sid = compute_hmac(session_id) if requires_backchannel_logout_session?(oauth_application)
 
       claims[:sid] = sid if sid
 
@@ -103,6 +108,25 @@ module Rodauth
       end
 
       claims
+    end
+
+    def create_oauth_grant(*)
+      code = super
+
+      return code unless requires_backchannel_logout_session?(oauth_application)
+
+      visited_sites = session[visited_sites_key] || []
+
+      sid = compute_hmac(code)
+
+      visited_site = [oauth_application[oauth_applications_client_id_column], sid]
+
+      unless visited_sites.include?(visited_site)
+        visited_sites << visited_site
+        set_session_value(visited_sites_key, visited_sites)
+      end
+
+      code
     end
 
     def requires_backchannel_logout_session?(oauth_application)
