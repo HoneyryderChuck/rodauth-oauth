@@ -379,6 +379,7 @@ module Rodauth
 
     def convert_to_boolean(key, value)
       case value
+      when true, false then value
       when "true" then true
       when "false" then false
       else
