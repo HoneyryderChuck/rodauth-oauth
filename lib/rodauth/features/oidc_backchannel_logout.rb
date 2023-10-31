@@ -79,6 +79,8 @@ module Rodauth
       # performs logout requests sequentially
       logout_params.each do |logout_url, logout_token|
         http_request(logout_url, { "logout_token" => logout_token })
+      rescue StandardError
+        warn "failed to perform backchannel logout on #{logout_url}"
       end
     end
 
