@@ -18,12 +18,13 @@ Sequel.migration do
       index :email, unique: true
     end
 
-    # Used by the account expiration feature (OIDC requirement)
-    create_table(:account_activity_times) do
-      foreign_key :id, :accounts, primary_key: true, type: Integer
-      DateTime :last_activity_at, null: false
-      DateTime :last_login_at, null: false
-      DateTime :expired_at
+    # Used by the active sessions feature (OIDC requirement)
+    create_table(:account_active_session_keys) do
+      foreign_key :account_id, :accounts, type: Integer
+      String :session_id
+      Time :created_at, null: false, default: Sequel::CURRENT_TIMESTAMP
+      Time :last_use, null: false, default: Sequel::CURRENT_TIMESTAMP
+      primary_key %i[account_id session_id]
     end
 
     # Used by the otp feature

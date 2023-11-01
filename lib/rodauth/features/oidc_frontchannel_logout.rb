@@ -9,11 +9,10 @@ raise LoadError, "the `:oidc_frontchannel_logout` requires rodauth 2.32.0 or hig
 
 module Rodauth
   Feature.define(:oidc_frontchannel_logout, :OidFrontchannelLogout) do
-    depends :logout, :oidc
+    depends :logout, :oidc_logout_base
 
     view "frontchannel_logout", "Logout", "frontchannel_logout"
 
-    session_key :visited_sites_key, :visited_sites
     translatable_method :oauth_frontchannel_logout_redirecting_lead, "You are being redirected..."
     translatable_method :oauth_frontchannel_logout_redirecting_label, "please click %<link>s if your browser does not " \
                                                                       "redirect you in a few seconds."
@@ -76,41 +75,17 @@ module Rodauth
 
       return claims unless oauth_application[oauth_applications_frontchannel_logout_uri_column]
 
-      visited_sites = session[visited_sites_key] || []
-
-      session_id = ((oauth_grant && oauth_grant[oauth_grants_code_column]) || request.env["HTTP_COOKIE"]).to_s
-
-      sid = compute_hmac(session_id) if requires_frontchannel_logout_session?(oauth_application)
-
-      claims[:sid] = sid if sid
-
-      visited_site = [oauth_application[oauth_applications_client_id_column], sid]
-
-      unless visited_sites.include?(visited_site)
-        visited_sites << visited_site
-        set_session_value(visited_sites_key, visited_sites)
-      end
+      session_id_in_claims(oauth_grant, claims)
 
       claims
     end
 
-    def create_oauth_grant(*)
-      code = super
+    def should_set_oauth_application_in_visited_sites?
+      true
+    end
 
-      return code unless requires_frontchannel_logout_session?(oauth_application)
-
-      visited_sites = session[visited_sites_key] || []
-
-      sid = compute_hmac(code)
-
-      visited_site = [oauth_application[oauth_applications_client_id_column], sid]
-
-      unless visited_sites.include?(visited_site)
-        visited_sites << visited_site
-        set_session_value(visited_sites_key, visited_sites)
-      end
-
-      code
+    def should_set_sid_in_visited_sites?(oauth_application)
+      super || requires_frontchannel_logout_session?(oauth_application)
     end
 
     def requires_frontchannel_logout_session?(oauth_application)

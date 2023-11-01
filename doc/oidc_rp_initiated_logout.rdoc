@@ -1,8 +1,8 @@
-The +oidc_rp_initiated_logout+ feature implements RP-initiated Logout Backchannel.
+The +oidc_rp_initiated_logout+ feature implements RP-initiated Logout.
 
 https://openid.net/specs/openid-connect-rpinitiated-1_0.html
 
-This feature depends on the oidc feature.
+This feature depends on the oidc_logout_base feature.
 
 == Auth Value Methods
 

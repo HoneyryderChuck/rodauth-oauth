@@ -19,12 +19,13 @@ else
     String :name
     String :ph, null: false
   end
-  # Used by the account expiration feature
-  DB.create_table(:account_activity_times) do
-    foreign_key :id, :accounts, primary_key: true, type: :Bignum, on_delete: :cascade
-    DateTime :last_activity_at, null: false
-    DateTime :last_login_at, null: false
-    DateTime :expired_at
+  # Used by the active sessions feature
+  DB.create_table(:account_active_session_keys) do
+    foreign_key :account_id, :accounts, type: Integer
+    String :session_id
+    Time :created_at, null: false, default: Sequel::CURRENT_TIMESTAMP
+    Time :last_use, null: false, default: Sequel::CURRENT_TIMESTAMP
+    primary_key %i[account_id session_id]
   end
   DB.create_table(:oauth_applications) do
     primary_key :id, type: Integer

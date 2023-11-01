@@ -4,9 +4,10 @@ require "rodauth/oauth"
 
 module Rodauth
   Feature.define(:oidc_rp_initiated_logout, :OidcRpInitiatedLogout) do
-    depends :oidc
+    depends :oidc_logout_base
 
     auth_value_method :oauth_applications_post_logout_redirect_uris_column, :post_logout_redirect_uris
+    translatable_method :oauth_invalid_id_token_hint_message, "Invalid ID token hint"
     translatable_method :oauth_invalid_post_logout_redirect_uri_message, "Invalid post logout redirect URI"
 
     # /oidc-logout
@@ -33,6 +34,11 @@ module Rodauth
             claims = jwt_decode(id_token_hint, verify_claims: false)
 
             redirect_logout_with_error(oauth_invalid_client_message) unless claims
+
+            # If the ID Token's sid claim does not correspond to the RP's current session or a
+            # recent session at the OP, the OP SHOULD treat the logout request as suspect, and
+            # MAY decline to act upon it.
+            redirect_logout_with_error(oauth_invalid_client_message) if claims["sid"] && !active_sessions?(claims["sid"])
 
             oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => claims["aud"]).first
             oauth_grant = db[oauth_grants_table]

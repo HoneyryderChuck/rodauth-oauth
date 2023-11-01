@@ -4,7 +4,7 @@ The +oidc_backchannel_logout+ feature supports the OpenID Connect Backchannel Lo
 
 https://openid.net/specs/openid-connect-backchannel-1_0.html
 
-This feature depends on the rodauth logout feature, as well as the oidc feature.
+This feature depends on the rodauth logout feature, as well as the oidc_logout_base feature.
 
 == Value Methods
 
