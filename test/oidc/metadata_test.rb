@@ -120,7 +120,7 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
 
   def setup_application(*args)
     rodauth do
-      last_account_login_at do
+      get_oidc_account_last_login_at do
         Time.now - 60
       end
     end
