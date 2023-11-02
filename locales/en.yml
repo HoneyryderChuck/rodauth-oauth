@@ -45,7 +45,7 @@ en:
     oauth_grant_user_jws_jwk_label: "JSON Web Keys"
     oauth_grant_user_jwt_public_key_label: "Public key"
     oauth_frontchannel_logout_redirecting_label: "please click %{link} if your browser does not redirect you in a few seconds."
-    oauth_frontchannel_logout_link_label: "here"
+    oauth_frontchannel_logout_redirecting_link_label: "here"
     oauth_application_button: "Register"
     oauth_authorize_button: "Authorize"
     oauth_grant_revoke_button: "Revoke"

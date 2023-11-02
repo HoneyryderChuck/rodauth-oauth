@@ -8,7 +8,6 @@ This feature depends on the rodauth logout feature, as well as the oidc_logout_b
 
 == Value Methods
 
-visited_sites_key :: The key in the session hash storing the OIDC visited sites to logout from (+:visited_sites+ by default).
 oauth_logout_token_expires_in :: The number of seconds a Logout token is valid after creation, <tt>1 minute</tt> by default.
 backchannel_logout_session_supported :: whether to include +sid+ in the ID and Logout token (+true+ by default).
 oauth_applications_backchannel_logout_uri_column :: The column where the oauth application backchannel logout URI is stored (+:backchannel_logout_uri+ by default).

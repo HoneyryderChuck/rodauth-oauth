@@ -9,6 +9,7 @@ This feature depends on the oidc_logout_base feature.
 oauth_applications_post_logout_redirect_uris_column :: db colummn where the logout redirect URIs are stored.
 oauth_invalid_post_logout_redirect_uri_message :: error message when an invalid <tt>post_logout_redirect_uri</tt> is used.
 oidc_logout_route :: the route which user uses to logout.
+oidc_logout_response :: Return a response after a successful OIDC logout. By default, redirects to the defined <tt>post_logout_redirect_uri</tt>.
 
 == Auth Methods
 

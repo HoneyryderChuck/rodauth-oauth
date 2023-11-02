@@ -45,7 +45,7 @@ pt:
     oauth_grant_user_jws_jwk_label: "Chaves JSON Web"
     oauth_grant_user_jwt_public_key_label: "Chave pública"
     oauth_frontchannel_logout_redirecting_label: "por favor clique %{link} se o seu navegador não lhe redireccionar em alguns segundos."
-    oauth_frontchannel_logout_link_label: "aqui"
+    oauth_frontchannel_logout_redirecting_link_label: "aqui"
     oauth_application_button: "Registar"
     oauth_authorize_button: "Autorizar"
     oauth_grant_revoke_button: "Revogar"

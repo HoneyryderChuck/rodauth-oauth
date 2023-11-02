@@ -18,10 +18,13 @@ module Rodauth
                                                                       "redirect you in a few seconds."
     translatable_method :oauth_frontchannel_logout_redirecting_link_label, "here"
     auth_value_method :frontchannel_logout_session_supported, true
+    auth_value_method :frontchannel_logout_redirect_timeout, 5
     auth_value_method :oauth_applications_frontchannel_logout_uri_column, :frontchannel_logout_uri
     auth_value_method :oauth_applications_frontchannel_logout_session_required_column, :frontchannel_logout_session_required
 
     attr_reader :frontchannel_logout_urls
+
+    attr_reader :frontchannel_logout_redirect
 
     def logout
       @visited_sites = session[visited_sites_key]
@@ -29,7 +32,7 @@ module Rodauth
       super
     end
 
-    def logout_response
+    def _logout_response
       visited_sites = @visited_sites
 
       return super unless visited_sites
@@ -38,6 +41,39 @@ module Rodauth
                     .where(oauth_applications_client_id_column => visited_sites.map(&:first))
                     .as_hash(oauth_applications_client_id_column, oauth_applications_frontchannel_logout_uri_column)
 
+      return super if logout_urls.empty?
+
+      generate_frontchannel_logout_urls(visited_sites, logout_urls)
+
+      @frontchannel_logout_redirect = logout_redirect
+
+      set_notice_flash logout_notice_flash
+      return_response frontchannel_logout_view
+    end
+
+    # overrides rp-initiate logout response
+    def _oidc_logout_response
+      visited_sites = @visited_sites
+
+      return super unless visited_sites
+
+      logout_urls = db[oauth_applications_table]
+                    .where(oauth_applications_client_id_column => visited_sites.map(&:first))
+                    .as_hash(oauth_applications_client_id_column, oauth_applications_frontchannel_logout_uri_column)
+
+      return super if logout_urls.empty?
+
+      generate_frontchannel_logout_urls(visited_sites, logout_urls)
+
+      @frontchannel_logout_redirect = oidc_logout_redirect
+
+      set_notice_flash logout_notice_flash
+      return_response frontchannel_logout_view
+    end
+
+    private
+
+    def generate_frontchannel_logout_urls(visited_sites, logout_urls)
       @frontchannel_logout_urls = logout_urls.flat_map do |client_id, logout_url|
         next unless logout_url
 
@@ -61,14 +97,7 @@ module Rodauth
           logout_url
         end
       end.compact
-
-      return super if logout_urls.empty?
-
-      set_notice_flash logout_notice_flash
-      frontchannel_logout_view
     end
-
-    private
 
     def id_token_claims(oauth_grant, signing_algorithm)
       claims = super

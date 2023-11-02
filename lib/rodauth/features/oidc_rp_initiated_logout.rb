@@ -5,10 +5,13 @@ require "rodauth/oauth"
 module Rodauth
   Feature.define(:oidc_rp_initiated_logout, :OidcRpInitiatedLogout) do
     depends :oidc_logout_base
+    response "oidc_logout"
 
     auth_value_method :oauth_applications_post_logout_redirect_uris_column, :post_logout_redirect_uris
     translatable_method :oauth_invalid_id_token_hint_message, "Invalid ID token hint"
     translatable_method :oauth_invalid_post_logout_redirect_uri_message, "Invalid post logout redirect URI"
+
+    attr_reader :oidc_logout_redirect
 
     # /oidc-logout
     auth_server_route(:oidc_logout) do |r|
@@ -92,7 +95,9 @@ module Rodauth
                 post_logout_redirect_uri = post_logout_redirect_uri.to_s
               end
 
-              redirect(post_logout_redirect_uri)
+              @oidc_logout_redirect = post_logout_redirect_uri
+
+              require_response(:_oidc_logout_response)
             end
 
           end
@@ -102,6 +107,10 @@ module Rodauth
 
         redirect_response_error("invalid_request")
       end
+    end
+
+    def _oidc_logout_response
+      redirect(oidc_logout_redirect)
     end
 
     private
