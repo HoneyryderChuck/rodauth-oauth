@@ -75,4 +75,5 @@ en:
     oauth_invalid_post_logout_redirect_uri_message: "Invalid post logout redirect URI"
     oauth_saml_assertion_not_base64_message: "SAML assertion must be in base64 format"
     oauth_saml_assertion_single_issuer_message: "SAML assertion must have a single issuer"
-    translatable_method :oauth_saml_settings_not_found_message: "No SAML settings found for issuer"
+    oauth_saml_settings_not_found_message: "No SAML settings found for issuer"
+    oauth_invalid_id_token_hint_message: "Invalid ID token hint"

@@ -36,7 +36,7 @@ module Rodauth
             #
             claims = jwt_decode(id_token_hint, verify_claims: false)
 
-            redirect_logout_with_error(oauth_invalid_client_message) unless claims
+            redirect_logout_with_error(oauth_invalid_id_token_hint_message) unless claims
 
             # If the ID Token's sid claim does not correspond to the RP's current session or a
             # recent session at the OP, the OP SHOULD treat the logout request as suspect, and
@@ -74,7 +74,7 @@ module Rodauth
 
           if (post_logout_redirect_uri = param_or_nil("post_logout_redirect_uri"))
             error_message = catch(:default_logout_redirect) do
-              throw(:default_logout_redirect, oauth_invalid_client_message) unless claims
+              throw(:default_logout_redirect, oauth_invalid_id_token_hint_message) unless claims
 
               oauth_application = db[oauth_applications_table].where(oauth_applications_client_id_column => claims["client_id"]).first
 
