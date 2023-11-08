@@ -3,7 +3,7 @@
   <p>
     #{
       rodauth.oauth_frontchannel_logout_redirecting_label(
-        link: "<a src=\"#{rodauth.logout_redirect}\">" \
+        link: "<a href=\"#{rodauth.frontchannel_logout_redirect}\">" \
               "#{rodauth.oauth_frontchannel_logout_redirecting_link_label}</a>"
     )
     }
