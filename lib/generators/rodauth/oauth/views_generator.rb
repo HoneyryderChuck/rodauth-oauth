@@ -20,11 +20,11 @@ module Rodauth::OAuth
         }.freeze
 
         class_option :features, type: :array,
-                                desc: "Roda OAuth features to generate views for (oauth_applications etc.)",
+                                desc: "Rodauth OAuth features to generate views for (oauth_applications etc.)",
                                 default: DEFAULT
 
         class_option :all, aliases: "-a", type: :boolean,
-                           desc: "Generates views for all Roda OAuth features",
+                           desc: "Generates views for all Rodauth OAuth features",
                            default: false
 
         class_option :directory, aliases: "-d", type: :string,
