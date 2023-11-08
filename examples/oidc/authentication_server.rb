@@ -19,16 +19,17 @@ else
     String :name
     String :ph, null: false
   end
-  # Used by the account expiration feature
-  DB.create_table(:account_activity_times) do
-    foreign_key :id, :accounts, primary_key: true, type: :Bignum
-    DateTime :last_activity_at, null: false
-    DateTime :last_login_at, null: false
-    DateTime :expired_at
+  # Used by the active sessions feature
+  DB.create_table(:account_active_session_keys) do
+    foreign_key :account_id, :accounts, type: Integer
+    String :session_id
+    Time :created_at, null: false, default: Sequel::CURRENT_TIMESTAMP
+    Time :last_use, null: false, default: Sequel::CURRENT_TIMESTAMP
+    primary_key %i[account_id session_id]
   end
   DB.create_table(:oauth_applications) do
     primary_key :id, type: Integer
-    foreign_key :account_id, :accounts, null: true
+    foreign_key :account_id, :accounts, null: true, on_delete: :cascade
     String :name, null: false
     String :description, null: true
     String :homepage_url, null: true
@@ -70,11 +71,17 @@ else
     String :jwt_public_key, type: :text
     # RP-initiated logout
     String :post_logout_redirect_uris
+    # frontchannel logout
+    String :frontchannel_logout_uri
+    TrueClass :frontchannel_logout_session_required, default: false
+    # backchannel logout
+    String :backchannel_logout_uri
+    TrueClass :backchannel_logout_session_required, default: false
   end
   DB.create_table :oauth_grants do
     primary_key :id, type: Integer
-    foreign_key :account_id, :accounts, null: false
-    foreign_key :oauth_application_id, :oauth_applications, null: false
+    foreign_key :account_id, :accounts, null: false, on_delete: :cascade
+    foreign_key :oauth_application_id, :oauth_applications, null: false, on_delete: :cascade
     String :type, null: false
     String :code, null: true
     String :token, token: true, unique: true
@@ -177,9 +184,11 @@ class AuthenticationServer < Roda
   plugin :rodauth, json: true do
     db DB
     enable :login, :logout, :create_account, :oidc, :oidc_session_management,
+           :oidc_rp_initiated_logout, :oidc_frontchannel_logout, :oidc_backchannel_logout,
            :oauth_client_credentials_grant, :oauth_pkce, :oauth_token_introspection,
-           :oidc_dynamic_client_registration, :oauth_jwt_bearer_grant, :oauth_jwt_secured_authorization_request,
-           :oidc_rp_initiated_logout
+           :oidc_dynamic_client_registration, :oauth_jwt_bearer_grant, :oauth_jwt_secured_authorization_request
+
+    hmac_secret "SECRET"
 
     login_return_to_requested_location? true
     account_password_hash_column :ph
@@ -242,8 +251,8 @@ class AuthenticationServer < Roda
         </p>
         <% else %>
           <p class="lead">
-            This is the demo authentication server for <a href="https://gitlab.com/os85/rodauth-oauth">Roda Oauth - Open ID Connect</a>.
-            Roda Oauth extends Rodauth to support the OAuth 2.0 authorization protocol, while adhering to the same principles of the parent library.
+            This is the demo authentication server for <a href="https://gitlab.com/os85/rodauth-oauth">Rodauth Oauth - Open ID Connect</a>.
+            Rodauth Oauth extends Rodauth to support the OAuth 2.0 authorization protocol, while adhering to the same principles of the parent library.
           </p>
           <p class="lead">In the authentication server, you can setup your account, and also register client applications.</p>
           <p class="text-center">

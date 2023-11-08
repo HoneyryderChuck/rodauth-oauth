@@ -28,7 +28,7 @@ else
     logo_uri: "http://localhost:9293/logo.png",
     tos_uri: "http://localhost:9293/tos",
     policy_uri: "http://localhost:9293/policy",
-    jwks_uri: "http://localhost:9293/jwks"
+    jwks_uri: "http://localhost:9292/jwks"
   }.freeze
 
   puts "registering client application...."
@@ -40,9 +40,9 @@ else
   response = http.request(request)
   raise "Unexpected error on client registration, #{response.body}" unless response.code.to_i == 200
 
-  metadata = JSON.parse(response.body, symbolize_names: true)
+  METADATA = JSON.parse(response.body, symbolize_names: true)
 
-  register_url = URI(metadata[:registration_endpoint])
+  register_url = URI(METADATA[:registration_endpoint])
   request = Net::HTTP::Post.new(register_url.request_uri)
   request.body = JSON.dump(TEST_APPLICATION_PARAMS)
   request["content-type"] = "application/json"
@@ -176,6 +176,7 @@ class ClientApplication < Roda
                 <% end %>
               </ul>
             </div>
+            <iframe id="rp" height="0" width="0" src="/rp-iframe"></iframe>
                    HTML
                  rescue RuntimeError => e
                    <<-HTML
@@ -200,6 +201,62 @@ class ClientApplication < Roda
       r.get do
         flash[:error] = "Authorization failed: #{r.params['message']}"
         r.redirect "/"
+      end
+    end
+
+    r.on "rp-iframe" do
+      r.get do
+        inline = <<-OUT
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+            <title>iFrame RP Page</title>
+          </head>
+          <body>
+            <iframe id="op" height="0" width="0" src="#{METADATA[:check_session_iframe]}"></iframe>
+            <script type="text/javascript">
+          var client_id = "#{CLIENT_ID}";
+          var session_state = "#{session['session_state']}";
+          var stat = "unchanged";
+          var mes = client_id + " " + session_state;
+          var targetOrigin = "#{AUTHORIZATION_SERVER}";
+          var opFrameId = "op";
+          var timerID;
+
+          function check_session()   {
+            var elem = document.getElementById("op");
+            if (!(elem instanceof HTMLIFrameElement)) return;
+
+            var win = elem.contentWindow;
+
+            win.postMessage(mes, targetOrigin);
+          }
+
+          function setTimer() {
+            check_session();
+            timerID = setInterval(check_session, 2 * 1000);
+          }
+
+          function receiveMessage(e) {
+            if (e.origin !== targetOrigin) {
+              return;
+            }
+            stat = e.data;
+
+            if (stat === "changed") {
+              clearInterval(timerID);
+              alert("session aborted in OP! logout!");
+            }
+          }
+
+          window.addEventListener("message", receiveMessage, false);
+          window.addEventListener("DOMContentLoaded", setTimer);
+            </script>
+          </body>
+        </html>
+        OUT
+        view inline: inline, layout: false
       end
     end
 
@@ -231,6 +288,7 @@ class ClientApplication < Roda
         session["id_token"] = authinfo.credentials.id_token
         session["access_token"] = authinfo.credentials.token
         session["refresh_token"] = authinfo.credentials.refresh_token
+        session["session_state"] = request.params["session_state"]
 
         r.redirect "/"
       end

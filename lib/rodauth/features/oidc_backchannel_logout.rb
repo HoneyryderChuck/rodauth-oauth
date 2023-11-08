@@ -4,9 +4,8 @@ require "rodauth/oauth"
 
 module Rodauth
   Feature.define(:oidc_backchannel_logout, :OidBackchannelLogout) do
-    depends :logout, :oidc
+    depends :logout, :oidc_logout_base
 
-    session_key :visited_sites_key, :visited_sites
     auth_value_method :oauth_logout_token_expires_in, 60 # 1 minute
     auth_value_method :backchannel_logout_session_supported, true
     auth_value_method :oauth_applications_backchannel_logout_uri_column, :backchannel_logout_uri
@@ -56,7 +55,9 @@ module Rodauth
         iat: issued_at, # issued at
         exp: issued_at + oauth_logout_token_expires_in,
         aud: oauth_application[oauth_applications_client_id_column],
-        events: "http://schemas.openid.net/event/backchannel-logout"
+        events: {
+          "http://schemas.openid.net/event/backchannel-logout": {}
+        }
       }
 
       logout_claims[:sid] = sid if sid
@@ -79,6 +80,8 @@ module Rodauth
       # performs logout requests sequentially
       logout_params.each do |logout_url, logout_token|
         http_request(logout_url, { "logout_token" => logout_token })
+      rescue StandardError
+        warn "failed to perform backchannel logout on #{logout_url}"
       end
     end
 
@@ -87,20 +90,17 @@ module Rodauth
 
       return claims unless oauth_application[oauth_applications_backchannel_logout_uri_column]
 
-      visited_sites = session[visited_sites_key] || []
-
-      sid = compute_hmac(compute_hmac(request.env["HTTP_COOKIE"])) if requires_backchannel_logout_session?(oauth_application)
-
-      claims[:sid] = sid if sid
-
-      visited_site = [oauth_application[oauth_applications_client_id_column], sid]
-
-      unless visited_sites.include?(visited_site)
-        visited_sites << visited_site
-        set_session_value(visited_sites_key, visited_sites)
-      end
+      session_id_in_claims(oauth_grant, claims)
 
       claims
+    end
+
+    def should_set_oauth_application_in_visited_sites?
+      true
+    end
+
+    def should_set_sid_in_visited_sites?(oauth_application)
+      super || requires_backchannel_logout_session?(oauth_application)
     end
 
     def requires_backchannel_logout_session?(oauth_application)

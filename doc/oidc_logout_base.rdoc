@@ -1,0 +1,7 @@
+= Documentation for Open ID Logout Base feature
+
+The +oidc_logout_base+ feature implements functionality required by OIDC logout-related strategiess.
+
+== Value Methods
+
+visited_sites_key :: The key in the session hash storing the OIDC visited sites to logout from (+:visited_sites+ by default).

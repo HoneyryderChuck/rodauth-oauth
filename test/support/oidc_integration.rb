@@ -49,7 +49,8 @@ class OIDCIntegration < JWTIntegration
     claims, headers = verify_jwt_token(data, signing_key, signing_algo, decryption_key: decryption_key)
     verify_id_token_claims(claims, oauth_grant) if oauth_grant
     assert headers["typ"] == "logout+jwt"
-    assert claims["events"] == "http://schemas.openid.net/event/backchannel-logout"
+    assert claims["events"].is_a?(Hash)
+    assert claims["events"].key?("http://schemas.openid.net/event/backchannel-logout")
     yield claims if block_given?
     claims
   end

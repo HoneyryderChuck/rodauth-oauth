@@ -163,7 +163,8 @@ module Rodauth
                                              register_invalid_uri_message(value))
         end
 
-        if (value = @oauth_application_params[oauth_applications_backchannel_logout_session_required_column])
+        if @oauth_application_params.key?(oauth_applications_backchannel_logout_session_required_column)
+          value = @oauth_application_params[oauth_applications_backchannel_logout_session_required_column]
           @oauth_application_params[oauth_applications_backchannel_logout_session_required_column] =
             convert_to_boolean("backchannel_logout_session_required", value)
         end

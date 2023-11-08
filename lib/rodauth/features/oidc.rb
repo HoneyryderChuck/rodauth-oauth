@@ -68,7 +68,7 @@ module Rodauth
       id_token_signing_alg_values_supported
     ].freeze
 
-    depends :account_expiration, :oauth_jwt, :oauth_jwt_jwks, :oauth_authorization_code_grant, :oauth_implicit_grant
+    depends :active_sessions, :oauth_jwt, :oauth_jwt_jwks, :oauth_authorization_code_grant, :oauth_implicit_grant
 
     auth_value_method :oauth_application_scopes, %w[openid]
 
@@ -349,10 +349,17 @@ module Rodauth
     end
 
     def get_oidc_account_last_login_at(account_id)
-      get_activity_timestamp(account_id, account_activity_last_activity_column)
+      return get_activity_timestamp(account_id, account_activity_last_activity_column) if features.include?(:account_expiration)
+
+      # active sessions based
+      ds = db[active_sessions_table].where(active_sessions_account_id_column => account_id)
+
+      ds = ds.order(Sequel.desc(active_sessions_created_at_column))
+
+      convert_timestamp(ds.get(active_sessions_created_at_column))
     end
 
-    def jwt_subject(oauth_grant, client_application = oauth_application)
+    def jwt_subject(account_unique_id, client_application = oauth_application)
       subject_type = client_application[oauth_applications_subject_type_column] || oauth_jwt_subject_type
 
       case subject_type
@@ -376,8 +383,7 @@ module Rodauth
 
         identifier_uri = URI(identifier_uri).host
 
-        account_ids = oauth_grant.values_at(oauth_grants_resource_owner_columns)
-        values = [identifier_uri, *account_ids, oauth_jwt_subject_secret]
+        values = [identifier_uri, account_unique_id, oauth_jwt_subject_secret]
         Digest::SHA256.hexdigest(values.join)
       else
         raise StandardError, "unexpected subject (#{subject_type})"

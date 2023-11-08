@@ -45,7 +45,7 @@ pt:
     oauth_grant_user_jws_jwk_label: "Chaves JSON Web"
     oauth_grant_user_jwt_public_key_label: "Chave pública"
     oauth_frontchannel_logout_redirecting_label: "por favor clique %{link} se o seu navegador não lhe redireccionar em alguns segundos."
-    oauth_frontchannel_logout_link_label: "aqui"
+    oauth_frontchannel_logout_redirecting_link_label: "aqui"
     oauth_application_button: "Registar"
     oauth_authorize_button: "Autorizar"
     oauth_grant_revoke_button: "Revogar"
@@ -76,3 +76,4 @@ pt:
     oauth_saml_assertion_not_base64_message: "A asserção SAML tem que estar no formato base64"
     oauth_saml_assertion_single_issuer_message: "A asserção SAML tem que ter um único emissor"
     oauth_saml_settings_not_found_message: "Nenhuma configuração SAML encontrada para o emissor"
+    oauth_invalid_id_token_hint_message: "ID token hint inválido"
