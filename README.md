@@ -18,8 +18,12 @@ This is an extension to the `rodauth` gem which implements the [OAuth 2.0 framew
 * Dynamic OP
 * Form Post OP
 * 3rd Party-Init OP
+* Session Management OP
+* RP-Initiated Logout OP
+* Front-Channel Logout OP
+* Back-Channel Logout OP
 
-(it also passes the conformance tests for the RP-Initiated Logout OP).
+The certifications were obtained using the [example OIDC server](/examples/oidc/authentication_server.rb) deployed [here](https://rodauth-oauth-oidc.onrender.com/).
 
 ## Features
 
