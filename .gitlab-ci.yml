@@ -225,7 +225,7 @@ coverage:
     - ruby25
     - ruby27
     - ruby32
-  image: "ruby:3.2-rc"
+  image: "ruby:3.2"
   script:
     # this is a workaround, because simplecov doesn't support relative paths.
     #
