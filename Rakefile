@@ -123,6 +123,7 @@ task prepare_website: %i[website_rdoc prepare_jekyll_data] do
     header = "---\n" \
              "layout: #{layout}\n" \
              "title: #{title}\n" \
+             "project: rodauth-oauth\n" \
              "---\n\n"
     File.write(path, header + data)
   end
