@@ -152,7 +152,7 @@ ruby27:
     - *test
   parallel:
     matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails70, Gemfile-rails61, Gemfile-rails60, Gemfile-rails52]
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails71, Gemfile-rails70, Gemfile-rails61, Gemfile-rails60, Gemfile-rails52]
   artifacts:
     paths:
       - "coverage/"
@@ -167,7 +167,7 @@ ruby30:
     - *test
   parallel:
     matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails70, Gemfile-rails61, Gemfile-rails60]
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails71, Gemfile-rails70, Gemfile-rails61, Gemfile-rails60]
   artifacts:
     paths:
       - "coverage/"
@@ -187,7 +187,7 @@ ruby31:
     - *test
   parallel:
     matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails70]
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails71, Gemfile-rails70]
   artifacts:
     paths:
       - "coverage/"
@@ -208,7 +208,7 @@ ruby32:
     - *test
   parallel:
     matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails70]
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails71, Gemfile-rails70]
   artifacts:
     paths:
       - "coverage/"
@@ -225,7 +225,7 @@ coverage:
     - ruby25
     - ruby27
     - ruby32
-  image: "ruby:3.2-rc"
+  image: "ruby:3.2"
   script:
     # this is a workaround, because simplecov doesn't support relative paths.
     #
