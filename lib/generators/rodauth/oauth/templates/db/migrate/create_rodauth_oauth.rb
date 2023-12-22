@@ -111,6 +111,9 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.string :acr
       t.string :claims_locales
       t.string :claims
+
+      # :oauth_dpop enabled
+      t.string :dpop_jkt
     end
 
     create_table :oauth_pushed_requests do |t|

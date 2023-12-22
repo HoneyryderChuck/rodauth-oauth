@@ -205,6 +205,14 @@ module Rodauth
       super
     end
 
+    def valid_oauth_grant_ds(grant_params = nil)
+      ds = super
+
+      ds = ds.where(oauth_grants_dpop_jkt_column => nil)
+      ds = ds.or(oauth_grants_dpop_jkt_column => @dpop_thumbprint) if @dpop_thumbprint
+      ds
+    end
+
     def oauth_grant_by_refresh_token_ds(_token, revoked: false)
       ds = super
       # The binding MUST be validated when the refresh token is later presented to get new access tokens.
@@ -219,6 +227,17 @@ module Rodauth
       ds = ds.where(oauth_grants_dpop_jkt_column => nil)
       ds = ds.or(oauth_grants_dpop_jkt_column => @dpop_thumbprint) if @dpop_thumbprint
       ds
+    end
+
+    def create_oauth_grant(create_params = {})
+      # 10. Authorization Code Binding to DPoP Key
+      # Binding the authorization code issued to the client's proof-of-possession key can enable end-to-end
+      # binding of the entire authorization flow.
+      if (dpop_jkt = param_or_nil("dpop_jkt"))
+        create_params[oauth_grants_dpop_jkt_column] = dpop_jkt
+      end
+
+      super
     end
 
     def json_access_token_payload(oauth_grant)

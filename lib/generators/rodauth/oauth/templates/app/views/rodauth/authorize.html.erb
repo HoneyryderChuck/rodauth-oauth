@@ -79,6 +79,11 @@
         <%= hidden_field_tag :registration, rodauth.param_or_nil("registration") %>
       <% end %>
     <% end %>
+    <% if rodauth.features.include?(:oidc) %>
+      <% if rodauth.param_or_nil("dpop_jkt") %>
+        <%= hidden_field_tag :dpop_jkt, rodauth.param_or_nil("dpop_jkt") %>
+      <% end %>
+    <% end %>
   </div>
  <p class="text-center">
     <%= submit_tag rodauth.oauth_authorize_button, class: "btn btn-outline-primary" %>
