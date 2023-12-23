@@ -302,10 +302,10 @@ module Rodauth
         # The value is a JSON object listing the requested Claims.
         claims = JSON.parse(claims)
 
-        claims.each do |_, individual_claims|
+        claims.each_value do |individual_claims|
           redirect_response_error("invalid_request") unless individual_claims.is_a?(Hash)
 
-          individual_claims.each do |_, claim|
+          individual_claims.each_value do |claim|
             redirect_response_error("invalid_request") unless claim.nil? || individual_claims.is_a?(Hash)
           end
         end

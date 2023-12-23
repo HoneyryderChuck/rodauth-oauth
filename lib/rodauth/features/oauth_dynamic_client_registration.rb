@@ -18,7 +18,7 @@ module Rodauth
       request.on(registration_client_uri_route) do
         # CLIENT REGISTRATION URI
         request.on(String) do |client_id|
-          (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v[/\A *Bearer (.*)\Z/, 1]))
+          (token = (v = request.env["HTTP_AUTHORIZATION"]) && v[/\A *Bearer (.*)\Z/, 1])
 
           next unless token
 

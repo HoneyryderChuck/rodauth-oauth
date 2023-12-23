@@ -99,7 +99,7 @@ module Rodauth
     private
 
     def require_oauth_application_for_introspect
-      (token = ((v = request.env["HTTP_AUTHORIZATION"]) && v[/\A *Bearer (.*)\Z/, 1]))
+      (token = (v = request.env["HTTP_AUTHORIZATION"]) && v[/\A *Bearer (.*)\Z/, 1])
 
       return require_oauth_application unless token
 

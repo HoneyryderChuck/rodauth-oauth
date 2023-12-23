@@ -35,7 +35,7 @@ class Rodauth::OAuth::TtlStore
       # at the same time, this ensures the first one wins.
       return @store[key][:payload] if @store[key] && @store[key][:ttl] < now
 
-      @store[key] = { payload: payload, ttl: (ttl || (now + DEFAULT_TTL)) }
+      @store[key] = { payload: payload, ttl: ttl || (now + DEFAULT_TTL) }
     end
     @store[key][:payload]
   end

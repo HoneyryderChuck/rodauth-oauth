@@ -143,7 +143,7 @@ class RodaIntegration < Minitest::Test
       end
 
       r.root do
-        view inline: (flash["error"] || flash["notice"] || "Unauthorized")
+        view inline: flash["error"] || flash["notice"] || "Unauthorized"
       end
 
       yield(rodauth) if block_given?
@@ -157,7 +157,7 @@ class RodaIntegration < Minitest::Test
         if (current_application = rodauth.current_oauth_application)
           response["x-oauth-current-application"] = current_application[:client_id]
         end
-        view inline: (flash["error"] || flash["notice"] || "Authorized")
+        view inline: flash["error"] || flash["notice"] || "Authorized"
       end
     end
   end
