@@ -46,6 +46,7 @@ module Rodauth
 
     auth_value_method :oauth_applications_dpop_bound_access_tokens_column, :dpop_bound_access_tokens
     auth_value_method :oauth_grants_dpop_jkt_column, :dpop_jkt
+    auth_value_method :oauth_pushed_authorization_requests_dpop_jkt_column, :dpop_jkt
 
     def require_oauth_authorization(*scopes)
       @dpop_access_token = fetch_access_token_from_authorization_header("dpop")
@@ -92,6 +93,20 @@ module Rodauth
       validate_dpop_token(dpop)
 
       super
+    end
+
+    def validate_par_params
+      super
+
+      return unless (dpop = fetch_dpop_token)
+
+      validate_dpop_token(dpop)
+
+      if (dpop_jkt = param_or_nil("dpop_jkt"))
+        redirect_response_error("invalid_request") if dpop_jkt != @dpop_thumbprint
+      else
+        request.params["dpop_jkt"] = @dpop_thumbprint
+      end
     end
 
     def validate_dpop_token(dpop)

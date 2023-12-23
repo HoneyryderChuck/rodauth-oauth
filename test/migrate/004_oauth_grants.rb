@@ -42,7 +42,7 @@ Sequel.migration do
       String :acr
       String :claims_locales
       String :claims
-      # dpop
+      # oauth_dpop
       String :dpop_jkt
     end
   end

@@ -120,9 +120,11 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.bigint :oauth_application_id
       t.foreign_key :oauth_applications, column: :oauth_application_id
       t.string :code, null: false, index: { unique: true }
+      t.index %i[oauth_application_id code], unique: true
       t.string :params, null: false
       t.datetime :expires_in, null: false
-      t.index %i[oauth_application_id code], unique: true
+      # :oauth_dpop
+      t.string :dpop_jkt
     end
 
     create_table :oauth_saml_settings do |t|
