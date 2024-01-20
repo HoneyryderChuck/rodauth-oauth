@@ -27,6 +27,7 @@ module Rodauth
 
     translatable_method :oauth_use_dpop_nonce_message, "DPoP nonce is required"
 
+    auth_value_method :oauth_dpop_proof_expires_in, 60 * 5 # 5 minutes
     auth_value_method :oauth_dpop_bound_access_tokens, false
     auth_value_method :oauth_dpop_use_nonce, false
     auth_value_method :oauth_dpop_nonce_expires_in, 5 # 5 seconds
@@ -47,6 +48,12 @@ module Rodauth
     auth_value_method :oauth_applications_dpop_bound_access_tokens_column, :dpop_bound_access_tokens
     auth_value_method :oauth_grants_dpop_jkt_column, :dpop_jkt
     auth_value_method :oauth_pushed_authorization_requests_dpop_jkt_column, :dpop_jkt
+
+    auth_value_method :oauth_dpop_proofs_table, :oauth_dpop_proofs
+    auth_value_method :oauth_dpop_proofs_jti_column, :jti
+    auth_value_method :oauth_dpop_proofs_first_use_column, :first_use
+
+    auth_methods(:validate_dpop_proof_usage)
 
     def require_oauth_authorization(*scopes)
       @dpop_access_token = fetch_access_token_from_authorization_header("dpop")
@@ -119,7 +126,29 @@ module Rodauth
       # 4.3.10
       validate_nonce(@dpop_claims)
 
+      # 11.1
+      # To prevent multiple uses of the same DPoP proof, servers can store, in the
+      # context of the target URI, the jti value of each DPoP proof for the time window
+      # in which the respective DPoP proof JWT would be accepted.
+      validate_dpop_proof_usage(@dpop_claims)
+
       @dpop_claims
+    end
+
+    def validate_dpop_proof_usage(claims)
+      jti = claims["jti"]
+
+      dpop_proof = __insert_or_do_nothing_and_return__(
+        db[oauth_dpop_proofs_table],
+        oauth_dpop_proofs_jti_column,
+        [oauth_dpop_proofs_jti_column],
+        oauth_dpop_proofs_jti_column => Digest::SHA256.hexdigest(jti),
+        oauth_dpop_proofs_first_use_column => Sequel::CURRENT_TIMESTAMP
+      )
+
+      return unless (Time.now - dpop_proof[oauth_dpop_proofs_first_use_column]) > oauth_dpop_proof_expires_in
+
+      redirect_response_error("invalid_dpop_proof")
     end
 
     def dpop_decode(dpop)

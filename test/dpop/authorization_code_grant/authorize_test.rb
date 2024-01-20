@@ -122,6 +122,70 @@ class RodauthOauthDPopAuthorizeTest < DPoPIntegration
     verify_access_token(json_body["access_token"], oauth_grant, bound_dpop_key: dpop_public_key)
   end
 
+  def test_authorize_post_authorize_with_expired_dpop_proof
+    dpop_key = OpenSSL::PKey::RSA.generate(2048)
+    dpop_public_key = dpop_key.public_key
+    jkt = generate_thumbprint(dpop_public_key)
+
+    rodauth do
+      oauth_dpop_proof_expires_in 2 # 2 seconds
+    end
+    setup_application
+    login
+
+    # show the authorization form
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code&" \
+          "scope=user.read+user.write&response_type=code&dpop_jkt=#{jkt}"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    check "user.read"
+
+    # submit authorization request
+    click_button "Authorize"
+
+    assert db[:oauth_grants].count == 1,
+           "no grant has been created"
+
+    oauth_grant = db[:oauth_grants].first
+
+    assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{oauth_grant[:code]}",
+           "was redirected instead to #{page.current_url}"
+
+    assert oauth_grant[:dpop_jkt] == jkt
+
+    dpop_proof = generate_dpop_proof(dpop_key)
+
+    header "DPoP", dpop_proof
+    post(
+      "/token",
+      client_id: oauth_application[:client_id],
+      client_secret: "CLIENT_SECRET",
+      grant_type: "authorization_code",
+      code: oauth_grant[:code],
+      redirect_uri: oauth_grant[:redirect_uri]
+    )
+
+    assert_equal 200, last_response.status
+    verify_access_token(json_body["access_token"], oauth_grant, bound_dpop_key: dpop_public_key)
+
+    @json_body = nil
+
+    sleep 3
+
+    header "DPoP", dpop_proof
+    post(
+      "/token",
+      client_id: oauth_application[:client_id],
+      client_secret: "CLIENT_SECRET",
+      grant_type: "authorization_code",
+      code: oauth_grant[:code],
+      redirect_uri: oauth_grant[:redirect_uri]
+    )
+
+    assert_equal 400, last_response.status
+    assert json_body["error"] == "invalid_dpop_proof"
+  end
+
   private
 
   def setup_application(*)
