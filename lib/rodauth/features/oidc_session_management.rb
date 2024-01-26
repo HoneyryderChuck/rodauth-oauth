@@ -35,8 +35,10 @@ module Rodauth
 
       user_agent_state_cookie_opts = Hash[oauth_oidc_user_agent_state_cookie_options]
       user_agent_state_cookie_opts[:value] = oauth_unique_id_generator
-      user_agent_state_cookie_opts[:expires] = convert_timestamp(Time.now + oauth_oidc_user_agent_state_cookie_expires_in)
       user_agent_state_cookie_opts[:secure] = true
+      if oauth_oidc_user_agent_state_cookie_expires_in
+        user_agent_state_cookie_opts[:expires] = convert_timestamp(Time.now + oauth_oidc_user_agent_state_cookie_expires_in)
+      end
       ::Rack::Utils.set_cookie_header!(response.headers, oauth_oidc_user_agent_state_cookie_key, user_agent_state_cookie_opts)
     end
 

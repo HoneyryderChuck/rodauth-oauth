@@ -43,7 +43,7 @@ oauth_acr_values_supported :: list of ACR values supported by the provider
 
 oauth_prompt_login_cookie_key :: try prompt cookie key.
 oauth_prompt_login_cookie_options :: prompt cookie options.
-oauth_prompt_login_interval :: prompt cookie lifetime.
+oauth_prompt_login_interval :: prompt cookie lifetime (5 minutes by default); can be set to <tt>nil</tt> in order not to set cookie "Expires".
 
 == Auth methods
 
