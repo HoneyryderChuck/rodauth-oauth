@@ -57,8 +57,10 @@ gem "simplecov"
 gem "pry"
 platform :mri, :truffleruby do
   gem "pry-byebug"
-  if RUBY_VERSION >= "2.7.0"
+  if RUBY_VERSION >= "3.0.0"
     gem "sqlite3"
+  elsif RUBY_VERSION >= "2.7.0"
+    gem "sqlite3", "< 1.7.0"
   else
     gem "sqlite3", "< 1.6.0"
   end
