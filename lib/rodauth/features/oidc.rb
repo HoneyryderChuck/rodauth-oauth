@@ -419,7 +419,9 @@ module Rodauth
 
         login_cookie_opts = Hash[oauth_prompt_login_cookie_options]
         login_cookie_opts[:value] = "login"
-        login_cookie_opts[:expires] = convert_timestamp(Time.now + oauth_prompt_login_interval) # 15 minutes
+        if oauth_prompt_login_interval
+          login_cookie_opts[:expires] = convert_timestamp(Time.now + oauth_prompt_login_interval) # 15 minutes
+        end
         ::Rack::Utils.set_cookie_header!(response.headers, oauth_prompt_login_cookie_key, login_cookie_opts)
 
         redirect require_login_redirect
