@@ -200,6 +200,14 @@ module Rodauth
         when "client_name"
           register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(value)) unless value.is_a?(String)
           key = oauth_applications_name_column
+        when "dpop_bound_access_tokens"
+          unless respond_to?(:oauth_applications_dpop_bound_access_tokens_column)
+            register_throw_json_response_error("invalid_client_metadata",
+                                               register_invalid_param_message(key))
+          end
+          request_params[key] = value = convert_to_boolean(key, value)
+
+          key = oauth_applications_dpop_bound_access_tokens_column
         when "require_signed_request_object"
           unless respond_to?(:oauth_applications_require_signed_request_object_column)
             register_throw_json_response_error("invalid_client_metadata",
@@ -291,7 +299,8 @@ module Rodauth
         create_params[oauth_applications_token_endpoint_auth_method_column] ||= begin
           # If unspecified or omitted, the default is "client_secret_basic", denoting the HTTP Basic
           # authentication scheme as specified in Section 2.3.1 of OAuth 2.0.
-          return_params["token_endpoint_auth_method"] = "client_secret_basic"
+          return_params["token_endpoint_auth_method"] =
+            "client_secret_basic"
           "client_secret_basic"
         end
       end

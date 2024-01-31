@@ -6,9 +6,7 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
   include Rack::Test::Methods
 
   def test_oauth_dynamic_client_wrong_params
-    rodauth do
-      oauth_application_scopes %w[read write]
-    end
+    rodauth { oauth_application_scopes %w[read write] }
     setup_application
     header "Accept", "application/json"
 
@@ -19,33 +17,45 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
   end
 
   def test_oauth_dynamic_client_redirect_uris
-    rodauth do
-      oauth_application_scopes %w[read write]
-    end
+    rodauth { oauth_application_scopes %w[read write] }
     setup_application
     header "Accept", "application/json"
 
-    post("/register", valid_registration_params.merge("redirect_uris" => "https://just-one.com"))
+    post(
+      "/register",
+      valid_registration_params.merge("redirect_uris" => "https://just-one.com")
+    )
 
     assert last_response.status == 400
 
-    post("/register", valid_registration_params.merge("redirect_uris" => %w[one two]))
+    post(
+      "/register",
+      valid_registration_params.merge("redirect_uris" => %w[one two])
+    )
 
     assert last_response.status == 400
 
-    post("/register", valid_registration_params.merge("redirect_uris" => %w[https://example.com/callback#foo=bar]))
+    post(
+      "/register",
+      valid_registration_params.merge(
+        "redirect_uris" => %w[https://example.com/callback#foo=bar]
+      )
+    )
 
     assert last_response.status == 400
 
-    post("/register", valid_registration_params.merge("redirect_uris" => %w[https://example.com/callback]))
+    post(
+      "/register",
+      valid_registration_params.merge(
+        "redirect_uris" => %w[https://example.com/callback]
+      )
+    )
 
     assert last_response.status == 201
   end
 
   def test_oauth_dynamic_client_contacts
-    rodauth do
-      oauth_application_scopes %w[read write]
-    end
+    rodauth { oauth_application_scopes %w[read write] }
 
     setup_application(:oauth_authorization_code_grant)
     header "Accept", "application/json"
@@ -53,35 +63,54 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
     post("/register", valid_registration_params.merge("contacts" => "smthsmth"))
     assert last_response.status == 400
 
-    post("/register", valid_registration_params.merge("contacts" => %w[test@mail.com]))
+    post(
+      "/register",
+      valid_registration_params.merge("contacts" => %w[test@mail.com])
+    )
     assert last_response.status == 201
     assert JSON.parse(last_response.body)["contacts"] == %w[test@mail.com]
   end
 
   def test_oauth_dynamic_client_grant_types
-    rodauth do
-      oauth_application_scopes %w[read write]
-    end
+    rodauth { oauth_application_scopes %w[read write] }
 
     setup_application(:oauth_authorization_code_grant)
     header "Accept", "application/json"
 
-    post("/register", valid_registration_params.merge("grant_types" => "smthsmth"))
+    post(
+      "/register",
+      valid_registration_params.merge("grant_types" => "smthsmth")
+    )
     assert last_response.status == 400
 
-    post("/register", valid_registration_params.merge("grant_types" => %w[smthsmth]))
+    post(
+      "/register",
+      valid_registration_params.merge("grant_types" => %w[smthsmth])
+    )
     assert last_response.status == 400
 
-    post("/register", valid_registration_params.merge("grant_types" => %w[authorization_code implicit refresh_token]))
+    post(
+      "/register",
+      valid_registration_params.merge(
+        "grant_types" => %w[authorization_code implicit refresh_token]
+      )
+    )
     assert last_response.status == 400
 
-    post("/register", valid_registration_params.merge("grant_types" => %w[authorization_code refresh_token]))
+    post(
+      "/register",
+      valid_registration_params.merge(
+        "grant_types" => %w[authorization_code refresh_token]
+      )
+    )
     assert last_response.status == 201
-    assert JSON.parse(last_response.body)["grant_types"] == %w[authorization_code refresh_token]
+    assert JSON.parse(last_response.body)["grant_types"] ==
+           %w[authorization_code refresh_token]
 
     post("/register", valid_registration_params)
     assert last_response.status == 201
-    assert JSON.parse(last_response.body)["grant_types"] == %w[authorization_code]
+    assert JSON.parse(last_response.body)["grant_types"] ==
+           %w[authorization_code]
   end
 
   def test_oauth_dynamic_client_response_types
@@ -90,35 +119,63 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
       oauth_response_types_supported { super() | %w[none] }
     end
 
-    setup_application(:oauth_authorization_code_grant, :oauth_implicit_grant, :oauth_client_credentials_grant)
+    setup_application(
+      :oauth_authorization_code_grant,
+      :oauth_implicit_grant,
+      :oauth_client_credentials_grant
+    )
     header "Accept", "application/json"
 
-    post("/register", valid_registration_params.merge("response_types" => "smthsmth"))
+    post(
+      "/register",
+      valid_registration_params.merge("response_types" => "smthsmth")
+    )
 
     assert last_response.status == 400
 
-    post("/register", valid_registration_params.merge("response_types" => %w[smthsmth]))
+    post(
+      "/register",
+      valid_registration_params.merge("response_types" => %w[smthsmth])
+    )
 
     assert last_response.status == 400
 
-    post("/register", valid_registration_params.merge("response_types" => %w[token]))
+    post(
+      "/register",
+      valid_registration_params.merge("response_types" => %w[token])
+    )
 
     assert last_response.status == 400
 
-    post("/register", valid_registration_params.merge("response_types" => %w[code token]))
+    post(
+      "/register",
+      valid_registration_params.merge("response_types" => %w[code token])
+    )
 
     assert last_response.status == 400
 
-    post("/register", valid_registration_params.merge("response_types" => %w[none]))
+    post(
+      "/register",
+      valid_registration_params.merge("response_types" => %w[none])
+    )
 
     assert last_response.status == 400
 
-    post("/register", valid_registration_params.merge("response_types" => %w[code]))
+    post(
+      "/register",
+      valid_registration_params.merge("response_types" => %w[code])
+    )
 
     assert last_response.status == 201
     assert JSON.parse(last_response.body)["response_types"] == %w[code]
 
-    post("/register", valid_registration_params.merge(grant_types: %w[implicit], "response_types" => %w[token]))
+    post(
+      "/register",
+      valid_registration_params.merge(
+        :grant_types => %w[implicit],
+        "response_types" => %w[token]
+      )
+    )
 
     assert last_response.status == 201
     assert JSON.parse(last_response.body)["response_types"] == %w[token]
@@ -129,9 +186,7 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
   end
 
   def test_oauth_dynamic_client_scopes
-    rodauth do
-      oauth_application_scopes %w[read write]
-    end
+    rodauth { oauth_application_scopes %w[read write] }
 
     setup_application
     header "Accept", "application/json"
@@ -155,40 +210,44 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
   %w[client_uri logo_uri tos_uri policy_uri jwks_uri].each do |uri_param|
     define_method :"test_oauth_dynamic_client_#{uri_param}" do
-      rodauth do
-        oauth_application_scopes %w[read write]
-      end
+      rodauth { oauth_application_scopes %w[read write] }
 
       setup_application
       header "Accept", "application/json"
 
-      post("/register", valid_registration_params.merge(uri_param => "smthsmth"))
+      post(
+        "/register",
+        valid_registration_params.merge(uri_param => "smthsmth")
+      )
 
       assert last_response.status == 400
 
-      post("/register", valid_registration_params.merge(uri_param => "https://example.com"))
+      post(
+        "/register",
+        valid_registration_params.merge(uri_param => "https://example.com")
+      )
 
       assert last_response.status == 201
     end
   end
 
   def test_oauth_dynamic_client_fail_on_missing_required_params
-    rodauth do
-      oauth_application_scopes %w[read write]
-    end
+    rodauth { oauth_application_scopes %w[read write] }
     setup_application
 
     %w[redirect_uris client_name client_uri].each do |required_param|
-      post("/register", valid_registration_params.tap { |hs| hs.delete(required_param) })
+      post(
+        "/register",
+        valid_registration_params.tap { |hs| hs.delete(required_param) }
+      )
       assert last_response.status == 400
-      assert JSON.parse(last_response.body)["error"] == "invalid_client_metadata"
+      assert JSON.parse(last_response.body)["error"] ==
+             "invalid_client_metadata"
     end
   end
 
   def test_oauth_dynamic_client_fail_on_missing_params
-    rodauth do
-      oauth_application_scopes %w[read write]
-    end
+    rodauth { oauth_application_scopes %w[read write] }
     setup_application
 
     post("/register", valid_registration_params.merge("foo" => "bar"))
@@ -201,28 +260,38 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
   end
 
   def test_oauth_dynamic_client_jwks_and_jwks_uri
-    rodauth do
-      oauth_application_scopes %w[read write]
-    end
+    rodauth { oauth_application_scopes %w[read write] }
     setup_application
 
     post("/register", valid_registration_params.merge("jwks" => { "a" => "b" }))
     assert last_response.status == 400
     assert JSON.parse(last_response.body)["error"] == "invalid_client_metadata"
 
-    post("/register", valid_registration_params.merge("jwks_uri" => nil, "jwks" => "bla").compact)
+    post(
+      "/register",
+      valid_registration_params.merge(
+        "jwks_uri" => nil,
+        "jwks" => "bla"
+      ).compact
+    )
     assert last_response.status == 400
     assert JSON.parse(last_response.body)["error"] == "invalid_client_metadata"
 
-    post("/register", valid_registration_params.merge("jwks_uri" => nil, "jwks" => { "a" => "b" }).compact)
+    post(
+      "/register",
+      valid_registration_params.merge(
+        "jwks_uri" => nil,
+        "jwks" => {
+          "a" => "b"
+        }
+      ).compact
+    )
     assert last_response.status == 201
     assert JSON.parse(last_response.body)["jwks"] == { "a" => "b" }
   end
 
   def test_oauth_dynamic_client_all_params_without_client_secret
-    rodauth do
-      oauth_application_scopes %w[read write]
-    end
+    rodauth { oauth_application_scopes %w[read write] }
     setup_application
 
     post("/register", valid_registration_params)
@@ -241,12 +310,13 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
   end
 
   def test_oauth_dynamic_client_all_params_with_client_secret
-    rodauth do
-      oauth_application_scopes %w[read write]
-    end
+    rodauth { oauth_application_scopes %w[read write] }
     setup_application
 
-    post("/register", valid_registration_params.merge("client_secret" => "CLIENT_SECRET"))
+    post(
+      "/register",
+      valid_registration_params.merge("client_secret" => "CLIENT_SECRET")
+    )
 
     assert last_response.status == 201
 
@@ -262,98 +332,189 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
   end
 
   def test_oauth_dynamic_client_token_endpoint_auth_method
-    rodauth do
-      oauth_application_scopes %w[read write]
-    end
+    rodauth { oauth_application_scopes %w[read write] }
     setup_application
 
-    post("/register", valid_registration_params.merge("token_endpoint_auth_method" => "smth"))
+    post(
+      "/register",
+      valid_registration_params.merge("token_endpoint_auth_method" => "smth")
+    )
     assert last_response.status == 400
     assert JSON.parse(last_response.body)["error"] == "invalid_client_metadata"
 
-    post("/register", valid_registration_params.merge("token_endpoint_auth_method" => "client_secret_post"))
+    post(
+      "/register",
+      valid_registration_params.merge(
+        "token_endpoint_auth_method" => "client_secret_post"
+      )
+    )
     assert last_response.status == 201
-    assert JSON.parse(last_response.body)["token_endpoint_auth_method"] == "client_secret_post"
+    assert JSON.parse(last_response.body)["token_endpoint_auth_method"] ==
+           "client_secret_post"
 
     post("/register", valid_registration_params)
     assert last_response.status == 201
-    assert JSON.parse(last_response.body)["token_endpoint_auth_method"] == "client_secret_basic"
+    assert JSON.parse(last_response.body)["token_endpoint_auth_method"] ==
+           "client_secret_basic"
+  end
+
+  def test_oauth_dynamic_client_dpop_bound_access_tokens
+    rodauth { oauth_application_scopes %w[read write] }
+    setup_application(:oauth_dpop)
+
+    post(
+      "/register",
+      valid_registration_params.merge("dpop_bound_access_tokens" => ";)")
+    )
+    assert last_response.status == 400
+    assert JSON.parse(last_response.body)["error"] == "invalid_client_metadata"
+
+    post(
+      "/register",
+      valid_registration_params.merge("dpop_bound_access_tokens" => true)
+    )
+    assert_equal last_response.status, 201
+    assert JSON.parse(last_response.body)["dpop_bound_access_tokens"] == true
+
+    post(
+      "/register",
+      valid_registration_params.merge("dpop_bound_access_tokens" => false)
+    )
+    assert last_response.status == 201
+    assert JSON.parse(last_response.body)["dpop_bound_access_tokens"] == false
   end
 
   def test_oauth_dynamic_client_require_signed_request_object
-    rodauth do
-      oauth_application_scopes %w[read write]
-    end
+    rodauth { oauth_application_scopes %w[read write] }
     setup_application(:oauth_jwt_secured_authorization_request)
 
-    post("/register", valid_registration_params.merge("require_signed_request_object" => "smth"))
+    post(
+      "/register",
+      valid_registration_params.merge("require_signed_request_object" => "smth")
+    )
     assert last_response.status == 400
     assert JSON.parse(last_response.body)["error"] == "invalid_client_metadata"
 
-    post("/register", valid_registration_params.merge("require_signed_request_object" => true))
+    post(
+      "/register",
+      valid_registration_params.merge("require_signed_request_object" => true)
+    )
     assert last_response.status == 201
-    assert JSON.parse(last_response.body)["require_signed_request_object"] == true
+    assert JSON.parse(last_response.body)["require_signed_request_object"] ==
+           true
 
-    post("/register", valid_registration_params.merge("require_signed_request_object" => false))
+    post(
+      "/register",
+      valid_registration_params.merge("require_signed_request_object" => false)
+    )
     assert last_response.status == 201
-    assert JSON.parse(last_response.body)["require_signed_request_object"] == false
+    assert JSON.parse(last_response.body)["require_signed_request_object"] ==
+           false
   end
 
   def test_oauth_dynamic_client_require_pushed_authorization_requests
-    rodauth do
-      oauth_application_scopes %w[read write]
-    end
+    rodauth { oauth_application_scopes %w[read write] }
     setup_application(:oauth_pushed_authorization_request)
 
-    post("/register", valid_registration_params.merge("require_pushed_authorization_requests" => "smth"))
+    post(
+      "/register",
+      valid_registration_params.merge(
+        "require_pushed_authorization_requests" => "smth"
+      )
+    )
     assert last_response.status == 400
     assert JSON.parse(last_response.body)["error"] == "invalid_client_metadata"
 
-    post("/register", valid_registration_params.merge("require_pushed_authorization_requests" => true))
+    post(
+      "/register",
+      valid_registration_params.merge(
+        "require_pushed_authorization_requests" => true
+      )
+    )
     assert last_response.status == 201
-    assert JSON.parse(last_response.body)["require_pushed_authorization_requests"] == true
+    assert JSON.parse(last_response.body)[
+             "require_pushed_authorization_requests"
+           ] == true
 
-    post("/register", valid_registration_params.merge("require_pushed_authorization_requests" => false))
+    post(
+      "/register",
+      valid_registration_params.merge(
+        "require_pushed_authorization_requests" => false
+      )
+    )
     assert last_response.status == 201
-    assert JSON.parse(last_response.body)["require_pushed_authorization_requests"] == false
+    assert JSON.parse(last_response.body)[
+             "require_pushed_authorization_requests"
+           ] == false
   end
 
   def test_oauth_dynamic_client_tls_client_auth
-    rodauth do
-      oauth_application_scopes %w[read write]
-    end
+    rodauth { oauth_application_scopes %w[read write] }
     setup_application(:oauth_tls_client_auth)
 
-    post("/register", valid_registration_params.merge(
-                        "tls_client_auth_subject_dn" => "smth",
-                        "tls_client_auth_san_dns" => "smth"
-                      ))
+    post(
+      "/register",
+      valid_registration_params.merge(
+        "tls_client_auth_subject_dn" => "smth",
+        "tls_client_auth_san_dns" => "smth"
+      )
+    )
     assert last_response.status == 400
     assert JSON.parse(last_response.body)["error"] == "invalid_client_metadata"
 
-    post("/register", valid_registration_params.merge("tls_client_auth_subject_dn" => "name"))
+    post(
+      "/register",
+      valid_registration_params.merge("tls_client_auth_subject_dn" => "name")
+    )
     assert last_response.status == 201
-    assert JSON.parse(last_response.body)["tls_client_auth_subject_dn"] == "name"
+    assert JSON.parse(last_response.body)["tls_client_auth_subject_dn"] ==
+           "name"
 
-    post("/register", valid_registration_params.merge("tls_client_auth_san_dns" => "name"))
+    post(
+      "/register",
+      valid_registration_params.merge("tls_client_auth_san_dns" => "name")
+    )
     assert last_response.status == 201
     assert JSON.parse(last_response.body)["tls_client_auth_san_dns"] == "name"
 
-    post("/register", valid_registration_params.merge("tls_client_auth_san_uri" => "uri:name:bar"))
+    post(
+      "/register",
+      valid_registration_params.merge(
+        "tls_client_auth_san_uri" => "uri:name:bar"
+      )
+    )
     assert last_response.status == 201
-    assert JSON.parse(last_response.body)["tls_client_auth_san_uri"] == "uri:name:bar"
+    assert JSON.parse(last_response.body)["tls_client_auth_san_uri"] ==
+           "uri:name:bar"
 
-    post("/register", valid_registration_params.merge("tls_client_auth_san_ip" => "169.232.2.1"))
+    post(
+      "/register",
+      valid_registration_params.merge("tls_client_auth_san_ip" => "169.232.2.1")
+    )
     assert last_response.status == 201
-    assert JSON.parse(last_response.body)["tls_client_auth_san_ip"] == "169.232.2.1"
+    assert JSON.parse(last_response.body)["tls_client_auth_san_ip"] ==
+           "169.232.2.1"
 
-    post("/register", valid_registration_params.merge("tls_client_auth_san_email" => "bang@bang.com"))
+    post(
+      "/register",
+      valid_registration_params.merge(
+        "tls_client_auth_san_email" => "bang@bang.com"
+      )
+    )
     assert last_response.status == 201
-    assert JSON.parse(last_response.body)["tls_client_auth_san_email"] == "bang@bang.com"
+    assert JSON.parse(last_response.body)["tls_client_auth_san_email"] ==
+           "bang@bang.com"
 
-    post("/register", valid_registration_params.merge("tls_client_certificate_bound_access_tokens" => true))
+    post(
+      "/register",
+      valid_registration_params.merge(
+        "tls_client_certificate_bound_access_tokens" => true
+      )
+    )
     assert last_response.status == 201
-    assert JSON.parse(last_response.body)["tls_client_certificate_bound_access_tokens"] == true
+    assert JSON.parse(last_response.body)[
+             "tls_client_certificate_bound_access_tokens"
+           ] == true
   end
 
   private
@@ -371,7 +532,10 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
   def valid_registration_params
     @valid_registration_params ||= {
-      "redirect_uris" => %w[https://foobar.com/callback https://foobar.com/callback2],
+      "redirect_uris" => %w[
+        https://foobar.com/callback
+        https://foobar.com/callback2
+      ],
       "client_name" => "This client name",
       "client_uri" => "https://foobar.com",
       "logo_uri" => "https://foobar.com/logo.png",

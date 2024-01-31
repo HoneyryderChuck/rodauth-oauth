@@ -37,7 +37,7 @@ class RodauthOauthJwtTokenIntrospectTest < JWTIntegration
     assert json_body["username"] == account[:email]
     assert json_body["scope"] == oauth_grant[:scopes]
     assert json_body["client_id"] == oauth_application[:client_id]
-    assert json_body["token_type"] == "access_token"
+    assert json_body["token_type"] == "Bearer"
     assert json_body.key?("exp")
 
     # test all other jwt props
@@ -80,7 +80,7 @@ class RodauthOauthJwtTokenIntrospectTest < JWTIntegration
     assert json_body["username"] == "Foo"
     assert json_body["scope"] == oauth_grant[:scopes]
     assert json_body["client_id"] == oauth_application[:client_id]
-    assert json_body["token_type"] == "access_token"
+    assert json_body["token_type"] == "Bearer"
     assert json_body.key?("exp")
 
     # test all other jwt props
@@ -133,7 +133,7 @@ class RodauthOauthJwtTokenIntrospectTest < JWTIntegration
     assert json_body["active"] == true
     assert json_body["username"] == account[:email]
     assert json_body["client_id"] == oauth_application[:client_id]
-    assert json_body["token_type"] == "access_token"
+    assert json_body["token_type"] == "Bearer"
     assert json_body.key?("exp")
 
     # test all other jwt props

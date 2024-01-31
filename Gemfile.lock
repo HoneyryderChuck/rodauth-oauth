@@ -7,25 +7,26 @@ PATH
 GEM
   remote: https://rubygems.org/
   specs:
-    activemodel (7.0.5.1)
-      activesupport (= 7.0.5.1)
-    activerecord (7.0.5.1)
-      activemodel (= 7.0.5.1)
-      activesupport (= 7.0.5.1)
+    activemodel (7.0.7.2)
+      activesupport (= 7.0.7.2)
+    activerecord (7.0.7.2)
+      activemodel (= 7.0.7.2)
+      activesupport (= 7.0.7.2)
     activerecord-jdbc-adapter (70.1-java)
       activerecord (~> 7.0)
-    activesupport (7.0.5.1)
+    activesupport (7.0.7.2)
       concurrent-ruby (~> 1.0, >= 1.0.2)
       i18n (>= 1.6, < 2)
       minitest (>= 5.1)
       tzinfo (~> 2.0)
-    addressable (2.8.4)
+    addressable (2.8.5)
       public_suffix (>= 2.0.2, < 6.0)
     aes_key_wrap (1.1.0)
     android_key_attestation (0.3.0)
     ast (2.4.2)
     attr_required (1.0.1)
     awrence (1.2.1)
+    base64 (0.1.1)
     bcrypt (3.1.19)
     bcrypt (3.1.19-java)
     bigdecimal (3.1.4)
@@ -55,7 +56,7 @@ GEM
     date (3.3.3-java)
     docile (1.4.0)
     erubi (1.12.0)
-    faraday (2.7.7)
+    faraday (2.7.10)
       faraday-net_http (>= 2.0, < 3.1)
       ruby2_keywords (>= 0.0.4)
     faraday-follow_redirects (0.3.0)
@@ -63,8 +64,10 @@ GEM
     faraday-net_http (3.0.2)
     ffi (1.15.5)
     ffi (1.15.5-java)
-    hanna-nouveau (1.4.0)
+    hanna (1.5.0)
       rdoc (>= 4)
+    hanna-nouveau (1.5.0)
+      hanna (>= 1.5)
     hashdiff (1.0.1)
     hashie (5.0.0)
     i18n (1.14.1)
@@ -93,13 +96,13 @@ GEM
       net-smtp
     matrix (0.4.2)
     method_source (1.0.0)
-    mini_mime (1.1.2)
-    mini_portile2 (2.8.2)
-    minitest (5.18.1)
-    minitest-hooks (1.5.0)
+    mini_mime (1.1.5)
+    mini_portile2 (2.8.4)
+    minitest (5.19.0)
+    minitest-hooks (1.5.1)
       minitest (> 5.3)
     mysql2 (0.5.5)
-    net-imap (0.3.6)
+    net-imap (0.3.7)
       date
       net-protocol
     net-pop (0.1.2)
@@ -108,10 +111,10 @@ GEM
       timeout
     net-smtp (0.3.3)
       net-protocol
-    nokogiri (1.15.2)
+    nokogiri (1.15.4)
       mini_portile2 (~> 2.8.2)
       racc (~> 1.4)
-    nokogiri (1.15.2-java)
+    nokogiri (1.15.4-java)
       racc (~> 1.4)
     omniauth (2.1.1)
       hashie (>= 3.4.6)
@@ -155,7 +158,7 @@ GEM
       stringio
     psych (5.1.0-java)
       jar-dependencies (>= 0.1.7)
-    public_suffix (5.0.1)
+    public_suffix (5.0.3)
     racc (1.7.3)
     racc (1.7.3-java)
     rack (3.0.8)
@@ -177,7 +180,7 @@ GEM
       webrick (~> 1.8)
     rainbow (3.1.1)
     rake (12.3.3)
-    rbs (3.1.0)
+    rbs (3.2.0)
     rdoc (6.5.0)
       psych (>= 4.0.0)
     regexp_parser (2.8.3)
@@ -190,13 +193,15 @@ GEM
     rodauth-i18n (0.7.1)
       i18n (~> 1.0)
       rodauth (~> 2.19)
-    rodauth-select-account (0.0.4)
+    rodauth-select-account (0.1.2)
+      rodauth (~> 2.0)
     rotp (6.2.2)
     rqrcode (2.2.0)
       chunky_png (~> 1.0)
       rqrcode_core (~> 1.0)
     rqrcode_core (1.2.0)
     rubocop (1.59.0)
+      base64 (~> 0.1.1)
       json (~> 2.3)
       language_server-protocol (>= 3.17.0)
       parallel (~> 1.10)
@@ -239,7 +244,7 @@ GEM
       ffi
     sqlite3 (1.6.3)
       mini_portile2 (~> 2.8.0)
-    stringio (3.0.7)
+    stringio (3.0.8)
     swd (2.0.2)
       activesupport (>= 3)
       attr_required (>= 0.0.5)
@@ -321,10 +326,10 @@ DEPENDENCIES
   rake (~> 12.3)
   rbs
   roda
-  rodauth (>= 2.0.0)
-  rodauth-i18n (>= 0.2.0)
+  rodauth (>= 2.31.0)
+  rodauth-i18n (>= 0.7.1)
   rodauth-oauth!
-  rodauth-select-account (~> 0.0.2)
+  rodauth-select-account (~> 0.1.2)
   rotp
   rqrcode
   rubocop
@@ -343,4 +348,4 @@ DEPENDENCIES
   xmlenc
 
 BUNDLED WITH
-   2.3.7
+   2.4.19

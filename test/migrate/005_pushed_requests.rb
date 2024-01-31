@@ -5,9 +5,11 @@ Sequel.migration do
     create_table :oauth_pushed_requests do |_t|
       foreign_key :oauth_application_id, :oauth_applications, null: false
       String :code, null: false, unique: true
+      index %i[oauth_application_id code], unique: true
       String :params, null: false
       Time :expires_in, null: false
-      index %i[oauth_application_id code], unique: true
+      # oauth_dpop
+      String :dpop_jkt
     end
   end
 

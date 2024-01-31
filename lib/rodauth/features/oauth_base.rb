@@ -237,16 +237,22 @@ module Rodauth
           return
         end
       else
-        value = request.env["HTTP_AUTHORIZATION"]
-
-        return unless value && !value.empty?
-
-        scheme, token = value.split(" ", 2)
-
-        return unless scheme.downcase == oauth_token_type
+        token = fetch_access_token_from_authorization_header
       end
 
       return if token.nil? || token.empty?
+
+      token
+    end
+
+    def fetch_access_token_from_authorization_header(token_type = oauth_token_type)
+      value = request.env["HTTP_AUTHORIZATION"]
+
+      return unless value && !value.empty?
+
+      scheme, token = value.split(" ", 2)
+
+      return unless scheme.downcase == token_type
 
       token
     end
@@ -819,8 +825,12 @@ module Rodauth
       payload = response_error_params(error_code, message)
       json_payload = _json_response_body(payload)
       response["Content-Type"] ||= json_response_content_type
-      response["WWW-Authenticate"] = oauth_token_type.upcase if status == 401
+      response["WWW-Authenticate"] = www_authenticate_header(payload) if status == 401
       return_response(json_payload)
+    end
+
+    def www_authenticate_header(*)
+      oauth_token_type.capitalize
     end
 
     def _json_response_body(hash)

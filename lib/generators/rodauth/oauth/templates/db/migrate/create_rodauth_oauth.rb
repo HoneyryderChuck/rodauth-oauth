@@ -49,6 +49,9 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.boolean :require_signed_request_object, null: true
       t.boolean :require_pushed_authorization_requests, null: false, default: false
 
+      # :oauth_dpop
+      t.string :dpop_bound_access_tokens, null: true
+
       # :oauth_tls_client_auth
       t.string :tls_client_auth_subject_dn, null: true
       t.string :tls_client_auth_san_dns, null: true
@@ -86,6 +89,9 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.datetime :created_at, null: false, default: -> { "CURRENT_TIMESTAMP(6)" }
       t.string :access_type, null: false, default: "offline"
 
+      # :oauth_dpop enabled
+      t.string :dpop_jwk, null: true
+
       # :oauth_pkce enabled
       t.string :code_challenge
       t.string :code_challenge_method
@@ -105,15 +111,20 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.string :acr
       t.string :claims_locales
       t.string :claims
+
+      # :oauth_dpop enabled
+      t.string :dpop_jkt
     end
 
     create_table :oauth_pushed_requests do |t|
       t.bigint :oauth_application_id
       t.foreign_key :oauth_applications, column: :oauth_application_id
       t.string :code, null: false, index: { unique: true }
+      t.index %i[oauth_application_id code], unique: true
       t.string :params, null: false
       t.datetime :expires_in, null: false
-      t.index %i[oauth_application_id code], unique: true
+      # :oauth_dpop
+      t.string :dpop_jkt
     end
 
     create_table :oauth_saml_settings do |t|
@@ -126,6 +137,11 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.text :name_identifier_format, null: true
       t.string :audience, null: true
       t.string :issuer, null: false, unique: true
+    end
+
+    create_table :oauth_dpop_proofs, primary_key: :jti do |t|
+      t.string :jti, null: false
+      t.datetime :first_use, null: false, default: -> { "CURRENT_TIMESTAMP(6)" }
     end
   end
 end

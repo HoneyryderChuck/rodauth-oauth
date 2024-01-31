@@ -116,7 +116,7 @@ module Rodauth
 
     module IndicatorIntrospection
       def json_token_introspect_payload(grant)
-        return super unless grant[oauth_grants_id_column]
+        return super unless grant && grant[oauth_grants_id_column]
 
         payload = super
 

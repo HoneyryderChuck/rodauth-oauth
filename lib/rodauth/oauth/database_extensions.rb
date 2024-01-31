@@ -14,6 +14,10 @@ module Rodauth
         else
           def __insert_and_return__(dataset, pkey, params)
             id = dataset.insert(params)
+            if params.key?(pkey)
+              # mysql returns 0 when the primary key is a varchar.
+              id = params[pkey]
+            end
             dataset.where(pkey => id).first
           end
         end

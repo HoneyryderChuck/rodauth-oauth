@@ -42,10 +42,10 @@ Sequel.migration do
       String :acr
       String :claims_locales
       String :claims
+      # oauth_dpop
+      String :dpop_jkt
     end
   end
 
-  down do
-    drop_table(:oauth_grants)
-  end
+  down { drop_table(:oauth_grants) }
 end

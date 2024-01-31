@@ -167,6 +167,10 @@ module Rodauth
         jwk.thumbprint
       end
 
+      def private_jwk?(jwk)
+        %w[d p q dp dq qi].any?(&jwk.method(:key?))
+      end
+
       def jwt_encode(payload,
                      jwks: nil,
                      headers: {},
@@ -222,6 +226,7 @@ module Rodauth
         verify_jti: true,
         verify_iss: true,
         verify_aud: true,
+        verify_headers: nil,
         **
       )
         jws_key = jws_key.first if jws_key.is_a?(Array)
@@ -271,6 +276,8 @@ module Rodauth
           )
           return
         end
+
+        return if verify_headers && !verify_headers.call(claims.header)
 
         claims
       rescue JSON::JWT::Exception
@@ -331,6 +338,10 @@ module Rodauth
       def jwk_thumbprint(jwk)
         jwk = jwk_import(jwk) if jwk.is_a?(Hash)
         JWT::JWK::Thumbprint.new(jwk).generate
+      end
+
+      def private_jwk?(jwk)
+        jwk_import(jwk).private?
       end
 
       def jwt_encode(payload,
@@ -394,7 +405,8 @@ module Rodauth
         verify_claims: true,
         verify_jti: true,
         verify_iss: true,
-        verify_aud: true
+        verify_aud: true,
+        verify_headers: nil
       )
         jws_key = jws_key.first if jws_key.is_a?(Array)
 
@@ -421,31 +433,33 @@ module Rodauth
                                end
 
         # decode jwt
-        claims = if is_authorization_server?
-                   if jwks
-                     jwks = jwks[:keys] if jwks.is_a?(Hash)
+        claims, headers = if is_authorization_server?
+                            if jwks
+                              jwks = jwks[:keys] if jwks.is_a?(Hash)
 
-                     # JWKs may be set up without a KID, when there's a single one
-                     if jwks.size == 1 && !jwks[0][:kid]
-                       key = jwks[0]
-                       algo = key[:alg]
-                       key = JWT::JWK.import(key).keypair
-                       JWT.decode(token, key, true, algorithms: [algo], **verify_claims_params).first
-                     else
-                       algorithms = jws_algorithm ? [jws_algorithm] : jwks.select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
-                       JWT.decode(token, nil, true, algorithms: algorithms, jwks: { keys: jwks }, **verify_claims_params).first
-                     end
-                   elsif jws_key
-                     JWT.decode(token, jws_key, true, algorithms: [jws_algorithm], **verify_claims_params).first
-                   else
-                     JWT.decode(token, jws_key, false, **verify_claims_params).first
-                   end
-                 elsif (jwks = auth_server_jwks_set)
-                   algorithms = jwks[:keys].select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
-                   JWT.decode(token, nil, true, jwks: jwks, algorithms: algorithms, **verify_claims_params).first
-                 end
+                              # JWKs may be set up without a KID, when there's a single one
+                              if jwks.size == 1 && !jwks[0][:kid]
+                                key = jwks[0]
+                                algo = key[:alg]
+                                key = JWT::JWK.import(key).keypair
+                                JWT.decode(token, key, true, algorithms: [algo], **verify_claims_params)
+                              else
+                                algorithms = jws_algorithm ? [jws_algorithm] : jwks.select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
+                                JWT.decode(token, nil, true, algorithms: algorithms, jwks: { keys: jwks }, **verify_claims_params)
+                              end
+                            elsif jws_key
+                              JWT.decode(token, jws_key, true, algorithms: [jws_algorithm], **verify_claims_params)
+                            else
+                              JWT.decode(token, jws_key, false, **verify_claims_params)
+                            end
+                          elsif (jwks = auth_server_jwks_set)
+                            algorithms = jwks[:keys].select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
+                            JWT.decode(token, nil, true, jwks: jwks, algorithms: algorithms, **verify_claims_params)
+                          end
 
         return if verify_claims && verify_aud && !verify_aud(claims["aud"], claims["client_id"])
+
+        return if verify_headers && !verify_headers.call(headers)
 
         claims
       rescue JWT::DecodeError, JWT::JWKError
@@ -502,6 +516,10 @@ module Rodauth
       end
 
       def jwt_decode(_token, **)
+        raise "#{__method__} is undefined, redefine it or require either \"jwt\" or \"json-jwt\""
+      end
+
+      def private_jwk?(_jwk)
         raise "#{__method__} is undefined, redefine it or require either \"jwt\" or \"json-jwt\""
       end
       # :nocov:
