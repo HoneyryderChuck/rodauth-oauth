@@ -224,7 +224,7 @@ module Rodauth
       nonce = claims["nonce"]
 
       unless nonce
-        dpop_nonce_required(claims) if oauth_dpop_use_nonce
+        dpop_nonce_required(claims) if dpop_use_nonce?
 
         return
       end
