@@ -94,7 +94,9 @@ module Rodauth
       # token data.
       claims[:scope] = oauth_grant[oauth_grants_scopes_column]
 
-      jwt_encode(claims)
+      # RFC8725 section 3.11: Use Explicit Typing
+      # RFC9068 section 2.1 : The "typ" value used SHOULD be "at+jwt".
+      jwt_encode(claims, headers: { typ: "at+jwt" })
     end
 
     def _generate_access_token(*)
