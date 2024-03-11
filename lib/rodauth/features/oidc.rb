@@ -545,7 +545,11 @@ module Rodauth
         jwks: oauth_application_jwks(oauth_application),
         signing_algorithm: signing_algorithm,
         encryption_algorithm: oauth_application[oauth_applications_id_token_encrypted_response_alg_column],
-        encryption_method: oauth_application[oauth_applications_id_token_encrypted_response_enc_column]
+        encryption_method: oauth_application[oauth_applications_id_token_encrypted_response_enc_column],
+
+        # Not officially part of the spec, but some providers follow this convention.
+        # This is useful for distinguishing between ID Tokens and JWT Access Tokens.
+        headers: { typ: "id_token+jwt" }
       }.compact
 
       oauth_grant[:id_token] = jwt_encode(id_claims, **params)

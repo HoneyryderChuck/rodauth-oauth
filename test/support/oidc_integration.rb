@@ -32,7 +32,8 @@ class OIDCIntegration < JWTIntegration
   end
 
   def verify_id_token(data, oauth_grant, signing_key:, signing_algo: "RS256", decryption_key: nil)
-    claims, = verify_jwt_token(data, signing_key, signing_algo, decryption_key: decryption_key)
+    claims, headers = verify_jwt_token(data, signing_key, signing_algo, decryption_key: decryption_key)
+    assert headers["typ"] == "id_token+jwt"
     verify_id_token_claims(claims, oauth_grant) if oauth_grant
     yield claims if block_given?
     claims

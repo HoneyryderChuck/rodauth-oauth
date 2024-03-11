@@ -140,7 +140,7 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
       scope: oauth_grant[:scopes]
     }.merge(params)
 
-    headers = {}
+    headers = { typ: "at+jwt" }
     jwk = JWT::JWK.new(priv_key)
     headers[:kid] = jwk.kid
     key = jwk.keypair

@@ -9,7 +9,10 @@ module Rodauth
 
     auth_value_method :oauth_jwt_access_tokens, true
 
-    auth_methods(:jwt_claims)
+    auth_methods(
+      :jwt_claims,
+      :verify_access_token_headers
+    )
 
     def require_oauth_authorization(*scopes)
       return super unless oauth_jwt_access_tokens
@@ -53,10 +56,14 @@ module Rodauth
       @authorization_token = decode_access_token
     end
 
+    def verify_access_token_headers(headers)
+      headers["typ"] == "at+jwt"
+    end
+
     def decode_access_token(access_token = fetch_access_token)
       return unless access_token
 
-      jwt_claims = jwt_decode(access_token)
+      jwt_claims = jwt_decode(access_token, verify_headers: method(:verify_access_token_headers))
 
       return unless jwt_claims
 
@@ -94,7 +101,9 @@ module Rodauth
       # token data.
       claims[:scope] = oauth_grant[oauth_grants_scopes_column]
 
-      jwt_encode(claims)
+      # RFC8725 section 3.11: Use Explicit Typing
+      # RFC9068 section 2.1 : The "typ" value used SHOULD be "at+jwt".
+      jwt_encode(claims, headers: { typ: "at+jwt" })
     end
 
     def _generate_access_token(*)

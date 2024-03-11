@@ -45,8 +45,9 @@ class JWTIntegration < RodaIntegration
   end
 
   def verify_access_token(data, oauth_grant, signing_key:, signing_algo:, audience: "CLIENT_ID")
-    claims, = verify_jwt_token(data, signing_key, signing_algo)
+    claims, headers = verify_jwt_token(data, signing_key, signing_algo)
 
+    assert headers["typ"] == "at+jwt"
     assert claims.key?("client_id")
     assert claims["client_id"] == "CLIENT_ID"
     assert claims["scope"] == oauth_grant[:scopes]

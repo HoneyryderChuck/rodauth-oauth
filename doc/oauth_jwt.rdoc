@@ -13,3 +13,4 @@ This feature depends on the oauth_jwt_base and oauth_jwt_jwks feature.
 == Auth Methods
 
 * jwt_claims :: returns the claims hash to add in JWT tokens payload.
+* verify_access_token_headers :: callback used to verify the JWT access token headers.
