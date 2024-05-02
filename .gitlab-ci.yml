@@ -16,8 +16,10 @@ cache:
   - rm -f Gemfile.lock
   - bundle install
   - |-
-      if [ "$BUNDLE_GEMFILE" !=~ "rails" ]; then
-        cd test/rails_app && bundle exec rails generate rodauth:oauth:views -a
+      if [[ "$BUNDLE_GEMFILE" = *rails* ]]; then
+        cd test/rails_app && \
+          BUNDLE_GEMFILE=../../$BUNDLE_GEMFILE DATABASE_URL=sqlite3::memory: bundle exec rails generate rodauth:oauth:views -a && \
+          cd ../..
       fi
 
 
