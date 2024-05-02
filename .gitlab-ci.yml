@@ -64,8 +64,7 @@ cache:
       name: mysql:8
       alias: mysql
       command:
-        - --default-authentication-plugin
-        - mysql_native_password
+        - "--mysql-native-password=ON"
 
 variables:
   BUNDLE_WITHOUT: demo:docs
