@@ -58,7 +58,12 @@ gem "pry"
 platform :mri, :truffleruby do
   gem "pry-byebug"
   if RUBY_VERSION >= "3.0.0"
-    gem "sqlite3"
+    if ENV.fetch("BUNDLE_GEMFILE", "").include?("rails")
+      # no rails version supports sqlite3 v2 yet.
+      gem "sqlite3", "~> 1.4"
+    else
+      gem "sqlite3"
+    end
   elsif RUBY_VERSION >= "2.7.0"
     gem "sqlite3", "< 1.7.0"
   else
