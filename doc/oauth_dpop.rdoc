@@ -27,15 +27,13 @@ oauth_multiple_dpop_proofs_error_code :: Error code for using an invalid DPoP pr
 oauth_invalid_dpop_jkt_error_code :: Error code when not able to verify the access token JKT, <tt>invalid_dpop_proof</tt> by default.
 oauth_invalid_dpop_jti_error_code :: Error code for invalid DPoP jti, <tt>invalid_dpop_proof</tt> by default.
 oauth_invalid_dpop_htm_error_code :: Error code for invalid DPoP htm, <tt>invalid_dpop_proof</tt> by default.
-oauth_invalid_dpop_htm_error_code :: Error code for invalid DPoP htu, <tt>invalid_dpop_proof</tt> by default.
+oauth_invalid_dpop_htu_error_code :: Error code for invalid DPoP htu, <tt>invalid_dpop_proof</tt> by default.
 
 oauth_dpop_proof_expires_in :: the time (in seconds) a DPoP proof can be used after first use, 5 minutes by default.
 oauth_dpop_bound_access_tokens :: whether only DPoP-bound access tokens are accepted, defaults to <tt>false</tt>.
-oauth_use_dpop_nonce :: wheter nonces are required on DPoP proofs, defaults to <tt>false</tt>.
+oauth_dpop_use_nonce :: wheter nonces are required on DPoP proofs, defaults to <tt>false</tt>.
 oauth_dpop_nonce_expires_in :: the time (in seconds) a server-generated nonce is valid after creation, 5 minutes by default.
 oauth_dpop_signing_alg_values_supported :: Supported JWS algorithms for signing DPoP headers.
-oauth_applications_dpop_bound_par_requests :: Boolean value indicating if the DPoP should be bound to pushed authorization requests. Defaults to false.
-logger :: Logger instance used for logging. Defaults to Logger.new(STDOUT).
 
 
 oauth_applications_dpop_bound_access_tokens_column :: DB column storing whether DPoP-bound access tokens are required for a client application, <tt>:dpop_bound_access_tokens</tt> by default.
@@ -47,4 +45,4 @@ oauth_dpop_proofs_first_use_column :: DB column where to store the timestamp of 
 
 == Value Methods
 
-* validate_dpop_proof_usage :: function which verifies correct usage of DPoP proofs. Can be override to disable the procedure, or customize to p.ex. use a different data store.
+validate_dpop_proof_usage :: function which verifies correct usage of DPoP proofs. Can be override to disable the procedure, or customize to p.ex. use a different data store.
