@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rodauth-oauth (1.6.0)
+    rodauth-oauth (1.6.1)
       rodauth (~> 2.0)
 
 GEM
