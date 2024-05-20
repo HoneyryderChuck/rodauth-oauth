@@ -40,7 +40,7 @@
   <% end %>
   <% rodauth.oauth_application_scopes.each do |scope| %>
     <div class="form-check">
-      <%= check_box_tag "scopes[]", scope, id: scope, class: "form-check-input" %>
+      <%= check_box_tag "scopes[]", scope, false, id: scope, class: "form-check-input" %>
       <%= scope %>
     </div>
   <% end %>

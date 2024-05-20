@@ -32,7 +32,7 @@
         <%= hidden_field_tag "scope[]", scope %>
       <% else %>
         <div class="form-check">
-          <%= check_box_tag "scope[]", scope, id: scope, class: "form-check-input" %>
+          <%= check_box_tag "scope[]", scope, false, id: scope, class: "form-check-input" %>
           <%= label_tag scope, scope, class: "form-check-label" %>
         </div>
       <% end %>
