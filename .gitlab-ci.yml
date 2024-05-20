@@ -116,10 +116,9 @@ ruby25:
   before_script:
     - *install_deps
     - *before_script
-    - *prepare_dbs
   image: "ruby:2.5"
   script:
-    - *test
+    - "DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
   artifacts:
     paths:
       - "coverage/"
@@ -131,12 +130,11 @@ ruby26:
   before_script:
     - *install_deps
     - *before_script
-    - *prepare_dbs
   image: "ruby:2.6"
   only:
     - master
   script:
-    - *test
+    - "DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
   artifacts:
     paths:
       - "coverage/"
