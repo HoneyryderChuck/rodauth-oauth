@@ -16,8 +16,10 @@ cache:
   - rm -f Gemfile.lock
   - bundle install
   - |-
-      if [ "$BUNDLE_GEMFILE" !=~ "rails" ]; then
-        cd test/rails_app && bundle exec rails generate rodauth:oauth:views -a
+      if [[ "$BUNDLE_GEMFILE" = *rails* ]]; then
+        cd test/rails_app && \
+          BUNDLE_GEMFILE=../../$BUNDLE_GEMFILE DATABASE_URL=sqlite3::memory: bundle exec rails generate rodauth:oauth:views -a && \
+          cd ../..
       fi
 
 
@@ -62,8 +64,7 @@ cache:
       name: mysql:8
       alias: mysql
       command:
-        - --default-authentication-plugin
-        - mysql_native_password
+        - "--mysql-native-password=ON"
 
 variables:
   BUNDLE_WITHOUT: demo:docs
@@ -115,10 +116,9 @@ ruby25:
   before_script:
     - *install_deps
     - *before_script
-    - *prepare_dbs
   image: "ruby:2.5"
   script:
-    - *test
+    - "DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
   artifacts:
     paths:
       - "coverage/"
@@ -130,12 +130,11 @@ ruby26:
   before_script:
     - *install_deps
     - *before_script
-    - *prepare_dbs
   image: "ruby:2.6"
   only:
     - master
   script:
-    - *test
+    - "DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
   artifacts:
     paths:
       - "coverage/"

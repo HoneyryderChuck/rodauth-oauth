@@ -5,6 +5,5 @@ eval File.read(File.join(__dir__, "Gemfile"))
 # frameworks
 gem "rails", "~> 7.0.0"
 
-gem "sqlite", "< 2.0.0"
 gem "rodauth-rails"
 gem "sequel-activerecord_connection"
