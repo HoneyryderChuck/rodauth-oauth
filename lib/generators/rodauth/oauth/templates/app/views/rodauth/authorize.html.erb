@@ -4,7 +4,7 @@
   <% end %>
   <% application_uri = rodauth.oauth_application[rodauth.oauth_applications_homepage_url_column] %>
   <% application_name = application_uri ? link_to(rodauth.oauth_application[rodauth.oauth_applications_name_column], application_uri) : rodauth.oauth_application[rodauth.oauth_applications_name_column] %>
-  <p class="lead"><%= rodauth.authorize_page_lead(name: application_name) %></p>
+  <p class="lead"><%= rodauth.authorize_page_lead(name: application_name).html_safe %></p>
 
   <div class="list-group">
     <% if rodauth.oauth_application[rodauth.oauth_applications_tos_uri_column] %>
@@ -79,7 +79,7 @@
         <%= hidden_field_tag :registration, rodauth.param_or_nil("registration") %>
       <% end %>
     <% end %>
-    <% if rodauth.features.include?(:oidc) %>
+    <% if rodauth.features.include?(:oauth_dpop) %>
       <% if rodauth.param_or_nil("dpop_jkt") %>
         <%= hidden_field_tag :dpop_jkt, rodauth.param_or_nil("dpop_jkt") %>
       <% end %>

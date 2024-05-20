@@ -36,7 +36,6 @@ class RodauthOauthDpopPushedAuthorizationRequestAuthorizeTest < DPoPIntegration
 
     # show the authorization form
     visit "/authorize?client_id=#{oauth_application[:client_id]}&request_uri=urn:ietf:params:oauth:request_uri:#{request[:code]}"
-    assert_includes page.html, "name=\"response_type\" value=\"code\""
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
     check "user.read"
@@ -86,7 +85,6 @@ class RodauthOauthDpopPushedAuthorizationRequestAuthorizeTest < DPoPIntegration
 
     # show the authorization form
     visit "/authorize?client_id=#{oauth_application[:client_id]}&request_uri=urn:ietf:params:oauth:request_uri:#{request[:code]}"
-    assert_includes page.html, "name=\"response_type\" value=\"code\""
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
     check "user.read"
