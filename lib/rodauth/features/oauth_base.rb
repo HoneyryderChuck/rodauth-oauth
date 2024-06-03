@@ -720,7 +720,7 @@ module Rodauth
     def supported_response_type?(response_type, expected_response_type = response_type)
       return false unless response_type == expected_response_type
 
-      response_types_supported = if oauth_application[oauth_applications_grant_types_column]
+      response_types_supported = if oauth_application[oauth_applications_response_types_column]
                                    oauth_application[oauth_applications_response_types_column].split(/ +/)
                                  else
                                    oauth_response_types_supported
