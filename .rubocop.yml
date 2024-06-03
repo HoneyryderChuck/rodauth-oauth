@@ -238,6 +238,9 @@ Style/SoleNestedConditional:
 Style/HashConversion:
   Enabled: false
 
+Style/SuperArguments:
+  Enabled: false
+
 Lint/SuppressedException:
   Exclude:
     - lib/generators/**/*
