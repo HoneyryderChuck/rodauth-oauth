@@ -29,7 +29,7 @@ namespace :coverage do
   end
 end
 
-CI_TASKS = %i[test rubocop]
+CI_TASKS = RUBY_VERSION >= "3.1.0" ? %i[test rubocop] : %i[test]
 
 task "test:ci": CI_TASKS
 
@@ -102,7 +102,7 @@ task :prepare_jekyll_data do
               .map { |v| v[1..-1] }
               .sort_by(&Gem::Version.method(:new))
               .reverse
-              .map { |v| { name: v, path: "#{v.tr(".", "_")}_md.html" } }
+              .map { |v| { name: v, path: "#{v.tr('.', '_')}_md.html" } }
               .map { |v| format(version_tmpl, v) }
               .join
               .then { |v| "-\n#{v}" }
