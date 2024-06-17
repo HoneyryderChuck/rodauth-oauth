@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "rodauth/oauth"
-require "logger"
 
 module Rodauth
   Feature.define(:oauth_dpop, :OauthDpop) do
