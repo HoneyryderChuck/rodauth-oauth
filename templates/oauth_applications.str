@@ -1,5 +1,5 @@
 <div id="oauth-applications">
-  <a class="btn btn-outline-primary" href="/oauth-applications/new">#{rodauth.new_oauth_application_page_title}</a>
+  <a class="btn btn-outline-primary" href="#{rodauth.oauth_applications_path}/new">#{rodauth.new_oauth_application_page_title}</a>
   #{
     if @oauth_applications.count.zero?
       "<p>#{rodauth.oauth_no_applications_text}</p>"

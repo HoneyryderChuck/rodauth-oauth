@@ -71,6 +71,38 @@ class RodauthOauthApplicationsTest < RodaIntegration
     assert_includes page.html, "No oauth applications yet!"
   end
 
+  def test_oauth_applications_with_prefix
+    rodauth do
+      prefix "/auth"
+    end
+    setup_application do |rodauth|
+      rodauth.request.on "auth" do
+        rodauth.load_oauth_application_management_routes
+      end
+    end
+    login
+    # List
+    visit "/auth/oauth-applications"
+    assert_includes page.html, "No oauth applications yet!"
+    # Create a new Application
+    click_link "New Oauth Application"
+    assert_includes page.html, "New Oauth Application"
+    fill_in "name", with: "Foo App"
+    fill_in "description", with: "An app starting with Foo"
+    fill_in "homepage-url", with: "https://foobar.com"
+    fill_in "redirect-uri", with: "https://foobar.com/callback"
+    fill_in "client-secret", with: "SECRET"
+    check "user.read"
+    check "user.write"
+    click_button "Register"
+
+    # Application page
+    assert_equal page.find("#notice").text, "Your oauth application has been registered"
+    assert_includes page.html, "Client ID: "
+    assert_includes page.html, "Default scopes: "
+    assert db[:oauth_applications].count == 1
+  end
+
   def test_oauth_applications_multiple_redirect_uris
     rodauth do
       new_oauth_application_view do
@@ -130,7 +162,13 @@ class RodauthOauthApplicationsTest < RodaIntegration
     :oauth_application_management
   end
 
-  def setup_application(*args)
-    super(*args, &:load_oauth_application_management_routes)
+  def setup_application(*args, &blk)
+    super(*args) do |rodauth|
+      if blk
+        blk.call(rodauth)
+      else
+        rodauth.load_oauth_application_management_routes
+      end
+    end
   end
 end
