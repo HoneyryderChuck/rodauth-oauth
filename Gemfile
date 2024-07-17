@@ -54,9 +54,8 @@ gem "rubocop"
 gem "rubocop-performance"
 gem "simplecov"
 
-gem "pry"
 platform :mri, :truffleruby do
-  gem "pry-byebug"
+  gem "debug"
   if RUBY_VERSION >= "3.0.0"
     if ENV.fetch("BUNDLE_GEMFILE", "").include?("rails")
       # no rails version supports sqlite3 v2 yet.
