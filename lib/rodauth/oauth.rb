@@ -6,8 +6,8 @@ require "rodauth/oauth/version"
 module Rodauth
   module OAuth
     module FeatureExtensions
-      def auth_server_route(*args, &blk)
-        routes = route(*args, &blk)
+      def auth_server_route(name, *args, &blk)
+        routes = route(name, *args, &blk)
 
         handle_meth = routes.last
 
@@ -19,6 +19,9 @@ module Rodauth
 
         alias_method :"#{handle_meth}_not_for_auth_server", handle_meth
         alias_method handle_meth, :"#{handle_meth}_for_auth_server"
+
+        # make all requests usable via internal_request feature
+        internal_request_method name
       end
 
       # override
