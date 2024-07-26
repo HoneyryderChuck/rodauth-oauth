@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    rodauth-oauth (1.6.2)
+    rodauth-oauth (1.6.3)
       base64
       rodauth (~> 2.0)
 
