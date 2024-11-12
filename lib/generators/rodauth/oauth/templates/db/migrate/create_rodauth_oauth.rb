@@ -140,7 +140,6 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
     end
 
     create_table :oauth_dpop_proofs, primary_key: :jti do |t|
-      t.string :jti, null: false
       t.datetime :first_use, null: false, default: -> { "CURRENT_TIMESTAMP(6)" }
     end
   end
