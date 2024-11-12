@@ -136,7 +136,7 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.boolean :check_idp_cert_expiration, null: true
       t.text :name_identifier_format, null: true
       t.string :audience, null: true
-      t.string :issuer, null: false, unique: true
+      t.string :issuer, null: false, index: { unique: true }
     end
 
     create_table :oauth_dpop_proofs, primary_key: :jti do |t|
