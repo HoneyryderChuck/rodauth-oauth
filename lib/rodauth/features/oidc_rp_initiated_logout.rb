@@ -23,7 +23,7 @@ module Rodauth
         catch_error do
           validate_oidc_logout_params
 
-          claims = oauth_application = nil
+          claims = nil
 
           if (id_token_hint = param_or_nil("id_token_hint"))
             #
