@@ -187,7 +187,7 @@ ruby31:
     - *test
   parallel:
     matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails71, Gemfile-rails70]
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails72, Gemfile-rails71, Gemfile-rails70]
   artifacts:
     paths:
       - "coverage/"
@@ -208,7 +208,7 @@ ruby32:
     - *test
   parallel:
     matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails71, Gemfile-rails70]
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails80, Gemfile-rails72, Gemfile-rails71, Gemfile-rails70]
   artifacts:
     paths:
       - "coverage/"
@@ -229,7 +229,7 @@ ruby33:
     - *test
   parallel:
     matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails71, Gemfile-rails70]
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails80, Gemfile-rails72, Gemfile-rails71, Gemfile-rails70]
   artifacts:
     paths:
       - "coverage/"
@@ -266,7 +266,7 @@ pages:
   stage: deploy
   needs:
     - coverage
-  image: "ruby:3.1"
+  image: "ruby:3.3"
   variables:
     BUNDLE_WITHOUT: test:coverage:assorted
   before_script:

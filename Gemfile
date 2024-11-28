@@ -57,8 +57,9 @@ gem "simplecov"
 platform :mri, :truffleruby do
   gem "debug"
   if RUBY_VERSION >= "3.0.0"
-    if ENV.fetch("BUNDLE_GEMFILE", "").include?("rails")
-      # no rails version supports sqlite3 v2 yet.
+    if ENV.fetch("BUNDLE_GEMFILE", "").match(/\-rails(\d+)/) &&
+       Regexp.last_match(1).to_i < 72
+      # rails 7.2 or higher supports sqlite3 v2.
       gem "sqlite3", "~> 1.4"
     else
       gem "sqlite3"
