@@ -50,6 +50,7 @@ This gem implements the following RFCs and features of OAuth:
 * `oauth_assertion_base` - [Assertion Framework](https://datatracker.ietf.org/doc/html/rfc7521);
   * `oauth_saml_bearer_grant` - [SAML 2.0 Bearer Assertion](https://datatracker.ietf.org/doc/html/rfc7522);
   * `oauth_jwt_bearer_grant` - [JWT Bearer Assertion](https://datatracker.ietf.org/doc/html/rfc7523);
+* `oauth_dpop` - [OAuth 2.0 Demonstrating Proof-of-Possession at the Application Layer (DPoP)](https://gitlab.com/os85/rodauth-oauth/-/wikis/DPoP);
 
 * `oauth_dynamic_client_registration` - [Dynamic Client Registration Protocol](https://datatracker.ietf.org/doc/html/rfc7591) and [Dynamic Client Registration Management](https://www.rfc-editor.org/rfc/rfc7592);
 * OAuth application and token management dashboards;
@@ -67,7 +68,7 @@ It also implements several components of [OpenID Connect](https://openid.net/con
 * `oidc_frontchannel_logout` - [Frontchannel Logout](https://gitlab.com/os85/rodauth-oauth/-/wikis/Frontchannel-Logout);
 * `oidc_backchannel_logout` - [Backchannel Logout](https://gitlab.com/os85/rodauth-oauth/-/wikis/Backchannel-Logout);
 
-This gem supports also rails (through [rodauth-rails]((https://github.com/janko/rodauth-rails))).
+This gem supports also rails (via [rodauth-rails]((https://github.com/janko/rodauth-rails)), which also dictates the versioning policy).
 
 
 ## Installation
