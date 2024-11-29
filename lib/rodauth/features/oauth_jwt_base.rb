@@ -347,7 +347,6 @@ module Rodauth
       def jwt_encode(payload,
                      signing_algorithm: oauth_jwt_keys.keys.first,
                      headers: {}, **)
-
         key = oauth_jwt_keys[signing_algorithm] || _jwt_key
         key = key.first if key.is_a?(Array)
 
@@ -475,7 +474,6 @@ module Rodauth
           jwe_key: oauth_jwt_jwe_keys[[jws_encryption_algorithm, jws_encryption_method]] || oauth_jwt_jwe_keys.values.first,
           **args
         )
-
           token = if jwks && jwks.any? { |k| k[:use] == "enc" }
                     JWE.__rodauth_oauth_decrypt_from_jwks(token, jwks, alg: jws_encryption_algorithm, enc: jws_encryption_method)
                   elsif jwe_key
