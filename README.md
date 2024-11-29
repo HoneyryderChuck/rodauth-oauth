@@ -50,7 +50,7 @@ This gem implements the following RFCs and features of OAuth:
 * `oauth_assertion_base` - [Assertion Framework](https://datatracker.ietf.org/doc/html/rfc7521);
   * `oauth_saml_bearer_grant` - [SAML 2.0 Bearer Assertion](https://datatracker.ietf.org/doc/html/rfc7522);
   * `oauth_jwt_bearer_grant` - [JWT Bearer Assertion](https://datatracker.ietf.org/doc/html/rfc7523);
-* `oauth_dpop` - [OAuth 2.0 Demonstrating Proof-of-Possession at the Application Layer (DPoP)](https://gitlab.com/os85/rodauth-oauth/-/wikis/DPoP);
+* `oauth_dpop` - [OAuth 2.0 Demonstrating Proof-of-Possession at the Application Layer (DPoP)](https://datatracker.ietf.org/doc/rfc9449/);
 
 * `oauth_dynamic_client_registration` - [Dynamic Client Registration Protocol](https://datatracker.ietf.org/doc/html/rfc7591) and [Dynamic Client Registration Management](https://www.rfc-editor.org/rfc/rfc7592);
 * OAuth application and token management dashboards;
