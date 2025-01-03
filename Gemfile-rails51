@@ -9,6 +9,7 @@ eval og_gemfile
 
 # frameworks
 gem "rails", "~> 5.1.0"
+gem "after_commit_everywhere"
 
 gem "rodauth-rails"
 gem "sequel-activerecord_connection"
