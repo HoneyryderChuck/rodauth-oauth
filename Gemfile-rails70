@@ -4,6 +4,9 @@ eval File.read(File.join(__dir__, "Gemfile"))
 
 # frameworks
 gem "rails", "~> 7.0.0"
+gem "after_commit_everywhere"
+gem "mutex_m"
+gem "drb"
 
 gem "rodauth-rails"
 gem "sequel-activerecord_connection"
