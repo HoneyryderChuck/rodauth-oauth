@@ -792,9 +792,7 @@ module Rodauth
     # Metadata
 
     def openid_configuration_body(path = nil)
-      metadata = oauth_server_metadata_body(path).select do |k, _|
-        VALID_METADATA_KEYS.include?(k)
-      end
+      metadata = oauth_server_metadata_body(path).slice(*VALID_METADATA_KEYS)
 
       scope_claims = oauth_application_scopes.each_with_object([]) do |scope, claims|
         oidc, param = scope.split(".", 2)

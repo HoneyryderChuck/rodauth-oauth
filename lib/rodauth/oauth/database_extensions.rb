@@ -81,7 +81,7 @@ module Rodauth
           end
 
           def __insert_or_do_nothing_and_return__(dataset, pkey, unique_columns, params)
-            find_params = params.select { |key, _| unique_columns.include?(key) }
+            find_params = params.slice(*unique_columns)
             dataset.where(find_params).first || __insert_and_return__(dataset, pkey, params)
           end
         end
