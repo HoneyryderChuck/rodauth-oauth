@@ -169,7 +169,7 @@ end
 DB.freeze
 
 if $PROGRAM_NAME == __FILE__
-  require "rack"
+  require "rackup"
 
   ROOT_CERT = File.join(__dir__, "root-cert.pem")
   ROOT_KEY = File.join(__dir__, "root-key.pem")
@@ -189,7 +189,7 @@ if $PROGRAM_NAME == __FILE__
   ca_client_store.add_file(File.join(__dir__, "client-root-cert.pem"))
   ca_client_store.add_file(File.join(__dir__, "client-cert.pem"))
 
-  Rack::Server.start(
+  Rackup::Server.start(
     app: AuthorizationServer,
     Port: 9292,
     SSLEnable: true,

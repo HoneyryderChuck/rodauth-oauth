@@ -159,9 +159,9 @@ end
 DB.freeze
 
 if $PROGRAM_NAME == __FILE__
-  require "rack"
+  require "rackup"
 
-  Rack::Server.start(
+  Rackup::Server.start(
     app: AuthorizationServer, Port: 9292
   )
 end

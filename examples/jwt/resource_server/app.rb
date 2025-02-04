@@ -92,9 +92,9 @@ class ResourceServer < Roda
 end
 
 if $PROGRAM_NAME == __FILE__
-  require "rack"
+  require "rackup"
 
-  Rack::Server.start(
+  Rackup::Server.start(
     app: ResourceServer, Port: 9294
   )
 end
