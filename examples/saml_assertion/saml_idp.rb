@@ -135,9 +135,9 @@ end
 DB.freeze
 
 if $PROGRAM_NAME == __FILE__
-  require "rack"
+  require "rackup"
 
-  Rack::Server.start(
+  Rackup::Server.start(
     app: SAMLServer, Port: 9294
   )
 end

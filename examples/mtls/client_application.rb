@@ -319,9 +319,9 @@ class ClientApplication < Roda
 end
 
 if $PROGRAM_NAME == __FILE__
-  require "rack"
+  require "rackup"
 
-  Rack::Server.start(
+  Rackup::Server.start(
     app: ClientApplication, Port: 9293
   )
 end
