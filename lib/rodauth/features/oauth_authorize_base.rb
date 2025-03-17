@@ -33,6 +33,10 @@ module Rodauth
       :oauth_grants_resource_owner_columns
     )
 
+    OAUTH_ACCESS_TYPES = %w[offline online].freeze
+
+    OAUTH_APPROVAL_PROMPTS = %w[force auto].freeze
+
     # /authorize
     auth_server_route(:authorize) do |r|
       require_authorizable_account
@@ -106,22 +110,18 @@ module Rodauth
       false
     end
 
-    ACCESS_TYPES = %w[offline online].freeze
-
     def check_valid_access_type?
       return true unless use_oauth_access_type?
 
       access_type = param_or_nil("access_type")
-      !access_type || ACCESS_TYPES.include?(access_type)
+      !access_type || OAUTH_ACCESS_TYPES.include?(access_type)
     end
-
-    APPROVAL_PROMPTS = %w[force auto].freeze
 
     def check_valid_approval_prompt?
       return true unless use_oauth_access_type?
 
       approval_prompt = param_or_nil("approval_prompt")
-      !approval_prompt || APPROVAL_PROMPTS.include?(approval_prompt)
+      !approval_prompt || OAUTH_APPROVAL_PROMPTS.include?(approval_prompt)
     end
 
     def resource_owner_params
