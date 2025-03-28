@@ -462,14 +462,14 @@ module Rodauth
     end
 
     def generate_token(grant_params = {}, should_generate_refresh_token = true)
-      if grant_params[oauth_grants_id_column] && (oauth_reuse_access_token &&
-           (
-             if oauth_grants_token_hash_column
-               grant_params[oauth_grants_token_hash_column]
-             else
-               grant_params[oauth_grants_token_column]
-             end
-           ))
+      if grant_params[oauth_grants_id_column] && oauth_reuse_access_token &&
+         (
+           if oauth_grants_token_hash_column
+             grant_params[oauth_grants_token_hash_column]
+           else
+             grant_params[oauth_grants_token_column]
+           end
+         )
         return grant_params
       end
 

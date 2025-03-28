@@ -132,8 +132,8 @@ module Rodauth
         end
       end
 
-      if features.include?(:oidc_rp_initiated_logout) && (defined?(oauth_applications_post_logout_redirect_uris_column) &&
-           (value = @oauth_application_params[oauth_applications_post_logout_redirect_uris_column]))
+      if features.include?(:oidc_rp_initiated_logout) && defined?(oauth_applications_post_logout_redirect_uris_column) &&
+         (value = @oauth_application_params[oauth_applications_post_logout_redirect_uris_column])
         if value.is_a?(Array)
           @oauth_application_params[oauth_applications_post_logout_redirect_uris_column] = value.each do |redirect_uri|
             unless check_valid_uri?(redirect_uri)

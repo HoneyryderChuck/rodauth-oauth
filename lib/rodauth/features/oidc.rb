@@ -317,9 +317,8 @@ module Rodauth
       # MUST ignore the offline_access request unless the Client
       # is using a response_type value that would result in an
       # Authorization Code
-      if sc && sc.include?("offline_access") && !(param_or_nil("prompt") == "consent" && (
-                (response_type = param_or_nil("response_type")) && response_type.split(" ").include?("code")
-              ))
+      if sc && sc.include?("offline_access") && !(param_or_nil("prompt") == "consent" &&
+                (response_type = param_or_nil("response_type")) && response_type.split(" ").include?("code"))
         sc.delete("offline_access")
 
         request.params["scope"] = sc.join(" ")
