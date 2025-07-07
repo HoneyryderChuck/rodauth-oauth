@@ -142,7 +142,7 @@ module Rodauth
         oauth_grants_redirect_uri_column => redirect_uri,
         oauth_grants_scopes_column => scopes.join(oauth_scope_separator),
         oauth_grants_access_type_column => "online"
-      ).count.zero?
+      ).none?
 
       # if there's a previous oauth grant for the params combo, it means that this user has approved before.
       request.env["REQUEST_METHOD"] = "POST"

@@ -870,7 +870,7 @@ module Rodauth
       return unless digest
 
       hash = digest.digest(hash)
-      hash = hash[0...hash.size / 2]
+      hash = hash[0...(hash.size / 2)]
       Base64.urlsafe_encode64(hash).tr("=", "")
     end
   end

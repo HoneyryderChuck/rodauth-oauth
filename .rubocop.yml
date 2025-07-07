@@ -252,3 +252,7 @@ Lint/ConstantDefinitionInBlock:
 
 Metrics/ParameterLists:
   Enabled: false
+
+# TODO: remove this and rename methods in a major version upgrade
+Naming/PredicateMethod:
+  Enabled: false
