@@ -41,7 +41,7 @@ class RodauthOAuthTokenRevokeTest < RodaIntegration
     post("/revoke", token_type_hint: "access_token", token: oauth_grant_with_token[:token])
 
     assert last_response.status == 200
-    assert db[:oauth_grants].where(revoked_at: nil).count.zero?
+    assert db[:oauth_grants].where(revoked_at: nil).none?
   end
 
   def test_revoke_refresh_token
@@ -56,7 +56,7 @@ class RodauthOAuthTokenRevokeTest < RodaIntegration
     post("/revoke", token_type_hint: "refresh_token", token: oauth_grant_with_token[:refresh_token])
 
     assert last_response.status == 200
-    assert db[:oauth_grants].where(revoked_at: nil).count.zero?
+    assert db[:oauth_grants].where(revoked_at: nil).none?
   end
 
   private

@@ -23,7 +23,7 @@ class RodauthOauthDPopAuthorizeTest < DPoPIntegration
     # submit authorization request
     click_button "Authorize"
 
-    assert db[:oauth_grants].count == 1,
+    assert db[:oauth_grants].one?,
            "no grant has been created"
 
     oauth_grant = db[:oauth_grants].first
@@ -81,7 +81,7 @@ class RodauthOauthDPopAuthorizeTest < DPoPIntegration
     # submit authorization request
     click_button "Authorize"
 
-    assert db[:oauth_grants].count == 1,
+    assert db[:oauth_grants].one?,
            "no grant has been created"
 
     oauth_grant = db[:oauth_grants].first
@@ -143,7 +143,7 @@ class RodauthOauthDPopAuthorizeTest < DPoPIntegration
     # submit authorization request
     click_button "Authorize"
 
-    assert db[:oauth_grants].count == 1,
+    assert db[:oauth_grants].one?,
            "no grant has been created"
 
     oauth_grant = db[:oauth_grants].first

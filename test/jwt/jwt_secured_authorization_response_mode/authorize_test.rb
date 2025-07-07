@@ -35,7 +35,7 @@ class RodauthOauthJwtSecuredAuthorizationResponseModeAuthorizeTest < JWTIntegrat
       assert claims.key?("state")
       assert claims["state"] == "STATE"
 
-      assert db[:oauth_grants].count == 1,
+      assert db[:oauth_grants].one?,
              "no grant has been created"
 
       oauth_grant = db[:oauth_grants].first
@@ -82,7 +82,7 @@ class RodauthOauthJwtSecuredAuthorizationResponseModeAuthorizeTest < JWTIntegrat
       assert claims.key?("state")
       assert claims["state"] == "STATE"
 
-      assert db[:oauth_grants].count == 1,
+      assert db[:oauth_grants].one?,
              "no grant has been created"
 
       oauth_grant = db[:oauth_grants].first
@@ -185,7 +185,7 @@ class RodauthOauthJwtSecuredAuthorizationResponseModeAuthorizeTest < JWTIntegrat
       assert claims.key?("state")
       assert claims["state"] == "STATE"
 
-      assert db[:oauth_grants].count == 1,
+      assert db[:oauth_grants].one?,
              "no grant has been created"
 
       assert claims.key?("access_token")
@@ -263,7 +263,7 @@ class RodauthOauthJwtSecuredAuthorizationResponseModeAuthorizeTest < JWTIntegrat
     assert claims.key?("state")
     assert claims["state"] == "STATE"
 
-    assert db[:oauth_grants].count == 1,
+    assert db[:oauth_grants].one?,
            "no grant has been created"
 
     oauth_grant = db[:oauth_grants].first

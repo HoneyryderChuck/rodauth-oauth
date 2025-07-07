@@ -23,7 +23,7 @@ class RodauthOAuthOidcTokenAuthorizationCodeTest < OIDCIntegration
     assert !json_body["access_token"].nil?
     assert json_body["refresh_token"].nil?
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
 
     oauth_grant = db[:oauth_grants].first
 
@@ -79,7 +79,7 @@ class RodauthOAuthOidcTokenAuthorizationCodeTest < OIDCIntegration
     assert !json_body["access_token"].nil?
     assert !json_body["refresh_token"].nil?
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
 
     oauth_grant = db[:oauth_grants].first
 

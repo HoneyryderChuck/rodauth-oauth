@@ -77,7 +77,7 @@ class RodauthOAuthJWTRefreshTokenTest < JWTIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_grants].where(revoked_at: nil).count == 1
+    assert db[:oauth_grants].where(revoked_at: nil).one?
 
     verify_refresh_token_response(json_body, oauth_grant)
     # oauth_grant = verify_oauth_grant
@@ -105,7 +105,7 @@ class RodauthOAuthJWTRefreshTokenTest < JWTIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_grants].where(revoked_at: nil).count == 1
+    assert db[:oauth_grants].where(revoked_at: nil).one?
 
     oauth_grant = db[:oauth_grants].first
 
@@ -130,7 +130,7 @@ class RodauthOAuthJWTRefreshTokenTest < JWTIntegration
 
     verify_response
 
-    assert db[:oauth_grants].where(revoked_at: nil).count == 1
+    assert db[:oauth_grants].where(revoked_at: nil).one?
 
     verify_refresh_token_response(json_body, oauth_grant_with_token)
     assert json_body["refresh_token"] == oauth_grant_with_token[:refresh_token]
@@ -157,7 +157,7 @@ class RodauthOAuthJWTRefreshTokenTest < JWTIntegration
     assert json_body["refresh_token"] != oauth_grant_with_token[:refresh_token]
 
     # previous token gets revoked
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
 
     verify_access_token_response(json_body, oauth_grant_with_token, "SECRET", "HS256")
 

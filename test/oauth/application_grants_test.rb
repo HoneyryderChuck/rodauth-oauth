@@ -36,7 +36,7 @@ class RodauthApplicationGrantsTest < RodaIntegration
     assert_includes page.html, oauth_grant[:expires_in].to_s
     refute_includes page.html, "value=\"Revoke"
 
-    assert db[:oauth_grants].where(revoked_at: nil).count.zero?
+    assert db[:oauth_grants].where(revoked_at: nil).none?
   end
 
   private

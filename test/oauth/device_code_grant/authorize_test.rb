@@ -16,7 +16,7 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
          })
     assert last_response.status == 200
 
-    assert db[:oauth_grants].count == 1,
+    assert db[:oauth_grants].one?,
            "no grant has been created"
 
     device_grant = db[:oauth_grants].first
@@ -46,7 +46,7 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
          scope: "user.read+user.write")
     assert last_response.status == 200
 
-    assert db[:oauth_grants].count == 1,
+    assert db[:oauth_grants].one?,
            "no grant has been created"
 
     device_grant = db[:oauth_grants].first
@@ -152,7 +152,7 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
     assert page.html.include?("The device is verified")
 
     assert db[:oauth_grants].where(user_code: grant[:user_code]).none?
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
     updated_grant = db[:oauth_grants].first
     assert updated_grant[:id] == grant[:id]
   end
@@ -170,7 +170,7 @@ class RodauthOauthDeviceGrantAuthorizeTest < RodaIntegration
     assert page.html.include?("The device is verified")
 
     assert db[:oauth_grants].where(user_code: grant[:user_code]).none?
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
     updated_grant = db[:oauth_grants].first
     assert updated_grant[:id] == grant[:id]
   end

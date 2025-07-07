@@ -33,7 +33,7 @@ class RodauthOauthOIDCFrontchannelLogoutAuthorizeTest < OIDCIntegration
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#id_token=([^&]+)&state=STATE/,
            "was redirected instead to #{page.current_url}"
 
-    assert db[:oauth_grants].count.zero?,
+    assert db[:oauth_grants].none?,
            "a grant has been created"
     claims = verify_id_token(Regexp.last_match(1), db[:oauth_grants].first, signing_key: jws_public_key, signing_algo: "RS256")
     assert claims.key?("sid")
@@ -76,7 +76,7 @@ class RodauthOauthOIDCFrontchannelLogoutAuthorizeTest < OIDCIntegration
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#id_token=([^&]+)&state=STATE/,
            "was redirected instead to #{page.current_url}"
 
-    assert db[:oauth_grants].count.zero?,
+    assert db[:oauth_grants].none?,
            "a grant has been created"
     claims = verify_id_token(Regexp.last_match(1), db[:oauth_grants].first, signing_key: jws_public_key, signing_algo: "RS256")
     assert !claims.key?("sid")
@@ -117,7 +117,7 @@ class RodauthOauthOIDCFrontchannelLogoutAuthorizeTest < OIDCIntegration
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#id_token=([^&]+)&state=STATE/,
            "was redirected instead to #{page.current_url}"
 
-    assert db[:oauth_grants].count.zero?,
+    assert db[:oauth_grants].none?,
            "a grant has been created"
     claims = verify_id_token(Regexp.last_match(1), db[:oauth_grants].first, signing_key: jws_public_key, signing_algo: "RS256")
     assert claims.key?("sid")
@@ -155,7 +155,7 @@ class RodauthOauthOIDCFrontchannelLogoutAuthorizeTest < OIDCIntegration
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}\?code=([^&]+)&state=STATE/,
            "was redirected instead to #{page.current_url}"
 
-    assert db[:oauth_grants].count == 1,
+    assert db[:oauth_grants].one?,
            "no grant has been created"
 
     code = Regexp.last_match(1)
@@ -209,7 +209,7 @@ class RodauthOauthOIDCFrontchannelLogoutAuthorizeTest < OIDCIntegration
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}\?code=([^&]+)&state=STATE/,
            "was redirected instead to #{page.current_url}"
 
-    assert db[:oauth_grants].count == 1,
+    assert db[:oauth_grants].one?,
            "no grant has been created"
 
     code = Regexp.last_match(1)
@@ -261,7 +261,7 @@ class RodauthOauthOIDCFrontchannelLogoutAuthorizeTest < OIDCIntegration
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}\?code=([^&]+)&state=STATE/,
            "was redirected instead to #{page.current_url}"
 
-    assert db[:oauth_grants].count == 1,
+    assert db[:oauth_grants].one?,
            "no grant has been created"
 
     code = Regexp.last_match(1)

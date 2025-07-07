@@ -180,7 +180,7 @@ class RodauthOAuthTokenDeviceCodeTest < RodaIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
     grant = db[:oauth_grants].first
     verify_access_token_response(json_body, grant)
   end
@@ -201,7 +201,7 @@ class RodauthOAuthTokenDeviceCodeTest < RodaIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
     grant = db[:oauth_grants].first
     verify_access_token_response(json_body, grant)
   end

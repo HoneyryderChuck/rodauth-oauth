@@ -16,7 +16,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     # submit authorization request
     click_button "Authorize"
 
-    assert db[:oauth_grants].count == 1,
+    assert db[:oauth_grants].one?,
            "no grant has been created"
 
     oauth_grant = db[:oauth_grants].first
@@ -46,7 +46,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     # submit authorization request
     click_button "Authorize"
 
-    assert db[:oauth_grants].count == 1,
+    assert db[:oauth_grants].one?,
            "no token has been created"
 
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#access_token=([^&]+)&token_type=bearer&expires_in=3600/,
@@ -79,7 +79,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     assert page.current_url =~ /#{oauth_application[:redirect_uri]}#id_token=([^&]+)&state=STATE/,
            "was redirected instead to #{page.current_url}"
 
-    assert db[:oauth_grants].count.zero?,
+    assert db[:oauth_grants].none?,
            "a grant has been created"
     verify_id_token(Regexp.last_match(1), db[:oauth_grants].first, signing_key: jws_public_key, signing_algo: "RS256")
   end
@@ -252,7 +252,7 @@ class RodauthOauthOIDCAuthorizeTest < OIDCIntegration
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&response_type=code&" \
           "prompt=none"
 
-    assert db[:oauth_grants].count == 1, "new grant not created"
+    assert db[:oauth_grants].one?, "new grant not created"
     new_grant = db[:oauth_grants].first
     assert page.current_url == "#{oauth_application[:redirect_uri]}?code=#{new_grant[:code]}",
            "was redirected instead to #{page.current_url}"

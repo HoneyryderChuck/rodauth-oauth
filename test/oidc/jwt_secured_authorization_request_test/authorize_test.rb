@@ -77,7 +77,7 @@ class RodauthOauthOIDCJwtSecuredAuthorizationRequestAuthorizeTest < OIDCIntegrat
     assert page.current_url.include?("state=123"),
            "was redirected instead to #{page.current_url}"
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
     oauth_grant = db[:oauth_grants].first
 
     assert oauth_grant[:nonce] == "456"

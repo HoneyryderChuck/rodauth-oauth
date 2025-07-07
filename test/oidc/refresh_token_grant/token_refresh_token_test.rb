@@ -133,7 +133,7 @@ class RodauthOAuthOIDCRefreshTokenTest < OIDCIntegration
     assert json_body["refresh_token"] != oauth_grant_with_token[:refresh_token]
 
     # previous token gets revoked
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
 
     verify_access_token_response(json_body, oauth_grant_with_token, "SECRET", "HS256")
 

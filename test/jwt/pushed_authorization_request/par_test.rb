@@ -22,7 +22,7 @@ class RodauthOauthJwtPushedAuthorizationRequestParTest < JWTIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_pushed_requests].count == 1,
+    assert db[:oauth_pushed_requests].one?,
            "no push request has been created"
     request = db[:oauth_pushed_requests].first
     assert request[:oauth_application_id] == application[:id]
@@ -46,7 +46,7 @@ class RodauthOauthJwtPushedAuthorizationRequestParTest < JWTIntegration
     # submit authorization request
     click_button "Authorize"
 
-    assert db[:oauth_grants].count == 1,
+    assert db[:oauth_grants].one?,
            "no grant has been created"
 
     oauth_grant = db[:oauth_grants].first

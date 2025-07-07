@@ -21,7 +21,7 @@ class JWTIntegration < RodaIntegration
   end
 
   def verify_oauth_grant
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
 
     oauth_grant = db[:oauth_grants].first
 

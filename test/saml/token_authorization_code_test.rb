@@ -41,7 +41,7 @@ class RodauthOAuthTokenSAMLAuthorizationCodeTest < SAMLIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
 
     access_token = db[:oauth_grants].first
 
@@ -68,7 +68,7 @@ class RodauthOAuthTokenSAMLAuthorizationCodeTest < SAMLIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
 
     access_token = db[:oauth_grants].first
 

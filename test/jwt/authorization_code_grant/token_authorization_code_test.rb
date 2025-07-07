@@ -21,7 +21,7 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
     verify_response
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
     grant = db[:oauth_grants].first
 
     assert json_body["token"] = grant[:token]

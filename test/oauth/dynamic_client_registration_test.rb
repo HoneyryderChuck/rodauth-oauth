@@ -298,7 +298,7 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
     assert last_response.status == 201
 
-    assert db[:oauth_applications].count == 1
+    assert db[:oauth_applications].one?
 
     oauth_application = db[:oauth_applications].first
 
@@ -320,7 +320,7 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
     assert last_response.status == 201
 
-    assert db[:oauth_applications].count == 1
+    assert db[:oauth_applications].one?
 
     oauth_application = db[:oauth_applications].first
 

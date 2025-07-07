@@ -41,7 +41,7 @@ class RodauthOauthPushedAuthorizationRequestParTest < RodaIntegration
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_pushed_requests].count == 1,
+    assert db[:oauth_pushed_requests].one?,
            "no push request has been created"
     request = db[:oauth_pushed_requests].first
     assert request[:oauth_application_id] == oauth_application[:id]

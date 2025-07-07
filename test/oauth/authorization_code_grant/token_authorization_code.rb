@@ -90,7 +90,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
 
     verify_response(200)
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
 
     oauth_grant = db[:oauth_grants].first
 
@@ -109,7 +109,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
 
     verify_response(200)
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
     oauth_grant = db[:oauth_grants].first
     verify_access_token_response(json_body, oauth_grant)
 
@@ -135,7 +135,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
 
     verify_response(200)
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
     oauth_grant2 = db[:oauth_grants].first
     verify_access_token_response(json_body, oauth_grant2)
 
@@ -156,7 +156,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
 
     verify_response(200)
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
 
     oauth_grant = db[:oauth_grants].first
 
@@ -190,7 +190,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
 
     verify_response(200)
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
     oauth_grant = db[:oauth_grants].first
     assert oauth_grant[:token].nil?
     assert !oauth_grant[:token_hash].nil?
@@ -223,7 +223,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
 
     verify_response(200)
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
     oauth_grant2 = db[:oauth_grants].first
 
     assert oauth_grant[:id] == oauth_grant2[:id]
@@ -244,7 +244,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
 
     verify_response(200)
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
 
     oauth_grant = db[:oauth_grants].first
 
@@ -289,7 +289,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
     assert last_response.status == 200
     assert last_response.headers["Content-Type"] == "application/json"
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
     oauth_grant = db[:oauth_grants].first
 
     assert json_body["access_token"] == oauth_grant[:token]

@@ -34,7 +34,7 @@ class RodauthGrantsTest < RodaIntegration
     assert_equal page.find("#notice").text, "The oauth grant has been revoked"
     assert_includes page.html, "No oauth grants yet!"
 
-    assert db[:oauth_grants].where(revoked_at: nil).count.zero?
+    assert db[:oauth_grants].where(revoked_at: nil).none?
   end
 
   unless ENV.key?("ONLY_ONE_TOKEN")

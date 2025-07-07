@@ -44,7 +44,7 @@ class RodauthOAuthTokenAuthorizationCodeTlsClientAuthTest < RodaIntegration
 
     verify_response(200)
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
     oauth_grant = db[:oauth_grants].first
     verify_access_token_response(json_body, oauth_grant)
   end
@@ -65,7 +65,7 @@ class RodauthOAuthTokenAuthorizationCodeTlsClientAuthTest < RodaIntegration
 
     verify_response(200)
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
     oauth_grant = db[:oauth_grants].first
     verify_access_token_response(json_body, oauth_grant)
   end
@@ -86,7 +86,7 @@ class RodauthOAuthTokenAuthorizationCodeTlsClientAuthTest < RodaIntegration
 
     verify_response(200)
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
     oauth_grant = db[:oauth_grants].first
     verify_access_token_response(json_body, oauth_grant)
   end
@@ -107,7 +107,7 @@ class RodauthOAuthTokenAuthorizationCodeTlsClientAuthTest < RodaIntegration
 
     verify_response(200)
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
     oauth_grant = db[:oauth_grants].first
     verify_access_token_response(json_body, oauth_grant)
   end
@@ -128,7 +128,7 @@ class RodauthOAuthTokenAuthorizationCodeTlsClientAuthTest < RodaIntegration
 
     verify_response(200)
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
     oauth_grant = db[:oauth_grants].first
     verify_access_token_response(json_body, oauth_grant)
   end
@@ -143,7 +143,7 @@ class RodauthOAuthTokenAuthorizationCodeTlsClientAuthTest < RodaIntegration
 
     verify_response(200)
 
-    assert db[:oauth_grants].count == 1
+    assert db[:oauth_grants].one?
 
     oauth_grant = db[:oauth_grants].first
 
