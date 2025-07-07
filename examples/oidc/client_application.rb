@@ -5,11 +5,26 @@ require "net/http"
 require "securerandom"
 require "roda"
 require "roda/session_middleware"
+require "sequel/core"
 require "omniauth/openid_connect"
 
 AUTHORIZATION_SERVER = ENV.fetch("AUTHORIZATION_SERVER_URI", "http://localhost:9292")
 RESOURCE_SERVER = ENV.fetch("RESOURCE_SERVER_URI", "http://localhost:9292/books")
 REDIRECT_URI = "http://localhost:9293/auth/openid_connect/callback"
+
+if (url = ENV.delete("DATABASE_URL"))
+  DB = Sequel.connect(url)
+else
+  DB = Sequel.sqlite
+  DB.create_table(:profiles) do
+    column :uid, :string, primary_key: true
+    column :userinfo, :jsonb, null: false
+    column :id_token, :text, null: false
+    column :access_token, :text, null: false
+    column :refresh_token, :text, null: true
+    column :expires_at, :timestamp, null: false
+  end
+end
 
 if ENV.key?("CLIENT_ID") && ENV.key?("CLIENT_SECRET")
   CLIENT_ID = ENV["CLIENT_ID"]
@@ -98,7 +113,7 @@ class ClientApplication < Roda
             <!-- a class="p-2 text-dark" href="#">Pricing</a-->
           </nav>
           <ul class="navbar-nav flex-row ml-md-auto d-none d-md-flex">
-            <% if !session["access_token"] %>
+            <% if @profile.nil? %>
               <li class="nav-item">
                 <form action="/auth/openid_connect" class="navbar-form pull-right" method="post">
                   <%= csrf_tag %>
@@ -107,7 +122,7 @@ class ClientApplication < Roda
               </li>
             <% else %>
               <li class="nav-item">
-                <div class="profile">Welcome, <b><%= @profile["name"] %></b></div>
+                <div class="profile">Welcome, <b><%= @profile.dig(:userinfo, :name) %></b></div>
               </li>
               <li class="nav-item">
                 <form action="/logout" class="navbar-form pull-right" method="post">
@@ -165,9 +180,16 @@ class ClientApplication < Roda
     verify_openid_session
 
     r.root do
-      inline = if (token = session["access_token"])
+      inline = if @profile.nil?
+                 <<-HTML
+        <p class="lead">
+          You can use this application to test the OpenID Connect framework.
+          Once you authenticate, you'll see a list of books available in the resource server, and your name.
+        </p>
+                 HTML
+               else
                  begin
-                   @books = json_request(:get, RESOURCE_SERVER, headers: { "authorization" => "Bearer #{token}" })
+                   @books = json_request(:get, RESOURCE_SERVER, headers: { "authorization" => "Bearer #{@profile[:access_token]}" })
                    <<-HTML
             <div class="books-app">
               <ul class="list-group">
@@ -185,13 +207,6 @@ class ClientApplication < Roda
             </p>
                    HTML
                  end
-               else
-                 <<-HTML
-        <p class="lead">
-          You can use this application to test the OpenID Connect framework.
-          Once you authenticate, you'll see a list of books available in the resource server, and your name.
-        </p>
-                 HTML
                end
 
       view inline: inline
@@ -283,11 +298,24 @@ class ClientApplication < Roda
 
         authinfo = request.env["omniauth.auth"]
 
-        session["info"] = authinfo.info
-        session["token_expires"] = authinfo.extra.raw_info.exp
-        session["id_token"] = authinfo.credentials.id_token
-        session["access_token"] = authinfo.credentials.token
-        session["refresh_token"] = authinfo.credentials.refresh_token
+        DB[:profiles].insert_conflict(
+          target: :uid, update: {
+            userinfo: Sequel[:excluded][:userinfo],
+            id_token: Sequel[:excluded][:id_token],
+            access_token: Sequel[:excluded][:access_token],
+            refresh_token: Sequel[:excluded][:refresh_token],
+            expires_at: Sequel[:excluded][:expires_at]
+          }
+        ).insert(
+          uid: authinfo.uid,
+          userinfo: JSON.dump(authinfo.info),
+          id_token: authinfo.credentials.id_token,
+          access_token: authinfo.credentials.token,
+          refresh_token: authinfo.credentials.refresh_token,
+          expires_at: Time.at(authinfo.extra.raw_info.exp)
+        )
+
+        session["uid"] = authinfo.uid
         session["session_state"] = request.params["session_state"]
 
         r.redirect "/"
@@ -304,15 +332,12 @@ class ClientApplication < Roda
                          "client_id" => CLIENT_ID,
                          "client_secret" => CLIENT_SECRET,
                          "token_type_hint" => "access_token",
-                         "token" => session["access_token"]
+                         "token" => @profile[:access_token]
                        })
         rescue StandardError # rubocop:disable Lint/SuppressedException
         end
 
-        session.delete("info")
-        session.delete("id_token")
-        session.delete("access_token")
-        session.delete("refresh_token")
+        session.delete("uid")
         flash["notice"] = "You are logged out!"
         r.redirect "/"
       end
@@ -322,21 +347,19 @@ class ClientApplication < Roda
   private
 
   def verify_openid_session
-    @profile = if (expiration_time = session["token_expires"])
+    return unless (uid = session["uid"])
 
-                 if expiration_time < Time.now.utc.to_i
-                   session.delete("info")
-                   session.delete("id_token")
-                   session.delete("access_token")
-                   session.delete("refresh_token")
-                   session.delete("token_expires")
-                   {}
-                 else
-                   session["info"]
-                 end
-               else
-                 {}
-               end
+    @profile = DB[:profiles][{ uid: uid }]
+
+    return unless @profile
+
+    if @profile[:expires_at] < Time.now.utc
+      session.delete("uid")
+      return
+    end
+
+    @profile[:userinfo] = JSON.parse(@profile[:userinfo], symbolize_names: true)
+    @profile
   end
 
   def json_request(meth, uri, headers: {}, params: {})
