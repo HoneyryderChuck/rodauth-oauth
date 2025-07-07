@@ -50,8 +50,6 @@ gem "saml_idp"
 gem "xmlenc"
 
 gem "rodauth-select-account", "~> 0.1.2"
-gem "rubocop"
-gem "rubocop-performance"
 gem "simplecov"
 
 platform :mri, :truffleruby do
@@ -76,7 +74,11 @@ platform :mri, :truffleruby do
   gem "pg"
 end
 
-gem "rbs", platforms: :mri if RUBY_VERSION >= "3.0"
+platform :mri do
+  gem "rbs" if RUBY_VERSION >= "3.0"
+  gem "rubocop"
+  gem "rubocop-performance"
+end
 
 group :demo do
   # For demo
