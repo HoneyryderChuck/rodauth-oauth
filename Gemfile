@@ -72,6 +72,7 @@ platform :mri, :truffleruby do
   gem "webauthn"
 
   gem "mysql2"
+  gem "openssl"
   gem "pg"
 end
 
