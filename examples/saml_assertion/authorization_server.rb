@@ -107,7 +107,7 @@ class AuthorizationServer < Roda
             <a class="btn btn-outline-primary btn-padded" href="/login">Login</a>
             <a class="btn btn-outline-secondary btn-padded" href="/create-account">Sign Up</a>
           </p>
-          <footer class="lead">This demo site is part of the Rodauth repository, so if you want to know how it works, you can <a href="https://gitlab.com/os85/rodauth-oauth/tree/master/examples">review the source</a>.</footer>
+          <footer class="lead">This demo site is part of the rodauth-oauth repository, so if you want to know how it works, you can <a href="https://gitlab.com/os85/rodauth-oauth/tree/master/examples">review the source</a>.</footer>
         <% end %>
       HTML
     end
