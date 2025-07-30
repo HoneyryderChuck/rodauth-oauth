@@ -103,7 +103,7 @@ truffleruby:
   allow_failure: true
   before_script:
     - dnf install -y git libxslt-devel libxml2-devel sqlite-devel postgresql-devel xz
-    - dnf --enablerepo=ol9_codeready_builder install mysql-devel
+    - dnf install mariadb-devel
     - *before_script
   image: "ghcr.io/graalvm/truffleruby-community:latest"
   script:
