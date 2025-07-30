@@ -160,7 +160,7 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
 
       http_request_cache do
         obj = Object.new
-        obj.define_singleton_method(:[]) { |*|; } # rubocop:disable Lint/EmptyBlock,Naming/MethodName
+        obj.define_singleton_method(:[]) { |*|; } # rubocop:disable Lint/EmptyBlock
         obj.define_singleton_method(:set) do |*, &blk|
           body, _ttl = blk.call
           body
