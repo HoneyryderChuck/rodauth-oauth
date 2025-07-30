@@ -31,7 +31,7 @@ cache:
   - apt-get update && apt-get install -y shared-mime-info libyaml-dev libsqlite3-dev libmariadb-dev-compat mariadb-client libmariadb-dev postgresql-client libpq-dev
 
 .test: &test
-- "DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
+- "DATABASE_URL=sqlite3::memory: bundle exec rake test"
 - "DATABASE_URL=postgresql://oauth:password@postgres/oauth bundle exec rake test"
 # concurrency limited with mysql, to avoid deadlock messages
 - "PARALLEL=0 && DATABASE_URL=mysql2://root:password@mysql/oauth bundle exec rake test"
@@ -118,7 +118,7 @@ ruby25:
     - *before_script
   image: "ruby:2.5"
   script:
-    - "DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
+    - "DATABASE_URL=sqlite3::memory: bundle exec rake test"
   artifacts:
     paths:
       - "coverage/"
@@ -134,7 +134,7 @@ ruby26:
   only:
     - master
   script:
-    - "DATABASE_URL=sqlite3::memory: bundle exec rake test:ci"
+    - "DATABASE_URL=sqlite3::memory: bundle exec rake test"
   artifacts:
     paths:
       - "coverage/"
@@ -247,6 +247,7 @@ ruby34:
   image: "ruby:3.4"
   script:
     - bundle exec rake check_method_doc
+    - bundle exec rake rubocop
     - *test
   parallel:
     matrix:

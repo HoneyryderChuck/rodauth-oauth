@@ -29,10 +29,6 @@ namespace :coverage do
   end
 end
 
-CI_TASKS = RUBY_VERSION >= "3.1.0" ? %i[test rubocop] : %i[test]
-
-task "test:ci": CI_TASKS
-
 task default: :test
 
 # Doc
