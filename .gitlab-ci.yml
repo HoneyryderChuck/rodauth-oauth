@@ -28,7 +28,7 @@ cache:
   - MYSQL_PWD=password mariadb -h mysql -u root -e 'CREATE DATABASE oauthunique'
 
 .install_deps: &install_deps
-  - apt-get update && apt-get install -y shared-mime-info libyaml-dev libsqlite3-dev libmariadb-dev-compat mariadb-client libmariadb-dev postgresql-client libpq-dev
+  - apt-get update && apt-get install -y ca-certificates shared-mime-info libyaml-dev libsqlite3-dev libmariadb-dev-compat mariadb-client libmariadb-dev postgresql-client libpq-dev
 
 .test: &test
 - "DATABASE_URL=sqlite3::memory: bundle exec rake test"
