@@ -71,7 +71,12 @@ platform :mri, :truffleruby do
 
   gem "mysql2"
   gem "openssl"
-  gem "pg"
+
+  if RUBY_VERSION < "3.0.0"
+    gem "pg", "< 1.6.0"
+  else
+    gem "pg"
+  end
 end
 
 platform :mri do
