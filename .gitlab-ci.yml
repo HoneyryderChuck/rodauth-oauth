@@ -208,7 +208,7 @@ ruby32:
     - *test
   parallel:
     matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails80, Gemfile-rails72, Gemfile-rails71, Gemfile-rails70]
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails81, Gemfile-rails80, Gemfile-rails72, Gemfile-rails71, Gemfile-rails70]
   artifacts:
     paths:
       - "coverage/"
@@ -229,7 +229,7 @@ ruby33:
     - *test
   parallel:
     matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails80, Gemfile-rails72, Gemfile-rails71, Gemfile-rails70]
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails81, Gemfile-rails80, Gemfile-rails72, Gemfile-rails71, Gemfile-rails70]
   artifacts:
     paths:
       - "coverage/"
@@ -251,7 +251,7 @@ ruby34:
     - *test
   parallel:
     matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails80, Gemfile-rails72, Gemfile-rails71, Gemfile-rails70]
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails81, Gemfile-rails80, Gemfile-rails72, Gemfile-rails71, Gemfile-rails70]
   artifacts:
     paths:
       - "coverage/"

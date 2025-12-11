@@ -5,6 +5,21 @@ require "test_helper"
 class RodauthOAuthOIDCTokenUserInfoTest < OIDCIntegration
   include Rack::Test::Methods
 
+  def test_oidc_userinfo_requires_oauth_grant
+    setup_application
+
+    generate_access_token(oauth_grant(scopes: "openid"))
+    db[:oauth_grants].filter(id: oauth_grant[:id]).delete
+
+    access_token = json_body["access_token"]
+    login(access_token)
+
+    @json_body = nil
+    get("/userinfo")
+
+    assert_equal 401, last_response.status
+  end
+
   def test_oidc_userinfo_openid
     setup_application
 
