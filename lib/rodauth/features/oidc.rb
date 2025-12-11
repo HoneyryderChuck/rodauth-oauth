@@ -144,7 +144,9 @@ module Rodauth
             **resource_owner_params_from_jwt_claims(claims)
           ).first
 
-          claims_locales = oauth_grant[oauth_grants_claims_locales_column] if oauth_grant
+          throw_json_response_error(oauth_authorization_required_error_status, "invalid_token") unless oauth_grant
+
+          claims_locales = oauth_grant[oauth_grants_claims_locales_column]
 
           if (claims = oauth_grant[oauth_grants_claims_column])
             claims = JSON.parse(claims)
