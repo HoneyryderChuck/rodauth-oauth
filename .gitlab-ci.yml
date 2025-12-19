@@ -255,6 +255,28 @@ ruby34:
   artifacts:
     paths:
       - "coverage/"
+ruby40:
+  <<: *test_services
+  before_script:
+    - *install_deps
+    - *before_script
+    - *prepare_dbs
+    # export RUBYOPT='-rbundler/setup -rrbs/test/setup'
+    # export RBS_TEST_RAISE=true
+    # export RBS_TEST_LOGLEVEL=error
+    # export RBS_TEST_OPT='-Isig'
+    # export RBS_TEST_TARGET='Rodauth*'
+  image: "ruby:4.0-rc"
+  script:
+    - bundle exec rake check_method_doc
+    - bundle exec rake rubocop
+    - *test
+  parallel:
+    matrix:
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails81, Gemfile-rails80, Gemfile-rails72, Gemfile-rails71, Gemfile-rails70]
+  artifacts:
+    paths:
+      - "coverage/"
 
 coverage:
   stage: prepare
