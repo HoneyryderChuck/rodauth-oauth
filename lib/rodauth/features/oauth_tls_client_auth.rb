@@ -138,21 +138,20 @@ module Rodauth
     def client_certificate_sans
       return @client_certificate_sans if defined?(@client_certificate_sans)
 
-      @client_certificate_sans = begin
-        return [] unless client_certificate
+      @client_certificate_sans =
+        if client_certificate
+          if (san = client_certificate.extensions.find { |ext| ext.oid == "subjectAltName" })
+            ostr = OpenSSL::ASN1.decode(san.to_der).value.last
 
-        san = client_certificate.extensions.find { |ext| ext.oid == "subjectAltName" }
+            sans = OpenSSL::ASN1.decode(ostr.value)
 
-        return [] unless san
-
-        ostr = OpenSSL::ASN1.decode(san.to_der).value.last
-
-        sans = OpenSSL::ASN1.decode(ostr.value)
-
-        return [] unless sans
-
-        sans.value
-      end
+            sans ? sans.value : []
+          else
+            []
+          end
+        else
+          []
+        end
     end
 
     def distinguished_name_match?(sub1, sub2)

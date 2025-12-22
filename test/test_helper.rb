@@ -9,6 +9,12 @@ if ENV.key?("CI")
   SimpleCov.coverage_dir "coverage/#{RUBY_ENGINE}-#{RUBY_VERSION}"
 end
 
+if RUBY_VERSION >= "3.4.0"
+  Warning.categories.each do |cat|
+    Warning[cat] = true
+  end
+end
+
 require "fileutils"
 require "logger"
 require "securerandom"

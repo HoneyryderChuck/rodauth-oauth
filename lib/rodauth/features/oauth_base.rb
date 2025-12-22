@@ -221,13 +221,11 @@ module Rodauth
     def oauth_application
       return @oauth_application if defined?(@oauth_application)
 
-      @oauth_application = begin
-        client_id = param_or_nil("client_id")
+      client_id = param_or_nil("client_id")
 
-        return unless client_id
+      return unless client_id
 
-        db[oauth_applications_table].filter(oauth_applications_client_id_column => client_id).first
-      end
+      @oauth_application = db[oauth_applications_table].filter(oauth_applications_client_id_column => client_id).first
     end
 
     def fetch_access_token
