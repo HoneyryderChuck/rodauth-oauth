@@ -241,6 +241,9 @@ Style/HashConversion:
 Style/SuperArguments:
   Enabled: false
 
+Style/OneClassPerFile:
+  Enabled: false
+
 Lint/SuppressedException:
   Exclude:
     - lib/generators/**/*

@@ -60,7 +60,8 @@ DB = begin
   db
 end
 
-Base = Class.new(Roda)
+class Base < Roda
+end
 Base.opts[:check_dynamic_arity] = Base.opts[:check_arity] = :warn
 Base.plugin :flash
 Base.plugin :render, views: "test/views", layout_opts: { path: "test/views/layout.str" }
