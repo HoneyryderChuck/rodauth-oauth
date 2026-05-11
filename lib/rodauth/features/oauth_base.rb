@@ -307,6 +307,12 @@ module Rodauth
       self.class.send(:define_method, :__one_oauth_token_per_account) { one_oauth_token_per_account }
     end
 
+    def password_hash(password)
+      return super if features.include?(:login_password_requirements_base)
+
+      BCrypt::Password.create(password, cost: BCrypt::Engine::DEFAULT_COST)
+    end
+
     private
 
     def oauth_account_ds(account_id)
@@ -451,12 +457,6 @@ module Rodauth
 
     def grant_from_application?(oauth_grant, oauth_application)
       oauth_grant[oauth_grants_oauth_application_id_column] == oauth_application[oauth_applications_id_column]
-    end
-
-    def password_hash(password)
-      return super if features.include?(:login_password_requirements_base)
-
-      BCrypt::Password.create(password, cost: BCrypt::Engine::DEFAULT_COST)
     end
 
     def generate_token(grant_params = {}, should_generate_refresh_token = true)
