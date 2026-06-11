@@ -191,10 +191,10 @@ module Rodauth
       (accept = request.env["HTTP_ACCEPT"]) && accept =~ json_request_regexp
     end
 
-    # copied from the jwt feature
+    # copied from the json feature
     def json_request?
-      return super if features.include?(:jsonn)
-      return @json_request if defined?(@json_request)
+      return super if features.include?(:json)
+      return @json_request unless @json_request.nil?
 
       @json_request = request.content_type =~ json_request_regexp
     end
