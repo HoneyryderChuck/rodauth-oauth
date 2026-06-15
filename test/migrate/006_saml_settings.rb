@@ -5,11 +5,11 @@ Sequel.migration do
     create_table :oauth_saml_settings do |_t|
       primary_key :id, type: Integer
       foreign_key :oauth_application_id, :oauth_applications, null: false, unique: true
-      String :idp_cert, null: true, type: :text
+      Text :idp_cert, null: true
       String :idp_cert_fingerprint, null: true
       String :idp_cert_fingerprint_algorithm, null: true
       TrueClass :check_idp_cert_expiration, null: true
-      String :name_identifier_format, null: true, type: :text
+      Text :name_identifier_format, null: true
       String :audience, null: true
       String :issuer, null: false, unique: true
     end

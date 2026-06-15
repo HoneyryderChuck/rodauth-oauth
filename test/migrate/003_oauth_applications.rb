@@ -23,7 +23,7 @@ Sequel.migration do
       String :tos_uri, null: true
       String :policy_uri, null: true
       String :jwks_uri, null: true
-      String :jwks, null: true, type: :text
+      Text :jwks, null: true
       String :contacts, null: true
       String :software_id, null: true
       String :software_version, null: true
@@ -60,7 +60,7 @@ Sequel.migration do
       String :tls_client_auth_san_email, null: true
       TrueClass :tls_client_certificate_bound_access_tokens, default: false
       # JWT/OIDC per application signing verification
-      String :jwt_public_key, type: :text
+      Text :jwt_public_key
       # RP-initiated logout
       String :post_logout_redirect_uris
       # frontchannel logout
