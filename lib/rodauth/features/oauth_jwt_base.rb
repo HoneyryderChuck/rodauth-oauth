@@ -259,7 +259,7 @@ module Rodauth
                    elsif jws_key
                      JSON::JWT.decode(token, jws_key)
                    else
-                     JSON::JWT.decode(token, nil, jws_algorithm)
+                     JSON::JWT.decode(token, (:skip_verification if jws_algorithm == "none"), jws_algorithm)
                    end
                  elsif (jwks = auth_server_jwks_set)
                    JSON::JWT.decode(token, JSON::JWK::Set.new(jwks))
