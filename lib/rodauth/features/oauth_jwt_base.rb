@@ -18,6 +18,11 @@ module Rodauth
 
     auth_value_method :oauth_jwt_jwe_copyright, nil
 
+    # Clock-skew leeway, in seconds, tolerated when rejecting a JWT whose iat (issued-at) is in the
+    # future. iat is informational per RFC 7519 section 4.1.6, so this only guards against tokens
+    # issued well ahead of now. Applies to the json-jwt verification path (see jwt_decode).
+    auth_value_method :oauth_jwt_iat_leeway, 30
+
     auth_methods(
       :jwt_encode,
       :jwt_decode,
@@ -272,9 +277,15 @@ module Rodauth
           # `&&` -- the inverse (failure conditions joined with `&&`) only rejects when every check
           # fails at once, which was the original verification bug. exp/nbf/iat are optional and
           # only enforced when present (e.g. DPoP proofs carry no exp).
+          #
+          # iat is informational per RFC 7519 section 4.1.6 (RFC 9068 section 4 requires it be present,
+          # not verified), so we only reject tokens issued in the future, tolerating
+          # oauth_jwt_iat_leeway seconds of clock skew. NOTE: the ruby-jwt path rejects a future iat
+          # with no leeway and offers no knob -- ruby-jwt deliberately (if contestedly) removed
+          # iat_leeway in 2.2.0 (jwt/ruby-jwt#319) -- so oauth_jwt_iat_leeway applies on this path only.
           claims_valid = (!claims[:exp] || Time.at(claims[:exp]) >= now) &&
                          (!claims[:nbf] || Time.at(claims[:nbf]) <= now) &&
-                         (!claims[:iat] || Time.at(claims[:iat]) <= now) &&
+                         (!claims[:iat] || Time.at(claims[:iat]) <= now + oauth_jwt_iat_leeway) &&
                          (!verify_iss || claims[:iss] == oauth_jwt_issuer) &&
                          (!verify_aud || verify_aud(claims[:aud], claims[:client_id])) &&
                          (!verify_jti || verify_jti(claims[:jti], claims))
@@ -418,7 +429,10 @@ module Rodauth
         #
         # issuer: check that server generated the token
         # aud: check the audience field (client is who he says he is)
-        # iat: check that the token didn't expire
+        # exp: check that the token hasn't expired
+        # iat: ruby-jwt's verify_iat rejects a future iat with no leeway and no knob -- iat_leeway was
+        #      deliberately (if contestedly) removed in 2.2.0 (jwt/ruby-jwt#319). iat is informational
+        #      per RFC 7519 section 4.1.6; the json-jwt path instead allows oauth_jwt_iat_leeway of skew.
         #
         # subject can't be verified automatically without having access to the account id,
         # which we don't because that's the whole point.

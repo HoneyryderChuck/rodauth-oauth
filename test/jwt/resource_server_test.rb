@@ -113,7 +113,7 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
         body: JSON.dump(keys: [JWT::JWK.new(rsa_private.public_key).export.merge(use: "sig", alg: "RS256")])
       )
 
-    # iat in the future (token issued ahead of now) must be rejected, matching the ruby-jwt path
+    # iat far in the future (beyond oauth_jwt_iat_leeway) must be rejected
     token = generate_access_token(rsa_private, "RS256", iss: "https://auth-server-future-iat", scope: "profile.read",
                                                         iat: Time.now.to_i + 3600)
 
@@ -122,6 +122,39 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
 
     get("/private")
     assert last_response.status == 401
+  end
+
+  def test_token_access_private_future_iat_within_leeway
+    setup_application("https://auth-server-iat-leeway")
+    rsa_private = OpenSSL::PKey::RSA.generate 2048
+
+    stub_request(:get, "https://auth-server-iat-leeway/.well-known/oauth-authorization-server")
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(jwks_uri: "https://auth-server/jwks-uri-iat-leeway.json")
+      )
+      .times(1)
+    stub_request(:get, "https://auth-server/jwks-uri-iat-leeway.json")
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(keys: [JWT::JWK.new(rsa_private.public_key).export.merge(use: "sig", alg: "RS256")])
+      )
+
+    # iat slightly in the future, within the default oauth_jwt_iat_leeway (30s), is tolerated as clock skew
+    token = generate_access_token(rsa_private, "RS256", iss: "https://auth-server-iat-leeway", scope: "profile.read",
+                                                        iat: Time.now.to_i + 5)
+
+    header "Accept", "application/json"
+    header "Authorization", "Bearer #{token}"
+
+    get("/private")
+    # oauth_jwt_iat_leeway is honored on the json-jwt path; the ruby-jwt path rejects any future iat
+    # with no leeway (iat_leeway removed in 2.2.0, jwt/ruby-jwt#319).
+    if defined?(JSON::JWT)
+      assert last_response.status == 200
+    else
+      assert last_response.status == 401
+    end
   end
 
   def test_token_access_private_wrong_iss

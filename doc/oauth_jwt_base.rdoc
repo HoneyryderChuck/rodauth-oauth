@@ -13,6 +13,7 @@ oauth_jwt_public_keys :: collection of the auth server public signing keys, whic
 oauth_jwt_jwe_keys :: collection of the auth server encryption keys indexed by algo/method tuple (**must** include <tt>oauth_jwe_key</tt> unless nil).
 oauth_jwt_jwe_public_keys :: collection of the auth server public encryption keys, which will be exposed in the JWKs endpoint.
 oauth_jwt_jwe_copyright :: copyright line to add in case JWT tokens are JWE-encrypted, <tt>nil</tt> by default (`ruby-jwe` only).
+oauth_jwt_iat_leeway :: Clock-skew leeway, in seconds, tolerated when rejecting a JWT whose +iat+ (issued-at) claim is in the future, on the json-jwt verification path. Defaults to <tt>30</tt>. RFC 7519 section 4.1.6 treats +iat+ as informational; the ruby-jwt path rejects a future +iat+ with no leeway (see jwt/ruby-jwt#319).
 oauth_jwt_jws_algorithms_supported :: Supported JWS algorithms for signing JWT tokens.
 oauth_jwt_jwe_algorithms_supported :: Supported JWE algorithms for encrypting JWT tokens.
 oauth_jwt_jwe_encryption_methods_supported :: Supported JWE encryption methods for encrypting JWT tokens.
