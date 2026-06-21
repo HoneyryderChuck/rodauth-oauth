@@ -31,13 +31,203 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
         body: JSON.dump(keys: [JWT::JWK.new(rsa_public).export.merge(use: "sig", alg: "RS256")])
       )
 
-    token = generate_access_token(rsa_private, "RS256", iss: "https://auth-server-inactive-token", expires_in: Time.now.to_i - 3600)
+    token = generate_access_token(rsa_private, "RS256", iss: "https://auth-server-inactive-token", scope: "profile.read",
+                                                        exp: Time.now.to_i - 3600)
 
     header "Accept", "application/json"
     header "Authorization", "Bearer #{token}"
 
     get("/private")
     assert last_response.status == 401
+  end
+
+  # Regression tests for independent JWT claim verification in jwt_decode. These primarily guard
+  # the json-jwt decode path (run with JWT_LIB=json/jwt), where a token used to be accepted unless
+  # every claim check failed at once; they are library-agnostic and pass on the ruby-jwt path too.
+  # Each token is otherwise valid (good signature + scope) so only the claim under test is bad.
+  def test_token_access_private_expired_exp
+    setup_application("https://auth-server-expired-exp")
+    rsa_private = OpenSSL::PKey::RSA.generate 2048
+
+    stub_request(:get, "https://auth-server-expired-exp/.well-known/oauth-authorization-server")
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(jwks_uri: "https://auth-server/jwks-uri-expired-exp.json")
+      )
+      .times(1)
+    stub_request(:get, "https://auth-server/jwks-uri-expired-exp.json")
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(keys: [JWT::JWK.new(rsa_private.public_key).export.merge(use: "sig", alg: "RS256")])
+      )
+
+    token = generate_access_token(rsa_private, "RS256", iss: "https://auth-server-expired-exp", scope: "profile.read",
+                                                        exp: Time.now.to_i - 3600)
+
+    header "Accept", "application/json"
+    header "Authorization", "Bearer #{token}"
+
+    get("/private")
+    assert last_response.status == 401
+  end
+
+  def test_token_access_private_future_nbf
+    setup_application("https://auth-server-future-nbf")
+    rsa_private = OpenSSL::PKey::RSA.generate 2048
+
+    stub_request(:get, "https://auth-server-future-nbf/.well-known/oauth-authorization-server")
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(jwks_uri: "https://auth-server/jwks-uri-future-nbf.json")
+      )
+      .times(1)
+    stub_request(:get, "https://auth-server/jwks-uri-future-nbf.json")
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(keys: [JWT::JWK.new(rsa_private.public_key).export.merge(use: "sig", alg: "RS256")])
+      )
+
+    token = generate_access_token(rsa_private, "RS256", iss: "https://auth-server-future-nbf", scope: "profile.read",
+                                                        nbf: Time.now.to_i + 3600)
+
+    header "Accept", "application/json"
+    header "Authorization", "Bearer #{token}"
+
+    get("/private")
+    assert last_response.status == 401
+  end
+
+  def test_token_access_private_future_iat
+    setup_application("https://auth-server-future-iat")
+    rsa_private = OpenSSL::PKey::RSA.generate 2048
+
+    stub_request(:get, "https://auth-server-future-iat/.well-known/oauth-authorization-server")
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(jwks_uri: "https://auth-server/jwks-uri-future-iat.json")
+      )
+      .times(1)
+    stub_request(:get, "https://auth-server/jwks-uri-future-iat.json")
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(keys: [JWT::JWK.new(rsa_private.public_key).export.merge(use: "sig", alg: "RS256")])
+      )
+
+    # iat in the future (token issued ahead of now) must be rejected, matching the ruby-jwt path
+    token = generate_access_token(rsa_private, "RS256", iss: "https://auth-server-future-iat", scope: "profile.read",
+                                                        iat: Time.now.to_i + 3600)
+
+    header "Accept", "application/json"
+    header "Authorization", "Bearer #{token}"
+
+    get("/private")
+    assert last_response.status == 401
+  end
+
+  def test_token_access_private_wrong_iss
+    setup_application("https://auth-server-wrong-iss")
+    rsa_private = OpenSSL::PKey::RSA.generate 2048
+
+    stub_request(:get, "https://auth-server-wrong-iss/.well-known/oauth-authorization-server")
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(jwks_uri: "https://auth-server/jwks-uri-wrong-iss.json")
+      )
+      .times(1)
+    stub_request(:get, "https://auth-server/jwks-uri-wrong-iss.json")
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(keys: [JWT::JWK.new(rsa_private.public_key).export.merge(use: "sig", alg: "RS256")])
+      )
+
+    # iss differs from the resource server's authorization_server_url
+    token = generate_access_token(rsa_private, "RS256", iss: "https://evil-issuer", scope: "profile.read")
+
+    header "Accept", "application/json"
+    header "Authorization", "Bearer #{token}"
+
+    get("/private")
+    assert last_response.status == 401
+  end
+
+  def test_token_access_private_wrong_aud
+    setup_application("https://auth-server-wrong-aud")
+    rsa_private = OpenSSL::PKey::RSA.generate 2048
+
+    stub_request(:get, "https://auth-server-wrong-aud/.well-known/oauth-authorization-server")
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(jwks_uri: "https://auth-server/jwks-uri-wrong-aud.json")
+      )
+      .times(1)
+    stub_request(:get, "https://auth-server/jwks-uri-wrong-aud.json")
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(keys: [JWT::JWK.new(rsa_private.public_key).export.merge(use: "sig", alg: "RS256")])
+      )
+
+    # aud differs from the application's client_id; client_id stays valid so only aud is wrong
+    token = generate_access_token(rsa_private, "RS256", iss: "https://auth-server-wrong-aud", scope: "profile.read",
+                                                        aud: "WRONG_AUDIENCE")
+
+    header "Accept", "application/json"
+    header "Authorization", "Bearer #{token}"
+
+    get("/private")
+    assert last_response.status == 401
+  end
+
+  def test_token_access_private_invalid_jti
+    setup_application("https://auth-server-invalid-jti")
+    rsa_private = OpenSSL::PKey::RSA.generate 2048
+
+    stub_request(:get, "https://auth-server-invalid-jti/.well-known/oauth-authorization-server")
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(jwks_uri: "https://auth-server/jwks-uri-invalid-jti.json")
+      )
+      .times(1)
+    stub_request(:get, "https://auth-server/jwks-uri-invalid-jti.json")
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(keys: [JWT::JWK.new(rsa_private.public_key).export.merge(use: "sig", alg: "RS256")])
+      )
+
+    # jti is deterministically SHA256("aud:iat"); override it with a value that can't match
+    token = generate_access_token(rsa_private, "RS256", iss: "https://auth-server-invalid-jti", scope: "profile.read",
+                                                        jti: "tampered-jti")
+
+    header "Accept", "application/json"
+    header "Authorization", "Bearer #{token}"
+
+    get("/private")
+    assert last_response.status == 401
+  end
+
+  def test_token_access_private_valid_claims
+    setup_application("https://auth-server-valid-claims")
+    rsa_private = OpenSSL::PKey::RSA.generate 2048
+
+    stub_request(:get, "https://auth-server-valid-claims/.well-known/oauth-authorization-server")
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(jwks_uri: "https://auth-server/jwks-uri-valid-claims.json")
+      )
+      .times(1)
+    stub_request(:get, "https://auth-server/jwks-uri-valid-claims.json")
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(keys: [JWT::JWK.new(rsa_private.public_key).export.merge(use: "sig", alg: "RS256")])
+      )
+
+    token = generate_access_token(rsa_private, "RS256", iss: "https://auth-server-valid-claims", scope: "profile.read",
+                                                        exp: Time.now.to_i + 3600)
+
+    header "Accept", "application/json"
+    header "Authorization", "Bearer #{token}"
+
+    get("/private")
+    assert last_response.status == 200
   end
 
   def test_token_access_private_invalid_scope
@@ -145,7 +335,7 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
     headers[:kid] = jwk.kid
     key = jwk.keypair
 
-    params[:jti] = Digest::SHA256.hexdigest("#{params[:aud]}:#{params[:iat]}")
+    params[:jti] ||= Digest::SHA256.hexdigest("#{params[:aud]}:#{params[:iat]}")
 
     JWT.encode(params, key, alg, headers)
   end

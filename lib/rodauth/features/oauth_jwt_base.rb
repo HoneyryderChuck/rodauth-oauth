@@ -266,15 +266,16 @@ module Rodauth
                  end
 
         now = Time.now
-        if verify_claims &&
-           (!claims[:exp] || Time.at(claims[:exp]) < now) &&
-           claims[:nbf] && Time.at(claims[:nbf]) < now &&
-           claims[:iat] && Time.at(claims[:iat]) < now &&
-           verify_iss && claims[:iss] != oauth_jwt_issuer &&
-           verify_aud && !verify_aud(claims[:aud], claims[:client_id]) &&
-           verify_jti && !verify_jti(claims[:jti], claims)
-
-          return
+        if verify_claims
+          # each claim is verified independently (a failure in any one rejects the token).
+          # exp/nbf/iat are optional and only enforced when present, mirroring the ruby-jwt
+          # path's verification (e.g. DPoP proofs legitimately carry no exp).
+          return if claims[:exp] && Time.at(claims[:exp]) < now
+          return if claims[:nbf] && Time.at(claims[:nbf]) > now
+          return if claims[:iat] && Time.at(claims[:iat]) > now
+          return if verify_iss && claims[:iss] != oauth_jwt_issuer
+          return if verify_aud && !verify_aud(claims[:aud], claims[:client_id])
+          return if verify_jti && !verify_jti(claims[:jti], claims)
         end
 
         return if verify_headers && !verify_headers.call(claims.header)
