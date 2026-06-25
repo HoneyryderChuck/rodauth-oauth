@@ -10,7 +10,8 @@ module Rodauth
     auth_value_method :oauth_pkce_challenge_method, "S256"
     # RFC 7636 §4.2 discourages the "plain" transform: it transmits the raw code_verifier,
     # so an intercepted authorization request exposes it and defeats PKCE. Disabled by
-    # default; set this to true to opt back into accepting "plain" challenges.
+    # default; set this to true to opt into accepting "plain" challenges end-to-end (authorize,
+    # token, and advertised server metadata).
     auth_value_method :oauth_pkce_allow_plain_method, false
 
     auth_value_method :oauth_grants_code_challenge_column, :code_challenge
@@ -75,10 +76,15 @@ module Rodauth
       if param_or_nil("code_challenge")
 
         challenge_method = param_or_nil("code_challenge_method")
-        redirect_response_error("code_challenge_required") unless oauth_pkce_challenge_method == challenge_method
-        # Refuse to issue a grant under the weak "plain" method unless it was explicitly enabled,
-        # keeping the policy consistent with token redemption.
-        redirect_response_error("unsupported_transform_algorithm") if challenge_method == "plain" && !oauth_pkce_allow_plain_method
+
+        # Reject the weak "plain" transform unless it has been explicitly opted into. This runs
+        # before the supported-method check so the disabled method surfaces a meaningful error
+        # instead of the generic "code challenge required".
+        if challenge_method == "plain" && !oauth_pkce_allow_plain_method
+          redirect_response_error("unsupported_transform_algorithm")
+        end
+
+        redirect_response_error("code_challenge_required") unless oauth_pkce_challenge_methods.include?(challenge_method)
       else
         return unless oauth_require_pkce
 
@@ -104,9 +110,16 @@ module Rodauth
       end
     end
 
+    # The PKCE transform methods the server accepts. "S256" is always supported; the weak "plain"
+    # transform is only included when explicitly opted into via oauth_pkce_allow_plain_method.
+    def oauth_pkce_challenge_methods
+      oauth_pkce_allow_plain_method ? %w[S256 plain] : %w[S256]
+    end
+
     def oauth_server_metadata_body(*)
       super.tap do |data|
-        data[:code_challenge_methods_supported] = oauth_pkce_challenge_method
+        # RFC 8414: code_challenge_methods_supported is a JSON array of the supported methods.
+        data[:code_challenge_methods_supported] = oauth_pkce_challenge_methods
       end
     end
   end
