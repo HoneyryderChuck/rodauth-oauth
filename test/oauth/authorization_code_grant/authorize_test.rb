@@ -378,6 +378,36 @@ class RodauthOauthAuthorizeTest < RodaIntegration
            "was redirected instead to #{page.current_url}"
   end
 
+  # The form-post auto-submit form interpolates the redirect URI into the
+  # action="..." attribute. A registered redirect URI may legitimately carry a
+  # query string, whose "&" separator survives URI.parse but must be
+  # HTML-escaped (to &amp;) in the attribute. These two tests render the success
+  # and error form-post bodies with such a URI and assert the action is escaped;
+  # both fail if the action is interpolated raw.
+  def test_authorize_post_authorize_code_form_post_escapes_action
+    setup_application
+    login
+    app = oauth_application(redirect_uri: "https://example.com/callback?foo=bar&baz=qux")
+
+    visit "/authorize?client_id=#{app[:client_id]}&scope=user.read+user.write&response_type=code&response_mode=form_post"
+    check "user.read"
+    click_button "Authorize"
+
+    assert_includes page.html, "action=\"https://example.com/callback?foo=bar&amp;baz=qux\""
+    refute_includes page.html, "action=\"https://example.com/callback?foo=bar&baz=qux\""
+  end
+
+  def test_authorize_post_authorize_error_form_post_escapes_action
+    setup_application
+    login
+    app = oauth_application(redirect_uri: "https://example.com/callback?foo=bar&baz=qux")
+
+    visit "/authorize?client_id=#{app[:client_id]}&scope=user.read+user.write&response_mode=form_post&response_type=unknown"
+
+    assert_includes page.html, "action=\"https://example.com/callback?foo=bar&amp;baz=qux\""
+    refute_includes page.html, "action=\"https://example.com/callback?foo=bar&baz=qux\""
+  end
+
   private
 
   def setup_application(*)
