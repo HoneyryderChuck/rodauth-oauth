@@ -8,6 +8,10 @@ module Rodauth
 
     auth_value_method :oauth_require_pkce, true
     auth_value_method :oauth_pkce_challenge_method, "S256"
+    # RFC 7636 §4.2 discourages the "plain" transform: it transmits the raw code_verifier,
+    # so an intercepted authorization request exposes it and defeats PKCE. Disabled by
+    # default; set this to true to opt back into accepting "plain" challenges.
+    auth_value_method :oauth_pkce_allow_plain_method, false
 
     auth_value_method :oauth_grants_code_challenge_column, :code_challenge
     auth_value_method :oauth_grants_code_challenge_method_column, :code_challenge_method
@@ -72,6 +76,9 @@ module Rodauth
 
         challenge_method = param_or_nil("code_challenge_method")
         redirect_response_error("code_challenge_required") unless oauth_pkce_challenge_method == challenge_method
+        # Refuse to issue a grant under the weak "plain" method unless it was explicitly enabled,
+        # keeping the policy consistent with token redemption.
+        redirect_response_error("unsupported_transform_algorithm") if challenge_method == "plain" && !oauth_pkce_allow_plain_method
       else
         return unless oauth_require_pkce
 
@@ -84,6 +91,9 @@ module Rodauth
 
       case grant[oauth_grants_code_challenge_method_column]
       when "plain"
+        # A grant stored with the weak "plain" method must not be redeemable unless the
+        # method has been explicitly enabled, otherwise PKCE is silently downgraded.
+        redirect_response_error("unsupported_transform_algorithm") unless oauth_pkce_allow_plain_method
         timing_safe_eql?(verifier.to_s, challenge.to_s)
       when "S256"
         generated_challenge = Base64.urlsafe_encode64(Digest::SHA256.digest(verifier), padding: false)

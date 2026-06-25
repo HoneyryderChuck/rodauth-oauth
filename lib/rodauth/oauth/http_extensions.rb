@@ -2,6 +2,7 @@
 
 require "uri"
 require "net/http"
+require "openssl"
 require "rodauth/oauth/ttl_store"
 
 module Rodauth
@@ -16,6 +17,9 @@ module Rodauth
 
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = uri.scheme == "https"
+        # Pin peer verification explicitly so the security posture does not depend on the
+        # ambient Ruby/OpenSSL default, which can be weakened by the environment.
+        http.verify_mode = OpenSSL::SSL::VERIFY_PEER if http.use_ssl?
         http.open_timeout = 15
         http.read_timeout = 15
         http.write_timeout = 15 if http.respond_to?(:write_timeout)

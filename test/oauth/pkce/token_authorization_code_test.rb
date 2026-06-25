@@ -83,6 +83,7 @@ class RodauthOAuthTokenPkceTest < RodaIntegration
   def test_token_authorization_code_pkce_with_plain_code_verifier
     rodauth do
       use_oauth_access_type? true
+      oauth_pkce_allow_plain_method true
     end
     setup_application
 
@@ -105,6 +106,29 @@ class RodauthOAuthTokenPkceTest < RodaIntegration
     assert json_body["access_token"] == oauth_grant[:token]
     assert json_body["refresh_token"].nil?
     assert !json_body["expires_in"].nil?
+  end
+
+  def test_token_authorization_code_pkce_plain_rejected_by_default
+    rodauth do
+      use_oauth_access_type? true
+    end
+    setup_application
+
+    pkce_grant = oauth_grant(access_type: "online", code_challenge_method: "plain", code_challenge: PKCE_VERIFIER)
+
+    post("/token",
+         client_id: oauth_application[:client_id],
+         grant_type: "authorization_code",
+         code: pkce_grant[:code],
+         redirect_uri: pkce_grant[:redirect_uri],
+         code_verifier: PKCE_VERIFIER)
+
+    assert last_response.status == 400
+    assert json_body["error"] == "invalid_request"
+    assert json_body["error_description"] == "transform algorithm not supported"
+
+    # the grant must not be redeemed
+    assert db[:oauth_grants].first[:token].nil?
   end
 
   # The PKCE verifier comparisons must be constant-time. We override
@@ -140,6 +164,7 @@ class RodauthOAuthTokenPkceTest < RodaIntegration
     calls = []
     rodauth do
       use_oauth_access_type? true
+      oauth_pkce_allow_plain_method true
       auth.send(:define_method, :timing_safe_eql?) do |provided, actual|
         calls << [provided, actual]
         super(provided, actual)
