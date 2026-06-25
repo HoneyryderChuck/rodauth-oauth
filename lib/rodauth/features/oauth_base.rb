@@ -445,7 +445,7 @@ module Rodauth
       if oauth_applications_client_secret_hash_column
         BCrypt::Password.new(oauth_application[oauth_applications_client_secret_hash_column]) == secret
       else
-        oauth_application[oauth_applications_client_secret_column] == secret
+        timing_safe_eql?(secret.to_s, oauth_application[oauth_applications_client_secret_column].to_s)
       end
     end
 

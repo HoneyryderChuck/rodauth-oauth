@@ -84,11 +84,11 @@ module Rodauth
 
       case grant[oauth_grants_code_challenge_method_column]
       when "plain"
-        challenge == verifier
+        timing_safe_eql?(verifier.to_s, challenge.to_s)
       when "S256"
         generated_challenge = Base64.urlsafe_encode64(Digest::SHA256.digest(verifier), padding: false)
 
-        challenge == generated_challenge
+        timing_safe_eql?(generated_challenge, challenge.to_s)
       else
         redirect_response_error("unsupported_transform_algorithm")
       end
