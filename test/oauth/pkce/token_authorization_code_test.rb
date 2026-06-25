@@ -107,6 +107,60 @@ class RodauthOAuthTokenPkceTest < RodaIntegration
     assert !json_body["expires_in"].nil?
   end
 
+  # The PKCE verifier comparisons must be constant-time. We override
+  # timing_safe_eql? on the auth class to record its arguments, then assert the
+  # S256/plain verifier check routed through it with the expected operands. A
+  # regression to a plain == comparison records no such call and these fail.
+  def test_token_authorization_code_pkce_s256_uses_timing_safe_compare
+    calls = []
+    rodauth do
+      use_oauth_access_type? true
+      auth.send(:define_method, :timing_safe_eql?) do |provided, actual|
+        calls << [provided, actual]
+        super(provided, actual)
+      end
+    end
+    setup_application
+
+    pkce_grant = oauth_grant(access_type: "online", code_challenge_method: "S256", code_challenge: PKCE_CHALLENGE)
+
+    post("/token",
+         client_id: oauth_application[:client_id],
+         grant_type: "authorization_code",
+         code: pkce_grant[:code],
+         redirect_uri: pkce_grant[:redirect_uri],
+         code_verifier: PKCE_VERIFIER)
+
+    assert last_response.status == 200
+    assert_includes calls, [PKCE_CHALLENGE, PKCE_CHALLENGE],
+                    "S256 PKCE verifier check did not route through timing_safe_eql?"
+  end
+
+  def test_token_authorization_code_pkce_plain_uses_timing_safe_compare
+    calls = []
+    rodauth do
+      use_oauth_access_type? true
+      auth.send(:define_method, :timing_safe_eql?) do |provided, actual|
+        calls << [provided, actual]
+        super(provided, actual)
+      end
+    end
+    setup_application
+
+    pkce_grant = oauth_grant(access_type: "online", code_challenge_method: "plain", code_challenge: PKCE_VERIFIER)
+
+    post("/token",
+         client_id: oauth_application[:client_id],
+         grant_type: "authorization_code",
+         code: pkce_grant[:code],
+         redirect_uri: pkce_grant[:redirect_uri],
+         code_verifier: PKCE_VERIFIER)
+
+    assert last_response.status == 200
+    assert_includes calls, [PKCE_VERIFIER, PKCE_VERIFIER],
+                    "plain PKCE verifier check did not route through timing_safe_eql?"
+  end
+
   def test_token_authorization_code_required_pkce_no_code_verifier
     rodauth do
       oauth_require_pkce true
