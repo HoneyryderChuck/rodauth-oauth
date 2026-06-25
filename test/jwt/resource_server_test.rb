@@ -153,6 +153,44 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
     assert last_response.status == 200
   end
 
+  def test_token_access_private_malformed_iat_is_rejected
+    setup_application("https://auth-server-malformed-iat")
+    rsa_private = OpenSSL::PKey::RSA.generate 2048
+    jwk = JWT::JWK.new(rsa_private.public_key)
+
+    stub_request(:get, "https://auth-server-malformed-iat/.well-known/oauth-authorization-server")
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(jwks_uri: "https://auth-server/jwks-uri-malformed-iat.json")
+      )
+    stub_request(:get, "https://auth-server/jwks-uri-malformed-iat.json")
+      .to_return(
+        headers: { "Cache-Control" => "max-age=3600" },
+        body: JSON.dump(keys: [jwk.export.merge(use: "sig", alg: "RS256")])
+      )
+
+    # A non-numeric iat is malformed (NumericDate per RFC 7519). ruby-jwt rejects it at encode time,
+    # so an attacker would forge the token directly -- build it by hand to reach the decode path.
+    # With verify_iat disabled on the ruby-jwt path, an unguarded Time.at(iat) would raise an error
+    # the JWT::DecodeError handler does not catch (HTTP 500); both backends must reject it as 401.
+    aud = oauth_application[:client_id]
+    token = encode_jwt_without_validation(rsa_private, "RS256", jwk.kid,
+                                          sub: oauth_grant[:account_id],
+                                          iss: "https://auth-server-malformed-iat",
+                                          iat: "abc",
+                                          client_id: aud,
+                                          exp: Time.now.to_i + 3600,
+                                          aud: aud,
+                                          scope: "profile.read",
+                                          jti: Digest::SHA256.hexdigest("#{aud}:abc"))
+
+    header "Accept", "application/json"
+    header "Authorization", "Bearer #{token}"
+
+    get("/private")
+    assert last_response.status == 401
+  end
+
   def test_token_access_private_wrong_iss
     setup_application("https://auth-server-wrong-iss")
     rsa_private = OpenSSL::PKey::RSA.generate 2048
@@ -367,6 +405,15 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
     params[:jti] ||= Digest::SHA256.hexdigest("#{params[:aud]}:#{params[:iat]}")
 
     JWT.encode(params, key, alg, headers)
+  end
+
+  # Sign a JWT by hand, bypassing ruby-jwt's encode-time payload validation, so a deliberately
+  # malformed claim (e.g. a non-numeric iat) can be placed inside a properly signed RS256 token.
+  def encode_jwt_without_validation(priv_key, alg, kid, payload)
+    enc = ->(segment) { Base64.urlsafe_encode64(JSON.dump(segment), padding: false) }
+    signing_input = "#{enc.call(typ: 'at+jwt', alg: alg, kid: kid)}.#{enc.call(payload)}"
+    signature = priv_key.sign(OpenSSL::Digest.new("SHA256"), signing_input)
+    "#{signing_input}.#{Base64.urlsafe_encode64(signature, padding: false)}"
   end
 
   def setup_application(auth_url = "https://auth-server")

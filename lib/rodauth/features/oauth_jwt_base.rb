@@ -283,9 +283,11 @@ module Rodauth
           # oauth_jwt_iat_leeway seconds of clock skew. Both backends now honor oauth_jwt_iat_leeway:
           # the ruby-jwt path disables verify_iat (which removed iat_leeway in 2.2.0, jwt/ruby-jwt#319)
           # and performs the same leeway'd future-iat check manually, so behavior is unified.
+          # A non-numeric iat is malformed (NumericDate per RFC 7519); reject it rather than letting
+          # Time.at raise, mirroring the ruby-jwt path so both backends reject malformed iat alike.
           claims_valid = (!claims[:exp] || Time.at(claims[:exp]) >= now) &&
                          (!claims[:nbf] || Time.at(claims[:nbf]) <= now) &&
-                         (!claims[:iat] || Time.at(claims[:iat]) <= now + oauth_jwt_iat_leeway) &&
+                         (!claims[:iat] || (claims[:iat].is_a?(Numeric) && Time.at(claims[:iat]) <= now + oauth_jwt_iat_leeway)) &&
                          (!verify_iss || claims[:iss] == oauth_jwt_issuer) &&
                          (!verify_aud || verify_aud(claims[:aud], claims[:client_id])) &&
                          (!verify_jti || verify_jti(claims[:jti], claims))
@@ -481,8 +483,13 @@ module Rodauth
 
         # iat is only rejected when issued in the future, tolerating oauth_jwt_iat_leeway seconds of
         # clock skew -- mirroring the json-jwt path so both backends behave identically. ruby-jwt
-        # claims are string-keyed.
-        return if verify_claims && claims["iat"] && Time.at(claims["iat"]) > Time.now + oauth_jwt_iat_leeway
+        # claims are string-keyed. Since verify_iat is disabled above, ruby-jwt no longer validates
+        # that iat is a NumericDate, so reject a non-numeric iat here rather than letting Time.at
+        # raise an error the JWT::DecodeError handler would not catch.
+        if verify_claims && (iat = claims["iat"])
+          return unless iat.is_a?(Numeric)
+          return if Time.at(iat) > Time.now + oauth_jwt_iat_leeway
+        end
 
         return if verify_claims && verify_aud && !verify_aud(claims["aud"], claims["client_id"])
 
