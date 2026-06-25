@@ -280,9 +280,9 @@ module Rodauth
           #
           # iat is informational per RFC 7519 section 4.1.6 (RFC 9068 section 4 requires it be present,
           # not verified), so we only reject tokens issued in the future, tolerating
-          # oauth_jwt_iat_leeway seconds of clock skew. NOTE: the ruby-jwt path rejects a future iat
-          # with no leeway and offers no knob -- ruby-jwt deliberately (if contestedly) removed
-          # iat_leeway in 2.2.0 (jwt/ruby-jwt#319) -- so oauth_jwt_iat_leeway applies on this path only.
+          # oauth_jwt_iat_leeway seconds of clock skew. Both backends now honor oauth_jwt_iat_leeway:
+          # the ruby-jwt path disables verify_iat (which removed iat_leeway in 2.2.0, jwt/ruby-jwt#319)
+          # and performs the same leeway'd future-iat check manually, so behavior is unified.
           claims_valid = (!claims[:exp] || Time.at(claims[:exp]) >= now) &&
                          (!claims[:nbf] || Time.at(claims[:nbf]) <= now) &&
                          (!claims[:iat] || Time.at(claims[:iat]) <= now + oauth_jwt_iat_leeway) &&
@@ -430,9 +430,11 @@ module Rodauth
         # issuer: check that server generated the token
         # aud: check the audience field (client is who he says he is)
         # exp: check that the token hasn't expired
-        # iat: ruby-jwt's verify_iat rejects a future iat with no leeway and no knob -- iat_leeway was
-        #      deliberately (if contestedly) removed in 2.2.0 (jwt/ruby-jwt#319). iat is informational
-        #      per RFC 7519 section 4.1.6; the json-jwt path instead allows oauth_jwt_iat_leeway of skew.
+        # iat: informational per RFC 7519 section 4.1.6, so we only reject a future iat, tolerating
+        #      oauth_jwt_iat_leeway seconds of clock skew. ruby-jwt's verify_iat offers no leeway knob
+        #      (iat_leeway was removed in 2.2.0, jwt/ruby-jwt#319), so verify_iat is disabled below and
+        #      iat is checked manually -- unifying behavior with the json-jwt path, which honors the
+        #      same oauth_jwt_iat_leeway.
         #
         # subject can't be verified automatically without having access to the account id,
         # which we don't because that's the whole point.
@@ -444,7 +446,9 @@ module Rodauth
                                    # can't use stock aud verification, as it's dependent on the client application id
                                    verify_aud: false,
                                    verify_jti: (verify_jti ? method(:verify_jti) : false),
-                                   verify_iat: true
+                                   # iat is verified manually below (with leeway) rather than via
+                                   # ruby-jwt's verify_iat, which rejects a future iat with no leeway.
+                                   verify_iat: false
                                  }
                                else
                                  {}
@@ -474,6 +478,11 @@ module Rodauth
                             algorithms = jwks[:keys].select { |k| k[:use] == "sig" }.map { |k| k[:alg] }
                             JWT.decode(token, nil, true, jwks: jwks, algorithms: algorithms, **verify_claims_params)
                           end
+
+        # iat is only rejected when issued in the future, tolerating oauth_jwt_iat_leeway seconds of
+        # clock skew -- mirroring the json-jwt path so both backends behave identically. ruby-jwt
+        # claims are string-keyed.
+        return if verify_claims && claims["iat"] && Time.at(claims["iat"]) > Time.now + oauth_jwt_iat_leeway
 
         return if verify_claims && verify_aud && !verify_aud(claims["aud"], claims["client_id"])
 

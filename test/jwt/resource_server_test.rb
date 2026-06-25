@@ -148,13 +148,9 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
     header "Authorization", "Bearer #{token}"
 
     get("/private")
-    # oauth_jwt_iat_leeway is honored on the json-jwt path; the ruby-jwt path rejects any future iat
-    # with no leeway (iat_leeway removed in 2.2.0, jwt/ruby-jwt#319).
-    if defined?(JSON::JWT)
-      assert last_response.status == 200
-    else
-      assert last_response.status == 401
-    end
+    # oauth_jwt_iat_leeway is now honored on BOTH backends (json-jwt and ruby-jwt), so a future iat
+    # within the leeway window is accepted regardless of the active JWT library.
+    assert last_response.status == 200
   end
 
   def test_token_access_private_wrong_iss
