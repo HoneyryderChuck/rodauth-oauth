@@ -445,7 +445,11 @@ module Rodauth
       if oauth_applications_client_secret_hash_column
         BCrypt::Password.new(oauth_application[oauth_applications_client_secret_hash_column]) == secret
       else
-        timing_safe_eql?(secret.to_s, oauth_application[oauth_applications_client_secret_column].to_s)
+        stored_secret = oauth_application[oauth_applications_client_secret_column]
+        # A missing submitted or stored secret must never match. Without these guards, .to_s would
+        # coerce nil to "", letting an absent secret authenticate a client whose stored secret is
+        # empty/NULL. The real comparison stays constant-time via timing_safe_eql?.
+        !secret.nil? && !stored_secret.nil? && timing_safe_eql?(secret.to_s, stored_secret.to_s)
       end
     end
 
