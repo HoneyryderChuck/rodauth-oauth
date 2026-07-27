@@ -50,6 +50,7 @@ module Rodauth
 
               oauth_application = transaction do
                 applications_ds = db[oauth_applications_table]
+                                  .where(oauth_applications_client_id_column => client_id)
                 __update_and_return__(applications_ds, @oauth_application_params)
               end
               json_response_oauth_application(oauth_application)
