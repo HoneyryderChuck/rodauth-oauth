@@ -6,6 +6,33 @@ It implements the Authorization Request form page.
 
 This feature depends on the oauth_base feature.
 
+== The authorization form
+
+The authorization request is validated twice: once on the GET which renders the form, and once on the POST which the resource owner submits. The POST is a fresh request, so every parameter the grant depends on has to make the round trip through the form, usually as a hidden field.
+
+This matters when you write your own +authorize_view+ instead of using the bundled one. A parameter which is not carried over is not rejected, it is silently absent from the grant, and the mismatch only shows up later, when the client presents the authorization code at the token endpoint and gets an error about a request it did make correctly.
+
+For that reason, start from the bundled template rather than from a blank file.
+
+Under rails, the generator writes it for you:
+
+    bundle exec rails generate rodauth:oauth:views
+    # copies the authorize form to app/views/rodauth/authorize.html.erb
+
+Under plain roda, copy it out of the gem into your views directory. It has to be named after the view, that is +authorize+, with the extension of whichever engine the +render+ plugin is set up for:
+
+    cp "$(bundle info rodauth-oauth --path)/templates/authorize.str" views/authorize.str
+
+The bundled template is written for the +str+ engine, so an application whose +render+ plugin uses another one, such as the default +erb+, has to port the interpolations over while adapting it.
+
+Three of the parameters are not plain hidden fields, and are the ones most easily lost while adapting the template to your own markup:
+
+* +resource+ may be repeated in the authorization request, so the form needs one input per resource indicator rather than a single field (+oauth_resource_indicators+, https://datatracker.ietf.org/doc/html/rfc8707).
+* +offline_access+ is carried as a hidden <tt>scope[]</tt> entry rather than as a checkbox, as the resource owner does not grant it separately (+oidc+).
+* the cancel action is a link to the client's +redirect_uri+ carrying <tt>error=access_denied</tt> and the +state+, and not a submission of the form.
+
+Enabling a feature which introduces a new authorization request parameter means the form has to carry that one too. Diffing your view against the bundled template after an upgrade is the cheapest way to catch it.
+
 == Auth Value Methods
 
 oauth_authorize_button :: Label of Authorize form button.
