@@ -211,6 +211,7 @@ class RodauthOAuthTokenDeviceCodeTest < RodaIntegration
   def setup_application(*)
     rodauth do
       oauth_token_endpoint_auth_methods_supported %w[client_secret_basic none]
+      oauth_default_token_endpoint_auth_methods %w[client_secret_basic none]
     end
     super
     header "Accept", "application/json"

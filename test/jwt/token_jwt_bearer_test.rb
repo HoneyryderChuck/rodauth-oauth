@@ -173,7 +173,9 @@ class RodauthOauthJWTTokenJwtBearerTest < JWTIntegration
 
     jws_key = OpenSSL::PKey::RSA.generate(2048)
     jws_public_key = jws_key.public_key
-    oauth_application(client_secret: "SECRET", jwks: JSON.dump([JWT::JWK.new(jws_public_key).export.merge(use: "sig", alg: "RS256")]))
+    oauth_application(client_secret: "SECRET",
+                      jwks: JSON.dump([JWT::JWK.new(jws_public_key).export.merge(use: "sig", alg: "RS256")]),
+                      token_endpoint_auth_method: "private_key_jwt")
     grant = set_oauth_grant(type: "authorization_code")
 
     post("/token",
