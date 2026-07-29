@@ -323,7 +323,9 @@ module Rodauth
       client_id = oauth_unique_id_generator
       create_params[oauth_applications_client_id_column] = client_id
       return_params["client_id"] = client_id
-      return_params["client_id_issued_at"] = Time.now.utc.iso8601
+      # https://datatracker.ietf.org/doc/html/rfc7591#section-3.2.1
+      # "client_id_issued_at" is a number, expressed as seconds since 1970-01-01T00:00:00Z.
+      return_params["client_id_issued_at"] = Time.now.to_i
 
       registration_access_token = oauth_unique_id_generator
       create_params[oauth_applications_registration_access_token_column] = secret_hash(registration_access_token)
