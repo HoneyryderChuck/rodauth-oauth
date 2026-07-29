@@ -188,6 +188,11 @@ module Rodauth
     def accepts_json?
       return true if only_json?
 
+      # the token endpoint responds in json no matter what the client asks for, including its
+      # errors, which are never bounced off the client's redirect uri.
+      # https://datatracker.ietf.org/doc/html/rfc6749#section-5.2
+      return true if request.path == token_path
+
       (accept = request.env["HTTP_ACCEPT"]) && accept =~ json_request_regexp
     end
 
