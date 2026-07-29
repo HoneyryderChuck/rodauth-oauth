@@ -186,11 +186,11 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
     setup_application(:oauth_jwt_secured_authorization_response_mode, :oauth_authorization_code_grant)
     header "Accept", "application/json"
 
-    post("/register", valid_registration_params.merge("authorization_encryption_alg_values_supported" => "smth"))
+    post("/register", valid_registration_params.merge("authorization_encrypted_response_alg" => "smth"))
 
     assert last_response.status == 400
 
-    post("/register", valid_registration_params.merge("authorization_encryption_alg_values_supported" => "none"))
+    post("/register", valid_registration_params.merge("authorization_signed_response_alg" => "none"))
 
     assert last_response.status == 400
 

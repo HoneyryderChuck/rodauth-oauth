@@ -120,6 +120,7 @@ module Rodauth
     end
 
     def validate_client_registration_params(request_params = request.params)
+      @oauth_application_unrecognized_params = []
       @oauth_application_params = request_params.each_with_object({}) do |(key, value), params|
         case key
         when "redirect_uris"
@@ -254,7 +255,11 @@ module Rodauth
             property = :"oauth_applications_#{key}_column"
             key = __send__(property)
           elsif !db[oauth_applications_table].columns.include?(key.to_sym)
-            register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(key))
+            # https://datatracker.ietf.org/doc/html/rfc7591#section-3.1
+            # "The authorization server MUST ignore any client metadata sent by the client that it
+            # does not understand".
+            @oauth_application_unrecognized_params << key
+            next
           end
         end
         params[key] = value
@@ -284,6 +289,9 @@ module Rodauth
     def do_register(return_params = request.params.dup)
       applications_ds = db[oauth_applications_table]
       application_columns = applications_ds.columns
+
+      # ignored metadata is not part of the registration, so it does not belong in the response either
+      Array(@oauth_application_unrecognized_params).each { |key| return_params.delete(key) }
 
       # set defaults
       create_params = @oauth_application_params

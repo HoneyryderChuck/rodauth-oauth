@@ -246,17 +246,26 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
     end
   end
 
-  def test_oauth_dynamic_client_fail_on_missing_params
+  def test_oauth_dynamic_client_fail_on_protected_params
     rodauth { oauth_application_scopes %w[read write] }
     setup_application
-
-    post("/register", valid_registration_params.merge("foo" => "bar"))
-    assert last_response.status == 400
-    assert JSON.parse(last_response.body)["error"] == "invalid_client_metadata"
 
     post("/register", valid_registration_params.merge("account_id" => 2))
     assert last_response.status == 400
     assert JSON.parse(last_response.body)["error"] == "invalid_client_metadata"
+  end
+
+  def test_oauth_dynamic_client_ignores_unrecognized_params
+    rodauth { oauth_application_scopes %w[read write] }
+    setup_application
+
+    post("/register", valid_registration_params.merge("foo" => "bar"))
+
+    assert last_response.status == 201
+    assert !JSON.parse(last_response.body).key?("foo")
+
+    assert db[:oauth_applications].one?
+    assert !db[:oauth_applications].first.key?(:foo)
   end
 
   def test_oauth_dynamic_client_jwks_and_jwks_uri
