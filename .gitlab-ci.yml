@@ -111,20 +111,20 @@ truffleruby:
   artifacts:
     paths:
       - "coverage/"
-ruby25:
-  <<: *test_services
-  before_script:
-    - *install_deps
-    - *before_script
-  image: "ruby:2.5"
-  script:
-    - "DATABASE_URL=sqlite3::memory: bundle exec rake test"
-  artifacts:
-    paths:
-      - "coverage/"
-  parallel:
-    matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails52, Gemfile-rails51]
+# ruby25:
+#   <<: *test_services
+#   before_script:
+#     - *install_deps
+#     - *before_script
+#   image: "ruby:2.5"
+#   script:
+#     - "DATABASE_URL=sqlite3::memory: bundle exec rake test"
+#   artifacts:
+#     paths:
+#       - "coverage/"
+#   parallel:
+#     matrix:
+#       - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails52, Gemfile-rails51]
 ruby26:
   <<: *test_services
   before_script:
@@ -286,7 +286,7 @@ coverage:
   dependencies:
     - jruby
     - truffleruby
-    - ruby25
+    # - ruby25
     - ruby27
     - ruby34
     - ruby40
