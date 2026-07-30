@@ -38,6 +38,14 @@ module Rodauth
       @oauth_application = client_params
     end
 
+    def authorize_form_params
+      super.tap do |params|
+        if (param_value = param_or_nil("registration"))
+          params << ["registration", param_value]
+        end
+      end
+    end
+
     private
 
     def oauth_response_types_supported

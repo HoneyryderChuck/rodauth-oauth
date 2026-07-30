@@ -46,6 +46,13 @@ module Rodauth
       authorization_required unless token_indicators.any? { |resource| base_url.start_with?(resource) }
     end
 
+    def authorize_form_params
+      super.tap do |params|
+        # the "resource" param may be repeated, so it carries one entry per resource indicator
+        Array(resource_indicators).each { |resource| params << ["resource", resource] }
+      end
+    end
+
     private
 
     def validate_token_params

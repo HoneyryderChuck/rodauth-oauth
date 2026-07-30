@@ -85,6 +85,14 @@ module Rodauth
       super
     end
 
+    def authorize_form_params
+      super.tap do |params|
+        if (param_value = param_or_nil("dpop_jkt"))
+          params << ["dpop_jkt", param_value]
+        end
+      end
+    end
+
     private
 
     def validate_token_params

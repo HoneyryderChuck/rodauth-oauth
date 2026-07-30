@@ -235,6 +235,22 @@ module Rodauth
       super unless subject_type == "pairwise"
     end
 
+    def authorize_form_params
+      super.tap do |params|
+        %w[prompt nonce ui_locales claims_locales claims acr_values].each do |param_name|
+          if (param_value = param_or_nil(param_name))
+            params << [param_name, param_value]
+          end
+        end
+      end
+    end
+
+    def authorize_hidden_scopes
+      # the resource owner does not approve "offline_access" separately, it comes with the
+      # "consent" prompt, so it is carried over rather than presented
+      super | %w[offline_access]
+    end
+
     private
 
     if defined?(::I18n)
