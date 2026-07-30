@@ -306,7 +306,8 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
     assert json_body["client_secret_expires_at"].zero?
 
     assert json_body.key?("client_secret")
-    assert json_body.key?("client_id_issued_at")
+    assert json_body["client_id_issued_at"].is_a?(Integer)
+    assert_in_delta Time.now.to_i, json_body["client_id_issued_at"], 5
   end
 
   def test_oauth_dynamic_client_all_params_with_client_secret
@@ -326,7 +327,7 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
     assert json_body["client_id"] == oauth_application[:client_id]
 
-    assert json_body.key?("client_id_issued_at")
+    assert json_body["client_id_issued_at"].is_a?(Integer)
     assert !json_body.key?("client_secret")
     assert !json_body.key?("client_secret_expires_at")
   end
