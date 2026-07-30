@@ -2,10 +2,10 @@
 
 require "rodauth/oauth"
 
-# :nocov:
+# simplecov:enable
 raise LoadError, "the `:oidc_frontchannel_logout` requires rodauth 2.32.0 or higher" if Rodauth::VERSION < "2.32.0"
 
-# :nocov:
+# simplecov:disable
 
 module Rodauth
   Feature.define(:oidc_frontchannel_logout, :OidFrontchannelLogout) do

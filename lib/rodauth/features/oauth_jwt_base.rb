@@ -496,7 +496,7 @@ module Rodauth
         JWT.decode(token, nil, false)
       end
     else
-      # :nocov:
+      # simplecov:enable
       def jwk_export(_key)
         raise "#{__method__} is undefined, redefine it or require either \"jwt\" or \"json-jwt\""
       end
@@ -520,7 +520,7 @@ module Rodauth
       def private_jwk?(_jwk)
         raise "#{__method__} is undefined, redefine it or require either \"jwt\" or \"json-jwt\""
       end
-      # :nocov:
+      # simplecov:disable
     end
   end
 end
