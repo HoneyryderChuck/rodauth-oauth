@@ -6,6 +6,12 @@ The +oauth_dynamic_client_registration+ feature adds support for the OAuth 2.0 d
 
 This feature depends on the oauth_base feature.
 
+== Client metadata
+
+Client metadata which the server does not understand, that is, which maps to neither an +oauth_applications_*_column+ auth value method nor a column of the applications table, is ignored, as mandated by https://datatracker.ietf.org/doc/html/rfc7591#section-3.1. It is left out of the registration, and out of the registration response as well.
+
+Metadata which the server does understand but the client may not set, such as +client_id+ or +account_id+, still fails the request with an <tt>"invalid_client_metadata"</tt> error, as does metadata with an unsupported value.
+
 == Auth Value Methods
 
 oauth_client_registration_required_params :: request params required to be present in the register body for it to succeed.
