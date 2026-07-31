@@ -34,6 +34,15 @@ module Rodauth
     auth_value_method :oauth_unique_id_generation_retries, 3
 
     auth_value_method :oauth_token_endpoint_auth_methods_supported, %w[client_secret_basic client_secret_post]
+    # An application which has no auth method of its own falls back to these, and not to every
+    # method the server supports: enabling a new method server-wide (such as "none", which requires
+    # no client authentication at all) must not turn existing confidential clients into public ones.
+    #
+    # TODO: change this to "client_secret_basic" only in a future major version, as per
+    # https://datatracker.ietf.org/doc/html/rfc7591#section-2, which defaults an omitted
+    # "token_endpoint_auth_method" to it. Doing so now would lock out "client_secret_post" clients
+    # whose application row has no auth method set.
+    auth_value_method :oauth_default_token_endpoint_auth_methods, %w[client_secret_basic client_secret_post]
     auth_value_method :oauth_grant_types_supported, %w[refresh_token]
     auth_value_method :oauth_response_types_supported, []
     auth_value_method :oauth_response_modes_supported, []
@@ -409,10 +418,10 @@ module Rodauth
     def supports_auth_method?(oauth_application, auth_method)
       return false unless oauth_application
 
-      supported_auth_methods = if oauth_application[oauth_applications_token_endpoint_auth_method_column]
-                                 oauth_application[oauth_applications_token_endpoint_auth_method_column].split(/ +/)
+      supported_auth_methods = if (auth_methods = oauth_application[oauth_applications_token_endpoint_auth_method_column])
+                                 auth_methods.split(/ +/)
                                else
-                                 oauth_token_endpoint_auth_methods_supported
+                                 oauth_default_token_endpoint_auth_methods
                                end
 
       supported_auth_methods.include?(auth_method)
