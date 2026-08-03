@@ -37,7 +37,6 @@ class RodauthOauthClientRegistrationTest < RodaIntegration
 
     put "/register/#{oauth_application[:client_id]}", {
       "client_secret" => "WRONG_SECRET"
-
     }
     assert last_response.status == 401
   end

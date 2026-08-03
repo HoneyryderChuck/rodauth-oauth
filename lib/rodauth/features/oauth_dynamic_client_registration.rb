@@ -12,7 +12,10 @@ module Rodauth
     auth_value_method :oauth_applications_registration_access_token_column, :registration_access_token
     auth_value_method :registration_client_uri_route, "register"
 
-    PROTECTED_APPLICATION_ATTRIBUTES = %w[account_id client_id].freeze
+    PROTECTED_APPLICATION_CREATE_ATTRIBUTES = %w[account_id client_id].freeze
+
+    PROTECTED_APPLICATION_UPDATE_ATTRIBUTES = %w[account_id client_id registration_access_token registration_client_uri
+                                                 client_secret_expires_at client_id_issued_at].freeze
 
     HIDDEN_APPLICATION_ATTRIBUTES = %w[id account_id client_id client_secret client_secret_hash].freeze
 
@@ -36,19 +39,14 @@ module Rodauth
               json_response_oauth_application(oauth_application)
             end
             request.on method: :put do
-              %w[client_id registration_access_token registration_client_uri client_secret_expires_at
-                 client_id_issued_at].each do |prohibited_param|
-                if request.params.key?(prohibited_param)
-                  register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(prohibited_param))
-                end
-              end
-              validate_client_registration_params
+              validate_client_registration_params(request.params, PROTECTED_APPLICATION_UPDATE_ATTRIBUTES)
 
-              # if the client includes the "client_secret" field in the request, the value of this field MUST match the currently
-              # issued client secret for that client.  The client MUST NOT be allowed to overwrite its existing client secret with
-              # its own chosen value.
-              authorization_required if request.params.key?("client_secret") && !secret_matches?(oauth_application,
-                                                                                                 request.params["client_secret"])
+              if request.params.key?("client_secret") && !secret_matches?(oauth_application, request.params["client_secret"])
+                # if the client includes the "client_secret" field in the request, the value of this field MUST match the currently
+                # issued client secret for that client.  The client MUST NOT be allowed to overwrite its existing client secret with
+                # its own chosen value.
+                authorization_required
+              end
 
               oauth_application = transaction do
                 applications_ds = db[oauth_applications_table]
@@ -82,7 +80,7 @@ module Rodauth
           end
         end
 
-        validate_client_registration_params
+        validate_client_registration_params(request.params, PROTECTED_APPLICATION_CREATE_ATTRIBUTES)
 
         response_params = transaction do
           before_register
@@ -121,9 +119,14 @@ module Rodauth
       }
     end
 
-    def validate_client_registration_params(request_params = request.params)
+    def validate_client_registration_params(request_params, protected_attributes)
       @oauth_application_unrecognized_params = []
       @oauth_application_params = request_params.each_with_object({}) do |(key, value), params|
+        if protected_attributes.include?(key)
+          register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(key))
+          next
+        end
+
         case key
         when "redirect_uris"
           if value.is_a?(Array)
@@ -182,6 +185,10 @@ module Rodauth
             end
           end
           key = __send__(:"oauth_applications_#{key}_column")
+        when "client_secret"
+          # use internal routine which may hash the secret
+          set_client_secret(params, value)
+          next
         when "jwks"
           register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(value)) unless value.is_a?(Hash)
           if request_params.key?("jwks_uri")
@@ -251,9 +258,6 @@ module Rodauth
           key = __send__(:"oauth_applications_#{key}_column")
         else
           if respond_to?(:"oauth_applications_#{key}_column")
-            if PROTECTED_APPLICATION_ATTRIBUTES.include?(key)
-              register_throw_json_response_error("invalid_client_metadata", register_invalid_param_message(key))
-            end
             property = :"oauth_applications_#{key}_column"
             key = __send__(property)
           elsif !db[oauth_applications_table].columns.include?(key.to_sym)
@@ -321,7 +325,7 @@ module Rodauth
         "code"
       end
       rescue_from_uniqueness_error do
-        initialize_register_params(create_params, return_params)
+        initialize_create_params(create_params, return_params)
         create_params.delete_if { |k, _| !application_columns.include?(k) }
         applications_ds.insert(create_params)
       end
@@ -329,7 +333,7 @@ module Rodauth
       return_params
     end
 
-    def initialize_register_params(create_params, return_params)
+    def initialize_create_params(create_params, return_params)
       client_id = oauth_unique_id_generator
       create_params[oauth_applications_client_id_column] = client_id
       return_params["client_id"] = client_id
@@ -343,7 +347,6 @@ module Rodauth
       return_params["registration_client_uri"] = "#{base_url}/#{registration_client_uri_route}/#{return_params['client_id']}"
 
       if create_params.key?(oauth_applications_client_secret_column)
-        set_client_secret(create_params, create_params[oauth_applications_client_secret_column])
         return_params.delete("client_secret")
       else
         client_secret = oauth_unique_id_generator
