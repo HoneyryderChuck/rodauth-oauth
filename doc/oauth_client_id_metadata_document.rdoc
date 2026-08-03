@@ -1,0 +1,5 @@
+The +oauth_client_id_metadata_document+ feature implements the OAuth Client ID Metadata Document spec.
+
+https://datatracker.ietf.org/doc/draft-ietf-oauth-client-id-metadata-document/
+
+This feature depends on the +oauth_authorize_base+ feature.
