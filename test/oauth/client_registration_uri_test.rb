@@ -32,6 +32,16 @@ class RodauthOauthClientRegistrationTest < RodaIntegration
     verify_oauth_application_attributes(oauth_application, json_body)
   end
 
+  def test_put_oauth_application_client_secret
+    setup_application
+
+    put "/register/#{oauth_application[:client_id]}", {
+      "client_secret" => "WRONG_SECRET"
+
+    }
+    assert last_response.status == 401
+  end
+
   def test_put_oauth_application_only_updates_authenticated_client
     setup_application
 

@@ -47,8 +47,8 @@ module Rodauth
               # if the client includes the "client_secret" field in the request, the value of this field MUST match the currently
               # issued client secret for that client.  The client MUST NOT be allowed to overwrite its existing client secret with
               # its own chosen value.
-              authorization_required if request.params.key?("client_secret") && secret_matches?(oauth_application,
-                                                                                                request.params["client_secret"])
+              authorization_required if request.params.key?("client_secret") && !secret_matches?(oauth_application,
+                                                                                                 request.params["client_secret"])
 
               oauth_application = transaction do
                 applications_ds = db[oauth_applications_table]
