@@ -119,7 +119,7 @@ module Rodauth
       }
     end
 
-    def validate_client_registration_params(request_params, protected_attributes)
+    def validate_client_registration_params(request_params, protected_attributes = PROTECTED_APPLICATION_CREATE_ATTRIBUTES)
       @oauth_application_unrecognized_params = []
       @oauth_application_params = request_params.each_with_object({}) do |(key, value), params|
         if protected_attributes.include?(key)
