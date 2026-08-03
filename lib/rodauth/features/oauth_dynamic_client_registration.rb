@@ -14,6 +14,8 @@ module Rodauth
 
     PROTECTED_APPLICATION_ATTRIBUTES = %w[account_id client_id].freeze
 
+    HIDDEN_APPLICATION_ATTRIBUTES = %w[id account_id client_id client_secret client_secret_hash].freeze
+
     def load_registration_client_uri_routes
       request.on(registration_client_uri_route) do
         # CLIENT REGISTRATION URI
@@ -414,7 +416,7 @@ module Rodauth
       params = methods.map { |k| k.to_s[/\Aoauth_applications_(\w+)_column\z/, 1] }.compact
 
       body = params.each_with_object({}) do |k, hash|
-        next if %w[id account_id client_id client_secret cliennt_secret_hash].include?(k)
+        next if HIDDEN_APPLICATION_ATTRIBUTES.include?(k)
 
         value = oauth_application[__send__(:"oauth_applications_#{k}_column")]
 
