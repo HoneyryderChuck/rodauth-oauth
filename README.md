@@ -183,7 +183,15 @@ If you're starting from scratch though, the recommendation is to stick to the de
 
 You'll have to generate HTML templates for the Oauth Authorization form.
 
-The rodauth default setup expects the roda `render` plugin to be activated; by default, it expects a `views` directory to be defined in the project root folder. The Oauth Authorization template must be therefore defined there, and it should be called `oauth_authorize.(erb|str|...)` (read the [roda `render` plugin documentation](http://roda.jeremyevans.net/rdoc/classes/Roda/RodaPlugins/Render.html) for more info about HTML templating).
+The rodauth default setup expects the roda `render` plugin to be activated; by default, it expects a `views` directory to be defined in the project root folder. The Oauth Authorization template must be therefore defined there, and it should be called `authorize.(erb|str|...)` (read the [roda `render` plugin documentation](http://roda.jeremyevans.net/rdoc/classes/Roda/RodaPlugins/Render.html) for more info about HTML templating).
+
+Start it from [the bundled template](templates/authorize.str), which is written for the `str` engine, rather than from a blank file:
+
+```
+cp "$(bundle info rodauth-oauth --path)/templates/authorize.str" views/authorize.str
+```
+
+The form posts back to the authorize endpoint, so every authorization request parameter the grant depends on has to be carried over into it. A parameter left out is dropped from the grant silently, and only surfaces later as an error at the token endpoint, which is why adapting the bundled template beats writing one from scratch. See [the authorize form docs](doc/oauth_authorize_base.rdoc) for the parts which are easiest to lose.
 
 ### OAuth applications management
 
