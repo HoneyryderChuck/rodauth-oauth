@@ -87,6 +87,8 @@
   </div>
  <p class="text-center">
     <%= submit_tag rodauth.oauth_authorize_button, class: "btn btn-outline-primary" %>
-    <%= link_to rodauth.oauth_cancel_button, "#{rodauth.redirect_uri}?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request#{"&state=\#{CGI.escape(rodauth.state)}" if rodauth.param_or_nil("state") }", class: "btn btn-outline-danger" %>
+    <% cancel_url = "#{rodauth.redirect_uri}?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request" %>
+    <% cancel_url += "&state=#{CGI.escape(rodauth.param("state"))}" if rodauth.param_or_nil("state") %>
+    <%= link_to rodauth.oauth_cancel_button, cancel_url, class: "btn btn-outline-danger" %>
   </p>
 <% end %>
