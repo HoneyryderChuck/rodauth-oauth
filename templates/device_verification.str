@@ -10,15 +10,15 @@
       scopes = @oauth_grant[rodauth.oauth_grants_scopes_column].split(rodauth.oauth_scope_separator)
       scopes.map do |scope|
         <<-HTML
-          <li class="list-group-item">#{scope}</li>
+          <li class="list-group-item">#{h(scope)}</li>
         HTML
       end.join
     }
     </ul>
   </div>
-  <input type="hidden" name="user_code" value="#{rodauth.param("user_code")}"/>
+  <input type="hidden" name="user_code" value="#{h(rodauth.param("user_code"))}"/>
   <p class="text-center">
     <input type="submit" class="btn btn-outline-primary" value="#{h(rodauth.oauth_device_verification_button)}"/>
-    <a href="#{rodauth.device_path}?error=access_denied" class="btn btn-outline-danger">#{rodauth.oauth_cancel_button}</a>
+    <a href="#{rodauth.device_path}?error=access_denied" class="btn btn-outline-danger">#{h(rodauth.oauth_cancel_button)}</a>
   </p>
 </form>

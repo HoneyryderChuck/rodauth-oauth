@@ -116,7 +116,7 @@ module Rodauth
         <html>
           <head><title>Authorized</title></head>
           <body onload="javascript:document.forms[0].submit()">
-            <form method="post" action="#{url}">
+            <form method="post" action="#{scope.h(url)}">
               #{yield}
               <input type="submit" class="btn btn-outline-primary" value="#{scope.h(oauth_authorize_post_button)}"/>
             </form>
@@ -130,7 +130,7 @@ module Rodauth
         <html>
           <head><title></title></head>
           <body onload="javascript:document.forms[0].submit()">
-            <form method="post" action="#{url}">
+            <form method="post" action="#{scope.h(url)}">
               #{yield}
             </form>
           </body>
