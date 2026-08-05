@@ -7,8 +7,14 @@
     <dd><%= oauth_application[rodauth.oauth_applications_description_column] %></dd>
     <dt><%= rodauth.oauth_applications_homepage_url_label %>: </dt>
     <dd><%= oauth_application[rodauth.oauth_applications_homepage_url_column] %></dd>
+    <dt><%= rodauth.oauth_applications_client_type_label %>: </dt>
+    <dd><%= rodauth.oauth_application_client_type_label(oauth_application[rodauth.oauth_applications_confidential_column]) %></dd>
     <dt><%= rodauth.oauth_applications_client_id_label %>: </dt>
     <dd><%= oauth_application[rodauth.oauth_applications_client_id_column] %></dd>
+    <% if oauth_application[rodauth.oauth_applications_confidential_column] %>
+      <dt><%= rodauth.oauth_applications_client_secret_label %>: </dt>
+      <dd><%= oauth_application[rodauth.oauth_applications_client_secret_column] %></dd>
+    <% end %>
     <dt><%= rodauth.oauth_applications_redirect_uri_label %>: </dt>
     <dd><%= oauth_application[rodauth.oauth_applications_redirect_uri_column] %></dd>
     <dt><%= rodauth.oauth_applications_scopes_label %>: </dt>

@@ -1,7 +1,10 @@
 <div id="oauth-application">
   <dl>
+    <dt class="confidential">#{rodauth.oauth_applications_client_type_label}</dt>
+    <dd class="confidential">#{rodauth.oauth_application_client_type_label(@oauth_application[rodauth.oauth_applications_confidential_column])}</dd>
     #{
-      params = [*rodauth.oauth_application_required_params, "client_id", "client_secret"]
+      params = [*rodauth.oauth_application_required_params, "client_id"]
+      params << "client_secret" if @oauth_application[rodauth.oauth_applications_confidential_column]
       if rodauth.features.include?(:oauth_jwt)
         params += %w[jwks]
       end
