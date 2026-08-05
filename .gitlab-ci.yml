@@ -113,6 +113,12 @@ truffleruby:
       - "coverage/"
 ruby25:
   <<: *test_services
+  # TEMPORARY: rack 3.2.6 uses Array#to_h with a block, which is ruby 2.6 or higher, while its
+  # gemspec still allows ruby 2.4 and up, so the Gemfile variant of this job resolves it and dies
+  # on load. Fixed upstream in rack, waiting on a release:
+  # https://github.com/rack/rack/issues/2450
+  # Revert once that release is out. See also !161.
+  allow_failure: true
   before_script:
     - *install_deps
     - *before_script
