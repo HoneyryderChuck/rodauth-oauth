@@ -28,8 +28,8 @@
     <h1 class="display-6"><%= rodauth.oauth_grants_scopes_label %></h1>
 
     <% rodauth.authorize_scopes.each do |scope| %>
-      <% if rodauth.authorize_hidden_scopes.include?(scope) %>
-        <%= hidden_field_tag "scope[]", scope, id: nil %>
+      <% if rodauth.features.include?(:oidc) && scope == "offline_access" %>
+        <%= hidden_field_tag "scope[]", scope %>
       <% else %>
         <div class="form-check">
           <%= check_box_tag "scope[]", scope, false, id: scope, class: "form-check-input" %>

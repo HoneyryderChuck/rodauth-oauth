@@ -31,8 +31,7 @@ module Rodauth
     auth_methods(
       :resource_owner_params,
       :oauth_grants_resource_owner_columns,
-      :authorize_form_params,
-      :authorize_hidden_scopes
+      :authorize_form_params
     )
 
     OAUTH_ACCESS_TYPES = %w[offline online].freeze
@@ -91,12 +90,6 @@ module Rodauth
       end
 
       params
-    end
-
-    # Scopes which the form carries over as hidden fields, rather than presenting them to the
-    # resource owner for approval.
-    def authorize_hidden_scopes
-      []
     end
 
     private

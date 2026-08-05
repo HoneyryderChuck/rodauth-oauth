@@ -61,7 +61,7 @@
 
     #{
       rodauth.authorize_scopes.map do |scope|
-        if rodauth.authorize_hidden_scopes.include?(scope)
+        if rodauth.features.include?(:oidc) && scope == "offline_access"
           "<input type=\"hidden\" name=\"scope[]\" value=\"#{h(scope)}\" />"
         else
           <<-HTML

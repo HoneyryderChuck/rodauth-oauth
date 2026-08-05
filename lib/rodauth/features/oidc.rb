@@ -245,12 +245,6 @@ module Rodauth
       end
     end
 
-    def authorize_hidden_scopes
-      # the resource owner does not approve "offline_access" separately, it comes with the
-      # "consent" prompt, so it is carried over rather than presented
-      super | %w[offline_access]
-    end
-
     private
 
     if defined?(::I18n)
