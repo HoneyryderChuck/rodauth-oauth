@@ -28,6 +28,14 @@ module Rodauth
 
     private
 
+    def oauth_confidential_token_endpoint_auth_methods
+      if oauth_applications_client_secret_hash_column.nil?
+        super | %w[client_secret_jwt private_key_jwt urn:ietf:params:oauth:client-assertion-type:jwt-bearer]
+      else
+        super | %w[private_key_jwt]
+      end
+    end
+
     def require_oauth_application_from_jwt_bearer_assertion_issuer(assertion)
       claims = jwt_assertion(assertion)
 

@@ -329,6 +329,10 @@ module Rodauth
 
     private
 
+    def oauth_confidential_token_endpoint_auth_methods
+      %w[client_secret_basic client_secret_post]
+    end
+
     def oauth_account_ds(account_id)
       account_ds(account_id)
     end

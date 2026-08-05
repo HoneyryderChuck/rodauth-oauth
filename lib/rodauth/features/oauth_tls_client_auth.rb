@@ -27,6 +27,10 @@ module Rodauth
 
     private
 
+    def oauth_confidential_token_endpoint_auth_methods
+      super | %w[tls_client_auth self_signed_tls_client_auth]
+    end
+
     def validate_token_params
       # For all requests to the authorization server utilizing mutual-TLS client authentication,
       # the client MUST include the client_id parameter
