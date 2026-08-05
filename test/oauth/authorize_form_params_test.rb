@@ -38,9 +38,11 @@ class RodauthOauthAuthorizeFormParamsTest < RodaIntegration
   def test_authorize_form_forwards_custom_params
     rodauth do
       authorize_form_params do
-        params = super()
-        params << ["tenant", param("tenant")] if param_or_nil("tenant")
-        params
+        super().tap do |params|
+          if (tenant = param_or_nil("tenant"))
+            params << { "name" => "tenant", "value" => tenant, "type" => "hidden" }
+          end
+        end
       end
     end
     setup_application

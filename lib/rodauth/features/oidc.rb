@@ -239,7 +239,7 @@ module Rodauth
       super.tap do |params|
         %w[prompt nonce ui_locales claims_locales claims acr_values].each do |param_name|
           if (param_value = param_or_nil(param_name))
-            params << [param_name, param_value]
+            params << { "name" => param_name, "value" => param_value, "type" => "hidden" }
           end
         end
       end

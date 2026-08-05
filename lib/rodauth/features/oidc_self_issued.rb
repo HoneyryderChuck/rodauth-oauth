@@ -41,7 +41,7 @@ module Rodauth
     def authorize_form_params
       super.tap do |params|
         if (param_value = param_or_nil("registration"))
-          params << ["registration", param_value]
+          params << { "name" => "registration", "value" => param_value, "type" => "hidden" }
         end
       end
     end

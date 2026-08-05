@@ -49,7 +49,9 @@ module Rodauth
     def authorize_form_params
       super.tap do |params|
         # the "resource" param may be repeated, so it carries one entry per resource indicator
-        Array(resource_indicators).each { |resource| params << ["resource", resource] }
+        Array(resource_indicators).each do |resource|
+          params << { "name" => "resource", "value" => resource, "type" => "hidden" }
+        end
       end
     end
 

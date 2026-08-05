@@ -75,8 +75,8 @@
     }
 
     #{
-      rodauth.authorize_form_params.map do |name, value|
-        "<input type=\"hidden\" name=\"#{h(name)}\" value=\"#{h(value)}\"/>"
+      rodauth.authorize_form_params.map do |field|
+        "<input type=\"#{h(field["type"])}\" name=\"#{h(field["name"])}\" value=\"#{h(field["value"])}\"/>"
       end.join
     }
   </div>

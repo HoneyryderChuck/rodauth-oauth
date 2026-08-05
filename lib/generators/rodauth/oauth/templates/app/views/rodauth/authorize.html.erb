@@ -37,8 +37,8 @@
         </div>
       <% end %>
     <% end %>
-    <% rodauth.authorize_form_params.each do |name, value| %>
-      <%= hidden_field_tag name, value, id: nil %>
+    <% rodauth.authorize_form_params.each do |field| %>
+      <%= tag(:input, type: field["type"], name: field["name"], value: field["value"]) %>
     <% end %>
   </div>
  <p class="text-center">
