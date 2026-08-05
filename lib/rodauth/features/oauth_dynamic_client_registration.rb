@@ -12,10 +12,14 @@ module Rodauth
     auth_value_method :oauth_applications_registration_access_token_column, :registration_access_token
     auth_value_method :registration_client_uri_route, "register"
 
-    PROTECTED_APPLICATION_CREATE_ATTRIBUTES = %w[account_id client_id].freeze
+    translatable_method :register_no_client_secret_if_public, "Client secret is not allowed for a public client"
 
-    PROTECTED_APPLICATION_UPDATE_ATTRIBUTES = %w[account_id client_id registration_access_token registration_client_uri
-                                                 client_secret_expires_at client_id_issued_at].freeze
+    PROTECTED_APPLICATION_CREATE_ATTRIBUTES = %w[account_id client_id confidential].freeze
+
+    PROTECTED_APPLICATION_UPDATE_ATTRIBUTES = %w[
+      account_id client_id confidential registration_access_token
+      registration_client_uri client_secret_expires_at client_id_issued_at
+    ].freeze
 
     HIDDEN_APPLICATION_ATTRIBUTES = %w[id account_id client_id client_secret client_secret_hash].freeze
 
@@ -47,6 +51,9 @@ module Rodauth
                 # its own chosen value.
                 authorization_required
               end
+
+              # set confidential status if the token endpoint auth method is changing
+              set_client_type(@oauth_application_params)
 
               oauth_application = transaction do
                 applications_ds = db[oauth_applications_table]
@@ -108,7 +115,7 @@ module Rodauth
 
     def _before_register
       raise %{dynamic client registration requires authentication.
-        Override ´before_register` to perform it.
+        Override `before_register` to perform it.
         example:
 
           before_register do
@@ -324,6 +331,7 @@ module Rodauth
         return_params["response_types"] = %w[code]
         "code"
       end
+
       rescue_from_uniqueness_error do
         initialize_create_params(create_params, return_params)
         create_params.delete_if { |k, _| !application_columns.include?(k) }
@@ -341,15 +349,39 @@ module Rodauth
       # "client_id_issued_at" is a number, expressed as seconds since 1970-01-01T00:00:00Z.
       return_params["client_id_issued_at"] = Time.now.to_i
 
-      if create_params.key?(oauth_applications_client_secret_column)
-        return_params.delete("client_secret")
-      else
+      set_client_type(create_params)
+
+      return_params.delete("client_secret")
+
+      unless (client_secret = create_params.key?(oauth_applications_client_secret_column))
+        if db[oauth_applications_table].columns.include?(oauth_applications_confidential_column) &&
+           create_params.key?(oauth_applications_confidential_column) &&
+           !create_params[oauth_applications_confidential_column]
+          # forego secret generation for public clients
+          return
+        end
+
+        # do not generate a secret for a confidential client
+        return unless confidential?(create_params)
+
         client_secret = oauth_unique_id_generator
-        set_client_secret(create_params, client_secret)
         return_params["client_secret"] = client_secret
         return_params["client_secret_expires_at"] = 0
-
       end
+
+      set_client_secret(create_params, client_secret)
+    end
+
+    def set_client_type(params) # rubocop:disable Naming/AccessorMethodName
+      return unless oauth_applications_confidential_column
+
+      is_confidential = params[oauth_applications_confidential_column] = confidential?(params)
+
+      # client secret should not be set for confidential clients
+      return unless !is_confidential && params.include?(oauth_applications_client_secret_column)
+
+      register_throw_json_response_error("invalid_client_metadata",
+                                         register_no_client_secret_if_public)
     end
 
     def register_throw_json_response_error(code, message)

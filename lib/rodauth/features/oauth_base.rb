@@ -242,6 +242,15 @@ module Rodauth
       @oauth_application = db[oauth_applications_table].filter(oauth_applications_client_id_column => client_id).first
     end
 
+    def confidential?(oauth_application)
+      oauth_confidential_token_endpoint_auth_methods.include?(oauth_application[oauth_applications_token_endpoint_auth_method_column]) ||
+        !(
+          # not exclusively registering implicit grant
+          Array(oauth_application[oauth_applications_grant_types_column]).include?("implicit") &&
+          Array(oauth_application[oauth_applications_response_types_column]).include?("token")
+        )
+    end
+
     def fetch_access_token
       if (token = request.params["access_token"])
         if request.post? && !(request.content_type.start_with?("application/x-www-form-urlencoded") &&
@@ -328,6 +337,10 @@ module Rodauth
     end
 
     private
+
+    def oauth_confidential_token_endpoint_auth_methods
+      %w[client_secret_basic client_secret_post]
+    end
 
     def oauth_account_ds(account_id)
       account_ds(account_id)
