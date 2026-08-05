@@ -48,7 +48,7 @@ class RodauthOauthTokenEndpointAuthMethodTest < RodaIntegration
     setup_application
     header "Accept", "application/json"
 
-    application = set_oauth_application(client_id: "PUBLIC_ID", token_endpoint_auth_method: "none")
+    application = set_oauth_application(client_id: "PUBLIC_ID", token_endpoint_auth_method: "none", client_secret: nil)
 
     post("/token",
          client_id: application[:client_id],

@@ -48,6 +48,8 @@ module OAuthHelpers
   end
 
   def set_oauth_application(params)
+    params[:confidential] = false if params[:token_endpoint_auth_method] == "none"
+
     id = db[:oauth_applications].insert({
       account_id: account[:id],
       name: "Foo",

@@ -8,7 +8,19 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.string :homepage_url, null: true
       t.string :redirect_uri, null: false
       t.string :client_id, null: false, index: { unique: true }
-      t.string :client_secret, null: false, index: { unique: true }
+      # change `:null` contraints to false if you want to support confidential clients only, and
+      # no scheme relying on JWT private keys advertised by the JWKs uri.
+      t.string :client_secret, null: true, index: { unique: true }
+      # enforces the null check if `confidential`` is true`
+      if ActiveRecord::Base.connection.adapter_name == 'MySQL'
+        # in mysql, CASE statement isn't considered a boolean expr, which is a requirement for checks
+        t.check_constraint :client_secret_present_for_confidential,
+         "(confidential IS TRUE AND client_secret IS NOT NULL) OR (confidential IS FALSE AND client_secret IS NULL)"
+      else
+        t.check_constraint :client_secret_present_for_confidential,
+          "CASE WHEN (confidential = 1) THEN (client_secret IS NOT NULL) ELSE (client_secret IS NULL) END)"
+      end
+      t.boolean :confidential, null: false, default: true
       t.string :registration_access_token, null: true
       t.string :scopes, null: false
       t.datetime :created_at, null: false, default: -> { "CURRENT_TIMESTAMP(6)" }

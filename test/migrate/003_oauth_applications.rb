@@ -2,6 +2,7 @@
 
 Sequel.migration do
   up do
+    db = self
     # Used by the account verification and close account features
     create_table(:oauth_applications) do
       primary_key :id, type: Integer
@@ -11,7 +12,18 @@ Sequel.migration do
       String :homepage_url, null: true
       String :redirect_uri, null: false
       String :client_id, null: false, unique: true
-      String :client_secret, null: false, unique: true
+      TrueClass :confidential, null: false, default: true
+      # change `:null` contraints to false if you want to support confidential clients only, and
+      # no scheme relying on JWT private keys advertised by the JWKs uri.
+      String :client_secret, null: true, unique: true
+      # enforces the null check if `confidential`` is true`
+      # in mysql, CASE statement isn't considered a boolean expr, which is a requirement for checks
+      constraint :client_secret_present_for_confidential,
+                 if db.database_type == :mysql
+                   Sequel.lit("(confidential IS TRUE AND client_secret IS NOT NULL) OR (confidential IS FALSE AND client_secret IS NULL)")
+                 else
+                   Sequel.case({ { confidential: true } => Sequel.negate(client_secret: nil) }, { client_secret: nil })
+                 end
       String :registration_access_token, null: true
       String :scopes, null: false
       # extra params
