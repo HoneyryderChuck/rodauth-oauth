@@ -76,7 +76,7 @@ module Rodauth
       account_id
       name description scopes
       client_id client_secret
-      homepage_url redirect_uri
+      confidential homepage_url redirect_uri
       token_endpoint_auth_method grant_types response_types response_modes
       logo_uri tos_uri policy_uri jwks jwks_uri
       contacts software_id software_version
