@@ -35,8 +35,11 @@ module Rodauth
     translatable_method :oauth_applications_jwks_uri_label, "JSON Web Keys URI"
     translatable_method :oauth_applications_homepage_url_label, "Homepage URL"
     translatable_method :oauth_applications_redirect_uri_label, "Redirect URI"
-    translatable_method :oauth_applications_client_secret_label, "Client Secret"
     translatable_method :oauth_applications_client_id_label, "Client ID"
+    translatable_method :oauth_applications_client_secret_label, "Client Secret"
+    translatable_method :oauth_applications_client_type_label, "Client Type"
+    translatable_method :oauth_applications_confidential_label, "Confidential"
+    translatable_method :oauth_applications_public_label, "Public"
 
     %w[type token refresh_token expires_in revoked_at].each do |param|
       translatable_method :"oauth_grants_#{param}_label", param.gsub("_", " ").capitalize
@@ -58,7 +61,8 @@ module Rodauth
     translatable_method :oauth_no_grants_text, "No oauth grants yet!"
 
     auth_methods(
-      :oauth_application_path
+      :oauth_application_path,
+      :oauth_application_client_type_label
     )
 
     def oauth_applications_path(opts = {})
@@ -67,6 +71,14 @@ module Rodauth
 
     def oauth_application_path(id)
       "#{oauth_applications_path}/#{id}"
+    end
+
+    def oauth_application_client_type_label(is_confidential)
+      if is_confidential
+        oauth_applications_confidential_label
+      else
+        oauth_applications_public_label
+      end
     end
 
     # /oauth-applications routes

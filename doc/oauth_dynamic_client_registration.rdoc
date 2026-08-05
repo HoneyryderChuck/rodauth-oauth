@@ -18,6 +18,7 @@ oauth_client_registration_required_params :: request params required to be prese
 oauth_applications_registration_access_token_column :: db column where an oauth application registration access token is stored, after being hashed.
 registration_client_uri_route :: the route where the client registration uri is available, and existing client applications can be further manipulated (via GET and PATCH verbs).
 register_route :: the route for registering dynamic clients, defaults to +register+.
+register_no_client_secret_if_public :: error message when a client secret is set for a public client.
 
 == Auth Methods
 
