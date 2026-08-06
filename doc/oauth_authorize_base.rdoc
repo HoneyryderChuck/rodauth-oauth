@@ -8,24 +8,24 @@ This feature depends on the oauth_base feature.
 
 == The authorization form
 
-The authorization request is validated twice: once on the GET which renders the form, and once on the POST which the resource owner submits. The POST is a fresh request, so every parameter the grant depends on has to make the round trip through the form, usually as a hidden field.
+The authorization request parameters are validated when the authozation form is rendered, and when it is submitted.
 
-This matters when you write your own +authorize_view+ instead of using the bundled one. A parameter which is not carried over is not rejected, it is silently absent from the grant, and the mismatch only shows up later, when the client presents the authorization code at the token endpoint and gets an error about a request it did make correctly.
+This matters when you write your own +authorize_view+ instead of using the bundled one; query params passed to the authorization form need to be part of the submitted params.
 
-For that reason, start from the bundled template rather than from a blank file.
+For that reason, the recommendation is to copy the bundled template and apply your changes on top of it.
+
+Under plain roda, copy it out of the gem into your views directory. It has to be named after the view, that is +authorize+, with the extension of whichever engine the +render+ plugin is set up for:
+
+    cp "$(bundle info rodauth-oauth --path)/templates/authorize.str" views/authorize.str
 
 Under rails, the generator writes it for you:
 
     bundle exec rails generate rodauth:oauth:views
     # copies the authorize form to app/views/rodauth/authorize.html.erb
 
-Under plain roda, copy it out of the gem into your views directory. It has to be named after the view, that is +authorize+, with the extension of whichever engine the +render+ plugin is set up for:
-
-    cp "$(bundle info rodauth-oauth --path)/templates/authorize.str" views/authorize.str
-
 The bundled template is written for the +str+ engine, so an application whose +render+ plugin uses another one, such as the default +erb+, has to port the interpolations over while adapting it.
 
-Which params have to be carried over is not something a view has to know. +authorize_form_params+ returns one entry per field, each with the +name+, +value+ and +type+ it is rendered with, so the form renders whatever the enabled features need:
+The authorization form parameters are rendered using the +authorize_form_params+ auth method:
 
     #{
       rodauth.authorize_form_params.map do |field|
@@ -33,7 +33,9 @@ Which params have to be carried over is not something a view has to know. +autho
       end.join
     }
 
-Each feature adds its own to it, so a view written this way keeps working when a feature is enabled later, rather than quietly dropping the params that feature introduced. To carry over a param of your own, extend the method instead of hardcoding an input into the template:
+Each feature adds its own required form params to it, thereby incorporating them into the authorization form, as new features are added.
+
+To carry over a param of your own, just extend the method:
 
     authorize_form_params do
       super().tap do |params|
