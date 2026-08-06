@@ -30,7 +30,8 @@ module Rodauth
 
     auth_methods(
       :resource_owner_params,
-      :oauth_grants_resource_owner_columns
+      :oauth_grants_resource_owner_columns,
+      :authorize_form_params
     )
 
     OAUTH_ACCESS_TYPES = %w[offline online].freeze
@@ -71,6 +72,24 @@ module Rodauth
       scopes || begin
         oauth_application[oauth_applications_scopes_column].split(oauth_scope_separator)
       end
+    end
+
+    # The authorization request is validated on the GET which renders the form, and again on the
+    # POST which the resource owner submits, and the latter is a fresh request. These are the
+    # params of the authorization request which the form has to carry over into it, one entry per
+    # field, each with the "name", "value" and "type" it is rendered with. Features which introduce
+    # authorization request params of their own extend it, so a view which renders all of them
+    # keeps working as features get enabled.
+    def authorize_form_params
+      params = [{ "name" => "client_id", "value" => param("client_id"), "type" => "hidden" }]
+
+      %w[access_type response_type response_mode state redirect_uri].each do |param_name|
+        if (param_value = param_or_nil(param_name))
+          params << { "name" => param_name, "value" => param_value, "type" => "hidden" }
+        end
+      end
+
+      params
     end
 
     private

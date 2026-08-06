@@ -17,6 +17,16 @@ module Rodauth
     auth_value_method :oauth_unsupported_transform_algorithm_error_code, "invalid_request"
     translatable_method :oauth_unsupported_transform_algorithm_message, "transform algorithm not supported"
 
+    def authorize_form_params
+      super.tap do |params|
+        %w[code_challenge code_challenge_method].each do |param_name|
+          if (param_value = param_or_nil(param_name))
+            params << { "name" => param_name, "value" => param_value, "type" => "hidden" }
+          end
+        end
+      end
+    end
+
     private
 
     def supports_auth_method?(oauth_application, auth_method)

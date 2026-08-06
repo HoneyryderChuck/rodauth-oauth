@@ -25,13 +25,27 @@ Under plain roda, copy it out of the gem into your views directory. It has to be
 
 The bundled template is written for the +str+ engine, so an application whose +render+ plugin uses another one, such as the default +erb+, has to port the interpolations over while adapting it.
 
-Three of the parameters are not plain hidden fields, and are the ones most easily lost while adapting the template to your own markup:
+Which params have to be carried over is not something a view has to know. +authorize_form_params+ returns one entry per field, each with the +name+, +value+ and +type+ it is rendered with, so the form renders whatever the enabled features need:
 
-* +resource+ may be repeated in the authorization request, so the form needs one input per resource indicator rather than a single field (+oauth_resource_indicators+, https://datatracker.ietf.org/doc/html/rfc8707).
-* +offline_access+ is carried as a hidden <tt>scope[]</tt> entry rather than as a checkbox, as the resource owner does not grant it separately (+oidc+).
-* the cancel action is a link to the client's +redirect_uri+ carrying <tt>error=access_denied</tt> and the +state+, and not a submission of the form.
+    #{
+      rodauth.authorize_form_params.map do |field|
+        "<input type=\"#{h(field["type"])}\" name=\"#{h(field["name"])}\" value=\"#{h(field["value"])}\"/>"
+      end.join
+    }
 
-Enabling a feature which introduces a new authorization request parameter means the form has to carry that one too. Diffing your view against the bundled template after an upgrade is the cheapest way to catch it.
+Each feature adds its own to it, so a view written this way keeps working when a feature is enabled later, rather than quietly dropping the params that feature introduced. To carry over a param of your own, extend the method instead of hardcoding an input into the template:
+
+    authorize_form_params do
+      super().tap do |params|
+        if (tenant = param_or_nil("tenant"))
+          params << { "name" => "tenant", "value" => tenant, "type" => "hidden" }
+        end
+      end
+    end
+
+Scopes are the exception, as the resource owner picks those. The form renders a checkbox per entry in +authorize_scopes+, other than <tt>"offline_access"</tt> under the +oidc+ feature, which is carried over as a hidden <tt>scope[]</tt> entry because it is not granted separately.
+
+The one part which is not a form field at all is the cancel action, a link to the client's +redirect_uri+ carrying <tt>error=access_denied</tt> and the +state+, rather than a submission of the form.
 
 == Auth Value Methods
 
@@ -63,3 +77,4 @@ before_authorize :: Run arbitrary code before executing an "authorize" endpoint.
 after_authorize :: Run arbitrary code after authorizing a request.
 authorize_view :: The HTML of the Authorize form.
 authorize_error_view :: The HTML of the Authorize error page.
+authorize_form_params :: the authorization request params which the authorize form has to carry over into the POST it submits, one entry per field, each with the "name", "value" and "type" it is rendered with. Features which introduce authorization request params of their own extend it, so a view which renders all of them keeps working as features get enabled. Extend it as well to carry over a param of your own.
