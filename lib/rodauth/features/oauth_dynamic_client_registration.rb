@@ -341,11 +341,6 @@ module Rodauth
       # "client_id_issued_at" is a number, expressed as seconds since 1970-01-01T00:00:00Z.
       return_params["client_id_issued_at"] = Time.now.to_i
 
-      registration_access_token = oauth_unique_id_generator
-      create_params[oauth_applications_registration_access_token_column] = secret_hash(registration_access_token)
-      return_params["registration_access_token"] = registration_access_token
-      return_params["registration_client_uri"] = "#{base_url}/#{registration_client_uri_route}/#{return_params['client_id']}"
-
       if create_params.key?(oauth_applications_client_secret_column)
         return_params.delete("client_secret")
       else

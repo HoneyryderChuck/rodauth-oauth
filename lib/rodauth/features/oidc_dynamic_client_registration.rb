@@ -287,7 +287,7 @@ module Rodauth
       "The application type '#{application_type}' is not allowed."
     end
 
-    def initialize_register_params(create_params, return_params)
+    def initialize_create_params(create_params, return_params)
       super
       registration_access_token = oauth_unique_id_generator
       create_params[oauth_applications_registration_access_token_column] = secret_hash(registration_access_token)
