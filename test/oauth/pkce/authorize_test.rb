@@ -79,8 +79,8 @@ class RodauthOauthPkceAuthorizeTest < RodaIntegration
           "code_challenge=#{PKCE_VERIFIER}&code_challenge_method=plain&response_mode=query&response_type=code"
 
     assert page.current_url.include?("?error=invalid_request"),
-           "plain challenge should be rejected by default"
-    assert db[:oauth_grants].count.zero?,
+           "plain challenge should be rejected"
+    assert db[:oauth_grants].none?,
            "a grant was created for a disabled challenge method"
   end
 
