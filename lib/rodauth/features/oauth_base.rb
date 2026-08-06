@@ -309,6 +309,7 @@ module Rodauth
       # all of the extensions below involve DB changes. Resource server mode doesn't use
       # database functions for OAuth though.
       return unless is_authorization_server?
+
       self.class.__send__(:include, Rodauth::OAuth::ExtendDatabase(db))
 
       # Check whether we can reutilize db entries for the same account / application pair

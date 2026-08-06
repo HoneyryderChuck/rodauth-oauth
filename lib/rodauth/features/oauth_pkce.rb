@@ -80,9 +80,7 @@ module Rodauth
         # Reject the weak "plain" transform unless it has been explicitly opted into. This runs
         # before the supported-method check so the disabled method surfaces a meaningful error
         # instead of the generic "code challenge required".
-        if challenge_method == "plain" && !oauth_pkce_allow_plain_method
-          redirect_response_error("unsupported_transform_algorithm")
-        end
+        redirect_response_error("unsupported_transform_algorithm") if challenge_method == "plain" && !oauth_pkce_allow_plain_method
 
         redirect_response_error("code_challenge_required") unless oauth_pkce_challenge_methods.include?(challenge_method)
       else
