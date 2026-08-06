@@ -111,7 +111,7 @@ class RodauthOAuthTokenPkceTest < RodaIntegration
   def test_token_authorization_code_pkce_plain_rejected
     rodauth do
       use_oauth_access_type? true
-       oauth_pkce_allow_plain_method false
+      oauth_pkce_allow_plain_method false
     end
     setup_application
 
