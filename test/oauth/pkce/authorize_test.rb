@@ -69,9 +69,11 @@ class RodauthOauthPkceAuthorizeTest < RodaIntegration
            "code challenge required"
   end
 
-  def test_authorize_post_authorize_with_plain_pkce_rejected_by_default
+  def test_authorize_post_authorize_with_plain_pkce_rejected
+    rodauth do
+      oauth_pkce_allow_plain_method false
+    end
     setup_application(:oauth_pkce)
-
     login
 
     # plain is disabled by default, so the authorization request must be rejected

@@ -8,11 +8,11 @@ module Rodauth
 
     auth_value_method :oauth_require_pkce, true
     auth_value_method :oauth_pkce_challenge_method, "S256"
+
+    # TODO: change to false in a major version bump
     # RFC 7636 §4.2 discourages the "plain" transform: it transmits the raw code_verifier,
-    # so an intercepted authorization request exposes it and defeats PKCE. Disabled by
-    # default; set this to true to opt into accepting "plain" challenges end-to-end (authorize,
-    # token, and advertised server metadata).
-    auth_value_method :oauth_pkce_allow_plain_method, false
+    # so an intercepted authorization request exposes it and defeats PKCE.
+    auth_value_method :oauth_pkce_allow_plain_method, true
 
     auth_value_method :oauth_grants_code_challenge_column, :code_challenge
     auth_value_method :oauth_grants_code_challenge_method_column, :code_challenge_method

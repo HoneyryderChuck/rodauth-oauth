@@ -73,7 +73,7 @@ class RodauthOauthServerMetadataTest < RodaIntegration
     get("/.well-known/oauth-authorization-server")
 
     assert last_response.status == 200
-    assert json_body["code_challenge_methods_supported"] == %w[S256]
+    assert json_body["code_challenge_methods_supported"] == %w[S256 plain]
   end
 
   def test_oauth_server_metadata_with_pkce_plain_allowed
