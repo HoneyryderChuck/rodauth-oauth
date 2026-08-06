@@ -309,14 +309,6 @@ module Rodauth
       # all of the extensions below involve DB changes. Resource server mode doesn't use
       # database functions for OAuth though.
       return unless is_authorization_server?
-
-      # Plaintext client secrets compare in constant time, but storing them unhashed is still a
-      # liability if the database is exposed. Nudge operators toward a hash column.
-      unless oauth_applications_client_secret_hash_column
-        warn "rodauth-oauth: client secrets are stored in plaintext; set " \
-             "`oauth_applications_client_secret_hash_column` to store them hashed."
-      end
-
       self.class.__send__(:include, Rodauth::OAuth::ExtendDatabase(db))
 
       # Check whether we can reutilize db entries for the same account / application pair
