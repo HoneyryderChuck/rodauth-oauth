@@ -25,6 +25,12 @@ module Rodauth
       :oauth_grant_path
     )
 
+    if respond_to?(:uses_instance_variables)
+      uses_instance_variables(
+        :@oauth_grants
+      )
+    end
+
     def oauth_grants_path(opts = {})
       route_path(oauth_grants_route, opts)
     end

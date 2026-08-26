@@ -19,7 +19,7 @@ module Rodauth
     }.freeze
 
     def oauth_application
-      return @oauth_application if defined?(@oauth_application)
+      return @oauth_application if @oauth_application
 
       return super unless (registration = param_or_nil("registration"))
 

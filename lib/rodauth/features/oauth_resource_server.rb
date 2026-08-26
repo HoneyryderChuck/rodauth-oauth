@@ -13,7 +13,7 @@ module Rodauth
     )
 
     def authorization_token
-      return @authorization_token if defined?(@authorization_token)
+      return @authorization_token if @authorization_token
 
       # check if there is a token
       access_token = fetch_access_token

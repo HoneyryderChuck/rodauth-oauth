@@ -115,6 +115,12 @@ module Rodauth
       :json_webfinger_payload
     )
 
+    if respond_to?(:uses_instance_variables)
+      uses_instance_variables(
+        :@acr
+      )
+    end
+
     # /userinfo
     auth_server_route(:userinfo) do |r|
       r.on method: %i[get post] do

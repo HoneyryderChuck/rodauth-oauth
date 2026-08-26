@@ -65,6 +65,14 @@ module Rodauth
       :oauth_application_client_type_label
     )
 
+    if respond_to?(:uses_instance_variables)
+      uses_instance_variables(
+        :@oauth_applications,
+        :@oauth_grants,
+        :@field_errors
+      )
+    end
+
     def oauth_applications_path(opts = {})
       route_path(oauth_applications_route, opts)
     end

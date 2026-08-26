@@ -51,7 +51,7 @@ module Rodauth
     def authorization_token
       return super unless oauth_jwt_access_tokens
 
-      return @authorization_token if defined?(@authorization_token)
+      return @authorization_token if @authorization_token
 
       @authorization_token = decode_access_token
     end

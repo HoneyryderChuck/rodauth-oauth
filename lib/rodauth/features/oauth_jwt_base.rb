@@ -33,6 +33,14 @@ module Rodauth
       :resource_owner_params_from_jwt_claims
     )
 
+    if respond_to?(:uses_instance_variables)
+      uses_instance_variables(
+        :@oauth_jwt_issuer,
+        :@oauth_jwt_audience,
+        :@_jwt_key
+      )
+    end
+
     private
 
     def oauth_jwt_issuer

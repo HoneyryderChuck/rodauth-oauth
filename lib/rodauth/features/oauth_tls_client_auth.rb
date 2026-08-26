@@ -21,6 +21,14 @@ module Rodauth
 
     auth_value_method :oauth_grants_certificate_thumbprint_column, :certificate_thumbprint
 
+    if respond_to?(:uses_instance_variables)
+      uses_instance_variables(
+        :@client_certificate,
+        :@certificate,
+        :@client_certificate_sans
+      )
+    end
+
     def oauth_token_endpoint_auth_methods_supported
       super | %w[tls_client_auth self_signed_tls_client_auth]
     end
@@ -128,7 +136,7 @@ module Rodauth
     end
 
     def client_certificate
-      return @client_certificate if defined?(@client_certificate)
+      return @client_certificate if @client_certificate
 
       unless (pem_cert = request.env["SSL_CLIENT_CERT"] || request.env["HTTP_SSL_CLIENT_CERT"] || request.env["HTTP_X_SSL_CLIENT_CERT"])
         return
@@ -140,7 +148,7 @@ module Rodauth
     end
 
     def client_certificate_sans
-      return @client_certificate_sans if defined?(@client_certificate_sans)
+      return @client_certificate_sans if @client_certificate_sans
 
       @client_certificate_sans =
         if client_certificate

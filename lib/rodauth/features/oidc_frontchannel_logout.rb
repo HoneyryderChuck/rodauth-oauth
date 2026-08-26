@@ -22,6 +22,14 @@ module Rodauth
     auth_value_method :oauth_applications_frontchannel_logout_uri_column, :frontchannel_logout_uri
     auth_value_method :oauth_applications_frontchannel_logout_session_required_column, :frontchannel_logout_session_required
 
+    if respond_to?(:uses_instance_variables)
+      uses_instance_variables(
+        :@visited_sites,
+        :@frontchannel_logout_redirect,
+        :@frontchannel_logout_urls
+      )
+    end
+
     attr_reader :frontchannel_logout_urls
 
     attr_reader :frontchannel_logout_redirect
