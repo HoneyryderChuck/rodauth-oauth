@@ -2,7 +2,6 @@
 
 Sequel.migration do
   up do
-    db = self
     # Used by the account verification and close account features
     create_table(:oauth_applications) do
       primary_key :id, type: Integer
