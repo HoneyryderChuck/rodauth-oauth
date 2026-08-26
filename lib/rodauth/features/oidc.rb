@@ -227,6 +227,14 @@ module Rodauth
       end
     end
 
+    def get_oidc_param(_, _)
+      raise NotImplementedError, "`get_oidc_param(account, claim)` auth method must be implemented to use oidc scopes."
+    end
+
+    def get_additional_param(_, _)
+      raise NotImplementedError, "`get_oidc_param(account, claim)` auth method must be implemented to use oidc scopes."
+    end
+
     def oauth_response_types_supported
       grant_types = oauth_grant_types_supported
       oidc_response_types = %w[id_token none]
@@ -632,35 +640,27 @@ module Rodauth
       claims_locales = claims_locales.split(" ").map(&:to_sym) if claims_locales
 
       unless oidc_scopes.empty?
-        if respond_to?(:get_oidc_param)
-          get_oidc_param = proxy_get_param(:get_oidc_param, claims, claims_locales, additional_claims_info)
+        get_oidc_param = proxy_get_param(:get_oidc_param, claims, claims_locales, additional_claims_info)
 
-          oidc_scopes.each do |scope|
-            scope_claims = claims
-            params = scopes_by_claim[scope]
-            params = params.empty? ? OIDC_SCOPES_MAP[scope] : (OIDC_SCOPES_MAP[scope] & params)
+        oidc_scopes.each do |scope|
+          scope_claims = claims
+          params = scopes_by_claim[scope]
+          params = params.empty? ? OIDC_SCOPES_MAP[scope] : (OIDC_SCOPES_MAP[scope] & params)
 
-            scope_claims = (claims["address"] = {}) if scope == "address"
+          scope_claims = (claims["address"] = {}) if scope == "address"
 
-            params.each do |param|
-              get_oidc_param[account, param, scope_claims]
-            end
+          params.each do |param|
+            get_oidc_param[account, param, scope_claims]
           end
-        else
-          warn "`get_oidc_param(account, claim)` must be implemented to use oidc scopes."
         end
       end
 
       return if additional_scopes.empty?
 
-      if respond_to?(:get_additional_param)
-        get_additional_param = proxy_get_param(:get_additional_param, claims, claims_locales, additional_claims_info)
+      get_additional_param = proxy_get_param(:get_additional_param, claims, claims_locales, additional_claims_info)
 
-        additional_scopes.each do |scope|
-          get_additional_param[account, scope.to_sym]
-        end
-      else
-        warn "`get_additional_param(account, claim)` must be implemented to use oidc scopes."
+      additional_scopes.each do |scope|
+        get_additional_param[account, scope.to_sym]
       end
     end
 
