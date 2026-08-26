@@ -73,8 +73,8 @@ module Rodauth
       "#{oauth_applications_path}/#{id}"
     end
 
-    def oauth_application_client_type_label(is_confidential)
-      if is_confidential
+    def oauth_application_client_type_label(oauth_application)
+      if confidential?(oauth_application)
         oauth_applications_confidential_label
       else
         oauth_applications_public_label

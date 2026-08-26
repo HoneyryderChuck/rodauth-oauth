@@ -169,8 +169,19 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
     assert last_response.status == 201
     assert JSON.parse(last_response.body)["response_types"] == %w[code]
-    last_application = db[:oauth_applications].order(Sequel.desc(:id)).first
-    assert last_application[:confidential]
+
+    # public clients
+    post(
+      "/register",
+      valid_registration_params.merge(
+        :token_endpoint_auth_method => "none",
+        :grant_types => %w[implicit],
+        "response_types" => %w[token],
+        client_secret: "SECRET"
+      ).compact
+    )
+
+    assert last_response.status == 400
 
     post(
       "/register",
@@ -183,14 +194,10 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
     assert last_response.status == 201
     assert JSON.parse(last_response.body)["response_types"] == %w[token]
-    last_application = db[:oauth_applications].order(Sequel.desc(:id)).first
-    assert !last_application[:confidential]
 
     post("/register", valid_registration_params)
     assert last_response.status == 201
     assert JSON.parse(last_response.body)["response_types"] == %w[code]
-    last_application = db[:oauth_applications].order(Sequel.desc(:id)).first
-    assert last_application[:confidential]
   end
 
   def test_oauth_dynamic_client_scopes

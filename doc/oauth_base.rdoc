@@ -38,7 +38,6 @@ oauth_applications_account_id_column :: the db column where the oauth applicatio
 oauth_applications_name_column :: the db column where the oauth application name is stored, <tt>:name</tt> by default.
 oauth_applications_description_column :: the db column where the oauth application description is stored, <tt>:description</tt> by default.
 oauth_applications_scopes_column :: the db column where the oauth allowed scopes are stored, <tt>:scopes</tt> by default.
-oauth_applications_confidential_column :: the db column where the oauth application can be marked as being confidential (otherwise public), <tt>true</tt> by default.
 oauth_applications_client_id_column :: the db column where the oauth application client ID is stored, <tt>:client_id</tt> by default.
 oauth_applications_client_secret_column :: the db column where the oauth application plaintext client secret is stored, <tt>:client_secret</tt> by default.
 oauth_applications_client_secret_hash_column :: the db column where the oauth application hashed client secret is stored, <tt>:client_secret</tt> by default.
@@ -125,3 +124,4 @@ oauth_unique_id_generator :: generates random base64 strings, used for raw acces
 require_authorizable_account :: requires the account to be logged in by default (calls `require_account`), can be overriden to add more functionality (i.e. requiring 2FA before authorization).
 oauth_account_ds :: returns a dataset filtered for an account id (overriden in rails to use Active Record <tt>Account</tt> model)
 oauth_application_ds :: returns a dataset filtered for an oauth application id (overriden in rails to use Active Record <tt>OAuthApplication</tt> model)
+confidential? :: whether the oauth application passed as arguments is confidential (<tt>false</tt> if public).

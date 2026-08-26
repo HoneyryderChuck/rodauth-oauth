@@ -8,10 +8,10 @@
     <dt><%= rodauth.oauth_applications_homepage_url_label %>: </dt>
     <dd><%= oauth_application[rodauth.oauth_applications_homepage_url_column] %></dd>
     <dt><%= rodauth.oauth_applications_client_type_label %>: </dt>
-    <dd><%= rodauth.oauth_application_client_type_label(oauth_application[rodauth.oauth_applications_confidential_column]) %></dd>
+    <dd><%= rodauth.oauth_application_client_type_label(oauth_application) %></dd>
     <dt><%= rodauth.oauth_applications_client_id_label %>: </dt>
     <dd><%= oauth_application[rodauth.oauth_applications_client_id_column] %></dd>
-    <% if oauth_application[rodauth.oauth_applications_confidential_column] %>
+    <% if rodauth.confidential?(oauth_application) %>
       <dt><%= rodauth.oauth_applications_client_secret_label %>: </dt>
       <dd><%= oauth_application[rodauth.oauth_applications_client_secret_column] %></dd>
     <% end %>

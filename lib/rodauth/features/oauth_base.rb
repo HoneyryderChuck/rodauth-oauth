@@ -130,7 +130,8 @@ module Rodauth
       :oauth_unique_id_generator,
       :require_authorizable_account,
       :oauth_account_ds,
-      :oauth_application_ds
+      :oauth_application_ds,
+      :confidential?
     )
 
     # /token

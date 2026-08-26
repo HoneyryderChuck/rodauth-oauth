@@ -17,7 +17,7 @@ module Rodauth
     PROTECTED_APPLICATION_CREATE_ATTRIBUTES = %w[account_id client_id confidential].freeze
 
     PROTECTED_APPLICATION_UPDATE_ATTRIBUTES = %w[
-      account_id client_id confidential registration_access_token
+      account_id client_id registration_access_token
       registration_client_uri client_secret_expires_at client_id_issued_at
     ].freeze
 
@@ -43,17 +43,23 @@ module Rodauth
               json_response_oauth_application(oauth_application)
             end
             request.on method: :put do
-              validate_client_registration_params(request.params, PROTECTED_APPLICATION_UPDATE_ATTRIBUTES)
+              params = request.params
 
-              if request.params.key?("client_secret") && !secret_matches?(oauth_application, request.params["client_secret"])
+              validate_client_registration_params(params, PROTECTED_APPLICATION_UPDATE_ATTRIBUTES)
+
+              if params.key?("client_secret") && !secret_matches?(oauth_application, params["client_secret"])
                 # if the client includes the "client_secret" field in the request, the value of this field MUST match the currently
                 # issued client secret for that client.  The client MUST NOT be allowed to overwrite its existing client secret with
                 # its own chosen value.
                 authorization_required
               end
 
-              # set confidential status if the token endpoint auth method is changing
-              set_client_type(@oauth_application_params)
+              if params.key?("client_secret")
+                next_oauth_application = oauth_application.merge(@oauth_application_params)
+                unless confidential?(next_oauth_application)
+                  register_throw_json_response_error("invalid_client_metadata", register_no_client_secret_if_public)
+                end
+              end
 
               oauth_application = transaction do
                 applications_ds = db[oauth_applications_table]
@@ -349,18 +355,13 @@ module Rodauth
       # "client_id_issued_at" is a number, expressed as seconds since 1970-01-01T00:00:00Z.
       return_params["client_id_issued_at"] = Time.now.to_i
 
-      set_client_type(create_params)
+      if create_params.key?(oauth_applications_client_secret_column) && !confidential?(create_params)
+        register_throw_json_response_error("invalid_client_metadata", register_no_client_secret_if_public)
+      end
 
       return_params.delete("client_secret")
 
       unless (client_secret = create_params.key?(oauth_applications_client_secret_column))
-        if db[oauth_applications_table].columns.include?(oauth_applications_confidential_column) &&
-           create_params.key?(oauth_applications_confidential_column) &&
-           !create_params[oauth_applications_confidential_column]
-          # forego secret generation for public clients
-          return
-        end
-
         # do not generate a secret for a confidential client
         return unless confidential?(create_params)
 
@@ -370,18 +371,6 @@ module Rodauth
       end
 
       set_client_secret(create_params, client_secret)
-    end
-
-    def set_client_type(params) # rubocop:disable Naming/AccessorMethodName
-      return unless oauth_applications_confidential_column
-
-      is_confidential = params[oauth_applications_confidential_column] = confidential?(params)
-
-      # client secret should not be set for confidential clients
-      return unless !is_confidential && params.include?(oauth_applications_client_secret_column)
-
-      register_throw_json_response_error("invalid_client_metadata",
-                                         register_no_client_secret_if_public)
     end
 
     def register_throw_json_response_error(code, message)
