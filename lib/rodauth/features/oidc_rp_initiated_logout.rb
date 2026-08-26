@@ -115,11 +115,11 @@ module Rodauth
       end
     end
 
+    private
+
     def _oidc_logout_response
       redirect(oidc_logout_redirect)
     end
-
-    private
 
     # Logout
 

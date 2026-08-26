@@ -40,6 +40,8 @@ module Rodauth
       super
     end
 
+    private
+
     def _logout_response
       visited_sites = @visited_sites
 
@@ -78,8 +80,6 @@ module Rodauth
       set_notice_flash logout_notice_flash
       return_response frontchannel_logout_view
     end
-
-    private
 
     def generate_frontchannel_logout_urls(visited_sites, logout_urls)
       @frontchannel_logout_urls = logout_urls.flat_map do |client_id, logout_url|
