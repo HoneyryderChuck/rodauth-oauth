@@ -162,8 +162,8 @@ class RodauthOauthApplicationsTest < RodaIntegration
     :oauth_application_management
   end
 
-  def setup_application(*args, &blk)
-    super(*args) do |rodauth|
+  def setup_application(*args, **kwargs, &blk)
+    super(*args, **kwargs) do |rodauth|
       if blk
         blk.call(rodauth)
       else

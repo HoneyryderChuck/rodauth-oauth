@@ -544,7 +544,7 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
 
   private
 
-  def setup_application(*)
+  def setup_application(*, **)
     rodauth do
       before_register {} # no auth
     end

@@ -234,7 +234,7 @@ class RodauthOauthJWTTokenAuthorizationCodeTest < JWTIntegration
 
   private
 
-  def setup_application(*)
+  def setup_application(*, **)
     super
     rodauth do
       oauth_jwt_keys("HS256" => OpenSSL::PKey::RSA.new(2048))

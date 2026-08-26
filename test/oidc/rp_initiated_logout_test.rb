@@ -112,11 +112,11 @@ class RodauthOAuthOIDCRpInitiatedLogoutTest < OIDCIntegration
 
   private
 
-  def setup_application(*args)
+  def setup_application(*args, **kwargs)
     rodauth do
       oauth_jwt_keys("RS256" => OpenSSL::PKey::RSA.generate(2048))
     end
-    super(:oidc_rp_initiated_logout, *args)
+    super(:oidc_rp_initiated_logout, *args, **kwargs)
   end
 
   def generate_id_token(application = oauth_application, response_type = "code+id_token")

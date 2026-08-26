@@ -188,7 +188,7 @@ class RodauthOauthDPopAuthorizeTest < DPoPIntegration
 
   private
 
-  def setup_application(*)
+  def setup_application(*, **)
     rodauth do
       oauth_dpop_bound_access_tokens true
       oauth_response_mode "query"

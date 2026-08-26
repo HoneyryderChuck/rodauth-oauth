@@ -291,7 +291,7 @@ class RodauthOauthJWTTokenJwtBearerTest < JWTIntegration
     JWT.encode(claims, signing_key, algo, headers)
   end
 
-  def setup_application(*)
+  def setup_application(*, **)
     super
     header "Accept", "application/json"
   end

@@ -79,7 +79,7 @@ class RodauthClientCredentialsGrantOAuthTokenAccessTest < RodaIntegration
 
   def test_token_access_private_invalid_scope_only_json
     rodauth do
-      only_json? true
+      enable :json
     end
     setup_application
 

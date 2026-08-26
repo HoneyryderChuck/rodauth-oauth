@@ -105,7 +105,7 @@ class RodauthOauthPushedAuthorizationRequestAuthorizeTest < RodaIntegration
 
   private
 
-  def setup_application(*)
+  def setup_application(*, **)
     rodauth do
       oauth_response_mode "query"
     end

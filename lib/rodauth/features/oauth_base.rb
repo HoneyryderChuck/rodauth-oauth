@@ -107,8 +107,6 @@ module Rodauth
 
     auth_value_method :is_authorization_server?, true
 
-    auth_value_methods(:only_json?)
-
     auth_value_method :json_request_regexp, %r{\Aapplication/(?:vnd\.api\+)?json\b}i
 
     # METADATA

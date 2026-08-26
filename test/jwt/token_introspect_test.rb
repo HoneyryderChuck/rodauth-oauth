@@ -152,7 +152,7 @@ class RodauthOauthJwtTokenIntrospectTest < JWTIntegration
     %i[oauth_authorization_code_grant oauth_token_introspection oauth_jwt]
   end
 
-  def setup_application(*)
+  def setup_application(*, **)
     super
     header "Accept", "application/json"
   end

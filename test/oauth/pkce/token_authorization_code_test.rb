@@ -207,7 +207,7 @@ class RodauthOAuthTokenPkceTest < RodaIntegration
 
   private
 
-  def setup_application
+  def setup_application(*, **)
     super
     header "Accept", "application/json"
   end

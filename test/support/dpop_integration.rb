@@ -9,7 +9,7 @@ class DPoPIntegration < JWTIntegration
     %i[oauth_authorization_code_grant oauth_dpop]
   end
 
-  def setup_application(*)
+  def setup_application(*, **)
     signing_key = OpenSSL::PKey::RSA.generate(2048)
     rodauth do
       oauth_jwt_keys("RS256" => signing_key)

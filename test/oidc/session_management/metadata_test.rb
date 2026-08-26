@@ -27,7 +27,7 @@ class RodauthOauthOidcSessionManagementServerMetadataTest < OIDCIntegration
     %i[oidc oidc_session_management]
   end
 
-  def setup_application(*args)
-    super(*args, &:load_openid_configuration_route)
+  def setup_application(*args, **kwargs)
+    super(*args, **kwargs, &:load_openid_configuration_route)
   end
 end

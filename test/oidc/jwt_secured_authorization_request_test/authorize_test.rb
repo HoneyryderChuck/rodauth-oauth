@@ -192,7 +192,7 @@ class RodauthOauthOIDCJwtSecuredAuthorizationRequestAuthorizeTest < OIDCIntegrat
 
   private
 
-  def setup_application(*)
+  def setup_application(*, **)
     rodauth do
       oauth_jwt_keys("RS256" => OpenSSL::PKey::RSA.generate(2048))
       oauth_applications_jwks_column :jwks

@@ -123,12 +123,12 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
 
   private
 
-  def setup_application(*args)
+  def setup_application(*args, **kwargs)
     rodauth do
       get_oidc_account_last_login_at do
         Time.now - 60
       end
     end
-    super(*args, &:load_openid_configuration_route)
+    super(*args, **kwargs, &:load_openid_configuration_route)
   end
 end

@@ -61,7 +61,7 @@ class SAMLIntegration < RodaIntegration
     ))
   end
 
-  def setup_application(*features)
+  def setup_application(*features, **)
     features << oauth_feature
     scopes = test_scopes
 

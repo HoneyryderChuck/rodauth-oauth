@@ -83,7 +83,7 @@ class RodauthGrantsTest < RodaIntegration
     %i[oauth_application_management oauth_grant_management]
   end
 
-  def setup_application(*args)
-    super(*args, &:load_oauth_grant_management_routes)
+  def setup_application(*args, **kwargs)
+    super(*args, **kwargs, &:load_oauth_grant_management_routes)
   end
 end
