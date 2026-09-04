@@ -159,7 +159,7 @@ module Rodauth
     def load_oauth_server_metadata_route(issuer = nil)
       request.on(".well-known") do
         request.get("oauth-authorization-server") do
-          json_response_success(oauth_server_metadata_body(issuer), true)
+          json_response_success(oauth_server_metadata_body(issuer).compact, true)
         end
       end
     end
