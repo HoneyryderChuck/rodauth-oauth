@@ -11,7 +11,9 @@ Sequel.migration do
       String :homepage_url, null: true
       String :redirect_uri, null: false
       String :client_id, null: false, unique: true
-      String :client_secret, null: false, unique: true
+      # change `:null` contraints to false if you want to support confidential clients only, and
+      # no scheme relying on JWT private keys advertised by the JWKs uri.
+      String :client_secret, null: true, unique: true
       String :registration_access_token, null: true
       String :scopes, null: false
       # extra params

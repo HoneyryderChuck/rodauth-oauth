@@ -8,7 +8,9 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       t.string :homepage_url, null: true
       t.string :redirect_uri, null: false
       t.string :client_id, null: false, index: { unique: true }
-      t.string :client_secret, null: false, index: { unique: true }
+      # change `:null` contraints to false if you want to support confidential clients only, and
+      # no scheme relying on JWT private keys advertised by the JWKs uri.
+      t.string :client_secret, null: true, index: { unique: true }
       t.string :registration_access_token, null: true
       t.string :scopes, null: false
       t.datetime :created_at, null: false, default: -> { "CURRENT_TIMESTAMP(6)" }

@@ -12,10 +12,14 @@ module Rodauth
     auth_value_method :oauth_applications_registration_access_token_column, :registration_access_token
     auth_value_method :registration_client_uri_route, "register"
 
-    PROTECTED_APPLICATION_CREATE_ATTRIBUTES = %w[account_id client_id].freeze
+    translatable_method :register_no_client_secret_if_public, "Client secret is not allowed for a public client"
 
-    PROTECTED_APPLICATION_UPDATE_ATTRIBUTES = %w[account_id client_id registration_access_token registration_client_uri
-                                                 client_secret_expires_at client_id_issued_at].freeze
+    PROTECTED_APPLICATION_CREATE_ATTRIBUTES = %w[account_id client_id confidential].freeze
+
+    PROTECTED_APPLICATION_UPDATE_ATTRIBUTES = %w[
+      account_id client_id registration_access_token
+      registration_client_uri client_secret_expires_at client_id_issued_at
+    ].freeze
 
     HIDDEN_APPLICATION_ATTRIBUTES = %w[id account_id client_id client_secret client_secret_hash].freeze
 
@@ -39,13 +43,22 @@ module Rodauth
               json_response_oauth_application(oauth_application)
             end
             request.on method: :put do
-              validate_client_registration_params(request.params, PROTECTED_APPLICATION_UPDATE_ATTRIBUTES)
+              params = request.params
 
-              if request.params.key?("client_secret") && !secret_matches?(oauth_application, request.params["client_secret"])
+              validate_client_registration_params(params, PROTECTED_APPLICATION_UPDATE_ATTRIBUTES)
+
+              if params.key?("client_secret") && !secret_matches?(oauth_application, params["client_secret"])
                 # if the client includes the "client_secret" field in the request, the value of this field MUST match the currently
                 # issued client secret for that client.  The client MUST NOT be allowed to overwrite its existing client secret with
                 # its own chosen value.
                 authorization_required
+              end
+
+              if params.key?("client_secret")
+                next_oauth_application = oauth_application.merge(@oauth_application_params)
+                unless confidential?(next_oauth_application)
+                  register_throw_json_response_error("invalid_client_metadata", register_no_client_secret_if_public)
+                end
               end
 
               oauth_application = transaction do
@@ -108,7 +121,7 @@ module Rodauth
 
     def _before_register
       raise %{dynamic client registration requires authentication.
-        Override ´before_register` to perform it.
+        Override `before_register` to perform it.
         example:
 
           before_register do
@@ -324,6 +337,7 @@ module Rodauth
         return_params["response_types"] = %w[code]
         "code"
       end
+
       rescue_from_uniqueness_error do
         initialize_create_params(create_params, return_params)
         create_params.delete_if { |k, _| !application_columns.include?(k) }
@@ -341,15 +355,22 @@ module Rodauth
       # "client_id_issued_at" is a number, expressed as seconds since 1970-01-01T00:00:00Z.
       return_params["client_id_issued_at"] = Time.now.to_i
 
-      if create_params.key?(oauth_applications_client_secret_column)
-        return_params.delete("client_secret")
-      else
+      if create_params.key?(oauth_applications_client_secret_column) && !confidential?(create_params)
+        register_throw_json_response_error("invalid_client_metadata", register_no_client_secret_if_public)
+      end
+
+      return_params.delete("client_secret")
+
+      unless (client_secret = create_params.key?(oauth_applications_client_secret_column))
+        # do not generate a secret for a confidential client
+        return unless confidential?(create_params)
+
         client_secret = oauth_unique_id_generator
-        set_client_secret(create_params, client_secret)
         return_params["client_secret"] = client_secret
         return_params["client_secret_expires_at"] = 0
-
       end
+
+      set_client_secret(create_params, client_secret)
     end
 
     def register_throw_json_response_error(code, message)

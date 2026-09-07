@@ -76,7 +76,7 @@ module Rodauth
       account_id
       name description scopes
       client_id client_secret
-      homepage_url redirect_uri
+      confidential homepage_url redirect_uri
       token_endpoint_auth_method grant_types response_types response_modes
       logo_uri tos_uri policy_uri jwks jwks_uri
       contacts software_id software_version
@@ -109,7 +109,7 @@ module Rodauth
 
     auth_value_methods(:only_json?)
 
-    auth_value_method :json_request_regexp, %r{\bapplication/(?:vnd\.api\+)?json\b}i
+    auth_value_method :json_request_regexp, %r{\Aapplication/(?:vnd\.api\+)?json\b}i
 
     # METADATA
     auth_value_method :oauth_metadata_service_documentation, nil
@@ -130,7 +130,8 @@ module Rodauth
       :oauth_unique_id_generator,
       :require_authorizable_account,
       :oauth_account_ds,
-      :oauth_application_ds
+      :oauth_application_ds,
+      :confidential?
     )
 
     # /token
@@ -242,6 +243,15 @@ module Rodauth
       @oauth_application = db[oauth_applications_table].filter(oauth_applications_client_id_column => client_id).first
     end
 
+    def confidential?(oauth_application)
+      oauth_confidential_token_endpoint_auth_methods.include?(oauth_application[oauth_applications_token_endpoint_auth_method_column]) ||
+        !(
+          # not exclusively registering implicit grant
+          Array(oauth_application[oauth_applications_grant_types_column]).include?("implicit") &&
+          Array(oauth_application[oauth_applications_response_types_column]).include?("token")
+        )
+    end
+
     def fetch_access_token
       if (token = request.params["access_token"])
         if request.post? && !(request.content_type.start_with?("application/x-www-form-urlencoded") &&
@@ -328,6 +338,10 @@ module Rodauth
     end
 
     private
+
+    def oauth_confidential_token_endpoint_auth_methods
+      %w[client_secret_basic client_secret_post]
+    end
 
     def oauth_account_ds(account_id)
       account_ds(account_id)

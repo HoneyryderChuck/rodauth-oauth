@@ -29,6 +29,9 @@ oauth_application_oauth_grants_page_title :: Title for the OAuth grants page for
 oauth_applications_client_id_label :: Form label for the oauth application client ID.
 oauth_applications_name_label :: Form label for the oauth application name.
 oauth_applications_client_secret_label :: Form label for the oauth application client secret.
+oauth_applications_client_type_label :: Form label for the oauth application client type.
+oauth_applications_confidential_label :: Form label for a confidential oauth application.
+oauth_applications_public_label :: Form label for a public oauth application.
 oauth_applications_description_label :: Form label for the oauth application description.
 oauth_applications_homepage_url_label :: Form label for the oauth application homepage URL.
 oauth_applications_redirect_uri_label :: Form label for the oauth application redirect URI.
@@ -73,3 +76,4 @@ oauth_applications_view :: The HTML of the Oauth applications dashboard.
 oauth_application_view :: The HTML of an Oauth application page.
 new_oauth_application_view :: The HTML of a new Oauth application form.
 oauth_application_oauth_grants_view :: The HTML of the Oauth application grants dashboard.
+oauth_application_client_type_label :: Labels a client application as public or confidential.

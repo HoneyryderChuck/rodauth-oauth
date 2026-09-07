@@ -116,6 +116,7 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
   def test_oauth_dynamic_client_response_types
     rodauth do
       oauth_application_scopes %w[read write]
+      oauth_token_endpoint_auth_methods_supported { super() | %w[none] }
       oauth_response_types_supported { super() | %w[none] }
     end
 
@@ -169,12 +170,26 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
     assert last_response.status == 201
     assert JSON.parse(last_response.body)["response_types"] == %w[code]
 
+    # public clients
     post(
       "/register",
       valid_registration_params.merge(
+        :token_endpoint_auth_method => "none",
+        :grant_types => %w[implicit],
+        "response_types" => %w[token],
+        client_secret: "SECRET"
+      ).compact
+    )
+
+    assert last_response.status == 400
+
+    post(
+      "/register",
+      valid_registration_params.merge(
+        :token_endpoint_auth_method => "none",
         :grant_types => %w[implicit],
         "response_types" => %w[token]
-      )
+      ).compact
     )
 
     assert last_response.status == 201

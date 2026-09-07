@@ -26,7 +26,7 @@ class RodauthOAuthTokenAuthorizationCodeNoneTest < RodaIntegration
   private
 
   def set_oauth_application(params = {})
-    super({ token_endpoint_auth_method: "none" }.merge(params))
+    super({ token_endpoint_auth_method: "none", client_secret: nil }.merge(params))
   end
 
   def post_token(request_args)

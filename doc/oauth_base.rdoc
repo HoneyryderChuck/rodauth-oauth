@@ -124,3 +124,4 @@ oauth_unique_id_generator :: generates random base64 strings, used for raw acces
 require_authorizable_account :: requires the account to be logged in by default (calls `require_account`), can be overriden to add more functionality (i.e. requiring 2FA before authorization).
 oauth_account_ds :: returns a dataset filtered for an account id (overriden in rails to use Active Record <tt>Account</tt> model)
 oauth_application_ds :: returns a dataset filtered for an oauth application id (overriden in rails to use Active Record <tt>OAuthApplication</tt> model)
+confidential? :: whether the oauth application passed as arguments is confidential (<tt>false</tt> if public).
