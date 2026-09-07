@@ -134,7 +134,7 @@ class RodaIntegration < Minitest::Test
       oauth_grants_token_hash_column nil
       oauth_grants_refresh_token_hash_column nil
       hmac_secret "SECRET"
-      already_logged_in { redirect '/' }
+      already_logged_in { redirect "/" }
     end
     roda do |r|
       ::I18n.locale = :en

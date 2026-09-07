@@ -423,7 +423,7 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
     resource_server.plugin :rodauth do
       enable :oauth_resource_server, :oauth_jwt
       authorization_server_url auth_url
-      already_logged_in { redirect '/' }
+      already_logged_in { redirect "/" }
 
       http_request_cache do
         obj = Object.new
