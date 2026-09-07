@@ -77,6 +77,7 @@ class RodauthOAuthResourceIndicatorsResourceServerTest < RodaIntegration
     resource_server.plugin :rodauth do
       enable :oauth_resource_server, :oauth_resource_indicators
       authorization_server_url auth_url
+      already_logged_in { redirect '/' }
     end
     resource_server.route do |r|
       rodauth.require_oauth_authorization("profile.read")
