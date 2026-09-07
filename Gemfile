@@ -80,6 +80,13 @@ platform :mri, :truffleruby do
   else
     gem "pg"
   end
+
+  if RUBY_VERSION >= "3.0.0"
+    group :website do
+      # Docs/Website
+      gem "hanna-nouveau", require: false
+    end
+  end
 end
 
 platform :mri do
@@ -100,11 +107,4 @@ platform :jruby do
   gem "jdbc-mysql"
   gem "jdbc-postgres"
   gem "jdbc-sqlite3"
-end
-
-if RUBY_VERSION >= "3.0.0"
-  group :website do
-    # Docs/Website
-    gem "hanna-nouveau", require: false
-  end
 end

@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require "bundler/gem_tasks"
-require "rdoc/task"
 require "rake/testtask"
 
 Rake::TestTask.new(:test) do |t|
@@ -36,24 +35,25 @@ task default: :test
 rdoc_opts = ["--line-numbers", "--title", "Rodauth OAuth: OAuth 2.0 and OpenID for rodauth"]
 
 begin
+  require "rdoc/task"
   gem "hanna-nouveau"
   rdoc_opts.concat(["-f", "hanna"])
-rescue Gem::LoadError
-end
 
-rdoc_opts.concat(["--main", "README.md"])
-RDOC_FILES = %w[README.md CHANGELOG.md lib/**/*.rb] + Dir["doc/*.rdoc"] + Dir["doc/release_notes/*.md"]
+  rdoc_opts.concat(["--main", "README.md"])
+  RDOC_FILES = %w[README.md CHANGELOG.md lib/**/*.rb] + Dir["doc/*.rdoc"] + Dir["doc/release_notes/*.md"]
 
-RDoc::Task.new do |rdoc|
-  rdoc.rdoc_dir = "rdoc"
-  rdoc.options += rdoc_opts
-  rdoc.rdoc_files.add RDOC_FILES
-end
+  RDoc::Task.new do |rdoc|
+    rdoc.rdoc_dir = "rdoc"
+    rdoc.options += rdoc_opts
+    rdoc.rdoc_files.add RDOC_FILES
+  end
 
-RDoc::Task.new(:website_rdoc) do |rdoc|
-  rdoc.rdoc_dir = "rdoc"
-  rdoc.options += rdoc_opts
-  rdoc.rdoc_files.add RDOC_FILES
+  RDoc::Task.new(:website_rdoc) do |rdoc|
+    rdoc.rdoc_dir = "rdoc"
+    rdoc.options += rdoc_opts
+    rdoc.rdoc_files.add RDOC_FILES
+  end
+rescue LoadError, Gem::LoadError
 end
 
 desc "Check configuration method documentation"

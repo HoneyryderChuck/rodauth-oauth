@@ -99,7 +99,7 @@ jruby:
   before_script:
     - apt-get update && apt-get install -y git shared-mime-info
     - *before_script
-  image: "jruby:9.4"
+  image: "jruby:10"
   script:
     - *jtest
   artifacts:
