@@ -74,6 +74,7 @@ class SAMLIntegration < RodaIntegration
       oauth_application_scopes scopes
       oauth_grants_token_hash_column nil
       oauth_grants_refresh_token_hash_column nil
+      already_logged_in { redirect "/" }
     end
 
     roda do |r|
