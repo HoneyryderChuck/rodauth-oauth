@@ -1,3 +1,12 @@
+GIT
+  remote: https://github.com/jeremyevans/rodauth.git
+  revision: 300b56b0871a498972a44f91fc1d015d468886b2
+  branch: master
+  specs:
+    rodauth (2.47.0)
+      roda (>= 2.6.0)
+      sequel (>= 4)
+
 PATH
   remote: .
   specs:
@@ -219,9 +228,6 @@ GEM
     rexml (3.4.4)
     roda (3.107.0)
       rack
-    rodauth (2.47.0)
-      roda (>= 2.6.0)
-      sequel (>= 4)
     rodauth-i18n (0.11.0)
       i18n (~> 1.0)
       rodauth (~> 2.19)
@@ -352,7 +358,7 @@ DEPENDENCIES
   rake
   rbs
   roda
-  rodauth (>= 2.31.0)
+  rodauth!
   rodauth-i18n (>= 0.7.1)
   rodauth-oauth!
   rodauth-select-account (~> 0.1.2)
