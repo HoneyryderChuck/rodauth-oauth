@@ -52,6 +52,8 @@ gem "xmlenc"
 gem "rodauth-select-account", "~> 0.1.2"
 gem "simplecov"
 
+gem "json", "< 3.0.0" if RUBY_VERSION < "3.2.0"
+
 platform :mri, :truffleruby do
   gem "debug"
   if RUBY_VERSION >= "3.0.0"
