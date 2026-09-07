@@ -98,7 +98,7 @@ module Rodauth
       settings
     end
 
-    # rubocop:disable Naming/MemoizedInstanceVariableName
+    # rubocop:disable-next Naming/MemoizedInstanceVariableName
     def parse_saml_assertion(assertion)
       return @assertion if defined?(@assertion)
 
@@ -129,7 +129,6 @@ module Rodauth
 
       @assertion = response
     end
-    # rubocop:enable Naming/MemoizedInstanceVariableName
 
     def oauth_server_metadata_body(*)
       super.tap do |data|

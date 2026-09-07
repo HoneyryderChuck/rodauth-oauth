@@ -2,7 +2,7 @@
 
 module Rodauth
   module OAuth
-    # rubocop:disable Naming/MethodName
+    # rubocop:disable-next Naming/MethodName
     def self.ExtendDatabase(db)
       Module.new do
         dataset = db.dataset
@@ -87,6 +87,5 @@ module Rodauth
         end
       end
     end
-    # rubocop:enable Naming/MethodName
   end
 end
