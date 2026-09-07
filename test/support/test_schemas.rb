@@ -12,7 +12,7 @@ module TestSchemas
     end
   end
 
-  # rubocop:disable Metrics/MethodLength
+  # rubocop:disable-next Metrics/MethodLength
   def self.oidc_configuration_response
     {
       type: "object",
@@ -640,5 +640,4 @@ module TestSchemas
       additionalProperties: true
     }
   end
-  # rubocop:enable Metrics/MethodLength
 end
