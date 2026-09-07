@@ -21,6 +21,30 @@ class RodauthOauthServerMetadataTest < RodaIntegration
     assert json_body["response_modes_supported"] == %w[query form_post]
     assert json_body["grant_types_supported"] == %w[refresh_token authorization_code]
     assert json_body["token_endpoint_auth_methods_supported"] == %w[client_secret_basic client_secret_post]
+
+    # RFC 8414, section 2: unused optional metadata parameters MUST be omitted, not null
+    refute json_body.key?("service_documentation")
+    refute json_body.key?("ui_locales_supported")
+    refute json_body.key?("op_policy_uri")
+    refute json_body.key?("op_tos_uri")
+    assert(json_body.values.none?(&:nil?))
+  end
+
+  def test_oauth_server_metadata_optional_fields
+    rodauth do
+      oauth_metadata_service_documentation "http://example.org/docs"
+      oauth_metadata_ui_locales_supported %w[en pt]
+      oauth_metadata_op_policy_uri "http://example.org/policy"
+      oauth_metadata_op_tos_uri "http://example.org/tos"
+    end
+    setup_application
+    get("/.well-known/oauth-authorization-server")
+
+    assert last_response.status == 200
+    assert json_body["service_documentation"] == "http://example.org/docs"
+    assert json_body["ui_locales_supported"] == %w[en pt]
+    assert json_body["op_policy_uri"] == "http://example.org/policy"
+    assert json_body["op_tos_uri"] == "http://example.org/tos"
   end
 
   def test_oauth_server_metadata_with_dynamic_registration
@@ -43,6 +67,8 @@ class RodauthOauthServerMetadataTest < RodaIntegration
 
     assert last_response.status == 200
     assert json_body["revocation_endpoint"] == "http://example.org/revoke"
+    # defaults to client_secret_basic, and unused parameters must be omitted rather than null
+    refute json_body.key?("revocation_endpoint_auth_methods_supported")
   end
 
   def test_oauth_server_metadata_with_token_introspection

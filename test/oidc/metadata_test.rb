@@ -41,6 +41,11 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
     # assert json_body["display_values_supported"] == %w[RS256]
     assert json_body["claim_types_supported"] == %w[normal]
     assert json_body["claims_supported"] == %w[sub iss iat exp aud auth_time email email_verified]
+
+    # unused optional metadata parameters must be omitted, not null
+    refute json_body.key?("service_documentation")
+    refute json_body.key?("op_policy_uri")
+    assert(json_body.values.none?(&:nil?))
   end
 
   def test_oidc_metadata_openid_configuration_cors
