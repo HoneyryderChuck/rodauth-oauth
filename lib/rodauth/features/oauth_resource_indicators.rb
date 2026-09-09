@@ -8,8 +8,14 @@ module Rodauth
 
     auth_value_method :oauth_grants_resource_column, :resource
 
+    if respond_to?(:uses_instance_variables)
+      uses_instance_variables(
+        :@resource_indicators
+      )
+    end
+
     def resource_indicators
-      return @resource_indicators if defined?(@resource_indicators)
+      return @resource_indicators if @resource_indicators
 
       resources = param_or_nil("resource")
 

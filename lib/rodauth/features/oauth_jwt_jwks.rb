@@ -17,6 +17,12 @@ module Rodauth
       end
     end
 
+    if respond_to?(:uses_instance_variables)
+      uses_instance_variables(
+        :@jwks_set
+      )
+    end
+
     private
 
     def oauth_server_metadata_body(path = nil)

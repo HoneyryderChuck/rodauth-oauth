@@ -360,7 +360,7 @@ class RodauthOauthJwtSecuredAuthorizationRequestAuthorizeTest < JWTIntegration
 
   private
 
-  def setup_application(*)
+  def setup_application(*, **)
     rodauth do
       oauth_applications_jwks_column :jwks
     end

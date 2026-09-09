@@ -38,6 +38,11 @@ module Rodauth
     auth_methods(
       :generate_user_code
     )
+    if respond_to?(:uses_instance_variables)
+      uses_instance_variables(
+        :@oauth_grant
+      )
+    end
 
     # /device-authorization
     auth_server_route(:device_authorization) do |r|

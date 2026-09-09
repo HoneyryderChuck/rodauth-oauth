@@ -88,7 +88,7 @@ class RodauthOAuthOidcTokenAuthorizationCodeTest < OIDCIntegration
 
   private
 
-  def setup_application(*)
+  def setup_application(*, **)
     rodauth do
       oauth_jwt_keys("RS256" => OpenSSL::PKey::RSA.generate(2048))
     end

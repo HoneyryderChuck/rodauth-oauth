@@ -54,6 +54,14 @@ module Rodauth
 
     auth_methods(:validate_dpop_proof_usage)
 
+    if respond_to?(:uses_instance_variables)
+      uses_instance_variables(
+        :@dpop_access_token,
+        :@dpop_claims,
+        :@dpop_thumbprint
+      )
+    end
+
     def require_oauth_authorization(*scopes)
       @dpop_access_token = fetch_access_token_from_authorization_header("dpop")
 

@@ -34,6 +34,13 @@ module Rodauth
       :authorize_form_params
     )
 
+    if respond_to?(:uses_instance_variables)
+      uses_instance_variables(
+        :@error,
+        :@back_url
+      )
+    end
+
     OAUTH_ACCESS_TYPES = %w[offline online].freeze
 
     OAUTH_APPROVAL_PROMPTS = %w[force auto].freeze

@@ -14,7 +14,14 @@ module Rodauth
 
     translatable_method :register_no_client_secret_if_public, "Client secret is not allowed for a public client"
 
-    PROTECTED_APPLICATION_CREATE_ATTRIBUTES = %w[account_id client_id confidential].freeze
+    if respond_to?(:uses_instance_variables)
+      uses_instance_variables(
+        :@oauth_application_params,
+        :@oauth_application_unrecognized_params
+      )
+    end
+
+    PROTECTED_APPLICATION_CREATE_ATTRIBUTES = %w[account_id client_id].freeze
 
     PROTECTED_APPLICATION_UPDATE_ATTRIBUTES = %w[
       account_id client_id registration_access_token

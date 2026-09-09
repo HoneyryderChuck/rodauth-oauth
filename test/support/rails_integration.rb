@@ -32,7 +32,7 @@ else
 
       opts = rodauth_opts(type)
 
-      opts[:json] = jwt_only ? :only : true
+      opts[:json] = jwt_only || type == :json ? :only : true
 
       app.plugin :render, views: "test/views"
       app.configure(nil, **opts) do

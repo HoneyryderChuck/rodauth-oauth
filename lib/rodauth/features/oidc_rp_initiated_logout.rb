@@ -13,6 +13,12 @@ module Rodauth
 
     attr_reader :oidc_logout_redirect
 
+    if respond_to?(:uses_instance_variables)
+      uses_instance_variables(
+        :@oidc_logout_redirect
+      )
+    end
+
     # /oidc-logout
     auth_server_route(:oidc_logout) do |r|
       require_authorizable_account
@@ -109,11 +115,11 @@ module Rodauth
       end
     end
 
+    private
+
     def _oidc_logout_response
       redirect(oidc_logout_redirect)
     end
-
-    private
 
     # Logout
 

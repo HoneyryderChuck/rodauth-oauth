@@ -100,7 +100,7 @@ class RodaIntegration < Minitest::Test
     rodauth_blocks = @rodauth_blocks
     opts = rodauth_opts(type)
 
-    opts[:json] = jwt_only ? :only : true
+    opts[:json] = jwt_only || type == :json ? :only : true
 
     app.plugin(:rodauth, opts) do
       enable :i18n
@@ -122,7 +122,7 @@ class RodaIntegration < Minitest::Test
     "authorization_code"
   end
 
-  def setup_application(*features)
+  def setup_application(*features, json: false)
     features = Array(oauth_feature) + features
     scopes = test_scopes
     rodauth do
@@ -136,7 +136,7 @@ class RodaIntegration < Minitest::Test
       hmac_secret "SECRET"
       already_logged_in { redirect "/" }
     end
-    roda do |r|
+    roda(json ? :json : nil) do |r|
       ::I18n.locale = :en
       r.rodauth
 

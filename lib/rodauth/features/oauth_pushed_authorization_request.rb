@@ -19,6 +19,12 @@ module Rodauth
       auth_value_method :"oauth_pushed_authorization_requests_#{column}_column", column
     end
 
+    if respond_to?(:uses_instance_variables)
+      uses_instance_variables(
+        :@require_signed_request_object
+      )
+    end
+
     # /par
     auth_server_route(:par) do |r|
       require_oauth_application

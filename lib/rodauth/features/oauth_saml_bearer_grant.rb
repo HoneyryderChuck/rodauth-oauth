@@ -34,6 +34,13 @@ module Rodauth
       :account_from_saml2_bearer_assertion
     )
 
+    if respond_to?(:uses_instance_variables)
+      uses_instance_variables(
+        :@saml_settings,
+        :@assertion
+      )
+    end
+
     def oauth_grant_types_supported
       super | %w[urn:ietf:params:oauth:grant-type:saml2-bearer]
     end
@@ -98,9 +105,8 @@ module Rodauth
       settings
     end
 
-    # rubocop:disable-next Naming/MemoizedInstanceVariableName
     def parse_saml_assertion(assertion)
-      return @assertion if defined?(@assertion)
+      return @assertion if @assertion
 
       response = OneLogin::RubySaml::Response.new(assertion)
 

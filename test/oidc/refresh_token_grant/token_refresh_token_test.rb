@@ -153,7 +153,7 @@ class RodauthOAuthOIDCRefreshTokenTest < OIDCIntegration
 
   private
 
-  def setup_application(*)
+  def setup_application(*, **)
     rodauth do
       oauth_jwt_keys("HS256" => "SECRET")
     end

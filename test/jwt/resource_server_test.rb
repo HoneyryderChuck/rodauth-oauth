@@ -416,7 +416,7 @@ class RodauthOAuthJwtResourceServerTest < JWTIntegration
     "#{signing_input}.#{Base64.urlsafe_encode64(signature, padding: false)}"
   end
 
-  def setup_application(auth_url = "https://auth-server")
+  def setup_application(auth_url = "https://auth-server", **)
     resource_server = Class.new(Roda)
     resource_server.plugin :common_logger if ENV.key?("RODAUTH_DEBUG")
 

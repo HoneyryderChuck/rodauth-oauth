@@ -256,9 +256,8 @@ module RodauthOAuthTokenAuthorizationCodeTest
   def test_token_authorization_code_with_sub_account
     rodauth do
       resource_owner_params { super().merge(sub_account_id: param_or_nil("sub_account_id")) }
-      only_json? true
     end
-    setup_application
+    setup_application(json: true)
     header "Authorization", "Basic #{authorization_header(
       username: 'foo@example.com',
       password: '0123456789'
@@ -297,7 +296,7 @@ module RodauthOAuthTokenAuthorizationCodeTest
 
   private
 
-  def setup_application
+  def setup_application(*, **)
     super
     header "Accept", "application/json"
   end

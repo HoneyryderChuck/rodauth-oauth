@@ -107,8 +107,6 @@ module Rodauth
 
     auth_value_method :is_authorization_server?, true
 
-    auth_value_methods(:only_json?)
-
     auth_value_method :json_request_regexp, %r{\Aapplication/(?:vnd\.api\+)?json\b}i
 
     # METADATA
@@ -133,6 +131,14 @@ module Rodauth
       :oauth_application_ds,
       :confidential?
     )
+
+    if respond_to?(:uses_instance_variables)
+      uses_instance_variables(
+        :@json_request,
+        :@oauth_application,
+        :@authorization_token
+      )
+    end
 
     # /token
     auth_server_route(:token) do |r|
@@ -234,7 +240,7 @@ module Rodauth
     end
 
     def oauth_application
-      return @oauth_application if defined?(@oauth_application)
+      return @oauth_application if @oauth_application
 
       client_id = param_or_nil("client_id")
 
@@ -286,7 +292,7 @@ module Rodauth
     end
 
     def authorization_token
-      return @authorization_token if defined?(@authorization_token)
+      return @authorization_token if @authorization_token
 
       # check if there is a token
       access_token = fetch_access_token

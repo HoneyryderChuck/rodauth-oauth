@@ -114,10 +114,7 @@ class RodauthOAuthTokenAccessTest < RodaIntegration
   end
 
   def test_token_access_private_invalid_scope_only_json
-    rodauth do
-      only_json? true
-    end
-    setup_application
+    setup_application(json: true)
 
     set_authorization_header(oauth_grant(scopes: "smthelse"))
     # valid token, and now we're getting somewhere

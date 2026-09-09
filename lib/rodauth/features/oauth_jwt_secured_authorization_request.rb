@@ -23,6 +23,12 @@ module Rodauth
 
     auth_value_method :max_param_bytesize, nil if Rodauth::VERSION >= "2.26.0"
 
+    if respond_to?(:uses_instance_variables)
+      uses_instance_variables(
+        :@require_signed_request_object
+      )
+    end
+
     private
 
     # /authorize
@@ -93,7 +99,7 @@ module Rodauth
     end
 
     def require_signed_request_object?
-      return @require_signed_request_object if defined?(@require_signed_request_object)
+      return @require_signed_request_object if @require_signed_request_object
 
       @require_signed_request_object = (oauth_application[oauth_applications_require_signed_request_object_column] if oauth_application)
       @require_signed_request_object = oauth_require_signed_request_object if @require_signed_request_object.nil?
