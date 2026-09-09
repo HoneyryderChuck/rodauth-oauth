@@ -244,7 +244,13 @@ module Rodauth
     end
 
     def confidential?(oauth_application)
-      oauth_confidential_token_endpoint_auth_methods.include?(oauth_application[oauth_applications_token_endpoint_auth_method_column]) ||
+      token_endpoint_auth_method = oauth_application[oauth_applications_token_endpoint_auth_method_column]
+
+      # https://datatracker.ietf.org/doc/html/rfc7591#section-2
+      # "none": The client is a public client as defined in OAuth 2.0, Section 2.1, and does not have a client secret.
+      return false if token_endpoint_auth_method == "none"
+
+      oauth_confidential_token_endpoint_auth_methods.include?(token_endpoint_auth_method) ||
         !(
           # not exclusively registering implicit grant
           Array(oauth_application[oauth_applications_grant_types_column]).include?("implicit") &&

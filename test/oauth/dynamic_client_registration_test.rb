@@ -356,6 +356,31 @@ class RodauthOauthDynamicClientRegistrationTest < RodaIntegration
     assert !json_body.key?("client_secret_expires_at")
   end
 
+  def test_oauth_dynamic_client_public_client_no_client_secret
+    rodauth do
+      oauth_application_scopes %w[read write]
+      oauth_token_endpoint_auth_methods_supported { super() | %w[none] }
+    end
+    setup_application
+
+    post(
+      "/register",
+      valid_registration_params.merge("token_endpoint_auth_method" => "none")
+    )
+
+    assert last_response.status == 201
+
+    assert db[:oauth_applications].one?
+
+    oauth_application = db[:oauth_applications].first
+
+    assert json_body["client_id"] == oauth_application[:client_id]
+    assert json_body["token_endpoint_auth_method"] == "none"
+    assert !json_body.key?("client_secret")
+    assert !json_body.key?("client_secret_expires_at")
+    assert oauth_application[:client_secret].nil?
+  end
+
   def test_oauth_dynamic_client_token_endpoint_auth_method
     rodauth { oauth_application_scopes %w[read write] }
     setup_application

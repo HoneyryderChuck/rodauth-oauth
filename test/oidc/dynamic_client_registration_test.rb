@@ -28,6 +28,25 @@ class RodauthOidcDynamicClientRegistrationTest < OIDCIntegration
     verify_oauth_application_attributes(oauth_application, json_body)
   end
 
+  def test_oidc_client_registration_public_client_no_client_secret
+    rodauth do
+      oauth_token_endpoint_auth_methods_supported { super() | %w[none] }
+    end
+    setup_application
+    header "Accept", "application/json"
+
+    post("/register", valid_registration_params.merge(
+                        "token_endpoint_auth_method" => "none"
+                      ))
+
+    assert last_response.status == 201
+    assert json_body["token_endpoint_auth_method"] == "none"
+    assert !json_body.key?("client_secret")
+    assert !json_body.key?("client_secret_expires_at")
+    oauth_application = db[:oauth_applications].where(client_id: json_body["client_id"]).first
+    assert oauth_application[:client_secret].nil?
+  end
+
   def test_oidc_client_registration_native_application_type
     rodauth do
       oauth_valid_uri_schemes %w[http https newapp]
