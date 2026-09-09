@@ -166,7 +166,7 @@ module Rodauth
     def load_oauth_server_metadata_route(issuer = nil)
       request.on(".well-known") do
         request.get("oauth-authorization-server") do
-          json_response_success(oauth_server_metadata_body(issuer).compact, true)
+          json_response_success(oauth_server_metadata_body(issuer), true)
         end
       end
     end
@@ -789,19 +789,22 @@ module Rodauth
       issuer = base_url
       issuer += "/#{path}" if path
 
-      {
+      payload = {
         issuer: issuer,
         token_endpoint: token_url,
         scopes_supported: oauth_application_scopes,
         response_types_supported: oauth_response_types_supported,
         response_modes_supported: oauth_response_modes_supported,
         grant_types_supported: oauth_grant_types_supported,
-        token_endpoint_auth_methods_supported: oauth_token_endpoint_auth_methods_supported,
-        service_documentation: oauth_metadata_service_documentation,
-        ui_locales_supported: oauth_metadata_ui_locales_supported,
-        op_policy_uri: oauth_metadata_op_policy_uri,
-        op_tos_uri: oauth_metadata_op_tos_uri
+        token_endpoint_auth_methods_supported: oauth_token_endpoint_auth_methods_supported
       }
+
+      # RFC 8414, section 2: unused optional metadata parameters must be omitted, not null
+      payload[:service_documentation] = oauth_metadata_service_documentation if oauth_metadata_service_documentation
+      payload[:ui_locales_supported] = oauth_metadata_ui_locales_supported if oauth_metadata_ui_locales_supported
+      payload[:op_policy_uri] = oauth_metadata_op_policy_uri if oauth_metadata_op_policy_uri
+      payload[:op_tos_uri] = oauth_metadata_op_tos_uri if oauth_metadata_op_tos_uri
+      payload
     end
 
     def redirect_response_error(error_code, message = nil)
