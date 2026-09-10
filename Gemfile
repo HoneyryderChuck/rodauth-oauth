@@ -52,9 +52,6 @@ gem "xmlenc"
 gem "rodauth-select-account", "~> 0.1.2"
 gem "simplecov"
 
-# a lot of deps are still requiring quirks mode
-gem "json", "< 3.0.0"
-
 platform :mri, :truffleruby do
   gem "debug"
   if RUBY_VERSION >= "3.0.0"
