@@ -77,6 +77,7 @@ GEM
       net-http (~> 0.5)
     ffi (1.17.4)
     ffi (1.17.4-x86_64-darwin)
+    ffi (1.17.4-x86_64-linux-gnu)
     hanna (1.5.1)
       rdoc (>= 4, != 6.13.0)
     hanna-nouveau (1.5.0)
@@ -136,6 +137,8 @@ GEM
       net-protocol
     nokogiri (1.19.4-x86_64-darwin)
       racc (~> 1.4)
+    nokogiri (1.19.4-x86_64-linux-gnu)
+      racc (~> 1.4)
     omniauth (2.1.4)
       hashie (>= 3.4.6)
       logger
@@ -163,6 +166,7 @@ GEM
       ast (~> 2.4.1)
       racc
     pg (1.6.3-x86_64-darwin)
+    pg (1.6.3-x86_64-linux)
     pp (0.6.4)
       prettyprint
     prettyprint (0.2.0)
@@ -250,6 +254,7 @@ GEM
       bigdecimal
     simplecov (1.2.0)
     sqlite3 (2.9.6-x86_64-darwin)
+    sqlite3 (2.9.6-x86_64-linux-gnu)
     swd (2.0.3)
       activesupport (>= 3)
       attr_required (>= 0.0.5)
@@ -293,6 +298,7 @@ GEM
 
 PLATFORMS
   x86_64-darwin-24
+  x86_64-linux
 
 DEPENDENCIES
   activerecord-jdbc-adapter
