@@ -117,7 +117,8 @@ module Rodauth
     def oauth_server_metadata_body(*)
       super.tap do |data|
         data[:revocation_endpoint] = revoke_url
-        # revocation_endpoint_auth_methods_supported is omitted: it defaults to client_secret_basic
+        # revocation_endpoint_auth_methods_supported must be absent: it defaults to client_secret_basic
+        data.delete(:revocation_endpoint_auth_methods_supported)
       end
     end
   end
