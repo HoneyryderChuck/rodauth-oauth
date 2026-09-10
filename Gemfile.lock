@@ -10,7 +10,7 @@ GIT
 PATH
   remote: .
   specs:
-    rodauth-oauth (1.6.6)
+    rodauth-oauth (1.6.7)
       base64
       rodauth (~> 2.28)
 
