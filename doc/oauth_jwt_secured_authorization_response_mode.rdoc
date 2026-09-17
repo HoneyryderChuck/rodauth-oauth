@@ -4,7 +4,7 @@ The +oauth_jwt_secured_authorization_response_mode+ feature implements support f
 
 https://openid.net/specs/openid-financial-api-jarm.html
 
-This feature depends on the oauth_authorize_base and oauth_jwt_base features.
+This feature depends on the +oauth_authorize_base+ and +oauth_jwt_base+ features.
 
 == Value Methods
 

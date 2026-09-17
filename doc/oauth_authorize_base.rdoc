@@ -1,10 +1,10 @@
 = Documentation for OAuth Authorization Base feature
 
-The +oauth_authorization_base+ provides common functionality shared by OAuth grant implementations (oauth_authorization_code_grant, oauth_implicit_grant or oauth_device_code_grant, to name a few).
+The +oauth_authorization_base+ provides common functionality shared by OAuth grant implementations (+oauth_authorization_code_grant+, +oauth_implicit_grant+ or +oauth_device_code_grant+, to name a few).
 
 It implements the Authorization Request form page.
 
-This feature depends on the oauth_base feature.
+This feature depends on the +oauth_base+ feature.
 
 == The authorization form
 

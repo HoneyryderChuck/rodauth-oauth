@@ -2,7 +2,7 @@
 
 The +oauth_assertion_base+ feature provides functionality which implements the Assertion Framework for OAuth 2.0 Client Authentication and Authorization Grants.
 
-This functionality is used by the oauth_saml_bearer_grant and the oauth_jwt_bearer_grant features.
+This functionality is used by the +oauth_saml_bearer_grant+ and the +oauth_jwt_bearer_grant+ features.
 
 https://datatracker.ietf.org/doc/html/rfc7521
 
