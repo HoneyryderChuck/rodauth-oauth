@@ -4,7 +4,7 @@ The oauth_dpop feature implements the OAuth 2.0 Demonstrating Proof-of-Possessio
 
 https://datatracker.ietf.org/doc/html/draft-ietf-oauth-dpop
 
-This feature depends on the oauth_authorize_base and oauth_jwt features.
+This feature depends on the +oauth_authorize_base+ and +oauth_jwt+ features.
 
 == Auth Value Methods
 

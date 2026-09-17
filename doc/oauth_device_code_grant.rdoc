@@ -4,7 +4,7 @@ The +oauth_device_code_grant+ feature implements the OAuth 2.0 Device Authorizat
 
 https://datatracker.ietf.org/doc/html/rfc8628
 
-This feature depends on the oauth_authorize_base feature.
+This feature depends on the +oauth_authorize_base+ feature.
 
 == Auth Value Methods
 
