@@ -28,7 +28,7 @@ cache:
   - MYSQL_PWD=password mariadb --disable-ssl-verify-server-cert -h mysql -u root -e 'CREATE DATABASE oauthunique'
 
 .install_deps_sqlite: &install_deps_sqlite
-  - apt-get update && apt-get install -y ca-certificates shared-mime-info libyaml-dev libsqlite3-dev
+  - apt-get update && apt-get install -y shared-mime-info libyaml-dev libsqlite3-dev
 
 .install_deps: &install_deps
   - *install_deps_sqlite
