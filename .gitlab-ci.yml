@@ -294,6 +294,7 @@ coverage:
   coverage: '/coverage: \d+ \/ \d+ \((\d+.\d+\%)/'
   before_script:
     - gem install simplecov --no-doc
+    - find coverage -name "*resultset.json" -exec sed -i 's?/home?'`pwd`'?' {} \;
   dependencies:
     - jruby
     - truffleruby
