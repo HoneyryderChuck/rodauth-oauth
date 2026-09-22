@@ -10,7 +10,7 @@ GIT
 PATH
   remote: .
   specs:
-    rodauth-oauth (1.6.7)
+    rodauth-oauth (1.7.0)
       base64
       rodauth (~> 2.28)
 
@@ -517,7 +517,7 @@ CHECKSUMS
   roda (3.108.0) sha256=a209acc5c885c7c9cfe703ad985b343026f79f67949932dd739b83e5a129ffbd
   rodauth (2.47.0)
   rodauth-i18n (0.11.1) sha256=6a2888a1fa2912d79bcd2da3eee959a01fe89006b13c762c6ce37801bec3194b
-  rodauth-oauth (1.6.7)
+  rodauth-oauth (1.7.0)
   rodauth-select-account (0.1.4) sha256=0fc4e5898daf3d97a112d6e08ef5eb7f34976d7659ffe8792d494da93de45f25
   rotp (6.3.0) sha256=75d40087e65ed0d8022c33055a6306c1c400d1c12261932533b5d6cbcd868854
   rqrcode (3.2.0) sha256=64c1494ca6bb67d731330f38b50e3fd09eeab4f5dcd04b608e21218d1d0b9542
