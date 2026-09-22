@@ -27,8 +27,13 @@ cache:
   - PGPASSWORD=password createdb -h postgres -U oauth oauth-unique 'oauth database to keep single row for access tokens'
   - MYSQL_PWD=password mariadb --disable-ssl-verify-server-cert -h mysql -u root -e 'CREATE DATABASE oauthunique'
 
+.debian9_aptget_trusted: &debian9_aptget_trusted
+  - echo "deb [trusted=yes] http://archive.debian.org/debian stretch main non-free contrib" > /etc/apt/sources.list
+  - echo "deb-src [trusted=yes] http://archive.debian.org/debian stretch main non-free contrib" >> /etc/apt/sources.list
+  - echo "deb [trusted=yes] http://archive.debian.org/debian-security stretch/updates main non-free contrib" >> /etc/apt/sources.list
+
 .install_deps_sqlite: &install_deps_sqlite
-  - apt-get update && apt-get install -y ca-certificates shared-mime-info libyaml-dev libsqlite3-dev
+  - apt-get update && apt-get install -y shared-mime-info libyaml-dev libsqlite3-dev
 
 .install_deps: &install_deps
   - *install_deps_sqlite
@@ -120,6 +125,7 @@ truffleruby:
       - "coverage/"
 ruby25:
   before_script:
+    - *debian9_aptget_trusted
     - *install_deps_sqlite
     - *before_script
   image: "ruby:2.5"
@@ -133,6 +139,7 @@ ruby25:
       - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails52, Gemfile-rails51]
 ruby26:
   before_script:
+    - *debian9_aptget_trusted
     - *install_deps_sqlite
     - *before_script
   image: "ruby:2.6"
@@ -149,6 +156,7 @@ ruby26:
 ruby27:
   <<: *test_services
   before_script:
+    - *debian9_aptget_trusted
     - *install_deps_sqlite
     - *before_script
   image: "ruby:2.7"
@@ -162,6 +170,7 @@ ruby27:
       - "coverage/"
 ruby30:
   before_script:
+    - *debian9_aptget_trusted
     - *install_deps_sqlite
     - *before_script
   image: "ruby:3.0"
