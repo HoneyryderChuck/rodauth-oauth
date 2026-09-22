@@ -55,6 +55,7 @@ This gem implements the following RFCs and features of OAuth:
 * `oauth_dynamic_client_registration` - [Dynamic Client Registration Protocol](https://datatracker.ietf.org/doc/html/rfc7591) and [Dynamic Client Registration Management](https://www.rfc-editor.org/rfc/rfc7592);
 * OAuth application and token management dashboards;
 *  The recommendations for [Native Apps](https://www.rfc-editor.org/rfc/rfc8252);
+* `oauth_client_id_metadata_document` - [Client ID Metadata Document](https://datatracker.ietf.org/doc/draft-ietf-oauth-client-id-metadata-document/);
 
 It also implements several components of [OpenID Connect](https://openid.net/connect/) on top of the OAuth features it provides, including:
 
