@@ -29,8 +29,13 @@ class RodauthOauthOidcServerMetadataTest < OIDCIntegration
     assert json_body["claim_types_supported"] == %w[normal]
     assert json_body["claims_supported"] == %w[sub iss iat exp aud auth_time email email_verified]
 
-    assert json_body["request_object_signing_alg_values_supported"] == %w[HS256 HS384 HS512 HS512256 RS256 RS384 RS512
-                                                                          ED25519 ES256 ES384 ES512 PS256 PS384 PS512]
+    if ENV["JWT_LIB"] == "json/jwt"
+      assert json_body["request_object_signing_alg_values_supported"] == %w[HS256 HS384 HS512 RS256 RS384 RS512 PS256
+                                                                            PS384 PS512 ES256 ES384 ES512 ES256K]
+    else
+      assert json_body["request_object_signing_alg_values_supported"] == %w[HS256 HS384 HS512 HS512256 RS256 RS384 RS512
+                                                                            ED25519 ES256 ES384 ES512 PS256 PS384 PS512]
+    end
   end
 
   def test_oidc_metadata_openid_configuration_cors
