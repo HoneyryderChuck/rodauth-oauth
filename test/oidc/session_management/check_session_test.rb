@@ -23,7 +23,7 @@ class RodauthOauthOIDCSessionManagementCheckSessionTest < OIDCIntegration
       oauth_jwt_keys("RS256" => OpenSSL::PKey::RSA.generate(2048))
       oauth_applications_jwks_column :jwks
       oauth_response_mode "query"
-      oauth_oidc_session_management_salt "SECRET"
+      oauth_unique_id_generator { "SECRET" }
     end
     super
   end
