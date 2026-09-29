@@ -46,7 +46,6 @@ module Rodauth
                           request.params.key?("code_verifier") &&
                           param_or_nil("grant_type") == "authorization_code"
 
-
       super(oauth_application, auth_method, NONE_AUTH_METHODS)
     end
 

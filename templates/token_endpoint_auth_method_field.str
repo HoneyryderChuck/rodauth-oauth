@@ -1,0 +1,11 @@
+<fieldset class="form-group">
+  <legend>#{rodauth.oauth_applications_token_endpoint_auth_method_label}</legend>
+  #{
+    rodauth.oauth_token_endpoint_auth_methods_supported.map do |auth_method|
+      "<div class=\"form-group form-check\">" +
+      "<input id=\"#{auth_method}\" type=\"checkbox\" class=\"form-check-input\" name=\"#{rodauth.oauth_application_token_endpoint_auth_method_param}[]\" value=\"#{auth_method}\">" +
+      "<label for=\"#{auth_method}\">#{auth_method}</label>" +
+      "</div>"
+    end.join
+  }
+</fieldset>

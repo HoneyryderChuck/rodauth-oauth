@@ -18,10 +18,10 @@ module Rodauth
     view "oauth_application_oauth_grants", "Oauth Application Grants", "oauth_application_oauth_grants"
 
     # Application
-    APPLICATION_REQUIRED_PARAMS = %w[name scopes homepage_url redirect_uri client_secret].freeze
+    APPLICATION_REQUIRED_PARAMS = %w[name scopes homepage_url redirect_uri client_secret token_endpoint_auth_method].freeze
     auth_value_method :oauth_application_required_params, APPLICATION_REQUIRED_PARAMS
 
-    (APPLICATION_REQUIRED_PARAMS + %w[description client_id]).each do |param|
+    (APPLICATION_REQUIRED_PARAMS + %w[description client_id token_endpoint_auth_method]).each do |param|
       auth_value_method :"oauth_application_#{param}_param", param
     end
 
@@ -40,6 +40,7 @@ module Rodauth
     translatable_method :oauth_applications_client_type_label, "Client Type"
     translatable_method :oauth_applications_confidential_label, "Confidential"
     translatable_method :oauth_applications_public_label, "Public"
+    translatable_method :oauth_applications_token_endpoint_auth_method_label, "Token Endpoint Authentication Methods"
 
     %w[type token refresh_token expires_in revoked_at].each do |param|
       translatable_method :"oauth_grants_#{param}_label", param.gsub("_", " ").capitalize
@@ -55,6 +56,7 @@ module Rodauth
     auth_value_method :oauth_grants_per_page, 20
 
     translatable_method :invalid_url_message, "Invalid URL"
+    translatable_method :oauth_invalid_token_endpoint_auth_method_message, "Invalid Token Endpoint Authentication Method"
     translatable_method :null_error_message, "is not filled"
 
     translatable_method :oauth_no_applications_text, "No oauth applications yet!"
@@ -175,11 +177,12 @@ module Rodauth
 
     def validate_oauth_application_params
       oauth_application_params.each do |key, value|
-        if key == oauth_application_homepage_url_param
+        case key
+        when oauth_application_homepage_url_param
 
           set_field_error(key, invalid_url_message) unless check_valid_uri?(value)
 
-        elsif key == oauth_application_redirect_uri_param
+        when oauth_application_redirect_uri_param
 
           if value.respond_to?(:each)
             value.each do |uri|
@@ -190,10 +193,17 @@ module Rodauth
           else
             set_field_error(key, invalid_url_message) unless check_valid_no_fragment_uri?(value)
           end
-        elsif key == oauth_application_scopes_param
+        when oauth_application_scopes_param
 
           value.each do |scope|
             set_field_error(key, oauth_invalid_scope_message) unless oauth_application_scopes.include?(scope)
+          end
+        when oauth_application_token_endpoint_auth_method_param
+          value.each do |auth_method|
+            unless oauth_token_endpoint_auth_methods_supported.include?(auth_method)
+              set_field_error(key,
+                              oauth_invalid_token_endpoint_auth_method_message)
+            end
           end
         end
       end
@@ -207,7 +217,8 @@ module Rodauth
         oauth_applications_name_column => oauth_application_params[oauth_application_name_param],
         oauth_applications_description_column => oauth_application_params[oauth_application_description_param],
         oauth_applications_scopes_column => oauth_application_params[oauth_application_scopes_param],
-        oauth_applications_homepage_url_column => oauth_application_params[oauth_application_homepage_url_param]
+        oauth_applications_homepage_url_column => oauth_application_params[oauth_application_homepage_url_param],
+        oauth_applications_token_endpoint_auth_method_column => oauth_application_params[oauth_application_token_endpoint_auth_method_param]
       }
 
       redirect_uris = oauth_application_params[oauth_application_redirect_uri_param]
@@ -219,6 +230,11 @@ module Rodauth
 
       if create_params[oauth_applications_scopes_column]
         create_params[oauth_applications_scopes_column] = create_params[oauth_applications_scopes_column].join(oauth_scope_separator)
+      end
+
+      if create_params[oauth_applications_token_endpoint_auth_method_column]
+        create_params[oauth_applications_token_endpoint_auth_method_column] =
+          create_params[oauth_applications_token_endpoint_auth_method_column].join(oauth_scope_separator)
       end
 
       rescue_from_uniqueness_error do

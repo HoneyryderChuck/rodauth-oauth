@@ -71,6 +71,41 @@ class RodauthOauthApplicationsTest < RodaIntegration
     assert_includes page.html, "No oauth applications yet!"
   end
 
+  def test_oauth_application_public_page
+    rodauth do
+      oauth_token_endpoint_auth_methods_supported { super() + %w[none] }
+    end
+    setup_application do |rodauth|
+      rodauth.load_oauth_application_management_routes
+    end
+    login
+    # List
+    visit "/oauth-applications"
+    assert_includes page.html, "No oauth applications yet!"
+    # Create a new Application
+    click_link "New Oauth Application"
+    assert_includes page.html, "New Oauth Application"
+    fill_in "name", with: "Foo App"
+    fill_in "description", with: "An app starting with Foo"
+    fill_in "homepage-url", with: "https://foobar.com"
+    fill_in "redirect-uri", with: "https://foobar.com/callback"
+    fill_in "client-secret", with: "SECRET"
+    check "user.read"
+    check "user.write"
+    check "none"
+    click_button "Register"
+
+    # Application page
+    assert_equal page.find("#notice").text, "Your oauth application has been registered"
+    assert_includes page.html, "Client ID: "
+    assert_includes page.html, "Default scopes: "
+    assert_includes page.html, "Token Endpoint Authentication Method: "
+    assert_includes page.html, "none"
+    assert_includes page.html, "Client Type: "
+    assert_includes page.html, "Public"
+    assert db[:oauth_applications].one?
+  end
+
   def test_oauth_applications_with_prefix
     rodauth do
       prefix "/auth"
@@ -100,6 +135,8 @@ class RodauthOauthApplicationsTest < RodaIntegration
     assert_equal page.find("#notice").text, "Your oauth application has been registered"
     assert_includes page.html, "Client ID: "
     assert_includes page.html, "Default scopes: "
+    assert_includes page.html, "Client Type: "
+    assert_includes page.html, "Confidential"
     assert db[:oauth_applications].one?
   end
 

@@ -6,6 +6,7 @@
   #{rodauth.render('homepage_url_field')}
   #{rodauth.render('redirect_uri_field')}
   #{rodauth.render('client_secret_field')}
+  #{rodauth.render('token_endpoint_auth_method_field')}
   #{rodauth.render('scope_field')}
   #{
     if rodauth.features.include?(:oauth_jwt)

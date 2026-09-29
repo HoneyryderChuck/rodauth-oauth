@@ -1,6 +1,8 @@
 <div id="oauth-application">
   <dl>
-    <dt class="confidential">#{rodauth.oauth_applications_client_type_label}</dt>
+    <dt class="token_endpoint_auth_method">#{rodauth.oauth_applications_token_endpoint_auth_method_label}: </dt>
+    <dd class="token_endpoint_auth_method">#{@oauth_application[rodauth.oauth_applications_token_endpoint_auth_method_column]}</dd>
+    <dt class="confidential">#{rodauth.oauth_applications_client_type_label}: </dt>
     <dd class="confidential">#{rodauth.oauth_application_client_type_label(@oauth_application)}</dd>
     #{
       params = [*rodauth.oauth_application_required_params, "client_id"]
