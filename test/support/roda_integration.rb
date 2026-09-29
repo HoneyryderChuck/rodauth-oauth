@@ -101,7 +101,7 @@ class RodaIntegration < Minitest::Test
     opts = rodauth_opts(type)
 
     if (opts[:json] = jwt_only || type == :json ? :only : true)
-      app.plugin :json_parser, :content_type_regexp=>/\Aapplication\/(?:vnd\.api\+)?json\b/i
+      app.plugin :json_parser, content_type_regexp: %r{\Aapplication/(?:vnd\.api\+)?json\b}i
     end
 
     app.plugin(:rodauth, opts) do
