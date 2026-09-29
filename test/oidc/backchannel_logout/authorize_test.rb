@@ -55,6 +55,57 @@ class RodauthOauthOIDCBackchannelLogoutAuthorizeTest < OIDCIntegration
     end
   end
 
+  def test_oidc_authorize_id_token_post_authorize_with_network_errors
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
+    rodauth do
+      oauth_jwt_keys("RS256" => jws_key)
+      oauth_jwt_public_keys("RS256" => jws_public_key)
+    end
+    oauth_application = set_oauth_application(backchannel_logout_uri: "http://logout.com")
+    setup_application
+    login
+
+    # show the authorization form
+    visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=openid&" \
+          "response_type=id_token&state=STATE&nonce=NONCE"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    check "openid"
+
+    # submit authorization request
+    click_button "Authorize"
+
+    assert page.current_url =~ /#{oauth_application[:redirect_uri]}#id_token=([^&]+)&state=STATE/,
+           "was redirected instead to #{page.current_url}"
+
+    assert db[:oauth_grants].none?,
+           "a grant has been created"
+    id_token_claims = verify_id_token(Regexp.last_match(1), db[:oauth_grants].first, signing_key: jws_public_key, signing_algo: "RS256")
+    assert id_token_claims.key?("sid")
+
+    # now let's logout
+    visit("/")
+    stub_request(:post, "http://logout.com")
+      .to_raise(StandardError)
+
+    logout
+
+    assert_requested(:post, "http://logout.com") do |req|
+      body = req.body
+      assert body.match(/logout_token=(.+)/)
+      params = URI.decode_www_form(body).to_h
+      logout_token = params["logout_token"]
+
+      logout_claims = verify_logout_token(logout_token, nil, signing_key: jws_public_key, signing_algo: "RS256")
+      assert logout_claims.key?("sid")
+      assert logout_claims["sid"] == id_token_claims["sid"]
+    end
+
+    assert page.current_path == "/login",
+           "was redirected instead to #{page.current_path}"
+  end
+
   def test_oidc_authorize_id_token_post_authorize_without_sid
     jws_key = OpenSSL::PKey::RSA.generate(2048)
     jws_public_key = jws_key.public_key

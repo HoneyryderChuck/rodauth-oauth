@@ -278,6 +278,30 @@ class RodauthOauthJwtSecuredAuthorizationResponseModeAuthorizeTest < JWTIntegrat
            "was redirected instead to #{page.current_url}"
   end
 
+  def test_jarm_authorize_post_invalid_response_mode
+    jws_key = OpenSSL::PKey::RSA.generate(2048)
+    jws_public_key = jws_key.public_key
+
+    rodauth do
+      oauth_jwt_keys("RS256" => jws_key)
+      oauth_jwt_public_keys("RS256" => jws_public_key)
+    end
+    setup_application
+    login
+
+    application = oauth_application(jwks: JSON.dump([JWT::JWK.new(jws_public_key).export.merge(use: "sig", alg: "RS256")]))
+
+    # show the authorization form
+    visit "/authorize?client_id=#{application[:client_id]}&response_type=code&response_mode=bla.jwt&state=STATE"
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_path}"
+    check "user.read"
+    click_button "Authorize"
+
+    assert page.current_path == "/authorize",
+           "was redirected instead to #{page.current_url}"
+  end
+
   private
 
   def setup_application(*, **)
