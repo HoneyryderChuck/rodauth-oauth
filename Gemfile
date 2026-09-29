@@ -29,7 +29,7 @@ gem "jwe"
 # direct dependencies
 gem "json-jwt"
 gem "jwt"
-gem "rodauth", git: "https://github.com/jeremyevans/rodauth.git", branch: "master"
+gem "rodauth"
 gem "sequel"
 
 # Demo-only
