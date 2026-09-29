@@ -1,6 +1,7 @@
 <h2><%= rodauth.new_oauth_application_page_title %></h2>
 <%= form_tag rodauth.oauth_applications_path, method: :post, class: "form-horizontal" do %>
   <%= rodauth.field_error('scope') %>
+  <%= rodauth.field_error('token_endpoint_auth_method') %>
   <div class="form-group">
     <%= label_tag "name", rodauth.oauth_applications_name_label %>
     <%= text_field_tag "name", rodauth.param('name'), class: "form-control#{' is-invalid' if rodauth.field_error('name')}" %>
@@ -38,9 +39,15 @@
       <%= rodauth.field_error('jwks_uri') %>
     </div>
   <% end %>
+  <% rodauth.oauth_token_endpoint_auth_methods_supported.each do |auth_method| %>
+    <div class="form-check">
+      <%= check_box_tag "#{rodauth.oauth_application_token_endpoint_auth_method_param}[]", auth_method, false, id: auth_method, class: "form-check-input" %>
+      <%= auth_method %>
+    </div>
+  <% end %>
   <% rodauth.oauth_application_scopes.each do |scope| %>
     <div class="form-check">
-      <%= check_box_tag "scopes[]", scope, false, id: scope, class: "form-check-input" %>
+      <%= check_box_tag "#{rodauth.oauth_application_scopes_param}[]", scope, false, id: scope, class: "form-check-input" %>
       <%= scope %>
     </div>
   <% end %>
