@@ -138,7 +138,7 @@ module Rodauth
 
     def oauth_server_metadata_body(*)
       super.tap do |data|
-        data[:token_endpoint_auth_methods_supported] << "urn:ietf:params:oauth:client-assertion-type:saml2-bearer"
+        data[:token_endpoint_auth_methods_supported] += "urn:ietf:params:oauth:client-assertion-type:saml2-bearer"
       end
     end
   end
