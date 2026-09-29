@@ -18,7 +18,7 @@ module Rodauth
     view "oauth_application_oauth_grants", "Oauth Application Grants", "oauth_application_oauth_grants"
 
     # Application
-    APPLICATION_REQUIRED_PARAMS = %w[name scopes homepage_url redirect_uri client_secret token_endpoint_auth_method].freeze
+    APPLICATION_REQUIRED_PARAMS = %w[name scopes homepage_url redirect_uri client_secret].freeze
     auth_value_method :oauth_application_required_params, APPLICATION_REQUIRED_PARAMS
 
     (APPLICATION_REQUIRED_PARAMS + %w[description client_id token_endpoint_auth_method]).each do |param|
@@ -217,9 +217,11 @@ module Rodauth
         oauth_applications_name_column => oauth_application_params[oauth_application_name_param],
         oauth_applications_description_column => oauth_application_params[oauth_application_description_param],
         oauth_applications_scopes_column => oauth_application_params[oauth_application_scopes_param],
-        oauth_applications_homepage_url_column => oauth_application_params[oauth_application_homepage_url_param],
-        oauth_applications_token_endpoint_auth_method_column => oauth_application_params[oauth_application_token_endpoint_auth_method_param]
+        oauth_applications_homepage_url_column => oauth_application_params[oauth_application_homepage_url_param]
       }
+
+      auth_methods = request.params.fetch(oauth_application_token_endpoint_auth_method_param, oauth_token_endpoint_auth_methods_supported)
+      create_params[oauth_applications_token_endpoint_auth_method_column] = auth_methods.join(oauth_scope_separator)
 
       redirect_uris = oauth_application_params[oauth_application_redirect_uri_param]
       redirect_uris = redirect_uris.to_a.reject(&:empty?).join(" ") if redirect_uris.respond_to?(:each)
@@ -230,11 +232,6 @@ module Rodauth
 
       if create_params[oauth_applications_scopes_column]
         create_params[oauth_applications_scopes_column] = create_params[oauth_applications_scopes_column].join(oauth_scope_separator)
-      end
-
-      if create_params[oauth_applications_token_endpoint_auth_method_column]
-        create_params[oauth_applications_token_endpoint_auth_method_column] =
-          create_params[oauth_applications_token_endpoint_auth_method_column].join(oauth_scope_separator)
       end
 
       rescue_from_uniqueness_error do
