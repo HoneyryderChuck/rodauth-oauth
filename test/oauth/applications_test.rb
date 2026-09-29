@@ -75,9 +75,7 @@ class RodauthOauthApplicationsTest < RodaIntegration
     rodauth do
       oauth_token_endpoint_auth_methods_supported { super() + %w[none] }
     end
-    setup_application do |rodauth|
-      rodauth.load_oauth_application_management_routes
-    end
+    setup_application(&:load_oauth_application_management_routes)
     login
     # List
     visit "/oauth-applications"

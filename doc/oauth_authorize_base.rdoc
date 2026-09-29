@@ -72,7 +72,6 @@ oauth_authorize_parameter_required :: Error message for required params missing 
 
 == Auth Methods
 
-oauth_grants_resource_owner_columns :: db columns which identify a resource owner in the grants table.
 resource_owner_params :: conditionals to filter grants by a given logged in resource owner.
 before_authorize_route :: Run arbitrary code before the authorize route.
 before_authorize :: Run arbitrary code before executing an "authorize" endpoint.

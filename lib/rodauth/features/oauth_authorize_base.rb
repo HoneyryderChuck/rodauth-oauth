@@ -30,7 +30,6 @@ module Rodauth
 
     auth_methods(
       :resource_owner_params,
-      :oauth_grants_resource_owner_columns,
       :authorize_form_params
     )
 
@@ -152,10 +151,6 @@ module Rodauth
 
     def resource_owner_params
       { oauth_grants_account_id_column => account_id }
-    end
-
-    def oauth_grants_resource_owner_columns
-      [oauth_grants_account_id_column]
     end
 
     def try_approval_prompt
