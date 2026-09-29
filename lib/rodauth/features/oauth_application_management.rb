@@ -176,7 +176,8 @@ module Rodauth
     end
 
     def validate_oauth_application_params
-      oauth_application_params.each do |key, value|
+      oauth_application_params # eager load and validate
+      request.params.each do |key, value|
         case key
         when oauth_application_homepage_url_param
 
