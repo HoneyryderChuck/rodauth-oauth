@@ -34,20 +34,20 @@ module Rodauth
 
     private
 
+    NONE_AUTH_METHODS = %w[none].freeze
+
     # PKCE lets public clients redeem authorization codes without client credentials.
     # The relaxation only applies to the authorization code grant, and not to applications which
     # registered a token endpoint auth method other than "none" (RFC 6749 section 3.2.1).
     def supports_auth_method?(oauth_application, auth_method)
-      return super unless auth_method == "none"
-      return super unless oauth_application && pkce_token_request?
+      return super unless auth_method == "none" &&
+                          # check if it's a /token request with PKCE params
+                          request.path == token_path &&
+                          request.params.key?("code_verifier") &&
+                          param_or_nil("grant_type") == "authorization_code"
 
-      registered_auth_methods = oauth_application[oauth_applications_token_endpoint_auth_method_column]
 
-      registered_auth_methods.nil? || registered_auth_methods.split(/ +/).include?("none") || super
-    end
-
-    def pkce_token_request?
-      request.params.key?("code_verifier") && param_or_nil("grant_type") == "authorization_code"
+      super(oauth_application, auth_method, NONE_AUTH_METHODS)
     end
 
     def validate_authorize_params

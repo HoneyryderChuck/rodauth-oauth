@@ -441,13 +441,13 @@ module Rodauth
       oauth_application
     end
 
-    def supports_auth_method?(oauth_application, auth_method)
+    def supports_auth_method?(oauth_application, auth_method, default_supported_auth_methods = oauth_default_token_endpoint_auth_methods)
       return false unless oauth_application
 
       supported_auth_methods = if (auth_methods = oauth_application[oauth_applications_token_endpoint_auth_method_column])
                                  auth_methods.split(/ +/)
                                else
-                                 oauth_default_token_endpoint_auth_methods
+                                 default_supported_auth_methods
                                end
 
       supported_auth_methods.include?(auth_method)
