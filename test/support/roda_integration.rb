@@ -100,7 +100,9 @@ class RodaIntegration < Minitest::Test
     rodauth_blocks = @rodauth_blocks
     opts = rodauth_opts(type)
 
-    opts[:json] = jwt_only || type == :json ? :only : true
+    if (opts[:json] = jwt_only || type == :json ? :only : true)
+      app.plugin :json_parser, :content_type_regexp=>/\Aapplication\/(?:vnd\.api\+)?json\b/i
+    end
 
     app.plugin(:rodauth, opts) do
       enable :i18n
