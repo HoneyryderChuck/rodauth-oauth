@@ -46,15 +46,15 @@ module Rodauth
       end
     end
 
-    private
+    def request_object_signing_alg_values_supported
+      %w[none RS256]
+    end
 
     def oauth_response_types_supported
       %w[id_token]
     end
 
-    def request_object_signing_alg_values_supported
-      %w[none RS256]
-    end
+    private
 
     def id_token_claims(oauth_grant, signing_algorithm)
       claims = super
