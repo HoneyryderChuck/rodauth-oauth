@@ -6,6 +6,7 @@ module Rodauth
   Feature.define(:oauth_grant_management, :OauthTokenManagement) do
     depends :oauth_management_base, :oauth_token_revocation
 
+    loaded_templates %w[oauth_grants]
     view "oauth_grants", "My Oauth Grants", "oauth_grants"
 
     button "Revoke", "oauth_grant_revoke"

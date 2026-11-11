@@ -56,8 +56,8 @@ gem "simplecov"
 gem "json", "< 3.0.0"
 
 platform :mri, :truffleruby do
-  gem "debug"
   if RUBY_VERSION >= "3.0.0"
+    gem "debug"
     if ENV.fetch("BUNDLE_GEMFILE", "").match(/\-rails(\d+)/) &&
        Regexp.last_match(1).to_i < 72
       # rails 7.2 or higher supports sqlite3 v2.
@@ -90,16 +90,21 @@ platform :mri, :truffleruby do
 end
 
 platform :mri do
-  gem "rbs" if RUBY_VERSION >= "3.0"
-  gem "rubocop"
-  gem "rubocop-performance"
+  gem "rbs" if RUBY_VERSION >= "4.0.0"
+  if RUBY_VERSION >= "3.4.0"
+    gem "herb"
+    gem "rubocop"
+    gem "rubocop-performance"
+  end
 end
 
-group :demo do
-  # For demo
-  gem "erubi"
-  gem "sassc"
-  gem "webrick" if RUBY_VERSION >= "3.0"
+if RUBY_VERSION >= "3.0.0"
+  group :demo do
+    # For demo
+    gem "erubi"
+    gem "sassc"
+    gem "webrick"
+  end
 end
 
 platform :jruby do

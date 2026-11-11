@@ -11,6 +11,7 @@ module Rodauth
   Feature.define(:oidc_frontchannel_logout, :OidFrontchannelLogout) do
     depends :logout, :oidc_logout_base
 
+    loaded_templates %w[frontchannel_logout]
     view "frontchannel_logout", "Logout", "frontchannel_logout"
 
     translatable_method :oauth_frontchannel_logout_redirecting_lead, "You are being redirected..."

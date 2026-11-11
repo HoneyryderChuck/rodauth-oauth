@@ -12,6 +12,11 @@ module Rodauth
     error_flash "There was an error registering your oauth application", "create_oauth_application"
     notice_flash "Your oauth application has been registered", "create_oauth_application"
 
+    loaded_templates %w[
+      oauth_applications oauth_application new_oauth_application oauth_application_oauth_grants
+      client_secret_field description_field homepage_url_field jwks_field name_field redirect_uri_field
+      scope_field token_endpoint_auth_method_field
+    ]
     view "oauth_applications", "Oauth Applications", "oauth_applications"
     view "oauth_application", "Oauth Application", "oauth_application"
     view "new_oauth_application", "New Oauth Application", "new_oauth_application"
