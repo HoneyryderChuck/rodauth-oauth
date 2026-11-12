@@ -26,7 +26,7 @@ module Rodauth
       # self-issued!
       redirect_uri = param_or_nil("client_id")
 
-      registration_params = JSON.parse(registration)
+      registration_params = JSON.parse(CGI.unescapeHTML(registration))
 
       registration_params = SELF_ISSUED_DEFAULT_APPLICATION_PARAMS.merge(registration_params)
 
