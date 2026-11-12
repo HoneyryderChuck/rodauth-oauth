@@ -164,7 +164,7 @@ ruby27:
     - *test_sqlite
   parallel:
     matrix:
-      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails71, Gemfile-rails70, Gemfile-rails61, Gemfile-rails60, Gemfile-rails52]
+      - BUNDLE_GEMFILE: [Gemfile, Gemfile-rails70, Gemfile-rails61, Gemfile-rails60, Gemfile-rails52]
   artifacts:
     paths:
       - "coverage/"
