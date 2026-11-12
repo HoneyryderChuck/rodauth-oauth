@@ -258,7 +258,6 @@ ruby34:
   image: "ruby:3.4"
   script:
     - bundle exec rake check_method_doc
-    - bundle exec rake rubocop
     - *test
   parallel:
     matrix:
@@ -281,6 +280,7 @@ ruby40:
   script:
     - bundle exec rake check_method_doc
     - bundle exec rake rubocop
+    - bundle exec herb analyze .
     - *test
   parallel:
     matrix:
@@ -288,6 +288,22 @@ ruby40:
   artifacts:
     paths:
       - "coverage/"
+
+herb:lint:
+  image: node:24
+  script:
+    - npx --yes @herb-tools/linter
+
+herb:format:
+  image: node:24
+  script:
+    - npx --yes @herb-tools/formatter --check
+
+herb:analyze:
+  image: ruby:4.0
+  script:
+    - gem install herb
+    - herb analyze .
 
 coverage:
   stage: prepare
