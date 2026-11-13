@@ -60,8 +60,8 @@ class RodauthOauthApplicationsTest < RodaIntegration
 
     # Application page
     assert_equal page.find("#notice").text, "Your oauth application has been registered"
-    assert_includes page.html, "Client ID: "
-    assert_includes page.html, "Default scopes: "
+    assert_includes page.html, "Client ID:"
+    assert_includes page.html, "Default scopes:"
     assert db[:oauth_applications].one?
 
     # Application page for different user
@@ -95,11 +95,11 @@ class RodauthOauthApplicationsTest < RodaIntegration
 
     # Application page
     assert_equal page.find("#notice").text, "Your oauth application has been registered"
-    assert_includes page.html, "Client ID: "
-    assert_includes page.html, "Default scopes: "
-    assert_includes page.html, "Token Endpoint Authentication Method: "
+    assert_includes page.html, "Client ID:"
+    assert_includes page.html, "Default scopes:"
+    assert_includes page.html, "Token Endpoint Authentication Method:"
     assert_includes page.html, "none"
-    assert_includes page.html, "Client Type: "
+    assert_includes page.html, "Client Type:"
     assert_includes page.html, "Public"
     assert db[:oauth_applications].one?
   end
@@ -131,9 +131,9 @@ class RodauthOauthApplicationsTest < RodaIntegration
 
     # Application page
     assert_equal page.find("#notice").text, "Your oauth application has been registered"
-    assert_includes page.html, "Client ID: "
-    assert_includes page.html, "Default scopes: "
-    assert_includes page.html, "Client Type: "
+    assert_includes page.html, "Client ID:"
+    assert_includes page.html, "Default scopes:"
+    assert_includes page.html, "Client Type:"
     assert_includes page.html, "Confidential"
     assert db[:oauth_applications].one?
   end
@@ -165,8 +165,8 @@ class RodauthOauthApplicationsTest < RodaIntegration
 
     # Application page
     assert_equal page.find("#notice").text, "Your oauth application has been registered"
-    assert_includes page.html, "Client ID: "
-    assert_includes page.html, "Default scopes: "
+    assert_includes page.html, "Client ID:"
+    assert_includes page.html, "Default scopes:"
     assert db[:oauth_applications].one?
     assert db[:oauth_applications].first[:redirect_uri] == "https://foobar.com/callback https://foobar.com/callback2"
   end
