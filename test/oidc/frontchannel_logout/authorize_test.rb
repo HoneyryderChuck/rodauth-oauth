@@ -43,7 +43,7 @@ class RodauthOauthOIDCFrontchannelLogoutAuthorizeTest < OIDCIntegration
     logout
 
     assert_includes CGI.unescapeHTML(page.html),
-                    %(<iframe src="http://logout.com?iss=#{CGI.escape('http://www.example.com')}&sid=#{claims['sid']}">)
+                    %(<iframe title="OIDC frontchannel logout" src="http://logout.com?iss=#{CGI.escape('http://www.example.com')}&sid=#{claims['sid']}">)
   end
 
   def test_oidc_authorize_id_token_post_authorize_without_sid
@@ -84,7 +84,7 @@ class RodauthOauthOIDCFrontchannelLogoutAuthorizeTest < OIDCIntegration
     visit("/")
     logout
 
-    assert_includes page.html, "<iframe src=\"http://logout.com\">"
+    assert_includes page.html, %(<iframe title="OIDC frontchannel logout" src="http://logout.com">)
   end
 
   def test_oidc_authorize_id_token_post_authorize_with_client_application_sid
@@ -126,7 +126,7 @@ class RodauthOauthOIDCFrontchannelLogoutAuthorizeTest < OIDCIntegration
     logout
 
     assert_includes CGI.unescapeHTML(page.html),
-                    %(<iframe src="http://logout.com?foo=bar&iss=#{CGI.escape('http://www.example.com')}&sid=#{claims['sid']}">)
+                    %(<iframe title="OIDC frontchannel logout" src="http://logout.com?foo=bar&iss=#{CGI.escape('http://www.example.com')}&sid=#{claims['sid']}">)
   end
 
   def test_oidc_authorize_code_post_authorize_with_sid
@@ -178,7 +178,7 @@ class RodauthOauthOIDCFrontchannelLogoutAuthorizeTest < OIDCIntegration
     logout
 
     assert_includes CGI.unescapeHTML(page.html),
-                    %(<iframe src="http://logout.com?iss=#{CGI.escape('http://www.example.com')}&sid=#{claims['sid']}">)
+                    %(<iframe title="OIDC frontchannel logout" src="http://logout.com?iss=#{CGI.escape('http://www.example.com')}&sid=#{claims['sid']}">)
   end
 
   def test_oidc_authorize_code_post_authorize_without_sid
@@ -230,7 +230,7 @@ class RodauthOauthOIDCFrontchannelLogoutAuthorizeTest < OIDCIntegration
     visit("/")
     logout
 
-    assert_includes page.html, "<iframe src=\"http://logout.com\">"
+    assert_includes page.html, %(<iframe title="OIDC frontchannel logout" src="http://logout.com">)
   end
 
   def test_oidc_authorize_code_post_authorize_with_client_application_sid
@@ -283,7 +283,7 @@ class RodauthOauthOIDCFrontchannelLogoutAuthorizeTest < OIDCIntegration
     logout
 
     assert_includes CGI.unescapeHTML(page.html),
-                    %(<iframe src="http://logout.com?foo=bar&iss=#{CGI.escape('http://www.example.com')}&sid=#{claims['sid']}">)
+                    %(<iframe title="OIDC frontchannel logout" src="http://logout.com?foo=bar&iss=#{CGI.escape('http://www.example.com')}&sid=#{claims['sid']}">)
   end
 
   private

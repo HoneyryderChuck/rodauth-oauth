@@ -26,7 +26,7 @@
             <td>
               <% if !oauth_grant[rodauth.oauth_grants_revoked_at_column] && !oauth_grant[rodauth.oauth_grants_token_hash_column] %>
                 <form method="post" action="<%= rodauth.revoke_path %>" class="form-horizontal" role="form" id="revoke-form">
-                  <% if respond_to?(:csrf_tag)  %>
+                  <% if respond_to?(:csrf_tag) %>
                     <%= csrf_tag(rodauth.revoke_path) %>
                   <% end %>
                   <%= rodauth.input_field_string("token_type_hint", "revoke-token-type-hint", :value => "access_token", :type=>"hidden") %>

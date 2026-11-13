@@ -3,7 +3,7 @@
     <%= csrf_tag(rodauth.authorize_path) %>
   <% end %>
   <% if rodauth.oauth_application[rodauth.oauth_applications_logo_uri_column] %>
-    <img src="<%= h(rodauth.oauth_application[rodauth.oauth_applications_logo_uri_column]) %>" />
+    <img alt="oauth application logo" src="<%= h(rodauth.oauth_application[rodauth.oauth_applications_logo_uri_column]) %>">
   <% end %>
   <p class="lead">
     <%
@@ -46,7 +46,7 @@
 
     <% rodauth.authorize_scopes.each do |scope| %>
       <% if rodauth.features.include?(:oidc) && scope == "offline_access" %>
-        <input type="hidden" name="scope[]" value="<%= h(scope) %>" />
+        <input type="hidden" name="scope[]" value="<%= h(scope) %>">
       <% else %>
         <div class="form-check">
           <input id="<%= scope %>" class="form-check-input" type="checkbox" name="scope[]" value="<%= h(scope) %>">
@@ -56,11 +56,11 @@
     <% end %>
 
     <% rodauth.authorize_form_params.each do |field| %>
-      <input type="<%= h(field["type"]) %>" name="<%= h(field["name"]) %>" value="<%= h(field["value"]) %>"/>
+      <input type="<%= h(field["type"]) %>" name="<%= h(field["name"]) %>" value="<%= h(field["value"]) %>">
     <% end %>
   </div>
   <p class="text-center">
-    <input type="submit" class="btn btn-outline-primary" value="<%= h(rodauth.oauth_authorize_button) %>"/>
+    <input type="submit" class="btn btn-outline-primary" value="<%= h(rodauth.oauth_authorize_button) %>">
     <%
       redirect_uri = h(rodauth.redirect_uri) +
         "?error=access_denied&error_description=The+resource+owner+or+authorization+server+denied+the+request"

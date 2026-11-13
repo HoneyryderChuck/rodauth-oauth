@@ -103,10 +103,10 @@ class RodauthOAuthOIDCRpInitiatedLogoutTest < OIDCIntegration
     visit "/oidc-logout?id_token_hint=#{id_token}&post_logout_redirect_uri=https://example.com/logout"
 
     assert_includes CGI.unescapeHTML(page.html),
-                    %(<iframe src="http://logout.com?iss=#{CGI.escape('http://www.example.com')}&sid=#{claims['sid']}">)
+                    %(<iframe title="OIDC frontchannel logout" src="http://logout.com?iss=#{CGI.escape('http://www.example.com')}&sid=#{claims['sid']}">)
 
     assert_includes page.html,
-                    "<meta http-equiv=\"refresh\" content=\"5; URL=https://example.com/logout\" />"
+                    "<meta http-equiv=\"refresh\" content=\"5; URL=https://example.com/logout\">"
   end
 
   private

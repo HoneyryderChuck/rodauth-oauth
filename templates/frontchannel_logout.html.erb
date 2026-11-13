@@ -9,7 +9,7 @@
     %>
   </p>
   <% rodauth.frontchannel_logout_urls.each do |logout_url| %>
-    <iframe src="<%= logout_url %>"></iframe>
+    <iframe title="OIDC frontchannel logout" src="<%= logout_url %>"></iframe>
   <% end %>
 </div>
-<meta http-equiv="refresh" content="<%= rodauth.frontchannel_logout_redirect_timeout %>; URL=<%= rodauth.frontchannel_logout_redirect %>" />
+<meta http-equiv="refresh" content="<%= rodauth.frontchannel_logout_redirect_timeout %>; URL=<%= rodauth.frontchannel_logout_redirect %>">
