@@ -1,6 +1,9 @@
 <% oauth_grant = rodauth.scope.instance_variable_get(:@oauth_grant) %>
+
 <%= form_tag rodauth.device_path, method: :post, class: "form-horizontal", id: "device-verification-form" do %>
-  <p class="lead"><%= rodauth.oauth_device_verification_page_lead(user_code: @oauth_grant[rodauth.oauth_grants_user_code_column]) %></p>
+  <p class="lead">
+    <%= rodauth.oauth_device_verification_page_lead(user_code: @oauth_grant[rodauth.oauth_grants_user_code_column]) %>
+  </p>
 
   <div class="form-group">
     <h1 class="display-6"><%= rodauth.oauth_grants_scopes_label %></h1>
@@ -11,6 +14,7 @@
       <% end %>
     </ul>
   </div>
+
   <%= hidden_field_tag :user_code, rodauth.param("user_code") %>
 
   <p class="text-center">
