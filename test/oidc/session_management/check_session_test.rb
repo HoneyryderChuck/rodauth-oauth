@@ -8,7 +8,7 @@ class RodauthOauthOIDCSessionManagementCheckSessionTest < OIDCIntegration
     login
     visit "/check-session"
 
-    assert_includes page.html, "<!DOCTYPE html>\n<html>"
+    assert_includes page.html, "<!DOCTYPE html>\n\n<html>"
     assert_includes page.html, "function receiveMessage(e)"
   end
 

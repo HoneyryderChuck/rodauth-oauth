@@ -10,6 +10,7 @@ module Rodauth
     before "authorize"
     after "authorize"
 
+    loaded_templates %w[authorize authorize_error]
     view "authorize", "Authorize", "authorize"
     view "authorize_error", "Authorize Error", "authorize_error"
 

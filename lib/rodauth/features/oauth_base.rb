@@ -392,7 +392,7 @@ module Rodauth
     end
 
     def template_path(page)
-      path = File.join(File.dirname(__FILE__), "../../../templates", "#{page}.str")
+      path = File.join(File.dirname(__FILE__), "../../../templates", "#{page}.html.erb")
       return super unless File.exist?(path)
 
       path

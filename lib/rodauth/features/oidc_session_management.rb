@@ -6,6 +6,7 @@ module Rodauth
   Feature.define(:oidc_session_management, :OidcSessionManagement) do
     depends :oidc
 
+    loaded_templates %w[check_session]
     view "check_session", "Check Session", "check_session"
 
     auth_value_method :oauth_oidc_user_agent_state_cookie_key, "_rodauth_oauth_user_agent_state"

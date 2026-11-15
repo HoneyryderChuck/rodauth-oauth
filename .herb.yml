@@ -1,0 +1,28 @@
+framework: actionview # only true of generators though...
+linter:
+  enabled: true
+  rules:
+    actionview-prefer-link-to-helper:
+      exclude:
+        - templates/**
+    erb-prefer-image-tag-helper:
+      exclude:
+        - templates/**
+    actionview-no-implicit-polymorphic-url:
+      exclude:
+        - lib/generators/rodauth/oauth/templates/app/views/rodauth/frontchannel_logout.html.erb
+    html-head-only-elements:
+      # TODO: remove this once we're able to render views with no layout.
+      enabled: false
+    html-require-script-nonce:
+      # flagging because framework is set, but there's no equivalent to roda.
+      # TODO: add an equivalent to roda potentially.
+      enabled: false
+    erb-no-unsafe-script-interpolation:
+      exclude:
+        - templates/check_session.html.erb
+
+formatter:
+  enabled: true
+#   indentWidth: 2
+#   maxLineLength: 120

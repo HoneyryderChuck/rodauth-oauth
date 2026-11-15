@@ -12,6 +12,7 @@ module Rodauth
     notice_flash "The device is verified", "device_verification"
     error_flash "No device to authorize with the given user code", "user_code_not_found"
 
+    loaded_templates %w[device_verification device_search]
     view "device_verification", "Device Verification", "device_verification"
     view "device_search", "Device Search", "device_search"
 

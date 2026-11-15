@@ -326,7 +326,7 @@ module Rodauth
 
       if (claims = param_or_nil("claims"))
         # The value is a JSON object listing the requested Claims.
-        claims = JSON.parse(claims)
+        claims = JSON.parse(CGI.unescapeHTML(claims))
 
         claims.each_value do |individual_claims|
           redirect_response_error("invalid_request") unless individual_claims.is_a?(Hash)
@@ -777,7 +777,7 @@ module Rodauth
         grant_params[oauth_grants_claims_locales_column] = claims_locales
       end
       if (claims = param_or_nil("claims"))
-        grant_params[oauth_grants_claims_column] = claims
+        grant_params[oauth_grants_claims_column] = CGI.unescapeHTML(claims)
       end
       grant_params
     end

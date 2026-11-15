@@ -1,4 +1,0 @@
-<div class="form-group">
-  <label for="homepage_url">#{rodauth.oauth_applications_homepage_url_label}#{rodauth.input_field_label_suffix}</label>
-  #{rodauth.input_field_string(rodauth.oauth_application_homepage_url_param, "homepage-url", :type=>"text")}
-</div>
