@@ -29,28 +29,7 @@ module Rodauth
 
         @client_id_lookup = false
 
-        # rewrite metadata params into column names
-        create_params = Hash[
-          client_metadata.map do |k, v|
-            k = case k
-                when :redirect_uris
-                  v = v.join(" ")
-                  :redirect_uri
-                when :client_uri
-                  :homepage_url
-                when :grant_types, :response_types, :contacts
-                  v = v.join(" ")
-                  k
-                when :client_name
-                  :name
-                when :scope
-                  :scopes
-                else
-                  k
-                end
-            [send(:"oauth_applications_#{k}_column"), v]
-          end
-        ]
+        create_params = client_metadata_document_to_oauth_application_params(client_metadata)
 
         applications_ds = db[oauth_applications_table]
         application_columns = applications_ds.columns
@@ -101,6 +80,42 @@ module Rodauth
 
       # the client_secret and client_secret_expires_at properties MUST NOT be used
       redirect_response_error("invalid_request") if metadata.key?(:client_secret) || metadata.key?(:client_secret_expires_at)
+
+      # A client SHOULD use the token_endpoint_auth_methods_supported
+      # ([OpenID.RPMetadataChoices]) property to advertise which client
+      # authentication methods the client supports, even if the value is only
+      # ["none"].
+      return unless (supported_auth_methods = metadata.delete(:token_endpoint_auth_methods_supported))
+
+      supported_auth_methods &= oauth_token_endpoint_auth_methods_supported
+      redirect_response_error("invalid_request") if supported_auth_methods.empty?
+      supported_auth_methods.shift if supported_auth_methods.first == "none" && supported_auth_methods.size > 1
+      metadata[:token_endpoint_auth_method] = supported_auth_methods.first
+    end
+
+    # rewrite metadata params into column names
+    def client_metadata_document_to_oauth_application_params(client_metadata)
+      Hash[
+          client_metadata.map do |k, v|
+            k = case k
+                when :redirect_uris
+                  v = v.join(" ")
+                  :redirect_uri
+                when :client_uri
+                  :homepage_url
+                when :grant_types, :response_types, :contacts
+                  v = v.join(" ")
+                  k
+                when :client_name
+                  :name
+                when :scope
+                  :scopes
+                else
+                  k
+                end
+            [send(:"oauth_applications_#{k}_column"), v]
+          end
+        ]
     end
 
     def oauth_server_metadata_body(*)
