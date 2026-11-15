@@ -91,12 +91,14 @@ class AuthorizationServer < Roda
 
   secret = ENV.delete("RODAUTH_SESSION_SECRET") || SecureRandom.random_bytes(64)
   plugin :sessions, secret: secret, key: "authorization-server.session"
+  plugin :json_parser, content_type_regexp: %r{\Aapplication/(?:vnd\.api\+)?json\b}i
 
   plugin :rodauth, json: true do
     db DB
     enable :login, :logout, :create_account,
            :oauth_authorization_code_grant, :oauth_tls_client_auth,
            :oauth_dynamic_client_registration, :oauth_token_introspection
+    already_logged_in { redirect "/" }
     login_return_to_requested_location? true
     account_password_hash_column :ph
     title_instance_variable :@page_title
