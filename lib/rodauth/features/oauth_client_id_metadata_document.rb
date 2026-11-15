@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "ipaddr"
 require "rodauth/oauth"
 
 module Rodauth
@@ -9,6 +10,59 @@ module Rodauth
     DOT_SEGMENTS = %w[. ..].freeze
 
     FORBIDDEN_TOKEN_AUTH_METHODS = %w[client_secret_post client_secret_basic client_secret_jwt].freeze
+
+    # https://github.com/arkadiyt/ssrf_filter/blob/main/lib/ssrf_filter/ssrf_filter.rb#L40
+    # https://en.wikipedia.org/wiki/Reserved_IP_addresses
+    IPV4_BLACKLIST = [
+      ::IPAddr.new('0.0.0.0/8'), # Current network (only valid as source address)
+      ::IPAddr.new('10.0.0.0/8'), # Private network
+      ::IPAddr.new('100.64.0.0/10'), # Shared Address Space
+      ::IPAddr.new('127.0.0.0/8'), # Loopback
+      ::IPAddr.new('169.254.0.0/16'), # Link-local
+      ::IPAddr.new('172.16.0.0/12'), # Private network
+      ::IPAddr.new('192.0.0.0/24'), # IETF Protocol Assignments
+      ::IPAddr.new('192.0.2.0/24'), # TEST-NET-1, documentation and examples
+      ::IPAddr.new('192.168.0.0/16'), # Private network
+      ::IPAddr.new('198.18.0.0/15'), # Network benchmark tests
+      ::IPAddr.new('198.51.100.0/24'), # TEST-NET-2, documentation and examples
+      ::IPAddr.new('203.0.113.0/24'), # TEST-NET-3, documentation and examples
+      ::IPAddr.new('224.0.0.0/4'), # IP multicast (former Class D network)
+      ::IPAddr.new('240.0.0.0/4'), # Reserved (former Class E network)
+      ::IPAddr.new('255.255.255.255') # Broadcast
+    ].freeze
+
+    # NAT64 local-use prefix (RFC 8215), uses RFC 6052 /48 encoding (checked at runtime).
+    NAT64_LOCAL_PREFIX = ::IPAddr.new('64:ff9b:1::/48').freeze
+
+    IPV6_BLACKLIST = ([
+      ::IPAddr.new('::/128'), # Unspecified address
+      ::IPAddr.new('::1/128'), # Loopback
+      ::IPAddr.new('100::/64'), # Discard prefix (RFC 6666)
+      ::IPAddr.new('100:0:0:1::/64'), # Dummy IPv6 prefix (RFC 9780)
+      ::IPAddr.new('2001::/32'), # Teredo tunneling
+      ::IPAddr.new('2001:2::/48'), # Benchmarking (RFC 5180)
+      ::IPAddr.new('2001:10::/28'), # Deprecated (previously ORCHID)
+      ::IPAddr.new('2001:20::/28'), # ORCHIDv2
+      ::IPAddr.new('2001:db8::/32'), # Addresses used in documentation and example source code
+      ::IPAddr.new('2002::/16'), # 6to4
+      ::IPAddr.new('3fff::/20'), # Documentation (RFC 9637)
+      ::IPAddr.new('5f00::/16'), # Segment Routing (SRv6) SIDs (RFC 9602)
+      ::IPAddr.new('fc00::/7'), # Unique local address
+      ::IPAddr.new('fe80::/10'), # Link-local address
+      ::IPAddr.new('ff00::/8') # Multicast
+    ] + IPV4_BLACKLIST.flat_map do |ipaddr|
+      prefixlen = prefixlen_from_ipaddr(ipaddr)
+
+      # Don't call ipaddr.ipv4_compat because it prints out a deprecation warning on ruby 2.5+
+      ipv4_compatible  = IPAddr.new(ipaddr.to_i, Socket::AF_INET6).mask(96 + prefixlen)
+      ipv4_mapped      = ipaddr.ipv4_mapped.mask(96 + prefixlen)
+      # IPv4-translated (RFC 2765): ::ffff:0:x.x.x.x/96+n
+      ipv4_translated  = IPAddr.new("::ffff:0:#{ipaddr}").mask(96 + prefixlen)
+      # NAT64 well-known prefix (RFC 6052): 64:ff9b::x.x.x.x/96+n
+      nat64_well_known = IPAddr.new("64:ff9b::#{ipaddr}").mask(96 + prefixlen)
+
+      [ipv4_compatible, ipv4_mapped, ipv4_translated, nat64_well_known]
+    end).freeze
 
     auth_value_method :oauth_applications_created_via_client_id_metadata_column, nil
 
@@ -69,7 +123,28 @@ module Rodauth
         # SHOULD NOT include a query string component, and MAY contain a port.
         (uri.query.nil? || uri.query.empty?)
 
+      # Authorization servers MUST NOT fetch a Client ID Metadata
+      # Document URL or any URLs contained within a Client ID Metadata
+      # Document that resolve to special-use IP addresses as defined in
+      # [RFC6890].
+      return false unless valid_ip?(uri)
       true
+    end
+
+    def valid_ip?(uri)
+      ip = IPAddr.new(IPSocket.getaddress(uri.host))
+
+      # reject IP masks
+      ip_range = ipaddr.to_range
+      return false ip_range.first != ip_range.last
+
+      if ip.ipv4?
+        return false if IPV4_BLACKLIST.any? { |range| range.include?(ip) }
+      else
+        return false if IPV6_BLACKLIST.any? { |range| range.include?(ip) }
+      end
+
+      return true
     end
 
     def validate_client_metadata_document(metadata)
