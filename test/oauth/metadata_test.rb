@@ -184,6 +184,25 @@ class RodauthOauthServerMetadataTest < RodaIntegration
     assert json_body["tls_client_certificate_bound_access_tokens"] == true
   end
 
+  def test_oauth_server_metadata_with_jwt_bearer_grant
+    rodauth do
+      oauth_applications_client_secret_hash_column nil
+    end
+    setup_application(:oauth_jwt_bearer_grant)
+    get("/.well-known/oauth-authorization-server")
+
+    assert last_response.status == 200
+    assert json_body["token_endpoint_auth_methods_supported"].include?("client_secret_jwt")
+    assert json_body["token_endpoint_auth_methods_supported"].include?("private_key_jwt")
+    if ENV["JWT_LIB"] == "json/jwt"
+      assert json_body["token_endpoint_auth_signing_alg_values_supported"] == %w[HS256 HS384 HS512 RS256 RS384 RS512 PS256
+                                                                                 PS384 PS512 ES256 ES384 ES512 ES256K]
+    else
+      assert json_body["token_endpoint_auth_signing_alg_values_supported"] == %w[HS256 HS384 HS512 HS512256 RS256 RS384 RS512
+                                                                                 ED25519 ES256 ES384 ES512 PS256 PS384 PS512]
+    end
+  end
+
   private
 
   def setup_application(*args, **kwargs)

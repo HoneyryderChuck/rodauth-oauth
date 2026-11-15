@@ -11,7 +11,8 @@ module Rodauth
     auth_methods(
       :require_oauth_application_from_jwt_bearer_assertion_issuer,
       :require_oauth_application_from_jwt_bearer_assertion_subject,
-      :account_from_jwt_bearer_assertion
+      :account_from_jwt_bearer_assertion,
+      :token_endpoint_auth_signing_alg_values_supported
     )
 
     def oauth_token_endpoint_auth_methods_supported
@@ -94,6 +95,19 @@ module Rodauth
       return unless claims && verify_aud(request.url, claims["aud"])
 
       claims
+    end
+
+    def token_endpoint_auth_signing_alg_values_supported
+      oauth_jwt_jws_algorithms_supported
+    end
+
+    def oauth_server_metadata_body(*)
+      super.tap do |data|
+        if data[:token_endpoint_auth_methods_supported].include?("client_secret_jwt") ||
+           data[:token_endpoint_auth_methods_supported].include?("private_key_jwt")
+          data[:token_endpoint_auth_signing_alg_values_supported] = token_endpoint_auth_signing_alg_values_supported
+        end
+      end
     end
   end
 end

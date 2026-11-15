@@ -11,3 +11,4 @@ This feature depends on the +oauth_jwt+ and oauth_assertion_base features.
 require_oauth_application_from_jwt_bearer_assertion_issuer :: loads the oauth application from the JWT assertion issuer (client authorization).
 require_oauth_application_from_jwt_bearer_assertion_subject :: loads the oauth application from the JWT assertion subject (client authentication).
 account_from_jwt_bearer_assertion :: loads the user account from the JWT assertion.
+token_endpoint_auth_signing_alg_values_supported :: Supported JWS algorithms for the client secret JWT (when used with <tt>client_secret_jwt</tt> or <tt>private_key_jwt</tt>).
