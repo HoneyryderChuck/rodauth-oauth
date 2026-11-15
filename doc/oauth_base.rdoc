@@ -108,6 +108,9 @@ oauth_cancel_button :: button label which cancels the device verification.
 
 http_request :: performs a GET http request to the given URL (or a POST with url-encoded body, if form data is passed)
 http_request_cache :: store where http requests get cached according to the HTTP cache rules.
+http_request_open_timeout :: timeout for opening a connect for http requests
+http_request_read_timeout :: read timeout for http requests
+http_request_write_timeout :: write timeout for http requests
 
 authorization_server_url :: returns the authorization server origin URL.
 oauth_grants_unique_columns :: uniqueness index to use in ON CONFLICT queries (when supported).

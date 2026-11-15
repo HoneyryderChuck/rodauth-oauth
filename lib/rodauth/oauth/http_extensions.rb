@@ -7,6 +7,12 @@ require "rodauth/oauth/ttl_store"
 module Rodauth
   module OAuth
     module HTTPExtensions
+      def self.included(feature)
+        feature.auth_value_method :http_request_open_timeout, 15
+        feature.auth_value_method :http_request_read_timeout, 15
+        feature.auth_value_method :http_request_write_timeout, 15
+      end
+
       REQUEST_CACHE = OAuth::TtlStore.new
 
       private
@@ -16,9 +22,9 @@ module Rodauth
 
         http = Net::HTTP.new(uri.host, uri.port)
         http.use_ssl = uri.scheme == "https"
-        http.open_timeout = 15
-        http.read_timeout = 15
-        http.write_timeout = 15 if http.respond_to?(:write_timeout)
+        http.open_timeout = http_request_open_timeout
+        http.read_timeout = http_request_read_timeout
+        http.write_timeout = http_request_write_timeout if http.respond_to?(:write_timeout)
 
         if form_data
           request = Net::HTTP::Post.new(uri.request_uri)
