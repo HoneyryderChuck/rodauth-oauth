@@ -75,6 +75,8 @@ Sequel.migration do
       String :authorization_signed_response_alg, null: true
       String :authorization_encrypted_response_alg, null: true
       String :authorization_encrypted_response_enc, null: true
+      # oauth_client_id_metadata_document
+      TrueClass :oauth_applications_created_via_client_id_metadata, default: false
     end
   end
 

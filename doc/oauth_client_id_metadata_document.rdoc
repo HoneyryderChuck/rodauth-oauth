@@ -3,3 +3,7 @@ The +oauth_client_id_metadata_document+ feature implements the OAuth Client ID M
 https://datatracker.ietf.org/doc/draft-ietf-oauth-client-id-metadata-document/
 
 This feature depends on the +oauth_authorize_base+ feature.
+
+== Auth Value Methods
+
+* oauth_applications_created_via_client_id_metadata_column :: the db column which tells whether the application was created via CIMD, <tt>nil</tt> by default.

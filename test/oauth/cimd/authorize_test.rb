@@ -63,6 +63,10 @@ class RodauthOauthcimdAuthorizeTest < JWTIntegration
 
     assert page.current_url == "https://example.com/callback?code=#{oauth_grant[:code]}",
            "was redirected instead to #{page.current_url}"
+
+    oauth_application = db[:oauth_applications].where(id: oauth_grant[:oauth_application_id]).first
+    assert oauth_application
+    assert oauth_application[:oauth_applications_created_via_client_id_metadata]
   end
 
   def test_cimd_authorize_post_authorize_with_private_key_jwt
@@ -107,6 +111,10 @@ class RodauthOauthcimdAuthorizeTest < JWTIntegration
 
     assert page.current_url == "https://example.com/callback?code=#{oauth_grant[:code]}",
            "was redirected instead to #{page.current_url}"
+
+    oauth_application = db[:oauth_applications].where(id: oauth_grant[:oauth_application_id]).first
+    assert oauth_application
+    assert oauth_application[:oauth_applications_created_via_client_id_metadata]
   end
 
   private
@@ -114,6 +122,7 @@ class RodauthOauthcimdAuthorizeTest < JWTIntegration
   def setup_application(*)
     rodauth do
       oauth_response_mode "query"
+      oauth_applications_created_via_client_id_metadata_column :oauth_applications_created_via_client_id_metadata
     end
     super
   end

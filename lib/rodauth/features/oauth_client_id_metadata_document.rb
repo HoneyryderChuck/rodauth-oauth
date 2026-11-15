@@ -10,6 +10,8 @@ module Rodauth
 
     FORBIDDEN_TOKEN_AUTH_METHODS = %w[client_secret_post client_secret_basic client_secret_jwt].freeze
 
+    auth_value_method :oauth_applications_created_via_client_id_metadata_column, nil
+
     def oauth_application
       super || begin
         client_id = param_or_nil("client_id")
@@ -95,7 +97,7 @@ module Rodauth
 
     # rewrite metadata params into column names
     def client_metadata_document_to_oauth_application_params(client_metadata)
-      Hash[
+      params = Hash[
           client_metadata.map do |k, v|
             k = case k
                 when :redirect_uris
@@ -116,6 +118,10 @@ module Rodauth
             [send(:"oauth_applications_#{k}_column"), v]
           end
         ]
+
+      params[oauth_applications_created_via_client_id_metadata_column] = true if oauth_applications_created_via_client_id_metadata_column
+
+      params
     end
 
     def oauth_server_metadata_body(*)

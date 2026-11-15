@@ -73,6 +73,9 @@ class CreateRodauthOauth < ActiveRecord::Migration<%= migration_version %>
       # backchannel logout
       t.string :backchannel_logout_uri
       t.boolean :backchannel_logout_session_required, default: false
+
+      # client id metadata document
+      t.boolean :oauth_applications_created_via_client_id_metadata, default: false
     end
 
     create_table :oauth_grants do |t|
