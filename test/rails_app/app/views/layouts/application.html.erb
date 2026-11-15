@@ -5,6 +5,11 @@
     <title><%= @page_title %></title>
 
     <meta charset="utf-8">
+
+    <% if content_for? :meta_tags %>
+      <%= content_for(:meta_tags) %>
+    <% end %>
+
     <%= csrf_meta_tags %>
   </head>
 
