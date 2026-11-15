@@ -90,7 +90,7 @@ platform :mri, :truffleruby do
 end
 
 platform :mri do
-  gem "rbs" if RUBY_VERSION >= "4.0.0"
+  gem "rbs" if RUBY_VERSION >= "3.3.0"
   if RUBY_VERSION >= "3.4.0"
     gem "herb"
     gem "rubocop"
