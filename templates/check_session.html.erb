@@ -8,6 +8,12 @@
   </head>
 
   <body>
+    <input
+      id="oauth-oidc-user-agent-state-cookie-key"
+      type="hidden"
+      value="<%= rodauth.oauth_oidc_user_agent_state_cookie_key %>"
+    >
+
     <script type="text/javascript">
       window.addEventListener("message", receiveMessage, false);
 
@@ -51,7 +57,7 @@
       };
 
       function getOpUserAgentState() {
-        var name = "<%= rodauth.oauth_oidc_user_agent_state_cookie_key %>=";
+        var name = document.getElementById('oauth-oidc-user-agent-state-cookie-key').value;
         var ca = document.cookie.split(';');
         var value = null;
         for (var i = 0; i < ca.length; i++) {
