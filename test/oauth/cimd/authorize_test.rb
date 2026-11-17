@@ -12,7 +12,7 @@ class RodauthOauthcimdAuthorizeTest < JWTIntegration
 
     # show the authorization form
     visit "/authorize?client_id=bang"
-    assert_includes page.html, "Invalid or missing 'client_id'"
+    assert_includes CGI.unescapeHTML(page.html), "Invalid or missing 'client_id'"
   end
 
   def test_cimd_authorize_invalid_client_id_url
@@ -23,7 +23,7 @@ class RodauthOauthcimdAuthorizeTest < JWTIntegration
     # show the authorization form
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
-    assert_includes page.html, "Invalid or missing 'client_id'"
+    assert_includes CGI.unescapeHTML(page.html), "Invalid or missing 'client_id'"
   end
 
   def test_cimd_authorize_post_authorize

@@ -1,0 +1,14 @@
+<% error = rodauth.scope.instance_variable_get(:@error) %>
+<% back_url = rodauth.scope.instance_variable_get(:@back_url) %>
+
+<div class="container">
+  <div class="alert alert-danger">
+    <p>
+      <%= error %>
+    </p>
+  </div>
+
+  <p class="text-center">
+    <%= link_to rodauth.oauth_cancel_button, back_url, class: "btn btn-outline-danger" %>
+  </p>
+</div>
