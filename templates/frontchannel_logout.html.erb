@@ -15,7 +15,9 @@
   <% end %>
 </div>
 
-<meta
-  http-equiv="refresh"
-  content="<%= rodauth.frontchannel_logout_redirect_timeout %>; URL=<%= rodauth.frontchannel_logout_redirect %>"
->
+<% content_for rodauth.oauth_content_for_meta_tags do %>
+  <meta
+    http-equiv="refresh"
+    content="<%= rodauth.frontchannel_logout_redirect_timeout %>; URL=<%= rodauth.frontchannel_logout_redirect %>"
+  >
+<% end %>

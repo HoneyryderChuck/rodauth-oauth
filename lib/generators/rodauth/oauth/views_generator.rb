@@ -10,10 +10,13 @@ module Rodauth::OAuth
         namespace "rodauth:oauth:views"
         desc "Generate db migrations for rodauth-oauth in your application."
 
-        DEFAULT = %w[authorize].freeze
+        DEFAULT = %w[authorize authorize_error].freeze
         VIEWS = {
           oauth_authorize: DEFAULT,
-          oauth_applications: %w[oauth_applications oauth_application new_oauth_application]
+          oauth_device_code_grant: %w[device_search device_verification],
+          oidc_frontchannel_logout: %w[frontchannel_logout],
+          oauth_application_management: %w[oauth_applications oauth_application new_oauth_application],
+          oauth_grant_management: %w[oauth_grants oauth_application_oauth_grants]
         }.freeze
 
         DEPENDENCIES = {

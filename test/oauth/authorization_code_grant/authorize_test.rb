@@ -24,8 +24,8 @@ class RodauthOauthAuthorizeTest < RodaIntegration
 
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
-    assert_includes page.html, "Invalid or missing 'client_id'"
-    assert_includes page.html, "Cancel"
+    assert_includes CGI.unescapeHTML(page.html), "Invalid or missing 'client_id'"
+    assert_includes CGI.unescapeHTML(page.html), "Cancel"
   end
 
   def test_authorize_get_authorize_invalid_client_id
@@ -35,8 +35,8 @@ class RodauthOauthAuthorizeTest < RodaIntegration
 
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
-    assert_includes page.html, "Invalid or missing 'client_id'"
-    assert_includes page.html, "Cancel"
+    assert_includes CGI.unescapeHTML(page.html), "Invalid or missing 'client_id'"
+    assert_includes CGI.unescapeHTML(page.html), "Cancel"
   end
 
   def test_authorize_get_authorize_invalid_redirect_uri
@@ -46,8 +46,8 @@ class RodauthOauthAuthorizeTest < RodaIntegration
 
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
-    assert_includes page.html, "Invalid or missing 'redirect_uri'"
-    assert_includes page.html, "Cancel"
+    assert_includes CGI.unescapeHTML(page.html), "Invalid or missing 'redirect_uri'"
+    assert_includes CGI.unescapeHTML(page.html), "Cancel"
   end
 
   def test_authorize_get_authorize_invalid_scope
@@ -71,8 +71,8 @@ class RodauthOauthAuthorizeTest < RodaIntegration
           "scope=user.read+user.write&response_type=code"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
-    assert_includes page.html, "Invalid or missing 'redirect_uri'"
-    assert_includes page.html, "Cancel"
+    assert_includes CGI.unescapeHTML(page.html), "Invalid or missing 'redirect_uri'"
+    assert_includes CGI.unescapeHTML(page.html), "Cancel"
   end
 
   def test_authorize_get_authorize_multiple_uris
@@ -86,7 +86,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
           "scope=user.read+user.write&response_type=code"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_url}"
-    refute_includes page.html, "Invalid or missing 'redirect_uri'"
+    refute_includes CGI.unescapeHTML(page.html), "Invalid or missing 'redirect_uri'"
   end
 
   def test_authorize_get_authorize_literal_loopback_uri_with_ephemeral_port
@@ -100,7 +100,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
           "scope=user.read+user.write&response_type=code"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_url}"
-    refute_includes page.html, "Invalid or missing 'redirect_uri'"
+    refute_includes CGI.unescapeHTML(page.html), "Invalid or missing 'redirect_uri'"
   end
 
   def test_authorize_get_authorize_literal_ipv6_loopback_uri_with_ephemeral_port
@@ -114,7 +114,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
           "scope=user.read+user.write&response_type=code"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_url}"
-    refute_includes page.html, "Invalid or missing 'redirect_uri'"
+    refute_includes CGI.unescapeHTML(page.html), "Invalid or missing 'redirect_uri'"
   end
 
   def test_authorize_get_authorize_localhost_loopback_uri_with_ephemeral_port
@@ -128,7 +128,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
           "scope=user.read+user.write&response_type=code"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_url}"
-    refute_includes page.html, "Invalid or missing 'redirect_uri'"
+    refute_includes CGI.unescapeHTML(page.html), "Invalid or missing 'redirect_uri'"
   end
 
   def test_authorize_post_authorize_same_code
@@ -325,7 +325,7 @@ class RodauthOauthAuthorizeTest < RodaIntegration
 
     visit "/authorize?client_id=#{oauth_application[:client_id]}&scope=user.read+user.write&response_mode=form_post&response_type=unknown"
 
-    assert_includes page.html, "name=\"error\" value=\"unsupported_response_type\""
+    assert_includes CGI.unescapeHTML(page.html), "name=\"error\" value=\"unsupported_response_type\""
   end
 
   def test_authorize_post_authorize_code_form_post

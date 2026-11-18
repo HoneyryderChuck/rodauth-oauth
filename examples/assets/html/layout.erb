@@ -8,6 +8,7 @@
           rel="stylesheet"
           integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
           crossorigin="anonymous"></link>
+    <%= content_for(:meta_tags) if respond_to?(:content_for) %>
     <%= assets(:css) %>
   </head>
   <body>

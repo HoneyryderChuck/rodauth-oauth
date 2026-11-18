@@ -14,6 +14,8 @@ module Rodauth
     loaded_templates %w[frontchannel_logout]
     view "frontchannel_logout", "Logout", "frontchannel_logout"
 
+    auth_value_method :oauth_content_for_meta_tags, :meta_tags
+
     translatable_method :oauth_frontchannel_logout_redirecting_lead, "You are being redirected..."
     translatable_method :oauth_frontchannel_logout_redirecting_label, "please click %<link>s if your browser does not " \
                                                                       "redirect you in a few seconds."
@@ -37,6 +39,12 @@ module Rodauth
 
     def logout
       @visited_sites = session[visited_sites_key]
+
+      super
+    end
+
+    def post_configure
+      self.class.roda_class.plugin :content_for
 
       super
     end

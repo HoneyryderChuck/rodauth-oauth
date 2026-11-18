@@ -25,7 +25,7 @@ else
     end
 
     test "choosing features" do
-      run_generator ["--features", "oauth_applications"]
+      run_generator ["--features", "oauth_application_management"]
 
       %w[authorize oauth_applications oauth_application new_oauth_application].each do |template|
         assert_file "app/views/rodauth/#{template}.html.erb"

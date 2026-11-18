@@ -24,8 +24,8 @@ class RodauthOauthPushedAuthorizationRequestAuthorizeTest < RodaIntegration
 
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
-    assert_includes page.html, "Invalid or missing 'client_id'"
-    assert_includes page.html, "Cancel"
+    assert_includes CGI.unescapeHTML(page.html), "Invalid or missing 'client_id'"
+    assert_includes CGI.unescapeHTML(page.html), "Cancel"
   end
 
   def test_authorize_get_authorize_invalid_client_id
@@ -35,8 +35,8 @@ class RodauthOauthPushedAuthorizationRequestAuthorizeTest < RodaIntegration
 
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
-    assert_includes page.html, "Invalid or missing 'client_id'"
-    assert_includes page.html, "Cancel"
+    assert_includes CGI.unescapeHTML(page.html), "Invalid or missing 'client_id'"
+    assert_includes CGI.unescapeHTML(page.html), "Cancel"
   end
 
   def test_authorize_post_authorize_client_client_application_required_par
@@ -48,8 +48,8 @@ class RodauthOauthPushedAuthorizationRequestAuthorizeTest < RodaIntegration
     visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code&scope=user.read+user.write&response_type=code"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
-    assert_includes page.html, "Invalid or missing 'request_uri'"
-    assert_includes page.html, "Cancel"
+    assert_includes CGI.unescapeHTML(page.html), "Invalid or missing 'request_uri'"
+    assert_includes CGI.unescapeHTML(page.html), "Cancel"
   end
 
   def test_authorize_post_authorize_server_providerr_required_par
@@ -63,8 +63,8 @@ class RodauthOauthPushedAuthorizationRequestAuthorizeTest < RodaIntegration
     visit "/authorize?client_id=#{oauth_application[:client_id]}&response_type=code&scope=user.read+user.write&response_type=code"
     assert page.current_path == "/authorize",
            "was redirected instead to #{page.current_path}"
-    assert_includes page.html, "Invalid or missing 'request_uri'"
-    assert_includes page.html, "Cancel"
+    assert_includes CGI.unescapeHTML(page.html), "Invalid or missing 'request_uri'"
+    assert_includes CGI.unescapeHTML(page.html), "Cancel"
   end
 
   def test_authorize_post_authorize_par_expired
